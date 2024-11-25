@@ -1,0 +1,14 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always",
+        "source.unusedImports": "always"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+    },
+    "editor.formatOnSave": true,
+    "eslint.enable": true,
+    "eslint.format.enable": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python"
+}

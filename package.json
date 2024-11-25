@@ -1,0 +1,21 @@
+{
+  "name": "website-starter-pack",
+  "private": true,
+  "version": "1.0.0",
+  "description": "website-starter-pack",
+  "main": "index.js",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "start": "docker compose --env-file .env --profile prod up",
+    "debug": "docker compose --env-file .env --profile debug up",
+    "dev": "docker compose --env-file .env --profile dev up",
+    "db-dump": "bash scripts/db-dump.sh",
+    "stop": "docker compose --env-file .env down --remove-orphans"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "json-schema-to-typescript": "^15.0.3"
+  }
+}

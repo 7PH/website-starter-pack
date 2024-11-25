@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Debug Backend",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "port": 5679,
+                "host": "127.0.0.1"
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/app/backend/src",
+                    "remoteRoot": "/app/src"
+                }
+            ],
+            "justMyCode": false,
+            "subProcess": true
+        }
+    ]
+}
