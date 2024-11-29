@@ -16,7 +16,7 @@ export const useApi = defineStore('api', {
                 headers: {
                     method: 'GET',
                     'Content-Type': 'application/json',
-                    ...(authStore.isLoggedIn ? { Authorization: `Bearer ${authStore.token?.token_raw}` } : {}),
+                    ...(authStore.isLoggedIn ? { Authorization: `Bearer ${authStore.token?.access_token}` } : {}),
                     ...options.headers,
                 },
             });

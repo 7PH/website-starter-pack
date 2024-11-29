@@ -23,15 +23,25 @@ For debugging the python process inside the backend container:
 - Run `npm run debug`
 - In the VSCode Debugger Tab, execute the action `Debug Backend`
 
-## Database backup
+## Database
+
+### Backup
 
 To backup the database:
 
 - Run `npm run db-dump`
-- Verify the generated SQL file with `head -n 100 services/db/initdb.sql`
+- Verify the generated SQL file in `backups/`
 
 To restore a backup:
 
-- Ensure your dump file is at `services/db/initdb.sql`
 - Delete database data folder with `sudo rm -rf services/db/data/ && npm run setup` (⚠️)
-- Re-run the database container
+- Run `npm run db-restore -- backups/<path-to-the-sql-dump>.sql.gz`
+
+### Initial state
+
+To ensure new databases automatically start from a specific backup:
+
+- Delete database data folder with `sudo rm -rf services/db/data/ && npm run setup` (⚠️)
+- Move the backup from `backups/*.sql.gz` to `services/db/initdb.sql`
+
+Beware that `initdb.sql` is tracked by Git.

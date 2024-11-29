@@ -6,3 +6,6 @@ venv
 .env
 
 node_modules
+
+/backups
+/static

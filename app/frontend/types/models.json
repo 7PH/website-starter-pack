@@ -205,8 +205,8 @@
     },
     "UserTokenUpdate": {
       "properties": {
-        "token_raw": {
-          "title": "Token Raw",
+        "access_token": {
+          "title": "Access Token",
           "type": "string"
         },
         "token_parsed": {
@@ -214,10 +214,15 @@
         },
         "user": {
           "$ref": "#/$defs/UserRead"
+        },
+        "token_type": {
+          "default": "bearer",
+          "title": "Token Type",
+          "type": "string"
         }
       },
       "required": [
-        "token_raw",
+        "access_token",
         "token_parsed",
         "user"
       ],

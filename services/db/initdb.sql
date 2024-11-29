@@ -1,0 +1,2 @@
+-- Postgres init script
+-- This script is run when the database is created

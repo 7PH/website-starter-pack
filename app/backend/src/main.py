@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.concurrency import asynccontextmanager
 from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -8,24 +9,36 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
+from .core.constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
+from .core.helpers.ratelimit import cleanup_entries
 from .db import create_db_and_tables
 from .router import router as api_router
-from .security.ratelimit import cleanup_entries
 
-# Configure CORS origins
-origins = [
-    f"{PUBLIC_PROTOCOL}://frontend",
-    PUBLIC_URL,
-]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting app")
+    create_db_and_tables()
+    cleanup_entries()
+    yield
+    print("Stopping app")
+
+
+@repeat_every(wait_first=True, seconds=300)  # Run every 5 minutes
+def periodic_cleanup():
+    cleanup_entries()
+
 
 # Create FastAPI app instance
-app = FastAPI(debug=not IS_PROD)
+app = FastAPI(debug=not IS_PROD, lifespan=lifespan)
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        f"{PUBLIC_PROTOCOL}://frontend",
+        PUBLIC_URL,
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,17 +60,4 @@ async def custom_validation_exception_handler(
     return await request_validation_exception_handler(request, exc)
 
 
-# Startup events
-@app.on_event("startup")
-def initialize_database():
-    create_db_and_tables()
-
-
-@app.on_event("startup")
-@repeat_every(wait_first=True, seconds=300)  # Run every 5 minutes
-def periodic_cleanup():
-    cleanup_entries()
-
-
-# Mount API router
 app.include_router(api_router)

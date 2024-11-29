@@ -1,17 +1,16 @@
 import datetime
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from src.db import Base
 
 
-class User(Base):
-    __tablename__ = "user"
+class UserBase(Base):
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
+    username = Column(String, unique=True, nullable=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email_confirmed = Column(Boolean, default=False)
@@ -22,6 +21,9 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.datetime.now)
     last_seen_at = Column(DateTime, default=datetime.datetime.now)
 
+    # This table is used for polymorphic inheritance
+    __mapper_args__ = {"polymorphic_identity": "userbase"}
+
 
 class UserRead(BaseModel):
     id: int
@@ -30,6 +32,9 @@ class UserRead(BaseModel):
     last_name: str
     is_admin: bool
 
+    class Config:
+        from_attributes = True
+
 
 class UserPreviewRead(BaseModel):
     id: int
@@ -37,8 +42,9 @@ class UserPreviewRead(BaseModel):
     last_name: str
 
     # Replace last name with its first letter for privacy
-    @validator("last_name")
-    def get_initials(cls, v):
+    @field_validator("last_name")
+    @classmethod
+    def get_initials(cls, v: str) -> str:
         if v == "":
             return ""
         return v[0].upper() + "."
@@ -50,8 +56,9 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
 
-    @validator("last_name")
-    def to_uppercase(cls, v):
+    @field_validator("last_name")
+    @classmethod
+    def to_uppercase(cls, v: str) -> str:
         return v.upper()
 
 
@@ -78,9 +85,10 @@ class UserToken(BaseModel):
 
 
 class UserTokenUpdate(BaseModel):
-    token_raw: str
+    access_token: str
     token_parsed: UserToken
     user: UserRead
+    token_type: str = "bearer"
 
 
 class UserPasswordResetRequest(BaseModel):

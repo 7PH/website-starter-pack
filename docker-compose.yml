@@ -51,6 +51,7 @@ x-backend-common: &backend-common
   env_file: .env
   volumes:
     - ./app/backend/src:/app/src
+    - ./static:/app/static:rw
   networks:
     - web
 
@@ -76,6 +77,22 @@ services:
             - prod
         environment:
             MODE: PRODUCTION
+        depends_on:
+            - frontend-prod-nginx
+            - backend-prod
+    
+    # Static file server
+    static:
+        container_name: static
+        image: nginx:1.26-alpine3.20-perl
+        volumes:
+            - ./static:/usr/share/nginx/html:ro
+        networks:
+            - web
+        profiles:
+            - prod
+            - dev
+            - debug
 
     # PostgreSQL database
     db:
@@ -102,6 +119,8 @@ services:
             - debug
         networks:
             - web
+        depends_on:
+            - db
 
     # Backend for Development
     backend-dev:
@@ -114,6 +133,8 @@ services:
             - "5679:5679"
         profiles:
             - dev
+        depends_on:
+            - db
 
     # Backend for Debugging
     backend-debug:
@@ -127,6 +148,8 @@ services:
             - "5679:5679"
         profiles:
             - debug
+        depends_on:
+            - db
 
     # Backend for Production
     backend-prod:
@@ -136,6 +159,8 @@ services:
             MODE: PRODUCTION
         profiles:
             - prod
+        depends_on:
+            - db
 
     # Frontend for development (Nuxt)
     frontend-dev:
@@ -163,6 +188,9 @@ services:
             dockerfile: Dockerfile.prod-node
         profiles:
             - prod
+        depends_on:
+            - backend-prod
+
     frontend-prod-nginx:
         container_name: frontend
         build:

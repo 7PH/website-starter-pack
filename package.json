@@ -10,10 +10,12 @@
     "debug": "docker compose --env-file .env --profile debug up",
     "dev": "docker compose --env-file .env --profile dev up",
     "db-dump": "bash scripts/db-dump.sh",
+    "db-delete": "bash scripts/db-delete.sh",
+    "db-restore": "bash scripts/db-restore.sh",
     "stop": "docker compose --env-file .env down --remove-orphans"
   },
   "keywords": [],
-  "author": "",
+  "author": "7PH <b.raymond@protonmail.com>",
   "license": "ISC",
   "devDependencies": {
     "json-schema-to-typescript": "^15.0.3"

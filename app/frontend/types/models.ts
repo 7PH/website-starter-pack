@@ -39,7 +39,8 @@ export type OldPassword = string;
 export type NewPassword = string;
 export type CreatedAt = string;
 export type ExpiresAt = string;
-export type TokenRaw = string;
+export type AccessToken = string;
+export type TokenType = string;
 export type Email4 = string;
 export type Email5 = string;
 export type Password2 = string;
@@ -82,9 +83,10 @@ export interface UserToken {
   expires_at: ExpiresAt;
 }
 export interface UserTokenUpdate {
-  token_raw: TokenRaw;
+  access_token: AccessToken;
   token_parsed: UserToken;
   user: UserRead;
+  token_type?: TokenType;
 }
 export interface UserPasswordResetRequest {
   email: Email4;
