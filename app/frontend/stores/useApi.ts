@@ -10,7 +10,7 @@ export const useApi = defineStore('api', {
          */
         async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
             const authStore = useAuth();
-            const basepath = import.meta.server ? 'http://backend:80' : useRuntimeConfig().public.apiBase;
+            const basepath = useRuntimeConfig().public.apiBase;
             const response = await fetch(basepath + path, {
                 ...options,
                 headers: {

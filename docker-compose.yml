@@ -20,14 +20,6 @@ x-traefik-common: &traefik-common
         - .env
 
 x-frontend-common: &frontend-common
-    container_name: frontend
-    build:
-        context: ./app/frontend
-        dockerfile: Dockerfile.prod
-        args:
-            - DOCKER_USER=${DOCKER_USER}
-            - DOCKER_UID=${DOCKER_UID}
-            - DOCKER_GID=${DOCKER_GID}
     volumes:
         - ./app/frontend/app.vue:/app/app.vue:ro
         - ./app/frontend/assets:/app/assets:ro
@@ -144,6 +136,7 @@ services:
     # Frontend for development (Nuxt)
     frontend-dev:
         <<: *frontend-common
+        container_name: frontend
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.dev
@@ -158,10 +151,25 @@ services:
             - debug
 
     # Frontend for production (Nuxt)
-    frontend-prod:
+    frontend-prod-node:
         <<: *frontend-common
+        container_name: frontend-node
+        build:
+            context: ./app/frontend
+            dockerfile: Dockerfile.prod-node
         profiles:
             - prod
+    frontend-prod-nginx:
+        container_name: frontend
+        build:
+            context: ./app/frontend
+            dockerfile: Dockerfile.prod-nginx
+        profiles:
+            - prod
+        depends_on:
+            - frontend-prod-node
+        networks:
+            - web
 
 volumes:
     letsencrypt_traefik:

@@ -41,9 +41,6 @@ export const useAuth = defineStore('auth', {
          * Logout the user
          */
         logout(): void {
-            if (import.meta.server) {
-                return;
-            }
             localStorage.removeItem(STORAGE_TOKEN_KEY);
             this.token = null;
         },
@@ -53,9 +50,6 @@ export const useAuth = defineStore('auth', {
          * @param token - The user token to save
          */
         saveUserToken(token: UserTokenUpdate): void {
-            if (import.meta.server) {
-                return;
-            }
             this.token = token;
             localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify(token));
         },
