@@ -22,6 +22,8 @@ http:
       rule: "Host(`adminer.{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: adminer
+      middlewares:
+        - admin-auth-middleware
       {{ if env "USE_TLS" }}
       tls:
         certResolver: letsencrypt
@@ -41,4 +43,21 @@ http:
     adminer:
       loadBalancer:
         servers:
-          - url: "http://adminer:80"
+          - url: "http://adminer:8080"
+
+  middlewares:
+    admin-auth-middleware:
+      chain:
+        middlewares:
+          - rate-limit-middleware
+          - basic-auth-middleware
+
+    basic-auth-middleware:
+      basicAuth:
+        users:
+        - "{{ env "BASIC_AUTH" }}"
+
+    rate-limit-middleware:
+      rateLimit:
+        average: 5
+        burst: 10

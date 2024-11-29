@@ -96,6 +96,10 @@ services:
         container_name: adminer
         image: adminer
         restart: always
+        profiles:
+            - prod
+            - dev
+            - debug
         networks:
             - web
 
