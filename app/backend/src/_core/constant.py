@@ -20,3 +20,6 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 2
 
 # Minimum length requirement for user passwords
 PASSWORD_MIN_LENGTH = 8
+
+# Stripe
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")

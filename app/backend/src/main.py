@@ -1,18 +1,15 @@
 from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
-from fastapi.exception_handlers import (
-    http_exception_handler,
-    request_validation_exception_handler,
-)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi_utils.tasks import repeat_every
-from src._core.constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
-from src._core.helpers.db import create_db_and_tables
-from src._core.helpers.ratelimit import cleanup_entries
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .router import router as api_router
+from ._core.constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
+from ._core.helpers.db import create_db_and_tables
+from ._core.helpers.ratelimit import cleanup_entries
+from ._core.helpers.router import router as api_router
 
 
 @asynccontextmanager
@@ -32,6 +29,7 @@ def periodic_cleanup():
 # Create FastAPI app instance
 app = FastAPI(debug=not IS_PROD, lifespan=lifespan)
 
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -45,19 +43,45 @@ app.add_middleware(
 )
 
 
-# Custom exception handlers
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    print(f"HTTP Exception occurred: {repr(exc)}")
-    return await http_exception_handler(request, exc)
-
-
 @app.exception_handler(RequestValidationError)
-async def custom_validation_exception_handler(
-    request: Request, exc: RequestValidationError
-):
-    print(f"Validation Error: {exc}")
-    return await request_validation_exception_handler(request, exc)
+async def custom_form_validation_error(request: Request, exc: RequestValidationError):
+    """
+    Custom handler for request validation errors.
+    Reformats the Pydantic validation error messages for better readability and returns a JSON response.
+    """
+    reformatted_message = []
+    for error in exc.errors():
+        loc = error["loc"]
+        msg = error["msg"]
+        # Remove common request types from the error location
+        filtered_loc = loc[1:] if loc[0] in ("body", "query", "path") else loc
+        field_string = ".".join(filtered_loc)  # Format nested fields using dot-notation
+        reformatted_message.append(f"{field_string}: {msg}")
+
+    return JSONResponse(
+        content={
+            "error": "Validation error",
+            "message": ", ".join(
+                reformatted_message
+            ),  # User-friendly reformatted message
+        },
+        status_code=400,
+    )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    Custom handler for HTTP exceptions.
+    Returns a JSON response with the error detail and status code.
+    """
+    return JSONResponse(
+        content={
+            "error": "HTTP error",
+            "detail": str(exc.detail),
+        },
+        status_code=exc.status_code,
+    )
 
 
 app.include_router(api_router)

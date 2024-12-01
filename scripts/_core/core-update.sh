@@ -36,12 +36,18 @@ if [ ! -f "$FILE_LIST" ]; then
   exit 1
 fi
 
-# Read the file list and update the files
-while IFS= read -r file || [[ -n "$file" ]]; do
-  echo "Updating $file..."
-  git checkout starter-pack/master -- "$file"
+# Read the file list, skipping comments and empty lines
+while IFS= read -r line || [[ -n "$line" ]]; do
+  # Trim whitespace and skip empty lines or comments
+  line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  if [[ -z "$line" || "$line" == \#* ]]; then
+    continue
+  fi
+
+  echo "Updating $line..."
+  git checkout starter-pack/main -- "$line"
   if [ $? -ne 0 ]; then
-    echo "Error: Failed to update $file. Ensure the file exists in the starter-pack repository."
+    echo "Error: Failed to update $line. Ensure the file exists in the starter-pack repository."
   fi
 done < "$FILE_LIST"
 

@@ -5,14 +5,15 @@
   "description": "website-starter-pack",
   "main": "index.js",
   "scripts": {
-    "setup": "bash scripts/setup.sh",
-    "start": "docker compose --env-file .env --profile prod up",
-    "debug": "docker compose --env-file .env --profile debug up",
-    "dev": "docker compose --env-file .env --profile dev up",
-    "db-dump": "bash scripts/db-dump.sh",
-    "db-delete": "bash scripts/db-delete.sh",
-    "db-restore": "bash scripts/db-restore.sh",
-    "stop": "docker compose --env-file .env down --remove-orphans"
+    "start": "docker compose -f docker-compose.core.yml -f docker-compose.yml --profile prod up",
+    "debug": "docker compose -f docker-compose.core.yml -f docker-compose.yml --profile debug up",
+    "dev": "docker compose -f docker-compose.core.yml -f docker-compose.yml --profile dev up",
+    "stop": "docker compose -f docker-compose.core.yml -f docker-compose.yml down --remove-orphans",
+    "setup": "bash scripts/_core/setup.sh",
+    "db-dump": "bash scripts/_core/db-dump.sh",
+    "db-delete": "bash scripts/_core/db-delete.sh",
+    "db-restore": "bash scripts/_core/db-restore.sh",
+    "db-connect": "bash scripts/_core/db-connect.sh"
   },
   "keywords": [],
   "author": "7PH <b.raymond@protonmail.com>",

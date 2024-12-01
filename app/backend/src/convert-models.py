@@ -6,6 +6,7 @@ from src._core.resources.users.model import *
 
 Main = TypeAdapter(
     Union[
+        # User
         UserRead,
         UserPreviewRead,
         UserCreate,
@@ -16,6 +17,7 @@ Main = TypeAdapter(
         UserTokenUpdate,
         UserPasswordResetRequest,
         UserPasswordResetConfirm,
+        # App types
     ]
 )
 print(json.dumps(Main.json_schema(), indent=2))

@@ -14,8 +14,8 @@ from ..constant import (
     JWT_SECRET_KEY,
     PASSWORD_HASH_SECRET_KEY,
 )
-from ..exception import InvalidTokenException
 from ..resources.users.model import UserBase, UserRead, UserTokenUpdate
+from .exception import InvalidTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 

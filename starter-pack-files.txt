@@ -1,8 +1,16 @@
+# Backend
 app/backend/Dockerfile
 app/backend/src/_core/*
-services/traefik/*
-scripts/*
-.env.template
-docker-compose.yml
-package*.json
+
+# Traefik
+services/traefik/*.core.yml
+
+# Scripts
+scripts/_core/*
+
+# Root project files
 .gitignore
+.env.template
+docker-compose.core.yml
+package*.json
+starter-pack-files.txt

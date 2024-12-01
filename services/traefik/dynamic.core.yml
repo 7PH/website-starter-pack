@@ -1,0 +1,77 @@
+http:
+  routers:
+    static:
+      rule: "Host(`static.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      entryPoints: default
+      service: static
+      {{ if env "USE_TLS" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+    frontend:
+      rule: "Host(`{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      entryPoints: default
+      service: frontend
+      {{ if env "USE_TLS" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+    backend:
+      rule: "Host(`api.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      entryPoints: default
+      service: backend
+      {{ if env "USE_TLS" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+    adminer:
+      rule: "Host(`adminer.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      entryPoints: default
+      service: adminer
+      middlewares:
+        - admin-auth-middleware
+      {{ if env "USE_TLS" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+  services:
+    static:
+      loadBalancer:
+        servers:
+          - url: "http://static:80"
+    
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:80"
+
+    adminer:
+      loadBalancer:
+        servers:
+          - url: "http://adminer:8080"
+
+  middlewares:
+    admin-auth-middleware:
+      chain:
+        middlewares:
+          - rate-limit-middleware
+          - basic-auth-middleware
+
+    basic-auth-middleware:
+      basicAuth:
+        users:
+        - "{{ env "BASIC_AUTH" }}"
+
+    rate-limit-middleware:
+      rateLimit:
+        average: 5
+        burst: 10
