@@ -11,10 +11,6 @@ engine = create_engine(db_url, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def dispose():
-    engine.dispose()
-
-
 def create_db_and_tables():
     Base.metadata.create_all(engine)
 

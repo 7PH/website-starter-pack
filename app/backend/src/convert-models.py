@@ -2,7 +2,7 @@ import json
 from typing import Union
 
 from pydantic import TypeAdapter
-from src.core.resources.users.model import *
+from src._core.resources.users.model import *
 
 Main = TypeAdapter(
     Union[

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export $(grep -v '^#' .env | xargs)
-
 if [ -z "$APP_DB_NAME" ] || [ -z "$APP_DB_USER" ] || [ -z "$APP_DB_PASSWORD" ]; then
   echo "Database configuration is missing in .env file"
   exit 1

@@ -1,4 +1,4 @@
-from src.core.resources.users.model import UserBase
+from src._core.resources.users.model import UserBase
 
 
 class User(UserBase):

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from src.db import get_session
 
 from ...constant import PUBLIC_URL
 from ...helpers.auth import (
@@ -10,6 +9,7 @@ from ...helpers.auth import (
     hash_password,
     verify_password,
 )
+from ...helpers.db import get_session
 from .crud import (
     create_user,
     get_user_by_email,

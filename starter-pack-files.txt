@@ -1,0 +1,8 @@
+app/backend/Dockerfile
+app/backend/src/_core/*
+services/traefik/*
+scripts/*
+.env.template
+docker-compose.yml
+package*.json
+.gitignore

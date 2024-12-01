@@ -2,7 +2,8 @@ import datetime
 
 from pydantic import BaseModel, field_validator
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from src.db import Base
+
+from ...helpers.db import Base
 
 
 class UserBase(Base):
