@@ -14,5 +14,20 @@
     "python.analysis.extraPaths": ["app/backend"],
     "python.autoComplete.extraPaths": [
         "app/backend"
-    ]
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/__pycache__": true
+    },
+    "files.associations": {
+        "*.css": "tailwindcss"
+    },
+    "editor.quickSuggestions": {
+        "strings": "on"
+    }
 }

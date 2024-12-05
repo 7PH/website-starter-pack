@@ -8,6 +8,6 @@ useAuth()
 
 <template>
   <div>
-    <HelloWorld />
+    <NuxtLayout />
   </div>
 </template>

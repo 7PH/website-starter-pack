@@ -9,7 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from ._core.constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
 from ._core.helpers.db import create_db_and_tables
 from ._core.helpers.ratelimit import cleanup_entries
-from ._core.helpers.router import router as api_router
+from ._core.resources.router import router as api_router
 
 
 @asynccontextmanager
