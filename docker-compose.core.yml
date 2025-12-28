@@ -1,3 +1,4 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 x-traefik-common: &traefik-common
     container_name: ${COMPOSE_PROJECT_NAME}-traefik
     image: traefik:v2.9
@@ -23,6 +24,7 @@ x-traefik-common: &traefik-common
 x-frontend-common: &frontend-common
     volumes:
         - ./app/frontend/app.vue:/app/app.vue:ro
+        - ./app/frontend/_core:/app/_core:ro
         - ./app/frontend/assets:/app/assets:ro
         - ./app/frontend/components:/app/components:ro
         - ./app/frontend/composables:/app/composables:ro
@@ -36,7 +38,7 @@ x-frontend-common: &frontend-common
         - ./app/frontend/public:/app/public:ro
         - ./app/frontend/types:/app/types:ro
     environment:
-        NUXT_PUBLIC_API_BASE: ${PUBLIC_URL_API}
+        NUXT_PUBLIC_API_BASE: /api
     networks:
         - web
 
@@ -209,6 +211,51 @@ services:
             web:
                 aliases:
                     - frontend
+
+    # Umami Analytics
+    umami:
+        container_name: ${COMPOSE_PROJECT_NAME}-umami
+        image: ghcr.io/umami-software/umami:postgresql-latest
+        restart: always
+        profiles:
+            - prod
+            - dev
+            - debug
+        environment:
+            DATABASE_URL: postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:-umami}@umami-db:5432/${UMAMI_DB_NAME:-umami}
+            DATABASE_TYPE: postgresql
+            APP_SECRET: ${UMAMI_APP_SECRET:-change-me-in-production}
+            TRACKER_SCRIPT_NAME: analytics
+            DISABLE_TELEMETRY: "1"
+        depends_on:
+            umami-db:
+                condition: service_healthy
+        networks:
+            web:
+                aliases:
+                    - umami
+
+    umami-db:
+        container_name: ${COMPOSE_PROJECT_NAME}-umami-db
+        image: postgres:15-alpine
+        restart: always
+        profiles:
+            - prod
+            - dev
+            - debug
+        environment:
+            POSTGRES_DB: ${UMAMI_DB_NAME:-umami}
+            POSTGRES_USER: ${UMAMI_DB_USER:-umami}
+            POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami}
+        volumes:
+            - ./services/umami/data:/var/lib/postgresql/data:rw
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER:-umami} -d ${UMAMI_DB_NAME:-umami}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - web
 
 volumes:
     letsencrypt_traefik:

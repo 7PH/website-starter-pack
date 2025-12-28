@@ -1,4 +1,5 @@
 #!/bin/bash
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 # Get backend container
 BACKEND_CONTAINER=$(docker container list --filter "name=backend" --format "{{.ID}}")

@@ -1,3 +1,6 @@
+#!/bin/bash
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 ROOT_GIT=$(git rev-parse --show-toplevel)
 
 # Install frontend dependencies

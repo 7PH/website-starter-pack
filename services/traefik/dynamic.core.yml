@@ -1,3 +1,4 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 http:
   routers:
     static:
@@ -19,9 +20,11 @@ http:
       {{ end }}
 
     backend:
-      rule: "Host(`api.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      rule: "Host(`{{env "PUBLIC_WEBSITE_HOST"}}`) && PathPrefix(`/api`)"
       entryPoints: default
       service: backend
+      middlewares:
+        - api-strip-prefix
       {{ if env "USE_TLS" }}
       tls:
         certResolver: letsencrypt
@@ -31,6 +34,18 @@ http:
       rule: "Host(`adminer.{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: adminer
+      middlewares:
+        - admin-auth-middleware
+      {{ if env "USE_TLS" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+    # Umami Analytics (only active when using --profile analytics)
+    umami:
+      rule: "Host(`analytics.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      entryPoints: default
+      service: umami
       middlewares:
         - admin-auth-middleware
       {{ if env "USE_TLS" }}
@@ -59,7 +74,17 @@ http:
         servers:
           - url: "http://adminer:8080"
 
+    umami:
+      loadBalancer:
+        servers:
+          - url: "http://umami:3000"
+
   middlewares:
+    api-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
+
     admin-auth-middleware:
       chain:
         middlewares:

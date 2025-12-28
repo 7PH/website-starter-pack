@@ -1,3 +1,6 @@
+#!/bin/bash
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 # Create .env from .env.template if not exists
 if [ ! -f .env ]; then
     sed \

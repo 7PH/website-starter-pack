@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 from typing import Generic, List, TypeVar
 
 from pydantic.generics import GenericModel
