@@ -1,5 +1,5 @@
 x-traefik-common: &traefik-common
-    container_name: traefik
+    container_name: ${COMPOSE_PROJECT_NAME}-traefik
     image: traefik:v2.9
     command:
         - "--log.level=DEBUG"
@@ -41,7 +41,7 @@ x-frontend-common: &frontend-common
         - web
 
 x-backend-common: &backend-common
-  container_name: backend
+  container_name: ${COMPOSE_PROJECT_NAME}-backend
   build:
     context: ./app/backend
     dockerfile: Dockerfile
@@ -54,7 +54,9 @@ x-backend-common: &backend-common
     - ./app/backend/src:/app/src
     - ./static:/app/static:rw
   networks:
-    - web
+    web:
+      aliases:
+        - backend
 
 services:
     # Traefik reverse proxy (dev)
@@ -84,7 +86,7 @@ services:
     
     # Static file server
     static:
-        container_name: static
+        container_name: ${COMPOSE_PROJECT_NAME}-static
         image: nginx:1.26-alpine3.20-perl
         volumes:
             - ./static:/usr/share/nginx/html:ro
@@ -97,7 +99,7 @@ services:
 
     # PostgreSQL database
     db:
-        container_name: db
+        container_name: ${COMPOSE_PROJECT_NAME}-db
         image: postgres:15.10-alpine3.20
         environment:
             POSTGRES_DB: ${APP_DB_NAME}
@@ -111,7 +113,7 @@ services:
 
     # Adminer database management tool
     adminer:
-        container_name: adminer
+        container_name: ${COMPOSE_PROJECT_NAME}-adminer
         image: adminer
         restart: always
         profiles:
@@ -166,7 +168,7 @@ services:
     # Frontend for development (Nuxt)
     frontend-dev:
         <<: *frontend-common
-        container_name: frontend
+        container_name: ${COMPOSE_PROJECT_NAME}-frontend
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.dev
@@ -175,7 +177,9 @@ services:
                 - DOCKER_UID=${DOCKER_UID}
                 - DOCKER_GID=${DOCKER_GID}
         networks:
-            - web
+            web:
+                aliases:
+                    - frontend
         profiles:
             - dev
             - debug
@@ -183,7 +187,7 @@ services:
     # Frontend for production (Nuxt)
     frontend-prod-node:
         <<: *frontend-common
-        container_name: frontend-node
+        container_name: ${COMPOSE_PROJECT_NAME}-frontend-node
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-node
@@ -193,7 +197,7 @@ services:
             - backend-prod
 
     frontend-prod-nginx:
-        container_name: frontend
+        container_name: ${COMPOSE_PROJECT_NAME}-frontend
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-nginx
@@ -202,7 +206,9 @@ services:
         depends_on:
             - frontend-prod-node
         networks:
-            - web
+            web:
+                aliases:
+                    - frontend
 
 volumes:
     letsencrypt_traefik:
