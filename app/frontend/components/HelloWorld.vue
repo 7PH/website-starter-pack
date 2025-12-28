@@ -2,7 +2,7 @@
 const config = useRuntimeConfig();
 const api = useApi();
 
-const data = import.meta.client && (await api.fetch("/healthcheck"));
+const data = import.meta.client && (await api.get("/healthcheck"));
 </script>
 
 <template>

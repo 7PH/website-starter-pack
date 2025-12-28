@@ -1,4 +1,5 @@
 #!/bin/bash
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 # Confirm deletion
 echo "WARNING: You are about to delete all data in the database '$APP_DB_NAME'."

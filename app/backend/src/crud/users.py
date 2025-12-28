@@ -1,7 +1,9 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .model import UserBase
+from ..models.user import UserBase
 
 
 def get_user_by_email(session: Session, email: str) -> UserBase | None:

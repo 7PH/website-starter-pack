@@ -1,0 +1,102 @@
+{
+    "core": {
+        "auth": {
+            "login": "Connexion",
+            "logout": "Déconnexion",
+            "register": "Inscription",
+            "forgotPassword": "Mot de passe oublié ?",
+            "resetPassword": "Réinitialiser le mot de passe",
+            "email": "Email",
+            "password": "Mot de passe",
+            "confirmPassword": "Confirmer le mot de passe",
+            "firstName": "Prénom",
+            "lastName": "Nom",
+            "rememberMe": "Se souvenir de moi",
+            "noAccount": "Pas encore de compte ?",
+            "hasAccount": "Déjà un compte ?",
+            "createAccount": "Créer un compte",
+            "loginSuccess": "Bienvenue !",
+            "logoutSuccess": "Vous avez été déconnecté",
+            "registerSuccess": "Compte créé avec succès",
+            "passwordChanged": "Mot de passe modifié avec succès",
+            "passwordResetSent": "Email de réinitialisation envoyé",
+            "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
+            "invalidCredentials": "Email ou mot de passe invalide",
+            "emailTaken": "Cet email est déjà utilisé",
+            "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+            "passwordMismatch": "Les mots de passe ne correspondent pas"
+        },
+        "common": {
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "delete": "Supprimer",
+            "edit": "Modifier",
+            "create": "Créer",
+            "update": "Mettre à jour",
+            "confirm": "Confirmer",
+            "close": "Fermer",
+            "back": "Retour",
+            "next": "Suivant",
+            "previous": "Précédent",
+            "search": "Rechercher",
+            "filter": "Filtrer",
+            "sort": "Trier",
+            "loading": "Chargement...",
+            "noResults": "Aucun résultat trouvé",
+            "actions": "Actions",
+            "settings": "Paramètres",
+            "profile": "Profil",
+            "help": "Aide",
+            "yes": "Oui",
+            "no": "Non",
+            "or": "ou",
+            "and": "et",
+            "all": "Tous",
+            "none": "Aucun",
+            "optional": "Optionnel",
+            "required": "Requis"
+        },
+        "unsavedChanges": {
+            "title": "Modifications non enregistrées",
+            "message": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter cette page ?",
+            "leave": "Quitter",
+            "stay": "Rester"
+        },
+        "errors": {
+            "generic": "Une erreur est survenue",
+            "network": "Erreur réseau. Veuillez vérifier votre connexion.",
+            "unauthorized": "Veuillez vous connecter pour continuer",
+            "forbidden": "Vous n'avez pas la permission d'effectuer cette action",
+            "notFound": "Ressource non trouvée",
+            "validation": "Veuillez vérifier votre saisie",
+            "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+            "timeout": "La requête a expiré"
+        },
+        "validation": {
+            "required": "Ce champ est requis",
+            "email": "Veuillez entrer un email valide",
+            "minLength": "Doit contenir au moins {min} caractères",
+            "maxLength": "Doit contenir au maximum {max} caractères",
+            "min": "Doit être au moins {min}",
+            "max": "Doit être au maximum {max}"
+        },
+        "time": {
+            "justNow": "À l'instant",
+            "minutesAgo": "Il y a {n} minute | Il y a {n} minutes",
+            "hoursAgo": "Il y a {n} heure | Il y a {n} heures",
+            "daysAgo": "Il y a {n} jour | Il y a {n} jours",
+            "weeksAgo": "Il y a {n} semaine | Il y a {n} semaines",
+            "monthsAgo": "Il y a {n} mois | Il y a {n} mois",
+            "yearsAgo": "Il y a {n} an | Il y a {n} ans"
+        },
+        "billing": {
+            "subscription": "Abonnement",
+            "plan": "Forfait",
+            "free": "Gratuit",
+            "premium": "Premium",
+            "manage": "Gérer l'abonnement",
+            "upgrade": "Passer à Premium",
+            "currentPlan": "Forfait actuel"
+        }
+    }
+}

@@ -1,15 +1,16 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi_utils.tasks import repeat_every
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from ._core.constant import IS_PROD, PUBLIC_PROTOCOL, PUBLIC_URL
-from ._core.helpers.db import create_db_and_tables
-from ._core.helpers.ratelimit import cleanup_entries
-from ._core.resources.router import router as api_router
+from .constants import IS_PROD
+from .helpers.db import create_db_and_tables
+from .helpers.ratelimit import cleanup_entries
+from .router import router as api_router
+from .tasks import register_core_tasks
 
 
 @asynccontextmanager
@@ -21,26 +22,22 @@ async def lifespan(app: FastAPI):
     print("Stopping app")
 
 
-@repeat_every(wait_first=True, seconds=300)  # Run every 5 minutes
-def periodic_cleanup():
-    cleanup_entries()
-
-
 # Create FastAPI app instance
 app = FastAPI(debug=not IS_PROD, lifespan=lifespan)
 
+# Register scheduled tasks
+register_core_tasks(app)
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        f"{PUBLIC_PROTOCOL}://frontend",
-        PUBLIC_URL,
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+# Add CORS middleware (only needed in development when frontend runs separately)
+if not IS_PROD:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.exception_handler(RequestValidationError)

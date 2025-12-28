@@ -1,0 +1,102 @@
+{
+    "core": {
+        "auth": {
+            "login": "Log in",
+            "logout": "Log out",
+            "register": "Sign up",
+            "forgotPassword": "Forgot password?",
+            "resetPassword": "Reset password",
+            "email": "Email",
+            "password": "Password",
+            "confirmPassword": "Confirm password",
+            "firstName": "First name",
+            "lastName": "Last name",
+            "rememberMe": "Remember me",
+            "noAccount": "Don't have an account?",
+            "hasAccount": "Already have an account?",
+            "createAccount": "Create account",
+            "loginSuccess": "Welcome back!",
+            "logoutSuccess": "You have been logged out",
+            "registerSuccess": "Account created successfully",
+            "passwordChanged": "Password changed successfully",
+            "passwordResetSent": "Password reset email sent",
+            "passwordResetSuccess": "Password reset successfully",
+            "invalidCredentials": "Invalid email or password",
+            "emailTaken": "This email is already registered",
+            "passwordTooShort": "Password must be at least 8 characters",
+            "passwordMismatch": "Passwords do not match"
+        },
+        "common": {
+            "save": "Save",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "edit": "Edit",
+            "create": "Create",
+            "update": "Update",
+            "confirm": "Confirm",
+            "close": "Close",
+            "back": "Back",
+            "next": "Next",
+            "previous": "Previous",
+            "search": "Search",
+            "filter": "Filter",
+            "sort": "Sort",
+            "loading": "Loading...",
+            "noResults": "No results found",
+            "actions": "Actions",
+            "settings": "Settings",
+            "profile": "Profile",
+            "help": "Help",
+            "yes": "Yes",
+            "no": "No",
+            "or": "or",
+            "and": "and",
+            "all": "All",
+            "none": "None",
+            "optional": "Optional",
+            "required": "Required"
+        },
+        "unsavedChanges": {
+            "title": "Unsaved changes",
+            "message": "You have unsaved changes. Are you sure you want to leave this page?",
+            "leave": "Leave",
+            "stay": "Stay"
+        },
+        "errors": {
+            "generic": "An error occurred",
+            "network": "Network error. Please check your connection.",
+            "unauthorized": "Please log in to continue",
+            "forbidden": "You don't have permission to do this",
+            "notFound": "Resource not found",
+            "validation": "Please check your input",
+            "serverError": "Server error. Please try again later.",
+            "timeout": "Request timed out"
+        },
+        "validation": {
+            "required": "This field is required",
+            "email": "Please enter a valid email",
+            "minLength": "Must be at least {min} characters",
+            "maxLength": "Must be at most {max} characters",
+            "min": "Must be at least {min}",
+            "max": "Must be at most {max}"
+        },
+        "time": {
+            "justNow": "Just now",
+            "minutesAgo": "{n} minute ago | {n} minutes ago",
+            "hoursAgo": "{n} hour ago | {n} hours ago",
+            "daysAgo": "{n} day ago | {n} days ago",
+            "weeksAgo": "{n} week ago | {n} weeks ago",
+            "monthsAgo": "{n} month ago | {n} months ago",
+            "yearsAgo": "{n} year ago | {n} years ago"
+        },
+        "billing": {
+            "subscription": "Subscription",
+            "plan": "Plan",
+            "free": "Free",
+            "premium": "Premium",
+            "manage": "Manage subscription",
+            "upgrade": "Upgrade",
+            "currentPlan": "Current plan"
+        }
+    }
+}

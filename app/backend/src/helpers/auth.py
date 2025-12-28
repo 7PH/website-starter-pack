@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 import hashlib
 import hmac
 import os
@@ -8,13 +10,13 @@ import jwt
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from ..constant import (
+from ..constants import (
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,
     JWT_SECRET_KEY,
     PASSWORD_HASH_SECRET_KEY,
 )
-from ..resources.users.model import UserBase, UserRead, UserTokenUpdate
+from ..models.user import UserBase, UserRead, UserTokenUpdate
 from .exception import InvalidTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")

@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 from fastapi import HTTPException, status
 
 

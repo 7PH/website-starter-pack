@@ -1,3 +1,4 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 FROM python:3.13-alpine3.20
 CMD ["uvicorn", "src.main:app", "--reload", "--port", "80", "--host", "0.0.0.0"]
 EXPOSE 80

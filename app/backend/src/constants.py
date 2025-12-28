@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 import os
 
 USE_TLS = os.environ.get("USE_TLS", "false").lower() == "true"

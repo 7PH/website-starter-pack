@@ -1,8 +1,13 @@
+// ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 import { defineStore } from 'pinia';
 
 export const STORAGE_TOKEN_KEY = 'user-token';
 
-
+/**
+ * Authentication store for managing user sessions.
+ * Handles token persistence in localStorage and provides auth state.
+ */
 export const useAuth = defineStore('auth', {
     state: () => ({
         token: null as UserTokenUpdate | null,
@@ -18,7 +23,8 @@ export const useAuth = defineStore('auth', {
     },
     actions: {
         /**
-         * Try and load the user token from local storage. If it's invalid, clear it.
+         * Initialize auth state from localStorage.
+         * Should be called on app startup (client-side only).
          */
         async init(): Promise<void> {
             if (import.meta.server) {
@@ -30,7 +36,6 @@ export const useAuth = defineStore('auth', {
                 if (!token) {
                     return;
                 }
-                // Temporarily make the frontend think we're logged in
                 this.token = token;
             } catch (error) {
                 this.logout();
@@ -38,19 +43,25 @@ export const useAuth = defineStore('auth', {
         },
 
         /**
-         * Logout the user
+         * Clear the user session and remove token from storage.
          */
         logout(): void {
+            if (import.meta.server) {
+                return;
+            }
             localStorage.removeItem(STORAGE_TOKEN_KEY);
             this.token = null;
         },
 
         /**
-         * Save a token to local storage and update user information
-         * @param token - The user token to save
+         * Save a new token and update user state.
+         * @param token - The authentication token response
          */
         saveUserToken(token: UserTokenUpdate): void {
             this.token = token;
+            if (import.meta.server) {
+                return;
+            }
             localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify(token));
         },
     },

@@ -1,6 +1,27 @@
 # Backend
 app/backend/Dockerfile
-app/backend/src/_core/*
+app/backend/src/main.py
+app/backend/src/constants.py
+app/backend/src/router.py
+app/backend/src/controllers/*
+app/backend/src/helpers/*
+app/backend/src/models/*
+app/backend/src/crud/*
+app/backend/src/tasks/*
+app/backend/src/templates/*
+
+# Frontend
+app/frontend/config/i18n.ts
+app/frontend/stores/useAuth.ts
+app/frontend/stores/useModal.ts
+app/frontend/composables/useApi.ts
+app/frontend/composables/useAnalytics.ts
+app/frontend/composables/useStripe.ts
+app/frontend/composables/useUnsavedChangesWarning.ts
+app/frontend/components/modal/ModalConfirm.vue
+app/frontend/types/modal.ts
+app/frontend/locales/core-en.json
+app/frontend/locales/core-fr.json
 
 # Traefik
 services/traefik/*.core.yml

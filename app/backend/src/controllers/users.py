@@ -1,23 +1,25 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ...constant import PUBLIC_URL
-from ...helpers.auth import (
+from ..constants import PUBLIC_URL
+from ..helpers.auth import (
     create_access_token,
     get_current_user,
     hash_password,
     verify_password,
 )
-from ...helpers.db import get_session
-from .crud import (
+from ..helpers.db import get_session
+from ..crud.users import (
     create_user,
     get_user_by_email,
     get_user_by_id,
     is_email_taken,
     update_user,
 )
-from .model import (
+from ..models.user import (
     UserBase,
     UserChangeInfo,
     UserChangePassword,
