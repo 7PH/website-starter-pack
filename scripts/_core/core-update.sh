@@ -3,6 +3,11 @@
 
 set -e
 
+# Load .env file if it exists
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,7 +36,7 @@ DELETED_FILES=()
 #######################################
 check_prerequisites() {
     # Check git is clean
-    if [ -n "$(git status --porcelain)" ]; then
+    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
         echo -e "${RED}Error: Git working directory is not clean.${NC}"
         echo "Please commit or stash your changes before running this script."
         exit 1
@@ -168,6 +173,14 @@ compare_files() {
 }
 
 #######################################
+# Check if there are any changes
+#######################################
+has_changes() {
+    local total=$((${#ADDED_FILES[@]} + ${#MODIFIED_FILES[@]} + ${#DELETED_FILES[@]}))
+    [ $total -gt 0 ]
+}
+
+#######################################
 # Show summary of changes
 #######################################
 show_summary() {
@@ -176,13 +189,6 @@ show_summary() {
     echo -e "${BLUE}           STARTERPACK UPDATE          ${NC}"
     echo -e "${BLUE}═══════════════════════════════════════${NC}"
     echo ""
-
-    local total=$((${#ADDED_FILES[@]} + ${#MODIFIED_FILES[@]} + ${#DELETED_FILES[@]}))
-
-    if [ $total -eq 0 ]; then
-        echo -e "${GREEN}Everything is up to date!${NC}"
-        return 1
-    fi
 
     if [ ${#ADDED_FILES[@]} -gt 0 ]; then
         echo -e "${GREEN}+ ${#ADDED_FILES[@]} file(s) to add:${NC}"
@@ -207,8 +213,6 @@ show_summary() {
         done
         echo ""
     fi
-
-    return 0
 }
 
 #######################################
@@ -269,11 +273,14 @@ main() {
     clone_upstream
     compare_files
 
-    if ! show_summary; then
+    if ! has_changes; then
+        echo ""
+        echo -e "${GREEN}Everything is up to date!${NC}"
         exit 0
     fi
 
     show_diffs
+    show_summary
 
     echo -e "${BLUE}───────────────────────────────────────${NC}"
     read -p "Apply these changes? [y/N] " confirm
