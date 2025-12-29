@@ -1,5 +1,8 @@
 {
     "core": {
+        "app": {
+            "name": "Starter Pack"
+        },
         "auth": {
             "login": "Connexion",
             "logout": "Déconnexion",
@@ -24,7 +27,14 @@
             "invalidCredentials": "Email ou mot de passe invalide",
             "emailTaken": "Cet email est déjà utilisé",
             "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
-            "passwordMismatch": "Les mots de passe ne correspondent pas"
+            "passwordMismatch": "Les mots de passe ne correspondent pas",
+            "verificationEmailSent": "Email de vérification envoyé",
+            "emailVerified": "Email vérifié avec succès",
+            "welcomeBack": "Bienvenue",
+            "brandingTagline": "Connectez-vous pour accéder à votre compte.",
+            "forgotPasswordMessage": "Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+            "sendResetLink": "Envoyer le lien",
+            "backToLogin": "Retour à la connexion"
         },
         "common": {
             "save": "Enregistrer",
@@ -94,9 +104,17 @@
             "plan": "Forfait",
             "free": "Gratuit",
             "premium": "Premium",
-            "manage": "Gérer l'abonnement",
+            "manage": "Gérer",
             "upgrade": "Passer à Premium",
-            "currentPlan": "Forfait actuel"
+            "currentPlan": "Forfait actuel",
+            "youArePremium": "Vous êtes Premium",
+            "freeAccount": "Compte gratuit",
+            "upgradePrompt": "Passez à Premium pour débloquer toutes les fonctionnalités",
+            "personalSubscription": "Abonnement personnel actif",
+            "manageSubscription": "Gérer mon abonnement",
+            "subscribe": "S'abonner",
+            "modifyOrCancel": "Modifier ou annuler votre abonnement",
+            "unlockFeatures": "Débloquez toutes les fonctionnalités"
         }
     }
 }

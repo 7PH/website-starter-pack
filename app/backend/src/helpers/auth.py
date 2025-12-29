@@ -3,8 +3,7 @@
 import hashlib
 import hmac
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import Depends
@@ -26,9 +25,7 @@ def hash_password(password: str) -> str:
     """
     Hash the password using HMAC with a secret key.
     """
-    return hmac.new(
-        PASSWORD_HASH_SECRET_KEY, password.encode("utf-8"), hashlib.sha256
-    ).hexdigest()
+    return hmac.new(PASSWORD_HASH_SECRET_KEY, password.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
@@ -52,12 +49,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
         first_name=token_decoded["data"].get("first_name"),
         last_name=token_decoded["data"].get("last_name"),
         is_admin=token_decoded["data"].get("is_admin"),
+        is_premium=token_decoded["data"].get("is_premium"),
     )
 
 
 def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
-) -> Optional[UserBase]:
+    token: str | None = Depends(oauth2_scheme),
+) -> UserBase | None:
     """
     Retrieve the current user if the token is provided, otherwise return None.
     If no token is passed, the user is considered unauthenticated.
@@ -71,9 +69,7 @@ def create_access_token(user: UserRead) -> UserTokenUpdate:
 
     Generates a JWT with the user's ID, email, and expiration time, and additional custom data.
     """
-    exp = datetime.now(timezone.utc) + timedelta(
-        minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    exp = datetime.now(UTC) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # Top-level claims and additional data
     encoded_data = {
@@ -85,6 +81,7 @@ def create_access_token(user: UserRead) -> UserTokenUpdate:
             "first_name": user.first_name,
             "last_name": user.last_name,
             "is_admin": user.is_admin,
+            "is_premium": user.is_premium,
         },
     }
 
@@ -92,13 +89,11 @@ def create_access_token(user: UserRead) -> UserTokenUpdate:
 
     token_parsed = dict(
         user=user,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         expires_at=exp,
     )
 
-    return UserTokenUpdate(
-        token_parsed=token_parsed, access_token=encoded_jwt, user=user
-    )
+    return UserTokenUpdate(token_parsed=token_parsed, access_token=encoded_jwt, user=user)
 
 
 def decode_access_token(token: str) -> dict:
@@ -111,9 +106,9 @@ def decode_access_token(token: str) -> dict:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
-        raise InvalidTokenException("Token has expired")
+        raise InvalidTokenException("Token has expired") from None
     except jwt.InvalidTokenError:
-        raise InvalidTokenException("Invalid token")
+        raise InvalidTokenException("Invalid token") from None
 
 
 def generate_password_reset_token() -> str:

@@ -1,19 +1,22 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 import { defineStore } from 'pinia';
+import { nextTick } from 'vue';
 import type { ModalOptions, ModalRecord } from '~/types/modal';
 
 /**
  * Modal store for managing modal state across the application.
  * Provides a promise-based API for opening modals and awaiting their result.
  *
+ * NOTE: Named useModalStore to avoid conflict with @nuxt/ui's useModal composable.
+ *
  * @example
  * // In a modal component (e.g., ModalConfirm.vue)
- * const modal = useModal();
+ * const modal = useModalStore();
  * onMounted(() => modal.register('confirm'));
  *
  * // Opening from anywhere
- * const confirmed = await useModal().open<boolean>('confirm', {
+ * const confirmed = await useModalStore().open<boolean>('confirm', {
  *     title: 'Are you sure?',
  *     message: 'This action cannot be undone.'
  * });
@@ -21,7 +24,7 @@ import type { ModalOptions, ModalRecord } from '~/types/modal';
  *     // User clicked confirm
  * }
  */
-export const useModal = defineStore('modal', {
+export const useModalStore = defineStore('modal', {
     state: () => ({
         modals: {} as Record<string, ModalRecord>,
     }),
@@ -30,16 +33,20 @@ export const useModal = defineStore('modal', {
         /**
          * Check if a modal is currently open.
          */
-        isOpen: (state) => (name: string): boolean => {
-            return state.modals[name]?.open ?? false;
-        },
+        isOpen:
+            (state) =>
+            (name: string): boolean => {
+                return state.modals[name]?.open ?? false;
+            },
 
         /**
          * Get the options for a modal.
          */
-        getOptions: (state) => (name: string): ModalOptions => {
-            return state.modals[name]?.options ?? {};
-        },
+        getOptions:
+            (state) =>
+            (name: string): ModalOptions => {
+                return state.modals[name]?.options ?? {};
+            },
     },
 
     actions: {
@@ -54,6 +61,20 @@ export const useModal = defineStore('modal', {
                     open: false,
                     options: defaultOptions,
                 };
+            } else if (this.modals[name].open) {
+                // open() was called before register() - re-trigger open to ensure reactivity
+                const pending = this.modals[name];
+                this.modals[name] = {
+                    open: false,
+                    options: { ...defaultOptions, ...pending.options },
+                    _resolve: pending._resolve,
+                };
+                // Re-open on next tick to trigger watchers
+                nextTick(() => {
+                    if (this.modals[name]) {
+                        this.modals[name].open = true;
+                    }
+                });
             }
         },
 
@@ -74,7 +95,7 @@ export const useModal = defineStore('modal', {
         open<T = unknown>(name: string, options: ModalOptions = {}): Promise<T> {
             return new Promise<T>((resolve) => {
                 if (!this.modals[name]) {
-                    console.warn(`Modal "${name}" is not registered. Make sure the component is mounted.`);
+                    // Modal not yet registered - create entry, it will be merged when register() is called
                     this.modals[name] = { open: false, options: {} };
                 }
 
@@ -113,7 +134,7 @@ export const useModal = defineStore('modal', {
          */
         closeAll(): void {
             for (const name of Object.keys(this.modals)) {
-                if (this.modals[name].open) {
+                if (this.modals[name]?.open) {
                     this.close(name, undefined);
                 }
             }

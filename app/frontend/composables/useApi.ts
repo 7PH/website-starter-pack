@@ -26,8 +26,19 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
             authStore.logout();
             throw new Error('Invalid or expired token');
         }
-        const error = await response.text();
-        throw new Error(error || response.statusText || 'An error occurred');
+
+        // For server errors (5xx), show generic message to avoid leaking internal details
+        if (response.status >= 500) {
+            throw new Error('Server error. Please try again later.');
+        }
+
+        // For client errors (4xx), try to parse error detail
+        try {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || response.statusText || 'An error occurred');
+        } catch {
+            throw new Error(response.statusText || 'An error occurred');
+        }
     }
 
     return response.json();
@@ -42,7 +53,12 @@ async function apiFetchOrError<T>(path: string, options: RequestInit = {}): Prom
     } catch (error) {
         const toast = useToast();
         if (error instanceof Error) {
-            toast.add({ title: 'Error', description: error.message, color: 'primary' });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.message,
+                life: 5000,
+            });
         }
         throw error;
     }
@@ -63,7 +79,6 @@ export function useApi() {
             apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body), ...options }),
         patch: <T>(path: string, body: unknown, options?: RequestInit) =>
             apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body), ...options }),
-        delete: <T>(path: string, options?: RequestInit) =>
-            apiFetch<T>(path, { method: 'DELETE', ...options }),
+        delete: <T>(path: string, options?: RequestInit) => apiFetch<T>(path, { method: 'DELETE', ...options }),
     };
 }

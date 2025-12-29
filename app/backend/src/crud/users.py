@@ -50,3 +50,16 @@ def reset_password(session: Session, user: UserBase, new_password: str) -> None:
     user.hashed_password = new_password
     user.password_reset_token = None
     session.commit()
+
+
+def get_user_by_stripe_id(session: Session, stripe_id: str) -> UserBase | None:
+    """Retrieve a user by their Stripe customer ID."""
+    return session.execute(
+        select(UserBase).where(UserBase.stripe_id == stripe_id)
+    ).scalar_one_or_none()
+
+
+def set_user_premium_status(session: Session, user: UserBase, is_premium: bool) -> None:
+    """Update a user's premium status."""
+    user.is_premium = is_premium
+    session.commit()

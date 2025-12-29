@@ -167,6 +167,10 @@
         "is_admin": {
           "title": "Is Admin",
           "type": "boolean"
+        },
+        "is_premium": {
+          "title": "Is Premium",
+          "type": "boolean"
         }
       },
       "required": [
@@ -174,7 +178,8 @@
         "email",
         "first_name",
         "last_name",
-        "is_admin"
+        "is_admin",
+        "is_premium"
       ],
       "title": "UserRead",
       "type": "object"

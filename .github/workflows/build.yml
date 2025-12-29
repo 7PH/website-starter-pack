@@ -1,0 +1,34 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-dev:
+    name: Build (dev profile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create CI environment file
+        run: cp .env.ci .env
+
+      - name: Build dev profile
+        run: docker compose --profile dev build
+
+  build-prod:
+    name: Build (prod profile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create CI environment file
+        run: cp .env.ci .env
+
+      - name: Build prod profile
+        run: docker compose --profile prod build

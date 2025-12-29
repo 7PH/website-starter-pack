@@ -1,17 +1,23 @@
 {
     "editor.codeActionsOnSave": {
         "source.organizeImports": "always",
-        "source.unusedImports": "always"
+        "source.unusedImports": "always",
+        "source.fixAll.eslint": "always"
     },
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
     },
     "editor.formatOnSave": true,
     "eslint.enable": true,
     "eslint.format.enable": true,
+    "eslint.workingDirectories": [
+        "app/frontend"
+    ],
     "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
-    "python.analysis.extraPaths": ["app/backend"],
+    "python.analysis.extraPaths": [
+        "app/backend"
+    ],
     "python.autoComplete.extraPaths": [
         "app/backend"
     ],

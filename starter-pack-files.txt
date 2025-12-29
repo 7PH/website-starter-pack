@@ -1,8 +1,11 @@
 # Backend
 app/backend/Dockerfile
+app/backend/migrations/README.md
+app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/constants.py
 app/backend/src/router.py
+app/backend/src/convert-models.py
 app/backend/src/controllers/*
 app/backend/src/helpers/*
 app/backend/src/models/*
@@ -18,7 +21,13 @@ app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useStripe.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
+app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
+app/frontend/composables/useAuthActions.ts
+app/frontend/composables/useColorModeToggle.ts
+app/frontend/composables/useLocale.ts
+app/frontend/composables/useSubscription.ts
+app/frontend/middleware/auth.ts
 app/frontend/types/modal.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
@@ -28,6 +37,9 @@ services/traefik/*.core.yml
 
 # Scripts
 scripts/_core/*
+
+# GitHub Workflows
+.github/workflows/*
 
 # Root project files
 .gitignore

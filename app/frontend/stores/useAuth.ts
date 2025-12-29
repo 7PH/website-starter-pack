@@ -25,19 +25,24 @@ export const useAuth = defineStore('auth', {
         /**
          * Initialize auth state from localStorage.
          * Should be called on app startup (client-side only).
+         * Attempts to refresh the token to extend the session.
          */
         async init(): Promise<void> {
-            if (import.meta.server) {
+            if (import.meta.server || !this.token) {
                 return;
             }
+
+            // Try to refresh the token (token already loaded synchronously via getInitialToken)
             try {
-                const item = localStorage.getItem(STORAGE_TOKEN_KEY);
-                const token = item ? (JSON.parse(item) as UserTokenUpdate) : null;
-                if (!token) {
-                    return;
-                }
-                this.token = token;
-            } catch (error) {
+                const freshToken = await $fetch<UserTokenUpdate>('/api/users/me/token', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.token.access_token}`,
+                    },
+                });
+                this.saveUserToken(freshToken);
+            } catch {
+                // Token invalid or expired - logout
                 this.logout();
             }
         },
@@ -63,6 +68,29 @@ export const useAuth = defineStore('auth', {
                 return;
             }
             localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify(token));
+        },
+
+        /**
+         * Refresh the current token to get updated user data.
+         * Useful after actions that change user state (e.g., subscription changes).
+         */
+        async refreshToken(): Promise<void> {
+            if (import.meta.server || !this.token) {
+                return;
+            }
+
+            try {
+                const freshToken = await $fetch<UserTokenUpdate>('/api/users/me/token', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.token.access_token}`,
+                    },
+                });
+                this.saveUserToken(freshToken);
+            } catch {
+                // Token invalid or expired - logout
+                this.logout();
+            }
         },
     },
 });

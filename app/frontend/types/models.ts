@@ -1,4 +1,4 @@
-export { };
+export {};
 declare global {
 /* eslint-disable */
 /**
@@ -23,6 +23,7 @@ export type Email = string;
 export type FirstName = string;
 export type LastName = string;
 export type IsAdmin = boolean;
+export type IsPremium = boolean;
 export type Id1 = number;
 export type FirstName1 = string;
 export type LastName1 = string;
@@ -52,6 +53,7 @@ export interface UserRead {
   first_name: FirstName;
   last_name: LastName;
   is_admin: IsAdmin;
+  is_premium: IsPremium;
 }
 export interface UserPreviewRead {
   id: Id1;

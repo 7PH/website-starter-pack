@@ -1,5 +1,8 @@
 {
     "core": {
+        "app": {
+            "name": "Starter Pack"
+        },
         "auth": {
             "login": "Log in",
             "logout": "Log out",
@@ -24,7 +27,14 @@
             "invalidCredentials": "Invalid email or password",
             "emailTaken": "This email is already registered",
             "passwordTooShort": "Password must be at least 8 characters",
-            "passwordMismatch": "Passwords do not match"
+            "passwordMismatch": "Passwords do not match",
+            "verificationEmailSent": "Verification email sent",
+            "emailVerified": "Email verified successfully",
+            "welcomeBack": "Welcome back",
+            "brandingTagline": "Sign in to access your account.",
+            "forgotPasswordMessage": "Enter your email address and we'll send you a link to reset your password.",
+            "sendResetLink": "Send reset link",
+            "backToLogin": "Back to login"
         },
         "common": {
             "save": "Save",
@@ -94,9 +104,17 @@
             "plan": "Plan",
             "free": "Free",
             "premium": "Premium",
-            "manage": "Manage subscription",
+            "manage": "Manage",
             "upgrade": "Upgrade",
-            "currentPlan": "Current plan"
+            "currentPlan": "Current plan",
+            "youArePremium": "You are Premium",
+            "freeAccount": "Free account",
+            "upgradePrompt": "Upgrade to Premium to unlock all features",
+            "personalSubscription": "Personal subscription active",
+            "manageSubscription": "Manage subscription",
+            "subscribe": "Subscribe",
+            "modifyOrCancel": "Modify or cancel your subscription",
+            "unlockFeatures": "Unlock all features"
         }
     }
 }

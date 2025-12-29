@@ -1,10 +1,17 @@
 <script lang="ts" setup>
 import PageHeader from '~/components/PageHeader.vue';
+import ModalConfirm from '~/components/modal/ModalConfirm.vue';
 </script>
 
 <template>
-    <UApp>
+    <div>
         <PageHeader />
         <NuxtPage />
-    </UApp>
+
+        <!-- Global modals -->
+        <ModalConfirm />
+
+        <!-- PrimeVue Toast -->
+        <Toast position="top-center" />
+    </div>
 </template>

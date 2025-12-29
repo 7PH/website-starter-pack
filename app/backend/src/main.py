@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .constants import IS_PROD
 from .helpers.db import create_db_and_tables
 from .helpers.ratelimit import cleanup_entries
+from .helpers.stripe import init_stripe
 from .router import router as api_router
 from .tasks import register_core_tasks
 
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
     print("Starting app")
     create_db_and_tables()
     cleanup_entries()
+    init_stripe()
     yield
     print("Stopping app")
 

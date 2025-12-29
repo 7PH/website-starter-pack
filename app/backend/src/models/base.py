@@ -1,12 +1,8 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-from typing import Generic, List, TypeVar
-
-from pydantic.generics import GenericModel
-
-T = TypeVar("T")
+from pydantic import BaseModel
 
 
-class PaginatedItems(GenericModel, Generic[T]):
-    items: List[T]
+class PaginatedItems[T](BaseModel):
+    items: list[T]
     has_more: bool

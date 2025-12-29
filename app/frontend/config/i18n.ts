@@ -35,7 +35,13 @@ export default defineI18nConfig(() => ({
     locale: 'fr',
     fallbackLocale: 'fr',
     messages: {
-        en: deepMerge(coreEn as Record<string, unknown>, appEn as Record<string, unknown>),
-        fr: deepMerge(coreFr as Record<string, unknown>, appFr as Record<string, unknown>),
+        en: deepMerge(coreEn as Record<string, unknown>, appEn as Record<string, unknown>) as unknown as Record<
+            string,
+            string
+        >,
+        fr: deepMerge(coreFr as Record<string, unknown>, appFr as Record<string, unknown>) as unknown as Record<
+            string,
+            string
+        >,
     },
 }));

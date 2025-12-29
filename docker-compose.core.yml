@@ -38,6 +38,7 @@ x-frontend-common: &frontend-common
         - ./app/frontend/public:/app/public:ro
         - ./app/frontend/types:/app/types:ro
     environment:
+        NUXT_PUBLIC_APP_NAME: ${APP_NAME}
         NUXT_PUBLIC_API_BASE: /api
     networks:
         - web
@@ -54,6 +55,7 @@ x-backend-common: &backend-common
   env_file: .env
   volumes:
     - ./app/backend/src:/app/src
+    - ./app/backend/ruff.toml:/app/ruff.toml:ro
     - ./static:/app/static:rw
   networks:
     web:
@@ -110,6 +112,11 @@ services:
         volumes:
             - ./services/db/data:/var/lib/postgresql/data
             - ./services/db/initdb.sql:/docker-entrypoint-initdb.d/init_db.sql
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${APP_DB_USER} -d ${APP_DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
         networks:
             - web
 
@@ -130,7 +137,7 @@ services:
     # Backend for Development
     backend-dev:
         <<: *backend-common
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api"]
         environment:
             MODE: DEVELOPMENT
         ports:
@@ -139,13 +146,14 @@ services:
         profiles:
             - dev
         depends_on:
-            - db
+            db:
+                condition: service_healthy
 
     # Backend for Debugging
     backend-debug:
         <<: *backend-common
         entrypoint: python3 -m debugpy --log-to-stderr --listen 0.0.0.0:5679 --wait-for-client -m
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api"]
         environment:
             MODE: DEVELOPMENT
         ports:
@@ -154,18 +162,20 @@ services:
         profiles:
             - debug
         depends_on:
-            - db
+            db:
+                condition: service_healthy
 
     # Backend for Production
     backend-prod:
         <<: *backend-common
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api"]
         environment:
             MODE: PRODUCTION
         profiles:
             - prod
         depends_on:
-            - db
+            db:
+                condition: service_healthy
 
     # Frontend for development (Nuxt)
     frontend-dev:
@@ -193,6 +203,10 @@ services:
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-node
+        networks:
+            web:
+                aliases:
+                    - frontend-node
         profiles:
             - prod
         depends_on:

@@ -46,16 +46,14 @@ export function useUnsavedChangesWarning(
     hasUnsavedChanges: Ref<boolean> | (() => boolean),
     options: UnsavedChangesOptions = {},
 ): void {
-    const modal = useModal();
+    const modal = useModalStore();
     const router = useRouter();
 
     const mergedOptions = { ...defaultOptions, ...options };
 
     // Helper to check if there are unsaved changes
     const checkUnsaved = (): boolean => {
-        return typeof hasUnsavedChanges === 'function'
-            ? hasUnsavedChanges()
-            : hasUnsavedChanges.value;
+        return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;
     };
 
     // Handle browser beforeunload (tab close, refresh, external navigation)
@@ -126,13 +124,11 @@ export function useUnsavedChangesWarningManual(
     // Set up the automatic guards
     useUnsavedChangesWarning(hasUnsavedChanges, options);
 
-    const modal = useModal();
+    const modal = useModalStore();
     const mergedOptions = { ...defaultOptions, ...options };
 
     const checkUnsaved = (): boolean => {
-        return typeof hasUnsavedChanges === 'function'
-            ? hasUnsavedChanges()
-            : hasUnsavedChanges.value;
+        return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;
     };
 
     /**
@@ -145,13 +141,15 @@ export function useUnsavedChangesWarningManual(
             return true;
         }
 
-        return await modal.open<boolean>('confirm', {
-            title: mergedOptions.title,
-            message: mergedOptions.message,
-            confirmText: mergedOptions.confirmText,
-            cancelText: mergedOptions.cancelText,
-            confirmColor: 'error',
-        } as ConfirmModalOptions) ?? false;
+        return (
+            (await modal.open<boolean>('confirm', {
+                title: mergedOptions.title,
+                message: mergedOptions.message,
+                confirmText: mergedOptions.confirmText,
+                cancelText: mergedOptions.cancelText,
+                confirmColor: 'error',
+            } as ConfirmModalOptions)) ?? false
+        );
     }
 
     return {

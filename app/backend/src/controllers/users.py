@@ -1,17 +1,12 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import PUBLIC_URL
-from ..helpers.auth import (
-    create_access_token,
-    get_current_user,
-    hash_password,
-    verify_password,
-)
-from ..helpers.db import get_session
+from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL
 from ..crud.users import (
     create_user,
     get_user_by_email,
@@ -19,6 +14,16 @@ from ..crud.users import (
     is_email_taken,
     update_user,
 )
+from ..helpers import stripe as stripe_helper
+from ..helpers.auth import (
+    create_access_token,
+    decode_access_token,
+    get_current_user,
+    hash_password,
+    oauth2_scheme,
+    verify_password,
+)
+from ..helpers.db import get_session
 from ..models.user import (
     UserBase,
     UserChangeInfo,
@@ -50,6 +55,16 @@ def register_user(*, session: Session = Depends(get_session), user_create: UserC
         last_name=user_create.last_name,
     )
     create_user(session, user)
+
+    # Create Stripe customer and free subscription for the new user
+    if stripe_helper.is_enabled():
+        user.stripe_id = stripe_helper.sync_customer(
+            user_id=user.id,
+            email=user.email,
+            name=f"{user.first_name} {user.last_name}",
+        )
+        stripe_helper.create_subscription(user.stripe_id)
+        update_user(session, user)
 
     token = create_access_token(UserRead.model_validate(user))
 
@@ -88,6 +103,45 @@ def get_me(*, current_user: UserRead = Depends(get_current_user)):
     Get the details of the currently authenticated user.
     """
     return current_user
+
+
+@router.post("/users/me/token", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
+def refresh_token(
+    *,
+    session: Session = Depends(get_session),
+    current_user: UserRead = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    """
+    Refresh the current user's token.
+    Rate limited: won't issue new token if current one is less than 5 minutes old.
+    """
+    # Decode current token to check creation time
+    payload = decode_access_token(token)
+
+    # Check if token was issued less than 5 minutes ago
+    token_exp = payload.get("exp", 0)
+    token_created = token_exp - (JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    now = datetime.now(UTC).timestamp()
+
+    if now - token_created < 300:  # 5 minutes
+        # Return current token info without generating new one
+        return UserTokenUpdate(
+            access_token=token,
+            token_parsed=dict(
+                user=current_user,
+                created_at=datetime.fromtimestamp(token_created, tz=UTC),
+                expires_at=datetime.fromtimestamp(token_exp, tz=UTC),
+            ),
+            user=current_user,
+        )
+
+    # Fetch fresh user data and issue new token
+    user = get_user_by_id(session, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return create_access_token(UserRead.model_validate(user))
 
 
 @router.get("/users/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)

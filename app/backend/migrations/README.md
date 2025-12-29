@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 # Database Migrations
 
 This folder contains manual SQL migration files for schema changes that SQLAlchemy can't auto-generate.
@@ -23,17 +25,20 @@ Example: `2025-12-28-add-users-email-index.sql`
 ## How to Run
 
 ### Via Adminer (Development)
+
 1. Open Adminer at `http://localhost:8080` (or your configured port)
 2. Connect to the database
 3. Go to "SQL command"
 4. Paste the migration SQL and execute
 
 ### Via psql (CLI)
+
 ```bash
 docker exec -i <container-name>-db psql -U postgres -d app < migrations/2025-12-28-example.sql
 ```
 
 ### Via Docker Compose
+
 ```bash
 docker compose exec db psql -U postgres -d app -f /path/to/migration.sql
 ```

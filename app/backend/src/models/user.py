@@ -21,6 +21,8 @@ class UserBase(Base):
     is_admin = Column(Boolean, default=False)
     newsletter_on = Column(Boolean, default=True)
     password_reset_token = Column(String, nullable=True)
+    stripe_id = Column(String, nullable=True)
+    is_premium = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.now)
     last_seen_at = Column(DateTime, default=datetime.datetime.now)
 
@@ -34,6 +36,7 @@ class UserRead(BaseModel):
     first_name: str
     last_name: str
     is_admin: bool
+    is_premium: bool
 
     class Config:
         from_attributes = True
@@ -102,3 +105,22 @@ class UserPasswordResetConfirm(BaseModel):
     email: str
     password: str
     token: str
+
+
+class EmailVerificationConfirm(BaseModel):
+    """Confirm email verification with JWT token."""
+
+    token: str
+
+
+class PasswordResetConfirmJWT(BaseModel):
+    """Confirm password reset using JWT token (no email needed)."""
+
+    token: str
+    password: str
+
+
+class AuthMessageResponse(BaseModel):
+    """Standard response for auth operations."""
+
+    message: str

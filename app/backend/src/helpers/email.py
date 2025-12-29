@@ -5,9 +5,8 @@ Email helper module with Jinja2 template support.
 Provides functions for sending transactional emails via Mailgun.
 """
 
-import os
 import logging
-from typing import Optional
+import os
 from pathlib import Path
 
 import requests
@@ -28,7 +27,7 @@ APP_NAME = os.environ.get("APP_NAME", "App")
 
 # Initialize Jinja2 template environment
 _template_dir = Path(__file__).parent.parent / "templates" / "email"
-_template_env: Optional[Environment] = None
+_template_env: Environment | None = None
 
 if _template_dir.exists():
     _template_env = Environment(
@@ -37,7 +36,7 @@ if _template_dir.exists():
     )
 
 
-def _get_template(name: str) -> Optional[str]:
+def _get_template(name: str) -> str | None:
     """Load a template by name. Returns None if not found."""
     if _template_env is None:
         return None
@@ -48,7 +47,7 @@ def _get_template(name: str) -> Optional[str]:
         return None
 
 
-def _render_template(name: str, **context) -> Optional[str]:
+def _render_template(name: str, **context) -> str | None:
     """Render a template with the given context."""
     template = _get_template(name)
     if template is None:
@@ -67,7 +66,7 @@ def send_email(
     to_email: str,
     subject: str,
     body: str,
-    html_body: Optional[str] = None,
+    html_body: str | None = None,
     raise_on_error: bool = True,
 ) -> bool:
     """

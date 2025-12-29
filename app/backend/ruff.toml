@@ -1,0 +1,18 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
+line-length = 120
+target-version = "py313"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",  # Line length handled by formatter
+    "B008",  # Depends() in defaults is standard FastAPI pattern
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Re-exports in __init__.py are intentional
+
+[format]
+quote-style = "double"
+indent-style = "space"

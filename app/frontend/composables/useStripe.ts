@@ -31,9 +31,7 @@ export function useStripe() {
     async function openBillingPortal(): Promise<void> {
         const returnUrl = window.location.href;
 
-        const response = await api.get<{ url: string }>(
-            `/stripe/portal?return_url=${encodeURIComponent(returnUrl)}`,
-        );
+        const response = await api.get<{ url: string }>(`/stripe/portal?return_url=${encodeURIComponent(returnUrl)}`);
 
         if (response.url) {
             window.open(response.url, '_blank');

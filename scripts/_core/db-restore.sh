@@ -18,10 +18,16 @@ if [ ! -f "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-DB_CONTAINER=$(docker container list --filter "name=db" --format "{{.ID}}")
+# Use project name to find the exact db container (not umami-db)
+DB_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-db"
+DB_CONTAINER=$(docker container list --filter "name=^${DB_CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null)
+# Fallback: try exact name match with docker inspect
+if [ -z "$DB_CONTAINER" ]; then
+  DB_CONTAINER=$(docker inspect --format '{{.Id}}' "$DB_CONTAINER_NAME" 2>/dev/null)
+fi
 
 if [ -z "$DB_CONTAINER" ]; then
-  echo "Database container 'db' is not running"
+  echo "Database container '$DB_CONTAINER_NAME' is not running"
   exit 1
 fi
 

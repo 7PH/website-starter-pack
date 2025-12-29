@@ -10,12 +10,13 @@ ENV NUXT_PORT=80
 WORKDIR /app
 
 RUN addgroup -g ${DOCKER_GID} ${DOCKER_USER} || true && \
-    RUN adduser -D -u ${DOCKER_UID} ${DOCKER_USER} || true \
-    RUN addgroup ${DOCKER_USER} ${DOCKER_USER} || true
+    adduser -D -u ${DOCKER_UID} ${DOCKER_USER} || true && \
+    addgroup ${DOCKER_USER} ${DOCKER_USER} || true
 
 COPY *.json *.js *.ts *.vue ./
 
-RUN chown -R ${DOCKER_UID}:${DOCKER_GID} /app
+RUN chown -R ${DOCKER_UID}:${DOCKER_GID} /app && \
+    mkdir -p /.npm && chown -R ${DOCKER_UID}:${DOCKER_GID} /.npm
 
 USER $DOCKER_UID
 
