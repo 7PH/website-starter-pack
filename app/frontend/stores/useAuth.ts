@@ -20,6 +20,10 @@ export const useAuth = defineStore('auth', {
         user(): UserRead | null {
             return this.token ? this.token.user : null;
         },
+
+        isImpersonating(): boolean {
+            return this.token?.token_parsed?.real_admin_id != null;
+        },
     },
     actions: {
         /**

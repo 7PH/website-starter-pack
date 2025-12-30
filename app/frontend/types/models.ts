@@ -17,7 +17,15 @@ export type Models =
   | UserToken
   | UserTokenUpdate
   | UserPasswordResetRequest
-  | UserPasswordResetConfirm;
+  | UserPasswordResetConfirm
+  | AdminUserRead
+  | AdminUserUpdate
+  | AdminUserListResponse
+  | AdminDashboardStats
+  | ImpersonationResponse
+  | EventLogRead
+  | EventLogFilter
+  | EventLogListResponse;
 export type Id = number;
 export type Email = string;
 export type FirstName = string;
@@ -40,12 +48,52 @@ export type OldPassword = string;
 export type NewPassword = string;
 export type CreatedAt = string;
 export type ExpiresAt = string;
+export type RealAdminId = number | null;
 export type AccessToken = string;
 export type TokenType = string;
 export type Email4 = string;
 export type Email5 = string;
 export type Password2 = string;
 export type Token = string;
+export type Id2 = number;
+export type Email6 = string;
+export type FirstName4 = string;
+export type LastName4 = string;
+export type IsAdmin1 = boolean;
+export type IsPremium1 = boolean;
+export type EmailConfirmed = boolean;
+export type CreatedAt1 = string | null;
+export type LastSeenAt = string | null;
+export type FirstName5 = string | null;
+export type LastName5 = string | null;
+export type Email7 = string | null;
+export type IsAdmin2 = boolean | null;
+export type IsPremium2 = boolean | null;
+export type Items = AdminUserRead[];
+export type Total = number;
+export type Limit = number;
+export type Offset = number;
+export type TotalUsers = number;
+export type AdminUsers = number;
+export type PremiumUsers = number;
+export type Id3 = number;
+export type UserId = number | null;
+export type Action = string;
+export type IpAddress = string | null;
+export type UserAgent = string | null;
+export type CreatedAt2 = string;
+export type RecentEvents = EventLogRead[];
+export type AccessToken1 = string;
+export type Message = string;
+export type UserId1 = number | null;
+export type Action1 = string | null;
+export type ActionPrefix = string | null;
+export type FromDate = string | null;
+export type ToDate = string | null;
+export type Items1 = EventLogRead[];
+export type Total1 = number;
+export type Limit1 = number;
+export type Offset1 = number;
 
 export interface UserRead {
   id: Id;
@@ -83,6 +131,7 @@ export interface UserToken {
   user: UserRead;
   created_at: CreatedAt;
   expires_at: ExpiresAt;
+  real_admin_id?: RealAdminId;
 }
 export interface UserTokenUpdate {
   access_token: AccessToken;
@@ -97,5 +146,90 @@ export interface UserPasswordResetConfirm {
   email: Email5;
   password: Password2;
   token: Token;
+}
+/**
+ * Extended user info for admin view.
+ */
+export interface AdminUserRead {
+  id: Id2;
+  email: Email6;
+  first_name: FirstName4;
+  last_name: LastName4;
+  is_admin: IsAdmin1;
+  is_premium: IsPremium1;
+  email_confirmed: EmailConfirmed;
+  created_at: CreatedAt1;
+  last_seen_at: LastSeenAt;
+}
+/**
+ * Schema for admin updating a user.
+ */
+export interface AdminUserUpdate {
+  first_name?: FirstName5;
+  last_name?: LastName5;
+  email?: Email7;
+  is_admin?: IsAdmin2;
+  is_premium?: IsPremium2;
+}
+/**
+ * Paginated response for user list.
+ */
+export interface AdminUserListResponse {
+  items: Items;
+  total: Total;
+  limit: Limit;
+  offset: Offset;
+}
+/**
+ * Dashboard statistics.
+ */
+export interface AdminDashboardStats {
+  total_users: TotalUsers;
+  admin_users: AdminUsers;
+  premium_users: PremiumUsers;
+  recent_events: RecentEvents;
+}
+/**
+ * Output schema for reading event logs.
+ */
+export interface EventLogRead {
+  id: Id3;
+  user_id: UserId;
+  action: Action;
+  details: Details;
+  ip_address: IpAddress;
+  user_agent: UserAgent;
+  created_at: CreatedAt2;
+}
+export interface Details {
+  [k: string]: unknown;
+}
+/**
+ * Response for impersonation endpoints.
+ */
+export interface ImpersonationResponse {
+  access_token: AccessToken1;
+  token_parsed: UserToken;
+  user: UserRead;
+  message: Message;
+}
+/**
+ * Query parameters for filtering event logs.
+ */
+export interface EventLogFilter {
+  user_id?: UserId1;
+  action?: Action1;
+  action_prefix?: ActionPrefix;
+  from_date?: FromDate;
+  to_date?: ToDate;
+}
+/**
+ * Paginated response for event logs.
+ */
+export interface EventLogListResponse {
+  items: Items1;
+  total: Total1;
+  limit: Limit1;
+  offset: Offset1;
 }
 }

@@ -15,7 +15,7 @@ export type AvailableLocale = 'fr' | 'en';
  * // Get current locale name
  * console.log(currentLocale.value?.name); // "English"
  */
-export function useLocale() {
+export function useAppLocale() {
     const { locale, locales, setLocale } = useI18n();
 
     const availableLocales = computed(() =>

@@ -1,5 +1,12 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+from .admin import (
+    AdminDashboardStats,
+    AdminUserListResponse,
+    AdminUserRead,
+    AdminUserUpdate,
+    ImpersonationResponse,
+)
 from .base import PaginatedItems
 from .user import (
     AuthMessageResponse,
@@ -19,7 +26,15 @@ from .user import (
 )
 
 __all__ = [
+    # Admin models
+    "AdminDashboardStats",
+    "AdminUserListResponse",
+    "AdminUserRead",
+    "AdminUserUpdate",
+    "ImpersonationResponse",
+    # Base models
     "PaginatedItems",
+    # User models
     "AuthMessageResponse",
     "EmailVerificationConfirm",
     "PasswordResetConfirmJWT",

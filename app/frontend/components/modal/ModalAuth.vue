@@ -48,6 +48,13 @@ const options = computed((): AuthModalOptions => {
 const mode = ref<AuthModalMode>('login');
 const isLoading = ref(false);
 
+// Password visibility toggles
+const showLoginPassword = ref(false);
+const showSignupPassword = ref(false);
+const showSignupConfirmPassword = ref(false);
+const showResetPassword = ref(false);
+const showResetConfirmPassword = ref(false);
+
 // Form data
 const loginForm = reactive({
     email: '',
@@ -234,244 +241,249 @@ function close() {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="isOpen"
-        :header="title"
-        modal
-        :closable="true"
-        :draggable="false"
-        :style="{ width: '28rem' }"
-        :pt="{
-            root: { class: 'border-none' },
-            header: { class: 'pb-2' },
-            content: { class: 'pt-0' },
-        }"
-    >
-        <!-- Login Form -->
-        <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
-            <div class="flex flex-col gap-2">
-                <label for="login-email" class="font-medium text-sm">{{ t('core.auth.email') }}</label>
-                <InputText
-                    id="login-email"
-                    v-model="loginForm.email"
-                    type="email"
-                    autocomplete="email"
-                    :placeholder="t('core.auth.email')"
-                    :invalid="!!errors.email"
-                    fluid
-                />
-                <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
-            </div>
-
-            <div class="flex flex-col gap-2">
-                <label for="login-password" class="font-medium text-sm">{{ t('core.auth.password') }}</label>
-                <Password
-                    id="login-password"
-                    v-model="loginForm.password"
-                    autocomplete="current-password"
-                    :placeholder="t('core.auth.password')"
-                    :invalid="!!errors.password"
-                    :feedback="false"
-                    toggle-mask
-                    fluid
-                />
-                <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
-            </div>
-
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <Checkbox v-model="loginForm.rememberMe" :binary="true" input-id="rememberMe" />
-                    <label for="rememberMe" class="text-sm cursor-pointer">{{ t('core.auth.rememberMe') }}</label>
-                </div>
-                <Button
-                    :label="t('core.auth.forgotPassword')"
-                    link
-                    type="button"
-                    class="p-0 text-sm"
-                    @click="switchMode('forgot-password')"
-                />
-            </div>
-
-            <Button type="submit" :label="t('core.auth.login')" :loading="isLoading" class="w-full" />
-
-            <Divider />
-
-            <p class="text-center text-sm text-surface-500">
-                {{ t('core.auth.noAccount') }}
-                <Button
-                    :label="t('core.auth.createAccount')"
-                    link
-                    type="button"
-                    class="p-0 text-sm"
-                    @click="switchMode('signup')"
-                />
-            </p>
-        </form>
-
-        <!-- Signup Form -->
-        <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
-            <div class="flex gap-3">
-                <div class="flex flex-col gap-2 flex-1">
-                    <label for="signup-firstname" class="font-medium text-sm">{{ t('core.auth.firstName') }}</label>
-                    <InputText
-                        id="signup-firstname"
-                        v-model="signupForm.firstName"
-                        autocomplete="given-name"
-                        :placeholder="t('core.auth.firstName')"
-                        :invalid="!!errors.firstName"
-                        fluid
+    <UModal v-model:open="isOpen" :title="title" class="sm:max-w-md">
+        <template #body>
+            <!-- Login Form -->
+            <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
+                <UFormField :label="t('core.auth.email')" :error="errors.email">
+                    <UInput
+                        v-model="loginForm.email"
+                        type="email"
+                        autocomplete="email"
+                        :placeholder="t('core.auth.email')"
+                        :color="errors.email ? 'error' : undefined"
+                        class="w-full"
                     />
-                    <small v-if="errors.firstName" class="text-red-500">{{ errors.firstName }}</small>
-                </div>
+                </UFormField>
 
-                <div class="flex flex-col gap-2 flex-1">
-                    <label for="signup-lastname" class="font-medium text-sm">{{ t('core.auth.lastName') }}</label>
-                    <InputText
-                        id="signup-lastname"
-                        v-model="signupForm.lastName"
-                        autocomplete="family-name"
-                        :placeholder="t('core.auth.lastName')"
-                        :invalid="!!errors.lastName"
-                        fluid
+                <UFormField :label="t('core.auth.password')" :error="errors.password">
+                    <UInput
+                        v-model="loginForm.password"
+                        :type="showLoginPassword ? 'text' : 'password'"
+                        autocomplete="current-password"
+                        :placeholder="t('core.auth.password')"
+                        :color="errors.password ? 'error' : undefined"
+                        :ui="{ trailing: 'pe-1' }"
+                        class="w-full"
+                    >
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showLoginPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                :aria-label="showLoginPassword ? 'Hide password' : 'Show password'"
+                                @click="showLoginPassword = !showLoginPassword"
+                            />
+                        </template>
+                    </UInput>
+                </UFormField>
+
+                <div class="flex items-center justify-between">
+                    <UCheckbox v-model="loginForm.rememberMe" :label="t('core.auth.rememberMe')" />
+                    <UButton
+                        :label="t('core.auth.forgotPassword')"
+                        variant="link"
+                        color="primary"
+                        size="sm"
+                        @click="switchMode('forgot-password')"
                     />
-                    <small v-if="errors.lastName" class="text-red-500">{{ errors.lastName }}</small>
                 </div>
-            </div>
 
-            <div class="flex flex-col gap-2">
-                <label for="signup-email" class="font-medium text-sm">{{ t('core.auth.email') }}</label>
-                <InputText
-                    id="signup-email"
-                    v-model="signupForm.email"
-                    type="email"
-                    autocomplete="email"
-                    :placeholder="t('core.auth.email')"
-                    :invalid="!!errors.email"
-                    fluid
+                <UButton type="submit" :label="t('core.auth.login')" :loading="isLoading" block />
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
+
+                <p class="text-center text-sm text-gray-500">
+                    {{ t('core.auth.noAccount') }}
+                    <UButton
+                        :label="t('core.auth.createAccount')"
+                        variant="link"
+                        color="primary"
+                        size="sm"
+                        @click="switchMode('signup')"
+                    />
+                </p>
+            </form>
+
+            <!-- Signup Form -->
+            <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
+                <div class="flex gap-3">
+                    <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">
+                        <UInput
+                            v-model="signupForm.firstName"
+                            autocomplete="given-name"
+                            :placeholder="t('core.auth.firstName')"
+                            :color="errors.firstName ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField :label="t('core.auth.lastName')" :error="errors.lastName" class="flex-1">
+                        <UInput
+                            v-model="signupForm.lastName"
+                            autocomplete="family-name"
+                            :placeholder="t('core.auth.lastName')"
+                            :color="errors.lastName ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+                </div>
+
+                <UFormField :label="t('core.auth.email')" :error="errors.email">
+                    <UInput
+                        v-model="signupForm.email"
+                        type="email"
+                        autocomplete="email"
+                        :placeholder="t('core.auth.email')"
+                        :color="errors.email ? 'error' : undefined"
+                        class="w-full"
+                    />
+                </UFormField>
+
+                <UFormField :label="t('core.auth.password')" :error="errors.password">
+                    <UInput
+                        v-model="signupForm.password"
+                        :type="showSignupPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        :placeholder="t('core.auth.password')"
+                        :color="errors.password ? 'error' : undefined"
+                        :ui="{ trailing: 'pe-1' }"
+                        class="w-full"
+                    >
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showSignupPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="showSignupPassword = !showSignupPassword"
+                            />
+                        </template>
+                    </UInput>
+                </UFormField>
+
+                <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
+                    <UInput
+                        v-model="signupForm.confirmPassword"
+                        :type="showSignupConfirmPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        :placeholder="t('core.auth.confirmPassword')"
+                        :color="errors.confirmPassword ? 'error' : undefined"
+                        :ui="{ trailing: 'pe-1' }"
+                        class="w-full"
+                    >
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showSignupConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="showSignupConfirmPassword = !showSignupConfirmPassword"
+                            />
+                        </template>
+                    </UInput>
+                </UFormField>
+
+                <UButton type="submit" :label="t('core.auth.createAccount')" :loading="isLoading" block />
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
+
+                <p class="text-center text-sm text-gray-500">
+                    {{ t('core.auth.hasAccount') }}
+                    <UButton
+                        :label="t('core.auth.login')"
+                        variant="link"
+                        color="primary"
+                        size="sm"
+                        @click="switchMode('login')"
+                    />
+                </p>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form v-else-if="mode === 'forgot-password'" class="flex flex-col gap-5" @submit.prevent="handleForgotPassword">
+                <UAlert
+                    color="info"
+                    title="Password Reset"
+                    description="Enter your email address and we'll send you a link to reset your password."
                 />
-                <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
-            </div>
 
-            <div class="flex flex-col gap-2">
-                <label for="signup-password" class="font-medium text-sm">{{ t('core.auth.password') }}</label>
-                <Password
-                    id="signup-password"
-                    v-model="signupForm.password"
-                    autocomplete="new-password"
-                    :placeholder="t('core.auth.password')"
-                    :invalid="!!errors.password"
-                    toggle-mask
-                    fluid
-                />
-                <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
-            </div>
+                <UFormField :label="t('core.auth.email')" :error="errors.email">
+                    <UInput
+                        v-model="forgotPasswordForm.email"
+                        type="email"
+                        autocomplete="email"
+                        :placeholder="t('core.auth.email')"
+                        :color="errors.email ? 'error' : undefined"
+                        class="w-full"
+                    />
+                </UFormField>
 
-            <div class="flex flex-col gap-2">
-                <label for="signup-confirm-password" class="font-medium text-sm">{{
-                    t('core.auth.confirmPassword')
-                }}</label>
-                <Password
-                    id="signup-confirm-password"
-                    v-model="signupForm.confirmPassword"
-                    autocomplete="new-password"
-                    :placeholder="t('core.auth.confirmPassword')"
-                    :invalid="!!errors.confirmPassword"
-                    :feedback="false"
-                    toggle-mask
-                    fluid
-                />
-                <small v-if="errors.confirmPassword" class="text-red-500">{{ errors.confirmPassword }}</small>
-            </div>
+                <UButton type="submit" label="Send Reset Link" :loading="isLoading" block />
 
-            <Button type="submit" :label="t('core.auth.createAccount')" :loading="isLoading" class="w-full" />
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
 
-            <Divider />
+                <p class="text-center">
+                    <UButton
+                        :label="`Back to ${t('core.auth.login')}`"
+                        variant="link"
+                        color="neutral"
+                        @click="switchMode('login')"
+                    />
+                </p>
+            </form>
 
-            <p class="text-center text-sm text-surface-500">
-                {{ t('core.auth.hasAccount') }}
-                <Button
-                    :label="t('core.auth.login')"
-                    link
-                    type="button"
-                    class="p-0 text-sm"
-                    @click="switchMode('login')"
-                />
-            </p>
-        </form>
+            <!-- Reset Password Form -->
+            <form v-else-if="mode === 'reset-password'" class="flex flex-col gap-5" @submit.prevent="handleResetPassword">
+                <UAlert v-if="errors.general" color="error" :title="errors.general" />
 
-        <!-- Forgot Password Form -->
-        <form v-else-if="mode === 'forgot-password'" class="flex flex-col gap-5" @submit.prevent="handleForgotPassword">
-            <Message severity="info" :closable="false">
-                Enter your email address and we'll send you a link to reset your password.
-            </Message>
+                <UFormField :label="t('core.auth.password')" :error="errors.password">
+                    <UInput
+                        v-model="resetPasswordForm.password"
+                        :type="showResetPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        :placeholder="t('core.auth.password')"
+                        :color="errors.password ? 'error' : undefined"
+                        :ui="{ trailing: 'pe-1' }"
+                        class="w-full"
+                    >
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showResetPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="showResetPassword = !showResetPassword"
+                            />
+                        </template>
+                    </UInput>
+                </UFormField>
 
-            <div class="flex flex-col gap-2">
-                <label for="forgot-email" class="font-medium text-sm">{{ t('core.auth.email') }}</label>
-                <InputText
-                    id="forgot-email"
-                    v-model="forgotPasswordForm.email"
-                    type="email"
-                    autocomplete="email"
-                    :placeholder="t('core.auth.email')"
-                    :invalid="!!errors.email"
-                    fluid
-                />
-                <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
-            </div>
+                <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
+                    <UInput
+                        v-model="resetPasswordForm.confirmPassword"
+                        :type="showResetConfirmPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        :placeholder="t('core.auth.confirmPassword')"
+                        :color="errors.confirmPassword ? 'error' : undefined"
+                        :ui="{ trailing: 'pe-1' }"
+                        class="w-full"
+                    >
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showResetConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="showResetConfirmPassword = !showResetConfirmPassword"
+                            />
+                        </template>
+                    </UInput>
+                </UFormField>
 
-            <Button type="submit" label="Send Reset Link" :loading="isLoading" class="w-full" />
-
-            <Divider />
-
-            <p class="text-center">
-                <Button
-                    :label="`Back to ${t('core.auth.login')}`"
-                    link
-                    severity="secondary"
-                    type="button"
-                    @click="switchMode('login')"
-                />
-            </p>
-        </form>
-
-        <!-- Reset Password Form -->
-        <form v-else-if="mode === 'reset-password'" class="flex flex-col gap-5" @submit.prevent="handleResetPassword">
-            <Message v-if="errors.general" severity="error" :closable="false">
-                {{ errors.general }}
-            </Message>
-
-            <div class="flex flex-col gap-2">
-                <label for="reset-password" class="font-medium text-sm">{{ t('core.auth.password') }}</label>
-                <Password
-                    id="reset-password"
-                    v-model="resetPasswordForm.password"
-                    autocomplete="new-password"
-                    :placeholder="t('core.auth.password')"
-                    :invalid="!!errors.password"
-                    toggle-mask
-                    fluid
-                />
-                <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
-            </div>
-
-            <div class="flex flex-col gap-2">
-                <label for="reset-confirm-password" class="font-medium text-sm">{{
-                    t('core.auth.confirmPassword')
-                }}</label>
-                <Password
-                    id="reset-confirm-password"
-                    v-model="resetPasswordForm.confirmPassword"
-                    autocomplete="new-password"
-                    :placeholder="t('core.auth.confirmPassword')"
-                    :invalid="!!errors.confirmPassword"
-                    :feedback="false"
-                    toggle-mask
-                    fluid
-                />
-                <small v-if="errors.confirmPassword" class="text-red-500">{{ errors.confirmPassword }}</small>
-            </div>
-
-            <Button type="submit" :label="t('core.auth.resetPassword')" :loading="isLoading" class="w-full" />
-        </form>
-    </Dialog>
+                <UButton type="submit" :label="t('core.auth.resetPassword')" :loading="isLoading" block />
+            </form>
+        </template>
+    </UModal>
 </template>

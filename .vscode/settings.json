@@ -35,5 +35,6 @@
     },
     "editor.quickSuggestions": {
         "strings": "on"
-    }
+    },
+    "css.lint.unknownAtRules": "ignore"
 }

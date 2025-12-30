@@ -1,11 +1,11 @@
 # Backend
 app/backend/Dockerfile
 app/backend/migrations/README.md
+app/backend/migrations/*.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/constants.py
 app/backend/src/router.py
-app/backend/src/convert-models.py
 app/backend/src/controllers/*
 app/backend/src/helpers/*
 app/backend/src/models/*
@@ -14,6 +14,10 @@ app/backend/src/tasks/*
 app/backend/src/templates/*
 
 # Frontend
+app/frontend/nuxt.config.ts
+app/frontend/app.config.ts
+app/frontend/assets/css/main.css
+app/frontend/layouts/default.vue
 app/frontend/config/i18n.ts
 app/frontend/stores/useAuth.ts
 app/frontend/stores/useModal.ts
@@ -28,7 +32,14 @@ app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useLocale.ts
 app/frontend/composables/useSubscription.ts
 app/frontend/middleware/auth.ts
+app/frontend/middleware/admin.ts
 app/frontend/types/modal.ts
+app/frontend/components/ui/*
+app/frontend/pages/premium.vue
+app/frontend/config/admin-nav.ts
+app/frontend/layouts/admin.vue
+app/frontend/components/admin/*
+app/frontend/pages/admin/*
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 

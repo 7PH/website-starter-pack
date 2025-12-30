@@ -15,21 +15,31 @@ onUnmounted(() => {
     modal.unregister(MODAL_NAME);
 });
 
-// Get modal state
-const isOpen = computed(() => modal.isOpen(MODAL_NAME));
-const options = computed(() => modal.getOptions(MODAL_NAME) as ConfirmModalOptions);
+// Modal state - use safe accessors (handle SSR and initialization)
+const isOpen = computed({
+    get: () => {
+        if (import.meta.server) return false;
+        return modal.isOpen?.(MODAL_NAME) ?? false;
+    },
+    set: (value: boolean) => {
+        if (!value) cancel();
+    },
+});
+
+const options = computed((): ConfirmModalOptions => {
+    if (import.meta.server) return {} as ConfirmModalOptions;
+    return (modal.getOptions?.(MODAL_NAME) ?? {}) as ConfirmModalOptions;
+});
 
 // Default values
 const title = computed(() => options.value.title ?? 'Confirm');
 const message = computed(() => options.value.message ?? 'Are you sure you want to continue?');
 const confirmText = computed(() => options.value.confirmText ?? 'Confirm');
 const cancelText = computed(() => options.value.cancelText ?? 'Cancel');
-const confirmSeverity = computed(() => {
+const confirmColor = computed(() => {
     const color = options.value.confirmColor ?? 'primary';
-    // Map Nuxt UI colors to PrimeVue severities
-    if (color === 'error') return 'danger';
-    if (color === 'warning') return 'warn';
-    return 'primary';
+    // Nuxt UI uses 'error' directly
+    return color;
 });
 
 // Actions
@@ -43,24 +53,18 @@ function cancel() {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="isOpen"
-        :header="title"
-        modal
-        :closable="true"
-        :draggable="false"
-        class="w-full max-w-md"
-        @hide="cancel"
-    >
-        <p class="text-gray-600 dark:text-gray-400">
-            {{ message }}
-        </p>
+    <UModal v-model:open="isOpen" :title="title" class="sm:max-w-md">
+        <template #body>
+            <p class="text-gray-600 dark:text-gray-400">
+                {{ message }}
+            </p>
+        </template>
 
         <template #footer>
             <div class="flex justify-end gap-3">
-                <Button :label="cancelText" text severity="secondary" @click="cancel" />
-                <Button :label="confirmText" :severity="confirmSeverity" @click="confirm" />
+                <UButton :label="cancelText" variant="ghost" color="neutral" @click="cancel" />
+                <UButton :label="confirmText" :color="confirmColor" @click="confirm" />
             </div>
         </template>
-    </Dialog>
+    </UModal>
 </template>

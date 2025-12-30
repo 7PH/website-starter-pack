@@ -54,14 +54,40 @@ async function apiFetchOrError<T>(path: string, options: RequestInit = {}): Prom
         const toast = useToast();
         if (error instanceof Error) {
             toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: error.message,
-                life: 5000,
+                color: 'error',
+                title: 'Error',
+                description: error.message,
+                duration: 5000,
             });
         }
         throw error;
     }
+}
+
+/**
+ * Build URL with query parameters.
+ */
+function buildUrl(path: string, params?: Record<string, unknown>): string {
+    if (!params) return path;
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) {
+            searchParams.append(key, String(value));
+        }
+    }
+    const queryString = searchParams.toString();
+    return queryString ? `${path}?${queryString}` : path;
+}
+
+/**
+ * Helper to create request options with JSON body.
+ */
+function withBody(method: string, body?: unknown, options?: RequestInit): RequestInit {
+    return {
+        method,
+        body: body ? JSON.stringify(body) : undefined,
+        ...options,
+    };
 }
 
 /**
@@ -72,13 +98,25 @@ export function useApi() {
     return {
         fetch: apiFetch,
         fetchOrError: apiFetchOrError,
-        get: <T>(path: string, options?: RequestInit) => apiFetch<T>(path, options),
-        post: <T>(path: string, body: unknown, options?: RequestInit) =>
-            apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body), ...options }),
-        put: <T>(path: string, body: unknown, options?: RequestInit) =>
-            apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body), ...options }),
-        patch: <T>(path: string, body: unknown, options?: RequestInit) =>
-            apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body), ...options }),
-        delete: <T>(path: string, options?: RequestInit) => apiFetch<T>(path, { method: 'DELETE', ...options }),
+
+        get<T>(path: string, params?: Record<string, unknown>, options?: RequestInit) {
+            return apiFetch<T>(buildUrl(path, params), options);
+        },
+
+        post<T>(path: string, body?: unknown, options?: RequestInit) {
+            return apiFetch<T>(path, withBody('POST', body, options));
+        },
+
+        put<T>(path: string, body: unknown, options?: RequestInit) {
+            return apiFetch<T>(path, withBody('PUT', body, options));
+        },
+
+        patch<T>(path: string, body: unknown, options?: RequestInit) {
+            return apiFetch<T>(path, withBody('PATCH', body, options));
+        },
+
+        delete<T>(path: string, options?: RequestInit) {
+            return apiFetch<T>(path, { method: 'DELETE', ...options });
+        },
     };
 }

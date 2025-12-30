@@ -88,6 +88,7 @@ class UserToken(BaseModel):
     user: UserRead
     created_at: datetime.datetime
     expires_at: datetime.datetime
+    real_admin_id: int | None = None
 
 
 class UserTokenUpdate(BaseModel):

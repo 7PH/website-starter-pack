@@ -5,11 +5,14 @@ Full-stack web app template: Nuxt 3 frontend + FastAPI backend + PostgreSQL + Tr
 ## Quick Commands
 
 ```bash
-npm run dev      # Start development
-npm run stop     # Stop containers
-npm run build    # Rebuild containers
-npm run debug    # Dev with debugpy (port 5679)
-npm run logs     # View logs
+npm run dev               # Start development
+npm run stop              # Stop containers
+npm run build             # Rebuild containers
+npm run debug             # Dev with debugpy (port 5679)
+npm run logs              # View logs
+npm run lint:frontend     # Lint frontend (ESLint)
+npm run lint:backend      # Lint backend (Ruff)
+npm run typecheck:frontend # Typecheck frontend (Vue/TS)
 ```
 
 ## Stack
@@ -37,7 +40,7 @@ Project-specific code lives alongside core files (same directories, different fi
 - Subdomains: `static.*`, `adminer.*`, `analytics.*`
 
 ### Database Migrations
-Manual SQL files in `app/backend/migrations/`. Use `IF NOT EXISTS` for idempotency. SQLAlchemy handles table creation; migrations handle indexes, alterations, etc.
+Manual SQL files in `app/backend/migrations/`. Use `IF NOT EXISTS` for idempotency. Indexes should be defined in both SQLAlchemy models (for fresh installs) and migration files (for existing databases).
 
 ## Key Environment Variables
 
@@ -55,6 +58,38 @@ npm run build && npm run dev  # After requirements.txt changes
 npm run db-connect            # Connect to database
 npm run db-dump / db-restore  # Backup/restore database
 ```
+
+## Theming & Dark Mode
+
+The app uses **Tailwind CSS** for custom styling and **PrimeVue** for UI components. Both support dark mode via the `.dark` class.
+
+### Styling Rules
+
+1. **PrimeVue components** (Button, Card, DataTable, etc.): Use as-is, they handle dark mode automatically
+2. **Custom styling**: Use Tailwind utilities with `dark:` variants
+3. **Colors**:
+   - `primary-*` for brand/accent colors (defined in `tailwind.config.ts`)
+   - `gray-*` for neutral backgrounds and text
+   - `red-*`, `green-*`, `amber-*` for semantic colors
+
+### Examples
+
+```vue
+<!-- Good: Tailwind dark mode classes -->
+<div class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+
+<!-- Good: Scoped style with @apply -->
+<style scoped>
+.my-card {
+    @apply bg-white dark:bg-gray-800 rounded-lg p-4;
+}
+</style>
+```
+
+### Don't Use
+
+- PrimeVue CSS variables (`--p-*`) with `@apply` in scoped styles (doesn't work)
+- `:global(.dark)` selectors (fragile, hard to maintain)
 
 ## Core Updates
 

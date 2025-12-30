@@ -2,11 +2,12 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL
+from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
+from ..crud.event_logs import log_event
 from ..crud.users import (
     create_user,
     get_user_by_email,
@@ -41,7 +42,7 @@ RESET_PASSWORD_BASE_URL = f"{PUBLIC_URL}/reset-password"
 @router.post(
     "/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED
 )
-def register_user(*, session: Session = Depends(get_session), user_create: UserCreate):
+def register_user(*, request: Request, session: Session = Depends(get_session), user_create: UserCreate):
     user_create.email = user_create.email.lower()
     if is_email_taken(session, user_create.email):
         raise HTTPException(
@@ -68,6 +69,9 @@ def register_user(*, session: Session = Depends(get_session), user_create: UserC
 
     token = create_access_token(UserRead.model_validate(user))
 
+    # Log the registration event
+    log_event(session, action=EventType.USER_REGISTER, user_id=user.id, request=request)
+
     return UserTokenUpdate(
         access_token=token.access_token,
         token_parsed=token.token_parsed,
@@ -80,6 +84,7 @@ def register_user(*, session: Session = Depends(get_session), user_create: UserC
 )
 def login_user(
     *,
+    request: Request,
     session: Session = Depends(get_session),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
@@ -93,6 +98,9 @@ def login_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
+
+    # Log the login event
+    log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
 
     return create_access_token(UserRead.model_validate(user))
 
@@ -165,6 +173,7 @@ def get_user(
 @router.patch("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
 def update_me(
     *,
+    request: Request,
     session: Session = Depends(get_session),
     user_change_info: UserChangeInfo,
     current_user: UserRead = Depends(get_current_user),
@@ -194,6 +203,9 @@ def update_me(
 
     update_user(session, user)
 
+    # Log profile update
+    log_event(session, action=EventType.USER_PROFILE_UPDATE, user_id=user.id, request=request)
+
     return UserRead.model_validate(user)
 
 
@@ -204,6 +216,7 @@ def update_me(
 )
 def update_my_password(
     *,
+    request: Request,
     session: Session = Depends(get_session),
     user_change_pwd: UserChangePassword,
     current_user: UserRead = Depends(get_current_user),
@@ -230,5 +243,8 @@ def update_my_password(
 
     user.hashed_password = hash_password(user_change_pwd.new_password)
     update_user(session, user)
+
+    # Log password change
+    log_event(session, action=EventType.USER_PASSWORD_CHANGE, user_id=user.id, request=request)
 
     return UserRead.model_validate(user)

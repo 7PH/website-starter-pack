@@ -1,3 +1,5 @@
+<!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
+
 <script setup lang="ts">
 definePageMeta({
     middleware: ['auth'],
@@ -20,126 +22,155 @@ async function openBillingPortal() {
         openingPortal.value = false;
     }
 }
+
+// Benefits list
+const benefits: { icon: string; label: string }[] = [];
 </script>
 
 <template>
-    <div class="max-w-2xl mx-auto py-8 px-4">
-        <!-- Page Title -->
-        <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
-            <i class="pi pi-star text-amber-400" />
-            {{ t('core.billing.premium') }}
-        </h1>
-
+    <div class="premium-page">
         <ClientOnly>
             <!-- Loading State -->
             <div v-if="loading" class="space-y-6">
-                <Card>
-                    <template #content>
-                        <div class="flex items-center gap-4">
-                            <Skeleton shape="circle" size="4rem" />
-                            <div class="flex-1">
-                                <Skeleton width="12rem" height="1.5rem" class="mb-2" />
-                                <Skeleton width="8rem" height="1rem" />
-                            </div>
+                <UCard>
+                    <div class="flex items-center gap-4">
+                        <USkeleton class="w-20 h-20 rounded-full" />
+                        <div class="flex-1">
+                            <USkeleton class="w-48 h-6 mb-2" />
+                            <USkeleton class="w-32 h-4" />
                         </div>
-                    </template>
-                </Card>
-                <Card>
-                    <template #content>
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <Skeleton width="10rem" height="1.25rem" class="mb-2" />
-                                <Skeleton width="14rem" height="1rem" />
-                            </div>
-                            <Skeleton width="6rem" height="2.5rem" />
-                        </div>
-                    </template>
-                </Card>
+                    </div>
+                </UCard>
             </div>
 
             <!-- Content -->
-            <div v-else class="space-y-6">
-                <!-- Status Card -->
-                <Card>
-                    <template #content>
-                        <div class="flex items-center gap-4">
-                            <!-- Premium Badge Icon -->
-                            <div
-                                class="w-16 h-16 rounded-full flex items-center justify-center shrink-0"
-                                :class="isPremium ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gray-200'"
-                            >
-                                <i class="pi pi-star text-2xl" :class="isPremium ? 'text-white' : 'text-gray-400'" />
-                            </div>
-
-                            <div class="flex-1">
-                                <h3 class="text-xl font-semibold">
-                                    {{ isPremium ? t('core.billing.youArePremium') : t('core.billing.freeAccount') }}
-                                </h3>
-                                <p v-if="isPremium" class="text-sm text-gray-600 mt-1">
-                                    <i class="pi pi-credit-card mr-1" />
-                                    {{ t('core.billing.personalSubscription') }}
-                                </p>
-                                <p v-else class="text-sm text-gray-500 mt-1">
-                                    {{ t('core.billing.upgradePrompt') }}
-                                </p>
-                            </div>
+            <div v-else>
+                <!-- Premium Status Card -->
+                <UCard class="status-card" :class="{ 'is-premium': isPremium }">
+                    <div class="status-header" :class="isPremium ? 'premium' : 'free'">
+                        <div class="status-icon">
+                            <UIcon name="i-lucide-star" class="text-3xl" />
                         </div>
-                    </template>
-                </Card>
+                        <div class="status-info">
+                            <h2 class="status-title">
+                                {{ isPremium ? t('core.billing.youArePremium') : t('core.billing.freeAccount') }}
+                            </h2>
+                            <p class="status-subtitle">
+                                {{
+                                    isPremium ? t('core.billing.personalSubscription') : t('core.billing.upgradePrompt')
+                                }}
+                            </p>
+                        </div>
+                    </div>
 
-                <!-- CTA Card -->
-                <Card>
-                    <template #content>
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <h4 class="font-semibold">
-                                    {{ isPremium ? t('core.billing.manageSubscription') : t('core.billing.upgrade') }}
-                                </h4>
-                                <p class="text-sm text-gray-500">
-                                    {{
-                                        isPremium ? t('core.billing.modifyOrCancel') : t('core.billing.unlockFeatures')
-                                    }}
-                                </p>
-                            </div>
-                            <Button
-                                :label="isPremium ? t('core.billing.manage') : t('core.billing.subscribe')"
+                    <!-- Benefits Grid -->
+                    <div v-if="!isPremium" class="benefits-grid">
+                        <div v-for="benefit in benefits" :key="benefit.label" class="benefit-item">
+                            <UIcon :name="benefit.icon" class="benefit-icon text-lg" />
+                            <span>{{ benefit.label }}</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Section -->
+                    <div class="cta-section">
+                        <template v-if="isPremium">
+                            <UButton
+                                :label="t('core.billing.manage')"
                                 :loading="openingPortal"
-                                icon="pi pi-external-link"
-                                icon-pos="right"
+                                icon="i-lucide-external-link"
+                                trailing
+                                color="neutral"
+                                variant="outline"
                                 @click="openBillingPortal"
                             />
-                        </div>
-                    </template>
-                </Card>
+                        </template>
+                        <template v-else>
+                            <UiGradientButton size="lg" :loading="openingPortal" @click="openBillingPortal">
+                                <UIcon name="i-lucide-sparkles" class="mr-2" />
+                                {{ t('core.billing.subscribe') }}
+                            </UiGradientButton>
+                        </template>
+                    </div>
+                </UCard>
             </div>
 
             <!-- SSR Fallback -->
             <template #fallback>
-                <div class="space-y-6">
-                    <Card>
-                        <template #content>
-                            <div class="flex items-center gap-4">
-                                <Skeleton shape="circle" size="4rem" />
-                                <div class="flex-1">
-                                    <Skeleton width="12rem" height="1.5rem" class="mb-2" />
-                                    <Skeleton width="8rem" height="1rem" />
-                                </div>
-                            </div>
-                        </template>
-                    </Card>
-                    <Card>
-                        <template #content>
-                            <div class="flex items-center justify-between gap-4">
-                                <div>
-                                    <Skeleton width="10rem" height="1.25rem" class="mb-2" />
-                                    <Skeleton width="14rem" height="1rem" />
-                                </div>
-                                <Skeleton width="6rem" height="2.5rem" />
-                            </div>
-                        </template>
-                    </Card>
-                </div>
+                <UCard>
+                    <div class="flex items-center gap-4">
+                        <USkeleton class="w-20 h-20 rounded-full" />
+                        <div class="flex-1">
+                            <USkeleton class="w-48 h-6 mb-2" />
+                            <USkeleton class="w-32 h-4" />
+                        </div>
+                    </div>
+                </UCard>
             </template>
         </ClientOnly>
     </div>
 </template>
+
+<style scoped>
+@reference "~/assets/css/main.css";
+.premium-page {
+    @apply max-w-2xl mx-auto py-8 px-4;
+}
+
+.status-card {
+    @apply overflow-hidden;
+}
+
+/* Status Header */
+.status-header {
+    @apply flex items-center gap-4 p-6 -m-6 mb-6 rounded-t-xl;
+}
+
+.status-header.premium {
+    background: linear-gradient(135deg, theme('colors.amber.400'), theme('colors.orange.500'));
+}
+
+.status-header.free {
+    background: linear-gradient(
+        135deg,
+        theme('colors.accent.500'),
+        theme('colors.primary.500'),
+        theme('colors.pop.500')
+    );
+}
+
+.status-icon {
+    @apply w-16 h-16 rounded-full flex items-center justify-center;
+    @apply bg-white/20 text-white;
+}
+
+.status-info {
+    @apply flex-1;
+}
+
+.status-title {
+    @apply text-xl font-bold text-white;
+}
+
+.status-subtitle {
+    @apply text-sm text-white/80 mt-1;
+}
+
+/* Benefits Grid */
+.benefits-grid {
+    @apply grid grid-cols-2 gap-4 mb-6;
+}
+
+.benefit-item {
+    @apply flex items-center gap-3 p-3 rounded-lg;
+    @apply bg-gray-50 dark:bg-gray-800;
+}
+
+.benefit-icon {
+    @apply text-primary-500;
+}
+
+/* CTA Section */
+.cta-section {
+    @apply flex justify-center pt-4;
+}
+</style>

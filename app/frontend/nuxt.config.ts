@@ -1,8 +1,14 @@
+// ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import Aura from '@primevue/themes/aura';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-01-01',
+
+    // Disable SSR for admin pages (auth is client-side, no SEO needed)
+    routeRules: {
+        '/admin/**': { ssr: false },
+    },
 
     app: {
         head: {
@@ -12,6 +18,7 @@ export default defineNuxtConfig({
 
     // Vite config for Docker/WSL2 file watching
     vite: {
+        plugins: [tailwindcss()],
         server: {
             watch: {
                 usePolling: true,
@@ -31,7 +38,7 @@ export default defineNuxtConfig({
         },
     },
 
-    modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@primevue/nuxt-module', '@nuxtjs/i18n', '@nuxtjs/color-mode'],
+    modules: ['@pinia/nuxt', '@nuxt/ui', '@nuxtjs/i18n', '@vueuse/nuxt'],
 
     colorMode: {
         preference: 'system',
@@ -40,14 +47,12 @@ export default defineNuxtConfig({
         storageKey: 'color-mode',
     },
 
-    primevue: {
-        options: {
-            theme: {
-                preset: Aura,
-                options: {
-                    darkModeSelector: '.dark',
-                },
-            },
+    icon: {
+        // Use Iconify CDN to avoid /api conflict with backend proxy
+        provider: 'iconify',
+        serverBundle: 'remote',
+        clientBundle: {
+            scan: true,
         },
     },
 

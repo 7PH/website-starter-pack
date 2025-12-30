@@ -36,18 +36,16 @@ onMounted(async () => {
 
 <template>
     <div class="min-h-screen flex items-center justify-center p-4">
-        <Card v-if="status === 'no-token'" class="max-w-md w-full text-center">
-            <template #content>
-                <div class="py-8">
-                    <i class="pi pi-times-circle text-5xl text-red-500"></i>
-                    <h2 class="mt-4 text-xl font-semibold">Invalid Reset Link</h2>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        This password reset link is invalid or has expired.
-                    </p>
-                    <Button class="mt-4" severity="primary" label="Go to Home" @click="router.push('/')" />
-                </div>
-            </template>
-        </Card>
+        <UCard v-if="status === 'no-token'" class="max-w-md w-full text-center">
+            <div class="py-8">
+                <UIcon name="i-lucide-x-circle" class="text-5xl text-red-500" />
+                <h2 class="mt-4 text-xl font-semibold">Invalid Reset Link</h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    This password reset link is invalid or has expired.
+                </p>
+                <UButton class="mt-4" label="Go to Home" @click="router.push('/')" />
+            </div>
+        </UCard>
 
         <!-- Modal will render when token is present -->
         <div v-else class="text-center">

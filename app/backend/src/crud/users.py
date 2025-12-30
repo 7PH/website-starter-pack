@@ -29,6 +29,12 @@ def update_user(session: Session, user: UserBase) -> None:
     session.commit()
 
 
+def delete_user(session: Session, user: UserBase) -> None:
+    """Delete a user from the database."""
+    session.delete(user)
+    session.commit()
+
+
 def is_email_taken(session: Session, email: str) -> bool:
     """Check if an email is already registered in the database."""
     return (

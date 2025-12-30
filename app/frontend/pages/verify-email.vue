@@ -39,33 +39,31 @@ onMounted(async () => {
 
 <template>
     <div class="min-h-screen flex items-center justify-center p-4">
-        <Card class="max-w-md w-full text-center">
-            <template #content>
-                <!-- Loading -->
-                <div v-if="status === 'loading'" class="py-8">
-                    <i class="pi pi-spin pi-spinner text-5xl text-primary-500"></i>
-                    <p class="mt-4 text-gray-600 dark:text-gray-400">Verifying your email...</p>
-                </div>
+        <UCard class="max-w-md w-full text-center">
+            <!-- Loading -->
+            <div v-if="status === 'loading'" class="py-8">
+                <UIcon name="i-lucide-loader-2" class="text-5xl text-primary-500 animate-spin" />
+                <p class="mt-4 text-gray-600 dark:text-gray-400">Verifying your email...</p>
+            </div>
 
-                <!-- Success -->
-                <div v-else-if="status === 'success'" class="py-8">
-                    <i class="pi pi-check-circle text-5xl text-green-500"></i>
-                    <h2 class="mt-4 text-xl font-semibold">Email Verified!</h2>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        Your email has been successfully verified. Redirecting...
-                    </p>
-                </div>
+            <!-- Success -->
+            <div v-else-if="status === 'success'" class="py-8">
+                <UIcon name="i-lucide-check-circle" class="text-5xl text-green-500" />
+                <h2 class="mt-4 text-xl font-semibold">Email Verified!</h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    Your email has been successfully verified. Redirecting...
+                </p>
+            </div>
 
-                <!-- Error -->
-                <div v-else class="py-8">
-                    <i class="pi pi-times-circle text-5xl text-red-500"></i>
-                    <h2 class="mt-4 text-xl font-semibold">Verification Failed</h2>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        {{ errorMessage }}
-                    </p>
-                    <Button class="mt-4" severity="primary" label="Go to Home" @click="router.push('/')" />
-                </div>
-            </template>
-        </Card>
+            <!-- Error -->
+            <div v-else class="py-8">
+                <UIcon name="i-lucide-x-circle" class="text-5xl text-red-500" />
+                <h2 class="mt-4 text-xl font-semibold">Verification Failed</h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    {{ errorMessage }}
+                </p>
+                <UButton class="mt-4" label="Go to Home" @click="router.push('/')" />
+            </div>
+        </UCard>
     </div>
 </template>

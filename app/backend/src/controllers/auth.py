@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from ..constants import EventType
+from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_email, get_user_by_id, update_user
 from ..helpers.auth import get_current_user, hash_password
 from ..helpers.auth_tokens import (
@@ -132,6 +134,9 @@ def verify_email(
     user.email_confirmed = True
     update_user(session, user)
 
+    # Log email verification
+    log_event(session, action=EventType.USER_EMAIL_VERIFY, user_id=user.id)
+
     return AuthMessageResponse(message="Email verified successfully")
 
 
@@ -186,6 +191,9 @@ def request_password_reset(
             # Email service might not be configured
             pass
 
+        # Log password reset request
+        log_event(session, action=EventType.USER_PASSWORD_RESET_REQUEST, user_id=user.id, request=request)
+
     return AuthMessageResponse(message="If an account exists, a reset email has been sent")
 
 
@@ -196,6 +204,7 @@ def request_password_reset(
 )
 def reset_password(
     *,
+    request: Request,
     session: Session = Depends(get_session),
     body: PasswordResetConfirmJWT,
 ):
@@ -216,5 +225,8 @@ def reset_password(
 
     user.hashed_password = hash_password(body.password)
     update_user(session, user)
+
+    # Log password reset
+    log_event(session, action=EventType.USER_PASSWORD_RESET, user_id=user.id, request=request)
 
     return AuthMessageResponse(message="Password reset successfully")

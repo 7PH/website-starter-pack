@@ -1,5 +1,401 @@
 {
   "$defs": {
+    "AdminDashboardStats": {
+      "description": "Dashboard statistics.",
+      "properties": {
+        "total_users": {
+          "title": "Total Users",
+          "type": "integer"
+        },
+        "admin_users": {
+          "title": "Admin Users",
+          "type": "integer"
+        },
+        "premium_users": {
+          "title": "Premium Users",
+          "type": "integer"
+        },
+        "recent_events": {
+          "items": {
+            "$ref": "#/$defs/EventLogRead"
+          },
+          "title": "Recent Events",
+          "type": "array"
+        }
+      },
+      "required": [
+        "total_users",
+        "admin_users",
+        "premium_users",
+        "recent_events"
+      ],
+      "title": "AdminDashboardStats",
+      "type": "object"
+    },
+    "AdminUserListResponse": {
+      "description": "Paginated response for user list.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/AdminUserRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "limit",
+        "offset"
+      ],
+      "title": "AdminUserListResponse",
+      "type": "object"
+    },
+    "AdminUserRead": {
+      "description": "Extended user info for admin view.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "first_name": {
+          "title": "First Name",
+          "type": "string"
+        },
+        "last_name": {
+          "title": "Last Name",
+          "type": "string"
+        },
+        "is_admin": {
+          "title": "Is Admin",
+          "type": "boolean"
+        },
+        "is_premium": {
+          "title": "Is Premium",
+          "type": "boolean"
+        },
+        "email_confirmed": {
+          "title": "Email Confirmed",
+          "type": "boolean"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created At"
+        },
+        "last_seen_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Seen At"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "first_name",
+        "last_name",
+        "is_admin",
+        "is_premium",
+        "email_confirmed",
+        "created_at",
+        "last_seen_at"
+      ],
+      "title": "AdminUserRead",
+      "type": "object"
+    },
+    "AdminUserUpdate": {
+      "description": "Schema for admin updating a user.",
+      "properties": {
+        "first_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
+        },
+        "last_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
+        },
+        "is_admin": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Admin"
+        },
+        "is_premium": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Premium"
+        }
+      },
+      "title": "AdminUserUpdate",
+      "type": "object"
+    },
+    "EventLogFilter": {
+      "description": "Query parameters for filtering event logs.",
+      "properties": {
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "User Id"
+        },
+        "action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action"
+        },
+        "action_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Prefix"
+        },
+        "from_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From Date"
+        },
+        "to_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To Date"
+        }
+      },
+      "title": "EventLogFilter",
+      "type": "object"
+    },
+    "EventLogListResponse": {
+      "description": "Paginated response for event logs.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/EventLogRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "limit",
+        "offset"
+      ],
+      "title": "EventLogListResponse",
+      "type": "object"
+    },
+    "EventLogRead": {
+      "description": "Output schema for reading event logs.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "User Id"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "ip_address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ip Address"
+        },
+        "user_agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "User Agent"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "action",
+        "details",
+        "ip_address",
+        "user_agent",
+        "created_at"
+      ],
+      "title": "EventLogRead",
+      "type": "object"
+    },
+    "ImpersonationResponse": {
+      "description": "Response for impersonation endpoints.",
+      "properties": {
+        "access_token": {
+          "title": "Access Token",
+          "type": "string"
+        },
+        "token_parsed": {
+          "$ref": "#/$defs/UserToken"
+        },
+        "user": {
+          "$ref": "#/$defs/UserRead"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "access_token",
+        "token_parsed",
+        "user",
+        "message"
+      ],
+      "title": "ImpersonationResponse",
+      "type": "object"
+    },
     "UserChangeInfo": {
       "properties": {
         "first_name": {
@@ -198,6 +594,18 @@
           "format": "date-time",
           "title": "Expires At",
           "type": "string"
+        },
+        "real_admin_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Real Admin Id"
         }
       },
       "required": [
@@ -265,6 +673,30 @@
     },
     {
       "$ref": "#/$defs/UserPasswordResetConfirm"
+    },
+    {
+      "$ref": "#/$defs/AdminUserRead"
+    },
+    {
+      "$ref": "#/$defs/AdminUserUpdate"
+    },
+    {
+      "$ref": "#/$defs/AdminUserListResponse"
+    },
+    {
+      "$ref": "#/$defs/AdminDashboardStats"
+    },
+    {
+      "$ref": "#/$defs/ImpersonationResponse"
+    },
+    {
+      "$ref": "#/$defs/EventLogRead"
+    },
+    {
+      "$ref": "#/$defs/EventLogFilter"
+    },
+    {
+      "$ref": "#/$defs/EventLogListResponse"
     }
   ]
 }

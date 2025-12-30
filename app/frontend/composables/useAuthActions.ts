@@ -42,18 +42,18 @@ export function useAuthActions() {
             const data = (await response.json()) as UserTokenUpdate;
             auth.saveUserToken(data);
             toast.add({
-                severity: 'success',
-                summary: t('core.auth.loginSuccess'),
-                life: 3000,
+                color: 'success',
+                title: t('core.auth.loginSuccess'),
+                duration: 3000,
             });
             return true;
         } catch (error) {
             const message = error instanceof Error ? error.message : t('core.auth.invalidCredentials');
             toast.add({
-                severity: 'error',
-                summary: t('core.errors.generic'),
-                detail: message,
-                life: 5000,
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
             });
             return false;
         }
@@ -78,9 +78,9 @@ export function useAuthActions() {
 
             auth.saveUserToken(response);
             toast.add({
-                severity: 'success',
-                summary: t('core.auth.registerSuccess'),
-                life: 3000,
+                color: 'success',
+                title: t('core.auth.registerSuccess'),
+                duration: 3000,
             });
 
             // Trigger email verification send (fire and forget)
@@ -90,10 +90,10 @@ export function useAuthActions() {
         } catch (error) {
             const message = error instanceof Error ? error.message : t('core.errors.generic');
             toast.add({
-                severity: 'error',
-                summary: t('core.errors.generic'),
-                detail: message,
-                life: 5000,
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
             });
             return false;
         }
@@ -111,9 +111,9 @@ export function useAuthActions() {
         }
 
         toast.add({
-            severity: 'success',
-            summary: t('core.auth.passwordResetSent'),
-            life: 3000,
+            color: 'success',
+            title: t('core.auth.passwordResetSent'),
+            duration: 3000,
         });
         return true;
     }
@@ -125,18 +125,18 @@ export function useAuthActions() {
         try {
             await api.post<AuthMessageResponse>('/auth/reset-password', { token, password });
             toast.add({
-                severity: 'success',
-                summary: t('core.auth.passwordResetSuccess'),
-                life: 3000,
+                color: 'success',
+                title: t('core.auth.passwordResetSuccess'),
+                duration: 3000,
             });
             return true;
         } catch (error) {
             const message = error instanceof Error ? error.message : t('core.errors.generic');
             toast.add({
-                severity: 'error',
-                summary: t('core.errors.generic'),
-                detail: message,
-                life: 5000,
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
             });
             return false;
         }
@@ -149,9 +149,9 @@ export function useAuthActions() {
         try {
             await api.post<AuthMessageResponse>('/auth/send-verification-email', {});
             toast.add({
-                severity: 'success',
-                summary: t('core.auth.verificationEmailSent'),
-                life: 3000,
+                color: 'success',
+                title: t('core.auth.verificationEmailSent'),
+                duration: 3000,
             });
             return true;
         } catch (error) {
@@ -168,18 +168,18 @@ export function useAuthActions() {
         try {
             await api.post<AuthMessageResponse>('/auth/verify-email', { token });
             toast.add({
-                severity: 'success',
-                summary: t('core.auth.emailVerified'),
-                life: 3000,
+                color: 'success',
+                title: t('core.auth.emailVerified'),
+                duration: 3000,
             });
             return true;
         } catch (error) {
             const message = error instanceof Error ? error.message : t('core.errors.generic');
             toast.add({
-                severity: 'error',
-                summary: t('core.errors.generic'),
-                detail: message,
-                life: 5000,
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
             });
             return false;
         }
@@ -191,9 +191,9 @@ export function useAuthActions() {
     function logout(): void {
         auth.logout();
         toast.add({
-            severity: 'success',
-            summary: t('core.auth.logoutSuccess'),
-            life: 3000,
+            color: 'success',
+            title: t('core.auth.logoutSuccess'),
+            duration: 3000,
         });
     }
 
