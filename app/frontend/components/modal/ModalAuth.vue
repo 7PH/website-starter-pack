@@ -256,7 +256,9 @@ function close() {
             <!-- Logged In View -->
             <div v-if="auth.isLoggedIn" class="flex flex-col gap-5">
                 <div class="text-center">
-                    <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mx-auto mb-3">
+                    <div
+                        class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mx-auto mb-3"
+                    >
                         <UIcon name="i-lucide-user" class="w-8 h-8 text-primary-500" />
                     </div>
                     <p class="font-medium text-gray-900 dark:text-gray-100">
@@ -438,7 +440,11 @@ function close() {
             </form>
 
             <!-- Forgot Password Form -->
-            <form v-else-if="mode === 'forgot-password'" class="flex flex-col gap-5" @submit.prevent="handleForgotPassword">
+            <form
+                v-else-if="mode === 'forgot-password'"
+                class="flex flex-col gap-5"
+                @submit.prevent="handleForgotPassword"
+            >
                 <UAlert
                     color="info"
                     title="Password Reset"
@@ -471,7 +477,11 @@ function close() {
             </form>
 
             <!-- Reset Password Form -->
-            <form v-else-if="mode === 'reset-password'" class="flex flex-col gap-5" @submit.prevent="handleResetPassword">
+            <form
+                v-else-if="mode === 'reset-password'"
+                class="flex flex-col gap-5"
+                @submit.prevent="handleResetPassword"
+            >
                 <UAlert v-if="errors.general" color="error" :title="errors.general" />
 
                 <UFormField :label="t('core.auth.password')" :error="errors.password">

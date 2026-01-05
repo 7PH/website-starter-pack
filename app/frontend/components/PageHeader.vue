@@ -5,6 +5,8 @@ const { t } = useI18n();
 const { isPremium, loading: subscriptionLoading } = useSubscription();
 const { locale, availableLocales, setLocale } = useAppLocale();
 const { isDark, toggle: toggleColorMode } = useColorModeToggle();
+const config = useRuntimeConfig();
+const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
 
 // Language switcher items for UDropdownMenu
 const localeMenuItems = computed(() => [
@@ -50,9 +52,9 @@ function onSelectLogout() {
 
                 <!-- Logged in state -->
                 <template v-else>
-                    <!-- Premium badge or Upgrade CTA -->
+                    <!-- Premium badge or Upgrade CTA (only when Stripe is enabled) -->
                     <NuxtLink
-                        v-if="!subscriptionLoading"
+                        v-if="stripeEnabled && !subscriptionLoading"
                         to="/premium"
                         :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                     >

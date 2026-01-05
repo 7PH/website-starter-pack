@@ -32,12 +32,7 @@ export function useTableState(options: TableStateOptions = {}): TableState & {
     prevPage: () => void;
     toggleSort: (field: string) => void;
 } {
-    const {
-        defaultLimit = 50,
-        searchDebounce = 300,
-        defaultSort = '',
-        defaultOrder = 'desc',
-    } = options;
+    const { defaultLimit = 50, searchDebounce = 300, defaultSort = '', defaultOrder = 'desc' } = options;
 
     // Core state
     const search = ref('');

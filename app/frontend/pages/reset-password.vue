@@ -40,9 +40,7 @@ onMounted(async () => {
             <div class="py-8">
                 <UIcon name="i-lucide-x-circle" class="text-5xl text-red-500" />
                 <h2 class="mt-4 text-xl font-semibold">Invalid Reset Link</h2>
-                <p class="mt-2 text-gray-600 dark:text-gray-400">
-                    This password reset link is invalid or has expired.
-                </p>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">This password reset link is invalid or has expired.</p>
                 <UButton class="mt-4" label="Go to Home" @click="router.push('/')" />
             </div>
         </UCard>

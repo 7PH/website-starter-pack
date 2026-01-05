@@ -31,7 +31,7 @@ http:
       {{ end }}
 
     adminer:
-      rule: "Host(`adminer.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      rule: "Host(`{{env "ADMINER_SUBDOMAIN"}}.{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: adminer
       middlewares:
@@ -41,9 +41,9 @@ http:
         certResolver: letsencrypt
       {{ end }}
 
-    # Umami Analytics (only active when using --profile analytics)
+    # Umami Analytics
     umami:
-      rule: "Host(`analytics.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      rule: "Host(`{{env "UMAMI_SUBDOMAIN"}}.{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: umami
       middlewares:

@@ -61,11 +61,11 @@ npm run db-dump / db-restore  # Backup/restore database
 
 ## Theming & Dark Mode
 
-The app uses **Tailwind CSS** for custom styling and **PrimeVue** for UI components. Both support dark mode via the `.dark` class.
+The app uses **Tailwind CSS** for custom styling and **@nuxt/ui** for UI components. Both support dark mode via the `.dark` class.
 
 ### Styling Rules
 
-1. **PrimeVue components** (Button, Card, DataTable, etc.): Use as-is, they handle dark mode automatically
+1. **@nuxt/ui components** (UButton, UInput, UModal, etc.): Use as-is, they handle dark mode automatically
 2. **Custom styling**: Use Tailwind utilities with `dark:` variants
 3. **Colors**:
    - `primary-*` for brand/accent colors (defined in `tailwind.config.ts`)
@@ -85,11 +85,6 @@ The app uses **Tailwind CSS** for custom styling and **PrimeVue** for UI compone
 }
 </style>
 ```
-
-### Don't Use
-
-- PrimeVue CSS variables (`--p-*`) with `@apply` in scoped styles (doesn't work)
-- `:global(.dark)` selectors (fragile, hard to maintain)
 
 ## Core Updates
 

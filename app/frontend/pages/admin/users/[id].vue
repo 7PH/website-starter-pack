@@ -19,11 +19,9 @@ const {
     data: user,
     pending: userPending,
     refresh: refreshUser,
-} = await useAsyncData<AdminUserRead>(
-    `admin-user-${userId.value}`,
-    () => api.get(`/admin/users/${userId.value}`),
-    { server: false },
-);
+} = await useAsyncData<AdminUserRead>(`admin-user-${userId.value}`, () => api.get(`/admin/users/${userId.value}`), {
+    server: false,
+});
 
 // Fetch user events
 const { data: eventsData, pending: eventsPending } = await useAsyncData<EventLogListResponse>(
@@ -206,8 +204,20 @@ async function deleteUser() {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <UButton label="Impersonate" icon="i-lucide-user" color="neutral" variant="outline" @click="impersonateUser" />
-                    <UButton label="Delete" icon="i-lucide-trash-2" color="error" variant="outline" @click="deleteUser" />
+                    <UButton
+                        label="Impersonate"
+                        icon="i-lucide-user"
+                        color="neutral"
+                        variant="outline"
+                        @click="impersonateUser"
+                    />
+                    <UButton
+                        label="Delete"
+                        icon="i-lucide-trash-2"
+                        color="error"
+                        variant="outline"
+                        @click="deleteUser"
+                    />
                 </div>
             </div>
 
@@ -292,7 +302,10 @@ async function deleteUser() {
                         </template>
 
                         <template #details-cell="{ row }">
-                            <code v-if="Object.keys(row.original.details).length > 0" class="details-code">
+                            <code
+                                v-if="row.original.details && Object.keys(row.original.details).length > 0"
+                                class="details-code"
+                            >
                                 {{ JSON.stringify(row.original.details) }}
                             </code>
                             <span v-else class="text-muted">-</span>

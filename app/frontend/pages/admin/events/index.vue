@@ -15,8 +15,8 @@ const fromDateStr = ref<string>('');
 const toDateStr = ref<string>('');
 
 // Convert string to Date for API
-const fromDate = computed(() => fromDateStr.value ? new Date(fromDateStr.value) : null);
-const toDate = computed(() => toDateStr.value ? new Date(toDateStr.value) : null);
+const fromDate = computed(() => (fromDateStr.value ? new Date(fromDateStr.value) : null));
+const toDate = computed(() => (toDateStr.value ? new Date(toDateStr.value) : null));
 
 // Action categories for filter dropdown
 const actionCategories = [
@@ -63,7 +63,9 @@ function formatAction(action: string): string {
         .join(' ');
 }
 
-function getActionColor(action: string): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+function getActionColor(
+    action: string,
+): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' {
     if (action.startsWith('admin.')) return 'info';
     if (action.startsWith('user.login') || action.startsWith('user.register')) return 'success';
     if (action.includes('delete')) return 'error';
@@ -71,7 +73,7 @@ function getActionColor(action: string): 'primary' | 'secondary' | 'success' | '
 }
 
 function clearFilters() {
-    actionFilter.value = null;
+    actionFilter.value = 'all';
     userIdFilter.value = '';
     fromDateStr.value = '';
     toDateStr.value = '';
@@ -87,37 +89,19 @@ function clearFilters() {
             <div class="filters">
                 <div class="filter-item">
                     <label class="filter-label">Event Type</label>
-                    <USelect
-                        v-model="actionFilter"
-                        :items="actionCategories"
-                        placeholder="All Events"
-                        class="w-40"
-                    />
+                    <USelect v-model="actionFilter" :items="actionCategories" placeholder="All Events" class="w-40" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">User ID</label>
-                    <UInput
-                        v-model="userIdFilter"
-                        type="number"
-                        placeholder="User ID"
-                        class="w-28"
-                    />
+                    <UInput v-model="userIdFilter" type="number" placeholder="User ID" class="w-28" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">From Date</label>
-                    <UInput
-                        v-model="fromDateStr"
-                        type="datetime-local"
-                        class="w-48"
-                    />
+                    <UInput v-model="fromDateStr" type="datetime-local" class="w-48" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">To Date</label>
-                    <UInput
-                        v-model="toDateStr"
-                        type="datetime-local"
-                        class="w-48"
-                    />
+                    <UInput v-model="toDateStr" type="datetime-local" class="w-48" />
                 </div>
                 <div class="filter-actions">
                     <UButton label="Clear" color="neutral" variant="outline" size="sm" @click="clearFilters" />
@@ -147,7 +131,11 @@ function clearFilters() {
                 </template>
 
                 <template #user_id-cell="{ row }">
-                    <NuxtLink v-if="row.original.user_id" :to="`/admin/users/${row.original.user_id}`" class="user-link">
+                    <NuxtLink
+                        v-if="row.original.user_id"
+                        :to="`/admin/users/${row.original.user_id}`"
+                        class="user-link"
+                    >
                         #{{ row.original.user_id }}
                     </NuxtLink>
                     <span v-else class="text-muted">-</span>
@@ -159,11 +147,14 @@ function clearFilters() {
                 </template>
 
                 <template #created_at-cell="{ row }">
-                    {{ formatDate(row.original.created_at) }}
+                    {{ row.original.created_at ? formatDate(row.original.created_at) : '-' }}
                 </template>
 
                 <template #details-cell="{ row }">
-                    <code v-if="Object.keys(row.original.details).length > 0" class="details-code">
+                    <code
+                        v-if="row.original.details && Object.keys(row.original.details).length > 0"
+                        class="details-code"
+                    >
                         {{ JSON.stringify(row.original.details) }}
                     </code>
                     <span v-else class="text-muted">-</span>

@@ -9,6 +9,13 @@ definePageMeta({
 const { t } = useI18n();
 const { isPremium, loading, refresh } = useSubscription();
 const stripe = useStripe();
+const config = useRuntimeConfig();
+
+// Redirect to home if Stripe is disabled
+const stripeEnabled = String(config.public.stripeEnabled) === 'true';
+if (!stripeEnabled) {
+    navigateTo('/');
+}
 
 // Sync premium status with Stripe on page load
 onMounted(() => refresh());

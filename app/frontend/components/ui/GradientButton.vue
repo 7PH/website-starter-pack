@@ -23,17 +23,18 @@ defineProps<{
 
 /* Shadow values (inline to ensure availability in scoped styles) */
 .gradient-btn {
-    --btn-shadow-rest: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
-    --btn-shadow-hover: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02);
-    --btn-shadow-glow-brand: 0 0 20px rgba(139,92,246,0.35), 0 0 40px rgba(139,92,246,0.2);
-    --btn-shadow-glow-pop: 0 0 20px rgba(217,70,239,0.35), 0 0 40px rgba(217,70,239,0.2);
+    --btn-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --btn-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    --btn-shadow-glow-brand: 0 0 20px rgba(139, 92, 246, 0.35), 0 0 40px rgba(139, 92, 246, 0.2);
+    --btn-shadow-glow-pop: 0 0 20px rgba(217, 70, 239, 0.35), 0 0 40px rgba(217, 70, 239, 0.2);
 
     @apply relative font-bold uppercase text-white rounded-lg cursor-pointer overflow-hidden;
     @apply inline-flex items-center justify-center;
     box-shadow: var(--btn-shadow-rest);
-    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
-                background-position 400ms ease;
+    transition:
+        transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+        background-position 400ms ease;
 }
 
 /* Hover: float up */

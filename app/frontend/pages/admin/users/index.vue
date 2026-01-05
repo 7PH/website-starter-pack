@@ -44,13 +44,14 @@ const {
     refresh,
 } = await useAsyncData<AdminUserListResponse>(
     'admin-users',
-    () => api.get('/admin/users', {
-        search: searchDebounced.value || undefined,
-        is_admin: filterToBool(isAdminFilter.value),
-        is_premium: filterToBool(isPremiumFilter.value),
-        limit: itemsPerPage,
-        offset: (page.value - 1) * itemsPerPage,
-    }),
+    () =>
+        api.get('/admin/users', {
+            search: searchDebounced.value || undefined,
+            is_admin: filterToBool(isAdminFilter.value),
+            is_premium: filterToBool(isPremiumFilter.value),
+            limit: itemsPerPage,
+            offset: (page.value - 1) * itemsPerPage,
+        }),
     { watch: [searchDebounced, isAdminFilter, isPremiumFilter, page], server: false },
 );
 
@@ -153,38 +154,24 @@ async function deleteUser(user: AdminUserRead) {
             />
             <div class="filter-item">
                 <label class="filter-label">Admin</label>
-                <USelect
-                    v-model="isAdminFilter"
-                    :items="filterOptions"
-                    class="w-24"
-                />
+                <USelect v-model="isAdminFilter" :items="filterOptions" class="w-24" />
             </div>
             <div class="filter-item">
                 <label class="filter-label">Premium</label>
-                <USelect
-                    v-model="isPremiumFilter"
-                    :items="filterOptions"
-                    class="w-24"
-                />
+                <USelect v-model="isPremiumFilter" :items="filterOptions" class="w-24" />
             </div>
         </div>
 
         <!-- Users Table -->
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UTable
-                :columns="columns"
-                :data="usersData?.items ?? []"
-                :loading="pending"
-            >
+            <UTable :columns="columns" :data="usersData?.items ?? []" :loading="pending">
                 <template #email-cell="{ row }">
                     <NuxtLink :to="`/admin/users/${row.original.id}`" class="user-link">
                         {{ row.original.email }}
                     </NuxtLink>
                 </template>
 
-                <template #name-cell="{ row }">
-                    {{ row.original.first_name }} {{ row.original.last_name }}
-                </template>
+                <template #name-cell="{ row }"> {{ row.original.first_name }} {{ row.original.last_name }} </template>
 
                 <template #is_admin-cell="{ row }">
                     <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
@@ -211,12 +198,7 @@ async function deleteUser(user: AdminUserRead) {
                         </UTooltip>
                         <UTooltip text="Edit">
                             <NuxtLink :to="`/admin/users/${row.original.id}`">
-                                <UButton
-                                    icon="i-lucide-pencil"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                />
+                                <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
                             </NuxtLink>
                         </UTooltip>
                         <UTooltip text="Delete">
@@ -235,7 +217,9 @@ async function deleteUser(user: AdminUserRead) {
             <!-- Pagination -->
             <div v-if="totalPages > 1" class="pagination-footer">
                 <div class="pagination-info">
-                    Showing {{ (page - 1) * itemsPerPage + 1 }}-{{ Math.min(page * itemsPerPage, usersData?.total ?? 0) }}
+                    Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
+                        Math.min(page * itemsPerPage, usersData?.total ?? 0)
+                    }}
                     of {{ usersData?.total ?? 0 }}
                 </div>
                 <UPagination v-model="page" :total="usersData?.total ?? 0" :items-per-page="itemsPerPage" />

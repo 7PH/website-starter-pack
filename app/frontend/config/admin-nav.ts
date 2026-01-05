@@ -10,8 +10,12 @@ export interface AdminNavItem {
     label: string;
     /** Icon name (e.g., 'i-lucide-users') */
     icon: string;
-    /** Route path */
-    to: string;
+    /** Route path (for internal links) */
+    to?: string;
+    /** External URL (for external links) */
+    href?: string;
+    /** Whether this is an external link (opens in new tab) */
+    external?: boolean;
     /** Sort order (lower = higher in list) */
     order?: number;
 }

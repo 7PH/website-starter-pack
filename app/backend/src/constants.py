@@ -20,6 +20,7 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 2
 PASSWORD_MIN_LENGTH = 8
 
 # Stripe
+STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "false").lower() == "true"
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 # Event log types - core events managed by starterpack
