@@ -1,10 +1,8 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-import hashlib
-import hmac
-import os
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -13,9 +11,8 @@ from ..constants import (
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,
     JWT_SECRET_KEY,
-    PASSWORD_HASH_SECRET_KEY,
 )
-from ..models.user import UserBase, UserRead, UserTokenUpdate
+from ..models.user import UserRead, UserTokenUpdate
 from .exception import InvalidTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
@@ -23,16 +20,26 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 def hash_password(password: str) -> str:
     """
-    Hash the password using HMAC with a secret key.
+    Hash the password using bcrypt with automatic salt generation.
+    Uses cost factor of 12 (2^12 iterations) for security.
     """
-    return hmac.new(PASSWORD_HASH_SECRET_KEY, password.encode("utf-8"), hashlib.sha256).hexdigest()
+    password_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
     """
-    Verify if the provided password matches the hashed password.
+    Verify if the provided password matches the bcrypt hashed password.
     """
-    return hmac.compare_digest(hashed_password, hash_password(password))
+    try:
+        password_bytes = password.encode("utf-8")
+        hashed_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except (ValueError, TypeError):
+        # Invalid hash format
+        return False
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
@@ -72,16 +79,6 @@ async def get_real_admin_id(token: str = Depends(oauth2_scheme)) -> int | None:
     """
     token_decoded = decode_access_token(token)
     return token_decoded["data"].get("real_admin_id")
-
-
-def get_current_user_optional(
-    token: str | None = Depends(oauth2_scheme),
-) -> UserBase | None:
-    """
-    Retrieve the current user if the token is provided, otherwise return None.
-    If no token is passed, the user is considered unauthenticated.
-    """
-    return get_current_user(token) if token else None
 
 
 def create_access_token(
@@ -143,10 +140,3 @@ def decode_access_token(token: str) -> dict:
         raise InvalidTokenException("Token has expired") from None
     except jwt.InvalidTokenError:
         raise InvalidTokenException("Invalid token") from None
-
-
-def generate_password_reset_token() -> str:
-    """
-    Generate a password reset token using a secure random URL-safe string.
-    """
-    return os.urandom(32).hex()

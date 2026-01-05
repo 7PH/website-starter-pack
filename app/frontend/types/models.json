@@ -106,18 +106,6 @@
             }
           ],
           "title": "Created At"
-        },
-        "last_seen_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Last Seen At"
         }
       },
       "required": [
@@ -128,8 +116,7 @@
         "is_admin",
         "is_premium",
         "email_confirmed",
-        "created_at",
-        "last_seen_at"
+        "created_at"
       ],
       "title": "AdminUserRead",
       "type": "object"
@@ -199,6 +186,111 @@
         }
       },
       "title": "AdminUserUpdate",
+      "type": "object"
+    },
+    "BackupInfo": {
+      "description": "Information about a single backup file.",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "filename",
+        "size",
+        "created_at"
+      ],
+      "title": "BackupInfo",
+      "type": "object"
+    },
+    "BackupListResponse": {
+      "description": "Response for backup list endpoint.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/BackupInfo"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total"
+      ],
+      "title": "BackupListResponse",
+      "type": "object"
+    },
+    "DatabaseHealthResponse": {
+      "description": "Complete database health response.",
+      "properties": {
+        "database_size": {
+          "title": "Database Size",
+          "type": "integer"
+        },
+        "database_size_pretty": {
+          "title": "Database Size Pretty",
+          "type": "string"
+        },
+        "active_connections": {
+          "title": "Active Connections",
+          "type": "integer"
+        },
+        "max_connections": {
+          "title": "Max Connections",
+          "type": "integer"
+        },
+        "cache_hit_ratio": {
+          "title": "Cache Hit Ratio",
+          "type": "number"
+        },
+        "tables": {
+          "items": {
+            "$ref": "#/$defs/TableStats"
+          },
+          "title": "Tables",
+          "type": "array"
+        },
+        "indexes": {
+          "items": {
+            "$ref": "#/$defs/IndexStats"
+          },
+          "title": "Indexes",
+          "type": "array"
+        },
+        "recommendations": {
+          "items": {
+            "$ref": "#/$defs/Recommendation"
+          },
+          "title": "Recommendations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "database_size",
+        "database_size_pretty",
+        "active_connections",
+        "max_connections",
+        "cache_hit_ratio",
+        "tables",
+        "indexes",
+        "recommendations"
+      ],
+      "title": "DatabaseHealthResponse",
       "type": "object"
     },
     "EventLogFilter": {
@@ -325,9 +417,17 @@
           "type": "string"
         },
         "details": {
-          "additionalProperties": true,
-          "title": "Details",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Details"
         },
         "ip_address": {
           "anyOf": [
@@ -352,16 +452,22 @@
           "title": "User Agent"
         },
         "created_at": {
-          "format": "date-time",
-          "title": "Created At",
-          "type": "string"
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created At"
         }
       },
       "required": [
         "id",
         "user_id",
         "action",
-        "details",
         "ip_address",
         "user_agent",
         "created_at"
@@ -396,17 +502,159 @@
       "title": "ImpersonationResponse",
       "type": "object"
     },
+    "IndexStats": {
+      "description": "Statistics for a database index.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "size_pretty": {
+          "title": "Size Pretty",
+          "type": "string"
+        },
+        "scans": {
+          "title": "Scans",
+          "type": "integer"
+        },
+        "is_unused": {
+          "title": "Is Unused",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "table",
+        "size",
+        "size_pretty",
+        "scans",
+        "is_unused"
+      ],
+      "title": "IndexStats",
+      "type": "object"
+    },
+    "Recommendation": {
+      "description": "An actionable recommendation for database optimization.",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "severity": {
+          "title": "Severity",
+          "type": "string"
+        },
+        "table": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Table"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "severity",
+        "table",
+        "message",
+        "action"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "TableStats": {
+      "description": "Statistics for a database table.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "size_pretty": {
+          "title": "Size Pretty",
+          "type": "string"
+        },
+        "row_count": {
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "dead_tuples": {
+          "title": "Dead Tuples",
+          "type": "integer"
+        },
+        "seq_scans": {
+          "title": "Seq Scans",
+          "type": "integer"
+        },
+        "idx_scans": {
+          "title": "Idx Scans",
+          "type": "integer"
+        },
+        "last_vacuum": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Vacuum"
+        }
+      },
+      "required": [
+        "name",
+        "size",
+        "size_pretty",
+        "row_count",
+        "dead_tuples",
+        "seq_scans",
+        "idx_scans",
+        "last_vacuum"
+      ],
+      "title": "TableStats",
+      "type": "object"
+    },
     "UserChangeInfo": {
       "properties": {
         "first_name": {
+          "maxLength": 100,
+          "minLength": 1,
           "title": "First Name",
           "type": "string"
         },
         "last_name": {
+          "maxLength": 100,
+          "minLength": 1,
           "title": "Last Name",
           "type": "string"
         },
         "email": {
+          "maxLength": 255,
           "title": "Email",
           "type": "string"
         }
@@ -422,10 +670,13 @@
     "UserChangePassword": {
       "properties": {
         "old_password": {
+          "maxLength": 128,
           "title": "Old Password",
           "type": "string"
         },
         "new_password": {
+          "maxLength": 128,
+          "minLength": 8,
           "title": "New Password",
           "type": "string"
         }
@@ -440,18 +691,25 @@
     "UserCreate": {
       "properties": {
         "email": {
+          "maxLength": 255,
           "title": "Email",
           "type": "string"
         },
         "password": {
+          "maxLength": 128,
+          "minLength": 8,
           "title": "Password",
           "type": "string"
         },
         "first_name": {
+          "maxLength": 100,
+          "minLength": 1,
           "title": "First Name",
           "type": "string"
         },
         "last_name": {
+          "maxLength": 100,
+          "minLength": 1,
           "title": "Last Name",
           "type": "string"
         }
@@ -463,47 +721,6 @@
         "last_name"
       ],
       "title": "UserCreate",
-      "type": "object"
-    },
-    "UserLogin": {
-      "properties": {
-        "email": {
-          "title": "Email",
-          "type": "string"
-        },
-        "password": {
-          "title": "Password",
-          "type": "string"
-        }
-      },
-      "required": [
-        "email",
-        "password"
-      ],
-      "title": "UserLogin",
-      "type": "object"
-    },
-    "UserPasswordResetConfirm": {
-      "properties": {
-        "email": {
-          "title": "Email",
-          "type": "string"
-        },
-        "password": {
-          "title": "Password",
-          "type": "string"
-        },
-        "token": {
-          "title": "Token",
-          "type": "string"
-        }
-      },
-      "required": [
-        "email",
-        "password",
-        "token"
-      ],
-      "title": "UserPasswordResetConfirm",
       "type": "object"
     },
     "UserPasswordResetRequest": {
@@ -654,9 +871,6 @@
       "$ref": "#/$defs/UserCreate"
     },
     {
-      "$ref": "#/$defs/UserLogin"
-    },
-    {
       "$ref": "#/$defs/UserChangeInfo"
     },
     {
@@ -670,9 +884,6 @@
     },
     {
       "$ref": "#/$defs/UserPasswordResetRequest"
-    },
-    {
-      "$ref": "#/$defs/UserPasswordResetConfirm"
     },
     {
       "$ref": "#/$defs/AdminUserRead"
@@ -697,6 +908,24 @@
     },
     {
       "$ref": "#/$defs/EventLogListResponse"
+    },
+    {
+      "$ref": "#/$defs/BackupInfo"
+    },
+    {
+      "$ref": "#/$defs/BackupListResponse"
+    },
+    {
+      "$ref": "#/$defs/DatabaseHealthResponse"
+    },
+    {
+      "$ref": "#/$defs/TableStats"
+    },
+    {
+      "$ref": "#/$defs/IndexStats"
+    },
+    {
+      "$ref": "#/$defs/Recommendation"
     }
   ]
 }

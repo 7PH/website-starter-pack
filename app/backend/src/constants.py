@@ -11,11 +11,6 @@ IS_PROD = os.environ.get("MODE", "PRODUCTION") != "DEVELOPMENT"
 PUBLIC_WEBSITE_HOST = os.environ.get("PUBLIC_WEBSITE_HOST", "")
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "")
 
-# Secret key for hashing user passwords
-PASSWORD_HASH_SECRET_KEY = os.environ.get("USERS_PASSWORD_HASH_SECRET_KEY").encode(
-    "utf-8"
-)
-
 # JWT details
 JWT_SECRET_KEY = os.environ.get("TOKEN_HASH_SECRET")
 JWT_ALGORITHM = "HS256"

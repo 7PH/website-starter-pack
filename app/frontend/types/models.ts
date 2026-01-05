@@ -11,13 +11,11 @@ export type Models =
   | UserRead
   | UserPreviewRead
   | UserCreate
-  | UserLogin
   | UserChangeInfo
   | UserChangePassword
   | UserToken
   | UserTokenUpdate
   | UserPasswordResetRequest
-  | UserPasswordResetConfirm
   | AdminUserRead
   | AdminUserUpdate
   | AdminUserListResponse
@@ -25,7 +23,13 @@ export type Models =
   | ImpersonationResponse
   | EventLogRead
   | EventLogFilter
-  | EventLogListResponse;
+  | EventLogListResponse
+  | BackupInfo
+  | BackupListResponse
+  | DatabaseHealthResponse
+  | TableStats
+  | IndexStats
+  | Recommendation;
 export type Id = number;
 export type Email = string;
 export type FirstName = string;
@@ -39,11 +43,9 @@ export type Email1 = string;
 export type Password = string;
 export type FirstName2 = string;
 export type LastName2 = string;
-export type Email2 = string;
-export type Password1 = string;
 export type FirstName3 = string;
 export type LastName3 = string;
-export type Email3 = string;
+export type Email2 = string;
 export type OldPassword = string;
 export type NewPassword = string;
 export type CreatedAt = string;
@@ -51,22 +53,18 @@ export type ExpiresAt = string;
 export type RealAdminId = number | null;
 export type AccessToken = string;
 export type TokenType = string;
-export type Email4 = string;
-export type Email5 = string;
-export type Password2 = string;
-export type Token = string;
+export type Email3 = string;
 export type Id2 = number;
-export type Email6 = string;
+export type Email4 = string;
 export type FirstName4 = string;
 export type LastName4 = string;
 export type IsAdmin1 = boolean;
 export type IsPremium1 = boolean;
 export type EmailConfirmed = boolean;
 export type CreatedAt1 = string | null;
-export type LastSeenAt = string | null;
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
-export type Email7 = string | null;
+export type Email5 = string | null;
 export type IsAdmin2 = boolean | null;
 export type IsPremium2 = boolean | null;
 export type Items = AdminUserRead[];
@@ -79,9 +77,12 @@ export type PremiumUsers = number;
 export type Id3 = number;
 export type UserId = number | null;
 export type Action = string;
+export type Details = {
+  [k: string]: unknown;
+} | null;
 export type IpAddress = string | null;
 export type UserAgent = string | null;
-export type CreatedAt2 = string;
+export type CreatedAt2 = string | null;
 export type RecentEvents = EventLogRead[];
 export type AccessToken1 = string;
 export type Message = string;
@@ -94,6 +95,38 @@ export type Items1 = EventLogRead[];
 export type Total1 = number;
 export type Limit1 = number;
 export type Offset1 = number;
+export type Filename = string;
+export type Size = number;
+export type CreatedAt3 = string;
+export type Items2 = BackupInfo[];
+export type Total2 = number;
+export type DatabaseSize = number;
+export type DatabaseSizePretty = string;
+export type ActiveConnections = number;
+export type MaxConnections = number;
+export type CacheHitRatio = number;
+export type Name = string;
+export type Size1 = number;
+export type SizePretty = string;
+export type RowCount = number;
+export type DeadTuples = number;
+export type SeqScans = number;
+export type IdxScans = number;
+export type LastVacuum = string | null;
+export type Tables = TableStats[];
+export type Name1 = string;
+export type Table = string;
+export type Size2 = number;
+export type SizePretty1 = string;
+export type Scans = number;
+export type IsUnused = boolean;
+export type Indexes = IndexStats[];
+export type Type = string;
+export type Severity = string;
+export type Table1 = string | null;
+export type Message1 = string;
+export type Action2 = string;
+export type Recommendations = Recommendation[];
 
 export interface UserRead {
   id: Id;
@@ -114,14 +147,10 @@ export interface UserCreate {
   first_name: FirstName2;
   last_name: LastName2;
 }
-export interface UserLogin {
-  email: Email2;
-  password: Password1;
-}
 export interface UserChangeInfo {
   first_name: FirstName3;
   last_name: LastName3;
-  email: Email3;
+  email: Email2;
 }
 export interface UserChangePassword {
   old_password: OldPassword;
@@ -140,26 +169,20 @@ export interface UserTokenUpdate {
   token_type?: TokenType;
 }
 export interface UserPasswordResetRequest {
-  email: Email4;
-}
-export interface UserPasswordResetConfirm {
-  email: Email5;
-  password: Password2;
-  token: Token;
+  email: Email3;
 }
 /**
  * Extended user info for admin view.
  */
 export interface AdminUserRead {
   id: Id2;
-  email: Email6;
+  email: Email4;
   first_name: FirstName4;
   last_name: LastName4;
   is_admin: IsAdmin1;
   is_premium: IsPremium1;
   email_confirmed: EmailConfirmed;
   created_at: CreatedAt1;
-  last_seen_at: LastSeenAt;
 }
 /**
  * Schema for admin updating a user.
@@ -167,7 +190,7 @@ export interface AdminUserRead {
 export interface AdminUserUpdate {
   first_name?: FirstName5;
   last_name?: LastName5;
-  email?: Email7;
+  email?: Email5;
   is_admin?: IsAdmin2;
   is_premium?: IsPremium2;
 }
@@ -196,13 +219,10 @@ export interface EventLogRead {
   id: Id3;
   user_id: UserId;
   action: Action;
-  details: Details;
+  details?: Details;
   ip_address: IpAddress;
   user_agent: UserAgent;
   created_at: CreatedAt2;
-}
-export interface Details {
-  [k: string]: unknown;
 }
 /**
  * Response for impersonation endpoints.
@@ -231,5 +251,67 @@ export interface EventLogListResponse {
   total: Total1;
   limit: Limit1;
   offset: Offset1;
+}
+/**
+ * Information about a single backup file.
+ */
+export interface BackupInfo {
+  filename: Filename;
+  size: Size;
+  created_at: CreatedAt3;
+}
+/**
+ * Response for backup list endpoint.
+ */
+export interface BackupListResponse {
+  items: Items2;
+  total: Total2;
+}
+/**
+ * Complete database health response.
+ */
+export interface DatabaseHealthResponse {
+  database_size: DatabaseSize;
+  database_size_pretty: DatabaseSizePretty;
+  active_connections: ActiveConnections;
+  max_connections: MaxConnections;
+  cache_hit_ratio: CacheHitRatio;
+  tables: Tables;
+  indexes: Indexes;
+  recommendations: Recommendations;
+}
+/**
+ * Statistics for a database table.
+ */
+export interface TableStats {
+  name: Name;
+  size: Size1;
+  size_pretty: SizePretty;
+  row_count: RowCount;
+  dead_tuples: DeadTuples;
+  seq_scans: SeqScans;
+  idx_scans: IdxScans;
+  last_vacuum: LastVacuum;
+}
+/**
+ * Statistics for a database index.
+ */
+export interface IndexStats {
+  name: Name1;
+  table: Table;
+  size: Size2;
+  size_pretty: SizePretty1;
+  scans: Scans;
+  is_unused: IsUnused;
+}
+/**
+ * An actionable recommendation for database optimization.
+ */
+export interface Recommendation {
+  type: Type;
+  severity: Severity;
+  table: Table1;
+  message: Message1;
+  action: Action2;
 }
 }

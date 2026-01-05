@@ -8,7 +8,7 @@ import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 
 from ..helpers.db import Base
@@ -25,7 +25,7 @@ class EventLogBase(Base):
     details = Column(JSONB, default=dict)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.now, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
     # Composite index for user event history queries
     __table_args__ = (
@@ -46,10 +46,10 @@ class EventLogRead(BaseModel):
     id: int
     user_id: int | None
     action: str
-    details: dict[str, Any]
+    details: dict[str, Any] | None = None
     ip_address: str | None
     user_agent: str | None
-    created_at: datetime.datetime
+    created_at: datetime.datetime | None
 
     class Config:
         from_attributes = True

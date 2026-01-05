@@ -33,7 +33,6 @@ class AdminUserRead(BaseModel):
     is_premium: bool
     email_confirmed: bool
     created_at: datetime | None
-    last_seen_at: datetime | None
 
     class Config:
         from_attributes = True

@@ -33,4 +33,16 @@ export const CORE_ADMIN_NAV: AdminNavItem[] = [
         to: '/admin/events',
         order: 20,
     },
+    {
+        label: 'DB Health',
+        icon: 'i-lucide-activity',
+        to: '/admin/db-health',
+        order: 25,
+    },
+    {
+        label: 'Backups',
+        icon: 'i-lucide-database-backup',
+        to: '/admin/backups',
+        order: 30,
+    },
 ];

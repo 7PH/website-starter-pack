@@ -45,19 +45,6 @@ def is_email_taken(session: Session, email: str) -> bool:
     )
 
 
-def set_password_reset_token(session: Session, user: UserBase, token: str) -> None:
-    """Set a password reset token for a user."""
-    user.password_reset_token = token
-    session.commit()
-
-
-def reset_password(session: Session, user: UserBase, new_password: str) -> None:
-    """Reset a user's password and clear their reset token."""
-    user.hashed_password = new_password
-    user.password_reset_token = None
-    session.commit()
-
-
 def get_user_by_stripe_id(session: Session, stripe_id: str) -> UserBase | None:
     """Retrieve a user by their Stripe customer ID."""
     return session.execute(

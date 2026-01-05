@@ -268,10 +268,6 @@ async function deleteUser() {
                             <span class="info-label">Created</span>
                             <span class="info-value">{{ formatDate(user.created_at) }}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="info-label">Last Seen</span>
-                            <span class="info-value">{{ formatDate(user.last_seen_at) }}</span>
-                        </div>
                     </div>
                 </UCard>
 

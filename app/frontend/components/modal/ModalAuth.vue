@@ -16,6 +16,7 @@ interface AuthModalOptions extends ModalOptions {
 const MODAL_NAME = 'auth';
 
 const modal = useModalStore();
+const auth = useAuth();
 const { t } = useI18n();
 const authActions = useAuthActions();
 
@@ -102,6 +103,9 @@ watch(isOpen, (open) => {
 
 // Computed title
 const title = computed(() => {
+    if (auth.isLoggedIn) {
+        return t('core.auth.account');
+    }
     switch (mode.value) {
         case 'login':
             return t('core.auth.login');
@@ -113,6 +117,12 @@ const title = computed(() => {
             return t('core.auth.resetPassword');
     }
 });
+
+// Handle logout
+function handleLogout() {
+    authActions.logout();
+    close();
+}
 
 // Validation
 function validateLogin(): boolean {
@@ -243,8 +253,34 @@ function close() {
 <template>
     <UModal v-model:open="isOpen" :title="title" class="sm:max-w-md">
         <template #body>
+            <!-- Logged In View -->
+            <div v-if="auth.isLoggedIn" class="flex flex-col gap-5">
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mx-auto mb-3">
+                        <UIcon name="i-lucide-user" class="w-8 h-8 text-primary-500" />
+                    </div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">
+                        {{ auth.user?.first_name }} {{ auth.user?.last_name }}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ auth.user?.email }}
+                    </p>
+                </div>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
+
+                <UButton
+                    :label="t('core.auth.logout')"
+                    color="error"
+                    variant="soft"
+                    icon="i-lucide-log-out"
+                    block
+                    @click="handleLogout"
+                />
+            </div>
+
             <!-- Login Form -->
-            <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
+            <form v-else-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
                 <UFormField :label="t('core.auth.email')" :error="errors.email">
                     <UInput
                         v-model="loginForm.email"

@@ -11,6 +11,7 @@ Usage:
     register_core_tasks(app)
 """
 
+from .backups import register_backup_tasks
 from .cleanup import register_cleanup_tasks
 
 
@@ -20,3 +21,4 @@ def register_core_tasks(app):
     Call this after creating the app instance.
     """
     register_cleanup_tasks(app)
+    register_backup_tasks(app)

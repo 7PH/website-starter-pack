@@ -6,7 +6,7 @@ Admin controller for user management, impersonation, and event logs.
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -65,11 +65,11 @@ def list_users(
     *,
     session: Session = Depends(get_session),
     admin: UserRead = Depends(get_current_admin),
-    search: str | None = None,
+    search: str | None = Query(None, max_length=100),
     is_admin: bool | None = None,
     is_premium: bool | None = None,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ):
     """List all users with optional search and filters."""
     query = session.query(UserBase)
@@ -294,10 +294,10 @@ def list_events(
     session: Session = Depends(get_session),
     admin: UserRead = Depends(get_current_admin),
     user_id: int | None = None,
-    action: str | None = None,
-    action_prefix: str | None = None,
-    limit: int = 50,
-    offset: int = 0,
+    action: str | None = Query(None, max_length=100),
+    action_prefix: str | None = Query(None, max_length=50),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ):
     """List event logs with optional filtering."""
     filters = EventLogFilter(
@@ -322,8 +322,8 @@ def get_user_event_log(
     session: Session = Depends(get_session),
     admin: UserRead = Depends(get_current_admin),
     user_id: int,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ):
     """Get event log for a specific user."""
     events, total = get_user_events(session, user_id=user_id, limit=limit, offset=offset)

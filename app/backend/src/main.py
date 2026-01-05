@@ -8,20 +8,25 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .constants import IS_PROD
 from .helpers.db import create_db_and_tables
+from .helpers.logging import configure_logging, get_logger, set_request_id
 from .helpers.ratelimit import cleanup_entries
 from .helpers.stripe import init_stripe
 from .router import router as api_router
 from .tasks import register_core_tasks
 
+# Configure structured logging before app startup
+configure_logging()
+logger = get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting app")
+    logger.info("Starting app")
     create_db_and_tables()
     cleanup_entries()
     init_stripe()
     yield
-    print("Stopping app")
+    logger.info("Stopping app")
 
 
 # Create FastAPI app instance
@@ -40,6 +45,16 @@ if not IS_PROD:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Add request ID to context for logging."""
+    # Use X-Request-ID header if provided, otherwise generate one
+    request_id = request.headers.get("X-Request-ID")
+    set_request_id(request_id)
+    response = await call_next(request)
+    return response
 
 
 @app.exception_handler(RequestValidationError)

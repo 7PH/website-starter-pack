@@ -4,6 +4,7 @@
             "name": "Starter Pack"
         },
         "auth": {
+            "account": "Compte",
             "login": "Connexion",
             "logout": "Déconnexion",
             "register": "Inscription",

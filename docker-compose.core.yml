@@ -57,6 +57,7 @@ x-backend-common: &backend-common
     - ./app/backend/src:/app/src
     - ./app/backend/ruff.toml:/app/ruff.toml:ro
     - ./static:/app/static:rw
+    - ./backups:/app/backups:rw
   networks:
     web:
       aliases:

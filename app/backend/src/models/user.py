@@ -2,8 +2,8 @@
 
 import datetime
 
-from pydantic import BaseModel, field_validator
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from ..helpers.db import Base
 
@@ -13,18 +13,14 @@ class UserBase(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
-    username = Column(String, unique=True, nullable=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email_confirmed = Column(Boolean, default=False)
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False)
-    newsletter_on = Column(Boolean, default=True)
-    password_reset_token = Column(String, nullable=True)
     stripe_id = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    last_seen_at = Column(DateTime, default=datetime.datetime.now)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # This table is used for polymorphic inheritance
     __mapper_args__ = {"polymorphic_identity": "userbase"}
@@ -57,10 +53,10 @@ class UserPreviewRead(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: str
-    password: str
-    first_name: str
-    last_name: str
+    email: str = Field(max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
 
     @field_validator("last_name")
     @classmethod
@@ -68,20 +64,15 @@ class UserCreate(BaseModel):
         return v.upper()
 
 
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-
 class UserChangeInfo(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    email: str = Field(max_length=255)
 
 
 class UserChangePassword(BaseModel):
-    old_password: str
-    new_password: str
+    old_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class UserToken(BaseModel):
@@ -100,12 +91,6 @@ class UserTokenUpdate(BaseModel):
 
 class UserPasswordResetRequest(BaseModel):
     email: str
-
-
-class UserPasswordResetConfirm(BaseModel):
-    email: str
-    password: str
-    token: str
 
 
 class EmailVerificationConfirm(BaseModel):

@@ -74,4 +74,4 @@ def ensure_rate_limit(
     :param count: Maximum number of times the action can be performed per minute
     """
     if is_rate_limited(action, quota, key, duration_minutes, True):
-        raise HTTPException(status_code=429, detail="Merci de patienter un peu.")
+        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")

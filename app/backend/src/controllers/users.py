@@ -25,6 +25,7 @@ from ..helpers.auth import (
     verify_password,
 )
 from ..helpers.db import get_session
+from ..helpers.ratelimit import ensure_rate_limit
 from ..models.user import (
     UserBase,
     UserChangeInfo,
@@ -38,11 +39,26 @@ router = APIRouter()
 
 RESET_PASSWORD_BASE_URL = f"{PUBLIC_URL}/reset-password"
 
+# Rate limit constants
+LOGIN_RATE_LIMIT_PER_IP = 10  # max attempts per IP
+LOGIN_RATE_LIMIT_MINUTES = 15
+REGISTER_RATE_LIMIT_PER_IP = 5  # max attempts per IP
+REGISTER_RATE_LIMIT_MINUTES = 15
+
 
 @router.post(
     "/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED
 )
 def register_user(*, request: Request, session: Session = Depends(get_session), user_create: UserCreate):
+    # Rate limit by IP
+    client_ip = request.client.host if request.client else "unknown"
+    ensure_rate_limit(
+        action="register",
+        quota=REGISTER_RATE_LIMIT_PER_IP,
+        key=client_ip,
+        duration_minutes=REGISTER_RATE_LIMIT_MINUTES,
+    )
+
     user_create.email = user_create.email.lower()
     if is_email_taken(session, user_create.email):
         raise HTTPException(
@@ -88,6 +104,15 @@ def login_user(
     session: Session = Depends(get_session),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
+    # Rate limit by IP
+    client_ip = request.client.host if request.client else "unknown"
+    ensure_rate_limit(
+        action="login",
+        quota=LOGIN_RATE_LIMIT_PER_IP,
+        key=client_ip,
+        duration_minutes=LOGIN_RATE_LIMIT_MINUTES,
+    )
+
     # Lowercase the username (email in this case) for case-insensitive login
     email = form_data.username.lower()
     password = form_data.password

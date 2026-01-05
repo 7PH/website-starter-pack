@@ -16,8 +16,6 @@ from .models import (
     UserChangeInfo,
     UserChangePassword,
     UserCreate,
-    UserLogin,
-    UserPasswordResetConfirm,
     UserPasswordResetRequest,
     UserPreviewRead,
     UserRead,
@@ -31,6 +29,16 @@ from .models.admin import (
     AdminUserUpdate,
     ImpersonationResponse,
 )
+from .models.backup import (
+    BackupInfo,
+    BackupListResponse,
+)
+from .models.db_health import (
+    DatabaseHealthResponse,
+    IndexStats,
+    Recommendation,
+    TableStats,
+)
 from .models.event_log import (
     EventLogFilter,
     EventLogListResponse,
@@ -43,13 +51,11 @@ Models = (
     UserRead
     | UserPreviewRead
     | UserCreate
-    | UserLogin
     | UserChangeInfo
     | UserChangePassword
     | UserToken
     | UserTokenUpdate
     | UserPasswordResetRequest
-    | UserPasswordResetConfirm
     # Admin models
     | AdminUserRead
     | AdminUserUpdate
@@ -60,6 +66,14 @@ Models = (
     | EventLogRead
     | EventLogFilter
     | EventLogListResponse
+    # Backup models
+    | BackupInfo
+    | BackupListResponse
+    # Database health models
+    | DatabaseHealthResponse
+    | TableStats
+    | IndexStats
+    | Recommendation
 )
 
 if __name__ == "__main__":
