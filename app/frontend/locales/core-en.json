@@ -116,6 +116,17 @@
             "subscribe": "Subscribe",
             "modifyOrCancel": "Modify or cancel your subscription",
             "unlockFeatures": "Unlock all features"
+        },
+        "legal": {
+            "lastUpdated": "Last updated",
+            "backToHome": "Back to home",
+            "terms": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "cookies": "Cookie Policy"
+        },
+        "footer": {
+            "copyright": "All rights reserved.",
+            "legal": "Legal"
         }
     }
 }
