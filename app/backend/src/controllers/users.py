@@ -46,9 +46,7 @@ REGISTER_RATE_LIMIT_PER_IP = 5  # max attempts per IP
 REGISTER_RATE_LIMIT_MINUTES = 15
 
 
-@router.post(
-    "/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED
-)
+@router.post("/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED)
 def register_user(*, request: Request, session: Session = Depends(get_session), user_create: UserCreate):
     # Rate limit by IP
     client_ip = request.client.host if request.client else "unknown"
@@ -61,9 +59,7 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
 
     user_create.email = user_create.email.lower()
     if is_email_taken(session, user_create.email):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     user = UserBase(
         email=user_create.email,
@@ -95,9 +91,7 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
     )
 
 
-@router.post(
-    "/users/login", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK
-)
+@router.post("/users/login", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
 def login_user(
     *,
     request: Request,
@@ -120,9 +114,7 @@ def login_user(
     user = get_user_by_email(session, email)
 
     if not user or not verify_password(password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     # Log the login event
     log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
@@ -172,7 +164,11 @@ def refresh_token(
     # Fetch fresh user data and issue new token
     user = get_user_by_id(session, current_user.id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        # User was deleted - force logout by returning 401
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account no longer exists",
+        )
 
     return create_access_token(UserRead.model_validate(user))
 
@@ -189,9 +185,7 @@ def get_user(
     """
     user = get_user_by_id(session, user_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
 
@@ -208,9 +202,7 @@ def update_me(
     """
     user = get_user_by_id(session, current_user.id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if user_change_info.first_name is not None:
         user.first_name = user_change_info.first_name
@@ -220,9 +212,7 @@ def update_me(
 
     if user_change_info.email is not None and user.email != user_change_info.email:
         if is_email_taken(session, user_change_info.email):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Email already in use"
-            )
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
         user.email = user_change_info.email
         user.email_confirmed = False
 
@@ -251,14 +241,10 @@ def update_my_password(
     """
     user = get_user_by_id(session, current_user.id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if not verify_password(user_change_pwd.old_password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid current password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid current password")
 
     if user_change_pwd.old_password == user_change_pwd.new_password:
         raise HTTPException(

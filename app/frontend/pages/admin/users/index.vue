@@ -16,11 +16,18 @@ const searchDebounced = refDebounced(search, 300);
 // Filters
 const isAdminFilter = ref('all');
 const isPremiumFilter = ref('all');
+const deletedFilter = ref('hide');
 
 const filterOptions = [
     { label: 'All', value: 'all' },
     { label: 'Yes', value: 'yes' },
     { label: 'No', value: 'no' },
+];
+
+const deletedFilterOptions = [
+    { label: 'Hide deleted', value: 'hide' },
+    { label: 'Show all', value: 'all' },
+    { label: 'Only deleted', value: 'only' },
 ];
 
 function filterToBool(value: string): boolean | undefined {
@@ -34,7 +41,7 @@ const page = ref(1);
 const itemsPerPage = 100;
 
 // Reset page when filters change
-watch([searchDebounced, isAdminFilter, isPremiumFilter], () => {
+watch([searchDebounced, isAdminFilter, isPremiumFilter, deletedFilter], () => {
     page.value = 1;
 });
 
@@ -49,10 +56,12 @@ const {
             search: searchDebounced.value || undefined,
             is_admin: filterToBool(isAdminFilter.value),
             is_premium: filterToBool(isPremiumFilter.value),
+            include_deleted: deletedFilter.value !== 'hide' ? true : undefined,
+            only_deleted: deletedFilter.value === 'only' ? true : undefined,
             limit: itemsPerPage,
             offset: (page.value - 1) * itemsPerPage,
         }),
-    { watch: [searchDebounced, isAdminFilter, isPremiumFilter, page], server: false },
+    { watch: [searchDebounced, isAdminFilter, isPremiumFilter, deletedFilter, page], server: false },
 );
 
 const totalPages = computed(() => Math.ceil((usersData.value?.total ?? 0) / itemsPerPage));
@@ -62,8 +71,7 @@ const columns = [
     { accessorKey: 'id', header: 'ID' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'is_admin', header: 'Admin' },
-    { accessorKey: 'is_premium', header: 'Premium' },
+    { accessorKey: 'status', header: 'Status' },
     { accessorKey: 'created_at', header: 'Created' },
     { accessorKey: 'actions', header: 'Actions' },
 ];
@@ -160,6 +168,10 @@ async function deleteUser(user: AdminUserRead) {
                 <label class="filter-label">Premium</label>
                 <USelect v-model="isPremiumFilter" :items="filterOptions" class="w-24" />
             </div>
+            <div class="filter-item">
+                <label class="filter-label">Deleted</label>
+                <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
+            </div>
         </div>
 
         <!-- Users Table -->
@@ -173,12 +185,12 @@ async function deleteUser(user: AdminUserRead) {
 
                 <template #name-cell="{ row }"> {{ row.original.first_name }} {{ row.original.last_name }} </template>
 
-                <template #is_admin-cell="{ row }">
-                    <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
-                </template>
-
-                <template #is_premium-cell="{ row }">
-                    <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
+                <template #status-cell="{ row }">
+                    <div class="status-badges">
+                        <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
+                        <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
+                        <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
+                    </div>
                 </template>
 
                 <template #created_at-cell="{ row }">
@@ -186,7 +198,7 @@ async function deleteUser(user: AdminUserRead) {
                 </template>
 
                 <template #actions-cell="{ row }">
-                    <div class="actions">
+                    <div v-if="!row.original.deleted_at" class="actions">
                         <UTooltip text="Impersonate">
                             <UButton
                                 icon="i-lucide-user"
@@ -211,6 +223,7 @@ async function deleteUser(user: AdminUserRead) {
                             />
                         </UTooltip>
                     </div>
+                    <NuxtLink v-else :to="`/admin/users/${row.original.id}`" class="view-link"> View </NuxtLink>
                 </template>
             </UTable>
 
@@ -272,6 +285,14 @@ async function deleteUser(user: AdminUserRead) {
 
 .actions {
     @apply flex gap-1;
+}
+
+.status-badges {
+    @apply flex flex-wrap gap-1;
+}
+
+.view-link {
+    @apply text-sm text-gray-500 dark:text-gray-400 hover:underline;
 }
 
 .pagination-footer {

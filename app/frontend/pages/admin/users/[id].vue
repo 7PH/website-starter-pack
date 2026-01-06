@@ -197,13 +197,14 @@ async function deleteUser() {
                     <h1 class="page-title">{{ user.first_name }} {{ user.last_name }}</h1>
                     <span class="user-email">{{ user.email }}</span>
                     <div class="badges">
+                        <UBadge v-if="user.deleted_at" label="Deleted" color="error" />
                         <UBadge v-if="user.is_admin" label="Admin" color="info" />
                         <UBadge v-if="user.is_premium" label="Premium" color="warning" />
                         <UBadge v-if="user.email_confirmed" label="Verified" color="success" />
-                        <UBadge v-else label="Unverified" color="neutral" />
+                        <UBadge v-else-if="!user.deleted_at" label="Unverified" color="neutral" />
                     </div>
                 </div>
-                <div class="header-actions">
+                <div v-if="!user.deleted_at" class="header-actions">
                     <UButton
                         label="Impersonate"
                         icon="i-lucide-user"
@@ -221,6 +222,17 @@ async function deleteUser() {
                 </div>
             </div>
 
+            <!-- Deleted user alert -->
+            <UAlert
+                v-if="user.deleted_at"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-trash-2"
+                title="This user has been deleted"
+                :description="`Deleted on ${formatDate(user.deleted_at)}. Personal data has been anonymized.`"
+                class="mb-6"
+            />
+
             <div class="content-grid">
                 <!-- User Info Card -->
                 <UCard class="info-card">
@@ -228,7 +240,7 @@ async function deleteUser() {
                         <div class="card-header">
                             <span class="font-semibold">User Information</span>
                             <UButton
-                                v-if="!isEditing"
+                                v-if="!isEditing && !user.deleted_at"
                                 label="Edit"
                                 icon="i-lucide-pencil"
                                 size="sm"
@@ -277,6 +289,10 @@ async function deleteUser() {
                         <div class="info-item">
                             <span class="info-label">Created</span>
                             <span class="info-value">{{ formatDate(user.created_at) }}</span>
+                        </div>
+                        <div v-if="user.deleted_at" class="info-item">
+                            <span class="info-label">Deleted</span>
+                            <span class="info-value deleted-value">{{ formatDate(user.deleted_at) }}</span>
                         </div>
                     </div>
                 </UCard>
@@ -381,6 +397,10 @@ async function deleteUser() {
 
 .info-value {
     @apply text-sm text-gray-900 dark:text-gray-100;
+}
+
+.info-value.deleted-value {
+    @apply text-red-600 dark:text-red-400;
 }
 
 .edit-form {

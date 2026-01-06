@@ -4,6 +4,7 @@
 CRUD operations for event logs.
 """
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import Request
@@ -49,6 +50,7 @@ def log_event(
         details=details or {},
         ip_address=ip_address,
         user_agent=user_agent,
+        created_at=datetime.now(UTC),
     )
     session.add(event)
     session.commit()

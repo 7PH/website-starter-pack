@@ -21,6 +21,7 @@ class UserBase(Base):
     stripe_id = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     # This table is used for polymorphic inheritance
     __mapper_args__ = {"polymorphic_identity": "userbase"}
