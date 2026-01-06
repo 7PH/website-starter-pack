@@ -1,6 +1,6 @@
-<script setup lang="ts">
-// ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+<!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
+<script setup lang="ts">
 interface Props {
     title?: string;
     description?: string;

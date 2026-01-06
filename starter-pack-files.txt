@@ -1,7 +1,8 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 # Backend
 app/backend/Dockerfile
 app/backend/migrations/README.md
-app/backend/migrations/*.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/constants.py
@@ -27,22 +28,29 @@ app/frontend/composables/useStripe.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
+app/frontend/composables/useAppLocale.ts
 app/frontend/composables/useAuthActions.ts
+app/frontend/composables/useAuthForms.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useLocale.ts
 app/frontend/composables/useSubscription.ts
+app/frontend/composables/useTableState.ts
 app/frontend/middleware/auth.ts
 app/frontend/middleware/admin.ts
 app/frontend/types/modal.ts
 app/frontend/components/ui/*
+app/frontend/components/EmptyState.vue
+app/frontend/components/ErrorBoundary.vue
 app/frontend/components/LegalPage.vue
+app/frontend/components/LoadingSkeleton.vue
 app/frontend/components/PageFooter.vue
 app/frontend/components/PageHeader.vue
 app/frontend/pages/premium.vue
 app/frontend/config/admin-nav.ts
 app/frontend/layouts/admin.vue
 app/frontend/components/admin/*
-app/frontend/pages/admin/*
+app/frontend/pages/admin/**/*
+app/frontend/plugins/*
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 
@@ -56,7 +64,6 @@ scripts/_core/*
 .github/workflows/*
 
 # Root project files
-.gitignore
 .env.template
 docker-compose.core.yml
 package*.json
