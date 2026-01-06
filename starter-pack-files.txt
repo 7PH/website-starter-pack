@@ -35,6 +35,9 @@ app/frontend/middleware/auth.ts
 app/frontend/middleware/admin.ts
 app/frontend/types/modal.ts
 app/frontend/components/ui/*
+app/frontend/components/LegalPage.vue
+app/frontend/components/PageFooter.vue
+app/frontend/components/PageHeader.vue
 app/frontend/pages/premium.vue
 app/frontend/config/admin-nav.ts
 app/frontend/layouts/admin.vue

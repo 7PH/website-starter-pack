@@ -71,7 +71,7 @@ const techStack = [
 <style scoped>
 @reference "~/assets/css/main.css";
 .hero-container {
-    @apply min-h-[calc(100vh-4rem)] flex items-center justify-center px-4;
+    @apply flex-1 flex items-center justify-center px-4 py-12;
     @apply relative overflow-hidden;
 }
 

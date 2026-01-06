@@ -116,6 +116,17 @@
             "subscribe": "S'abonner",
             "modifyOrCancel": "Modifier ou annuler votre abonnement",
             "unlockFeatures": "Débloquez toutes les fonctionnalités"
+        },
+        "legal": {
+            "lastUpdated": "Dernière mise à jour",
+            "backToHome": "Retour à l'accueil",
+            "terms": "Conditions d'utilisation",
+            "privacy": "Politique de confidentialité",
+            "cookies": "Politique des cookies"
+        },
+        "footer": {
+            "copyright": "Tous droits réservés.",
+            "legal": "Mentions légales"
         }
     }
 }
