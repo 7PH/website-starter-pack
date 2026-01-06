@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import get_events, get_user_events, log_event
-from ..crud.users import delete_user, get_user_by_id, update_user
+from ..crud.users import get_user_by_id, soft_delete_user, update_user
 from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id
 from ..helpers.db import get_session
 from ..models.admin import (
@@ -39,10 +39,14 @@ def get_dashboard_stats(
     session: Session = Depends(get_session),
     admin: UserRead = Depends(get_current_admin),
 ):
-    """Get dashboard statistics."""
-    total_users = session.query(func.count(UserBase.id)).scalar()
-    admin_users = session.query(func.count(UserBase.id)).filter(UserBase.is_admin).scalar()
-    premium_users = session.query(func.count(UserBase.id)).filter(UserBase.is_premium).scalar()
+    """Get dashboard statistics (excludes deleted users)."""
+    total_users = session.query(func.count(UserBase.id)).filter(UserBase.deleted_at.is_(None)).scalar()
+    admin_users = (
+        session.query(func.count(UserBase.id)).filter(UserBase.is_admin, UserBase.deleted_at.is_(None)).scalar()
+    )
+    premium_users = (
+        session.query(func.count(UserBase.id)).filter(UserBase.is_premium, UserBase.deleted_at.is_(None)).scalar()
+    )
 
     # Get recent events
     recent_events, _ = get_events(session, limit=10)
@@ -68,11 +72,19 @@ def list_users(
     search: str | None = Query(None, max_length=100),
     is_admin: bool | None = None,
     is_premium: bool | None = None,
+    include_deleted: bool = False,
+    only_deleted: bool = False,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     """List all users with optional search and filters."""
     query = session.query(UserBase)
+
+    # Handle deleted user filtering
+    if only_deleted:
+        query = query.filter(UserBase.deleted_at.isnot(None))
+    elif not include_deleted:
+        query = query.filter(UserBase.deleted_at.is_(None))
 
     if search:
         search_pattern = f"%{search}%"
@@ -106,8 +118,8 @@ def get_user_detail(
     admin: UserRead = Depends(get_current_admin),
     user_id: int,
 ):
-    """Get detailed user info."""
-    user = get_user_by_id(session, user_id)
+    """Get detailed user info (including deleted users for audit purposes)."""
+    user = get_user_by_id(session, user_id, include_deleted=True)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return AdminUserRead.model_validate(user)
@@ -172,20 +184,28 @@ def delete_user_by_admin(
     admin: UserRead = Depends(get_current_admin),
     user_id: int,
 ):
-    """Delete a user (admin only)."""
+    """Soft delete a user (admin only). Anonymizes personal data."""
     if user_id == admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete yourself",
         )
 
-    user = get_user_by_id(session, user_id)
+    # Fetch user including deleted ones to give proper error message
+    user = get_user_by_id(session, user_id, include_deleted=True)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    # Check if already deleted
+    if user.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already deleted",
+        )
+
     user_email = user.email
 
-    # Log before deletion (so we have the user_id)
+    # Log before soft deletion (so we have the original email)
     log_event(
         session,
         action=EventType.ADMIN_USER_DELETE,
@@ -194,7 +214,7 @@ def delete_user_by_admin(
         request=request,
     )
 
-    delete_user(session, user)
+    soft_delete_user(session, user)
 
 
 # ============================================================================
