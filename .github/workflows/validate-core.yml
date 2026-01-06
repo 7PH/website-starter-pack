@@ -1,0 +1,19 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
+name: Validate Core Files
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    name: Check core file consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate core files
+        run: bash scripts/_core/validate-core-files.sh
