@@ -64,7 +64,10 @@ function onSelectLogout() {
                         <span>{{ isPremium ? t('core.billing.premium') : t('core.billing.upgrade') }}</span>
                     </NuxtLink>
 
-                    <span class="nav-user">{{ auth.user?.first_name }}</span>
+                    <NuxtLink to="/account" class="nav-user-link">
+                        <UIcon name="i-lucide-user" />
+                        <span>{{ auth.user?.first_name }}</span>
+                    </NuxtLink>
 
                     <UButton
                         icon="i-lucide-log-out"
@@ -132,8 +135,11 @@ function onSelectLogout() {
     @apply flex items-center gap-3;
 }
 
-.nav-user {
-    @apply text-sm text-slate-600 dark:text-slate-300;
+.nav-user-link {
+    @apply flex items-center gap-1.5 px-2 py-1.5 rounded-lg;
+    @apply text-sm font-medium text-slate-600 dark:text-slate-300 no-underline;
+    @apply hover:bg-slate-100 dark:hover:bg-slate-800/50;
+    @apply transition-colors duration-200;
 }
 
 .nav-icon-btn {

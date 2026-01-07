@@ -15,6 +15,7 @@ from ..constants import JWT_ALGORITHM, JWT_SECRET_KEY, PUBLIC_URL
 # Token expiration constants
 EMAIL_VERIFICATION_EXPIRE_DAYS = 10
 PASSWORD_RESET_EXPIRE_DAYS = 7
+EMAIL_CHANGE_EXPIRE_DAYS = 2
 
 
 def create_email_verification_token(user_id: int, email: str) -> str:
@@ -49,9 +50,27 @@ def create_password_reset_token(user_id: int) -> str:
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
+def create_email_change_token(user_id: int, current_email: str, new_email: str) -> str:
+    """
+    Create a JWT token for email change.
+
+    Token contains: type, user_id, current_email, new_email, exp
+    The current_email is included to invalidate tokens if user changes email again.
+    """
+    exp = datetime.now(UTC) + timedelta(days=EMAIL_CHANGE_EXPIRE_DAYS)
+    payload = {
+        "type": "change-email",
+        "user_id": user_id,
+        "current_email": current_email,
+        "new_email": new_email,
+        "exp": int(exp.timestamp()),
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
 def decode_typed_token(
     token: str,
-    expected_type: Literal["verify-email", "reset-password"],
+    expected_type: Literal["verify-email", "reset-password", "change-email"],
 ) -> dict | None:
     """
     Decode and validate a typed JWT token.
@@ -85,3 +104,11 @@ def get_password_reset_url(token: str) -> str:
     """
     base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
     return f"{base_url}/reset-password#{token}"
+
+
+def get_email_change_url(token: str) -> str:
+    """
+    Generate the email change confirmation URL with fragment-based token.
+    """
+    base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
+    return f"{base_url}/confirm-email-change#{token}"

@@ -197,6 +197,30 @@ export function useAuthActions() {
         });
     }
 
+    /**
+     * Confirm email change with token from email link.
+     */
+    async function confirmEmailChange(token: string): Promise<boolean> {
+        try {
+            await api.post<AuthMessageResponse>('/auth/confirm-email-change', { token });
+            toast.add({
+                color: 'success',
+                title: t('core.account.email.changeSuccess'),
+                duration: 3000,
+            });
+            return true;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : t('core.errors.generic');
+            toast.add({
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
+            });
+            return false;
+        }
+    }
+
     return {
         login,
         signup,
@@ -205,5 +229,6 @@ export function useAuthActions() {
         sendVerificationEmail,
         verifyEmail,
         logout,
+        confirmEmailChange,
     };
 }

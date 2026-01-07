@@ -45,7 +45,6 @@ export type FirstName2 = string;
 export type LastName2 = string;
 export type FirstName3 = string;
 export type LastName3 = string;
-export type Email2 = string;
 export type OldPassword = string;
 export type NewPassword = string;
 export type CreatedAt = string;
@@ -53,9 +52,9 @@ export type ExpiresAt = string;
 export type RealAdminId = number | null;
 export type AccessToken = string;
 export type TokenType = string;
-export type Email3 = string;
+export type Email2 = string;
 export type Id2 = number;
-export type Email4 = string;
+export type Email3 = string;
 export type FirstName4 = string;
 export type LastName4 = string;
 export type IsAdmin1 = boolean;
@@ -65,7 +64,7 @@ export type CreatedAt1 = string | null;
 export type DeletedAt = string | null;
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
-export type Email5 = string | null;
+export type Email4 = string | null;
 export type IsAdmin2 = boolean | null;
 export type IsPremium2 = boolean | null;
 export type Items = AdminUserRead[];
@@ -151,7 +150,6 @@ export interface UserCreate {
 export interface UserChangeInfo {
   first_name: FirstName3;
   last_name: LastName3;
-  email: Email2;
 }
 export interface UserChangePassword {
   old_password: OldPassword;
@@ -170,14 +168,14 @@ export interface UserTokenUpdate {
   token_type?: TokenType;
 }
 export interface UserPasswordResetRequest {
-  email: Email3;
+  email: Email2;
 }
 /**
  * Extended user info for admin view.
  */
 export interface AdminUserRead {
   id: Id2;
-  email: Email4;
+  email: Email3;
   first_name: FirstName4;
   last_name: LastName4;
   is_admin: IsAdmin1;
@@ -192,7 +190,7 @@ export interface AdminUserRead {
 export interface AdminUserUpdate {
   first_name?: FirstName5;
   last_name?: LastName5;
-  email?: Email5;
+  email?: Email4;
   is_admin?: IsAdmin2;
   is_premium?: IsPremium2;
 }

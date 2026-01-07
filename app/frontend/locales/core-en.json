@@ -127,6 +127,46 @@
         "footer": {
             "copyright": "All rights reserved.",
             "legal": "Legal"
+        },
+        "account": {
+            "title": "Account Settings",
+            "save": "Save",
+            "cancel": "Cancel",
+            "goHome": "Go to Home",
+            "profileSaved": "Profile saved successfully",
+            "tabs": {
+                "account": "Account",
+                "password": "Password"
+            },
+            "profile": {
+                "title": "Profile",
+                "description": "Update your personal information"
+            },
+            "email": {
+                "title": "Email Address",
+                "description": "Manage your email address",
+                "current": "Current email",
+                "change": "Change email",
+                "newEmail": "New email address",
+                "confirmWithPassword": "Enter your password to confirm",
+                "sendVerification": "Send verification email",
+                "verificationSent": "Verification email sent to your new address",
+                "changeSuccess": "Email changed successfully",
+                "changeFailed": "Email Change Failed",
+                "confirming": "Confirming your email change...",
+                "redirectingToLogin": "Your email has been changed. Please log in with your new email.",
+                "noToken": "No confirmation token found",
+                "invalidToken": "Invalid or expired confirmation link"
+            },
+            "password": {
+                "title": "Password",
+                "description": "Update your password",
+                "current": "Current password",
+                "new": "New password",
+                "confirm": "Confirm new password",
+                "change": "Change password",
+                "changeSuccess": "Password changed successfully"
+            }
         }
     }
 }

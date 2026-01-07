@@ -68,12 +68,22 @@ class UserCreate(BaseModel):
 class UserChangeInfo(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    email: str = Field(max_length=255)
 
 
 class UserChangePassword(BaseModel):
     old_password: str = Field(max_length=128)
     new_password: str = Field(min_length=8, max_length=128)
+
+
+class UserChangeEmail(BaseModel):
+    new_email: str = Field(max_length=255)
+    password: str = Field(max_length=128)
+
+
+class EmailChangeConfirm(BaseModel):
+    """Confirm email change with JWT token."""
+
+    token: str
 
 
 class UserToken(BaseModel):

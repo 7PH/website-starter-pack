@@ -31,6 +31,7 @@ app/frontend/components/modal/ModalConfirm.vue
 app/frontend/composables/useAppLocale.ts
 app/frontend/composables/useAuthActions.ts
 app/frontend/composables/useAuthForms.ts
+app/frontend/composables/useUserActions.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useLocale.ts
 app/frontend/composables/useSubscription.ts
@@ -46,7 +47,11 @@ app/frontend/components/LoadingSkeleton.vue
 app/frontend/components/PageFooter.vue
 app/frontend/components/PageHeader.vue
 app/frontend/pages/premium.vue
+app/frontend/pages/account.vue
+app/frontend/pages/confirm-email-change.vue
 app/frontend/config/admin-nav.ts
+app/frontend/config/account-tabs.ts
+app/frontend/components/account/*
 app/frontend/layouts/admin.vue
 app/frontend/components/admin/*
 app/frontend/pages/admin/**/*

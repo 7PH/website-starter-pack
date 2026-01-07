@@ -243,3 +243,46 @@ Get started: {PUBLIC_URL}
         html_body=html_body,
         raise_on_error=False,  # Welcome emails are not critical
     )
+
+
+def send_email_change_email(
+    to_email: str,
+    username: str,
+    confirmation_link: str,
+) -> bool:
+    """
+    Send an email change confirmation email to the NEW email address.
+
+    Args:
+        to_email: New email address to confirm
+        username: User's display name
+        confirmation_link: Email change confirmation URL
+
+    Returns:
+        True if email was sent successfully
+    """
+    context = {
+        "username": username,
+        "confirmation_link": confirmation_link,
+    }
+
+    html_body = _render_template("email_change.html", **context)
+    text_body = _render_template("email_change.txt", **context)
+
+    if text_body is None:
+        text_body = f"""Hello {username},
+
+You requested to change your email address to this one. Click the link below to confirm:
+{confirmation_link}
+
+This link will expire in 48 hours.
+
+If you didn't request this change, you can ignore this email.
+"""
+
+    return send_email(
+        to_email=to_email,
+        subject="Confirm Your New Email Address",
+        body=text_body,
+        html_body=html_body,
+    )
