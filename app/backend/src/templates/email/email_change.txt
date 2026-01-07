@@ -1,0 +1,9 @@
+Hello {{ username }}!
+
+You requested to change your email address to this one. Please confirm by clicking the link below:
+
+{{ confirmation_link }}
+
+This link will expire in 48 hours.
+
+If you didn't request this change, you can safely ignore this email.

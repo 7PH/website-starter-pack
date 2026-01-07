@@ -127,6 +127,46 @@
         "footer": {
             "copyright": "Tous droits réservés.",
             "legal": "Mentions légales"
+        },
+        "account": {
+            "title": "Paramètres du compte",
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "goHome": "Retour à l'accueil",
+            "profileSaved": "Profil enregistré avec succès",
+            "tabs": {
+                "account": "Compte",
+                "password": "Mot de passe"
+            },
+            "profile": {
+                "title": "Profil",
+                "description": "Mettre à jour vos informations personnelles"
+            },
+            "email": {
+                "title": "Adresse email",
+                "description": "Gérer votre adresse email",
+                "current": "Email actuel",
+                "change": "Changer d'email",
+                "newEmail": "Nouvelle adresse email",
+                "confirmWithPassword": "Entrez votre mot de passe pour confirmer",
+                "sendVerification": "Envoyer l'email de vérification",
+                "verificationSent": "Email de vérification envoyé à votre nouvelle adresse",
+                "changeSuccess": "Email changé avec succès",
+                "changeFailed": "Échec du changement d'email",
+                "confirming": "Confirmation de votre changement d'email...",
+                "redirectingToLogin": "Votre email a été changé. Veuillez vous connecter avec votre nouvel email.",
+                "noToken": "Aucun jeton de confirmation trouvé",
+                "invalidToken": "Lien de confirmation invalide ou expiré"
+            },
+            "password": {
+                "title": "Mot de passe",
+                "description": "Mettre à jour votre mot de passe",
+                "current": "Mot de passe actuel",
+                "new": "Nouveau mot de passe",
+                "confirm": "Confirmer le nouveau mot de passe",
+                "change": "Changer le mot de passe",
+                "changeSuccess": "Mot de passe changé avec succès"
+            }
         }
     }
 }

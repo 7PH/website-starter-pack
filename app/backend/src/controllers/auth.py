@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import log_event
-from ..crud.users import get_user_by_email, get_user_by_id, update_user
+from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, update_user
+from ..helpers import stripe as stripe_helper
 from ..helpers.auth import get_current_user, hash_password
 from ..helpers.auth_tokens import (
     create_email_verification_token,
@@ -26,6 +27,7 @@ from ..helpers.email import send_email_verification_email, send_password_reset_e
 from ..helpers.ratelimit import ensure_rate_limit
 from ..models.user import (
     AuthMessageResponse,
+    EmailChangeConfirm,
     EmailVerificationConfirm,
     PasswordResetConfirmJWT,
     UserPasswordResetRequest,
@@ -230,3 +232,61 @@ def reset_password(
     log_event(session, action=EventType.USER_PASSWORD_RESET, user_id=user.id, request=request)
 
     return AuthMessageResponse(message="Password reset successfully")
+
+
+@router.post(
+    "/auth/confirm-email-change",
+    response_model=AuthMessageResponse,
+    status_code=status.HTTP_200_OK,
+)
+def confirm_email_change(
+    *,
+    session: Session = Depends(get_session),
+    body: EmailChangeConfirm,
+):
+    """
+    Confirm email change using the JWT token from the confirmation email.
+    Token contains user_id, current_email, new_email, exp.
+    """
+    payload = decode_typed_token(body.token, "change-email")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = get_user_by_id(session, payload["user_id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Ensure the current_email in the token matches user's current email
+    # This invalidates old tokens if user requested another email change
+    if user.email != payload["current_email"]:
+        raise HTTPException(status_code=400, detail="Token is no longer valid (email was changed)")
+
+    new_email = payload["new_email"]
+
+    # Double-check the new email is still available
+    if is_email_taken(session, new_email):
+        raise HTTPException(status_code=409, detail="Email is no longer available")
+
+    # Apply the email change
+    user.email = new_email
+    user.email_confirmed = True  # Already verified by clicking the link
+    update_user(session, user)
+
+    # Sync new email to Stripe
+    if stripe_helper.is_enabled() and user.stripe_id:
+        stripe_helper.sync_customer(
+            user_id=user.id,
+            email=new_email,
+            name=f"{user.first_name} {user.last_name}",
+            existing_stripe_id=user.stripe_id,
+        )
+
+    # Log email change
+    log_event(
+        session,
+        action=EventType.USER_PROFILE_UPDATE,
+        user_id=user.id,
+        details={"action": "email_changed", "new_email": new_email},
+    )
+
+    return AuthMessageResponse(message="Email changed successfully")

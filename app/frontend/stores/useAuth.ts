@@ -75,6 +75,24 @@ export const useAuth = defineStore('auth', {
         },
 
         /**
+         * Update the user data in the current token without refreshing.
+         * Useful after profile updates where we already have the fresh data.
+         */
+        updateUser(user: UserRead): void {
+            if (!this.token) {
+                return;
+            }
+            this.token = {
+                ...this.token,
+                user,
+            };
+            if (import.meta.server) {
+                return;
+            }
+            localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify(this.token));
+        },
+
+        /**
          * Refresh the current token to get updated user data.
          * Useful after actions that change user state (e.g., subscription changes).
          */

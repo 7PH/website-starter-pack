@@ -665,17 +665,11 @@
           "minLength": 1,
           "title": "Last Name",
           "type": "string"
-        },
-        "email": {
-          "maxLength": 255,
-          "title": "Email",
-          "type": "string"
         }
       },
       "required": [
         "first_name",
-        "last_name",
-        "email"
+        "last_name"
       ],
       "title": "UserChangeInfo",
       "type": "object"
