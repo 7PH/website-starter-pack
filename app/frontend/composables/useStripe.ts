@@ -1,28 +1,69 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-export interface SubscriptionStatus {
-    is_premium: boolean;
-    plan: string | null;
-    expires_at: string | null;
-}
-
 /**
  * Composable for Stripe billing integration.
+ * Combines billing portal access with subscription state management.
  *
  * @example
- * const { openBillingPortal, getSubscriptionStatus } = useStripe();
+ * const { isPremium, loading, openBillingPortal, refresh } = useStripe();
+ *
+ * // Check premium status (from JWT, no API call)
+ * if (isPremium.value) {
+ *     console.log('User is premium!');
+ * }
+ *
+ * // Refresh subscription from Stripe API
+ * await refresh();
  *
  * // Open billing portal
  * await openBillingPortal();
- *
- * // Check subscription status
- * const status = await getSubscriptionStatus();
- * if (status.is_premium) {
- *     console.log('User is premium!');
- * }
  */
+
+import * as stripeApi from '~/utils/api/stripe';
+
 export function useStripe() {
-    const api = useApi();
+    const auth = useAuth();
+
+    // Subscription state
+    const plan = ref<string | null>(null);
+    const expiresAt = ref<Date | null>(null);
+    const loading = ref(false);
+    const error = ref<string | null>(null);
+
+    // Premium status comes directly from the JWT token (no API call needed)
+    const isPremium = computed(() => auth.user?.is_premium ?? false);
+
+    /**
+     * Fetch subscription status from Stripe API.
+     * Updates plan/expiresAt and refreshes token if premium status changed.
+     */
+    async function refresh(): Promise<void> {
+        if (!auth.isLoggedIn) {
+            plan.value = null;
+            expiresAt.value = null;
+            return;
+        }
+
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const data = await stripeApi.getSubscriptionStatus();
+            plan.value = data.plan ?? null;
+            expiresAt.value = data.expires_at ? new Date(data.expires_at) : null;
+
+            // If premium status changed, refresh token to get updated value
+            if (data.is_premium !== undefined && data.is_premium !== auth.user?.is_premium) {
+                await auth.refreshToken();
+            }
+        } catch {
+            // Stripe not configured or user has no stripe_id
+            plan.value = null;
+            expiresAt.value = null;
+        } finally {
+            loading.value = false;
+        }
+    }
 
     /**
      * Open the Stripe billing portal in a new tab.
@@ -30,8 +71,7 @@ export function useStripe() {
      */
     async function openBillingPortal(): Promise<void> {
         const returnUrl = window.location.href;
-
-        const response = await api.get<{ url: string }>(`/stripe/portal?return_url=${encodeURIComponent(returnUrl)}`);
+        const response = await stripeApi.getBillingPortalUrl(returnUrl);
 
         if (response.url) {
             window.open(response.url, '_blank');
@@ -39,13 +79,34 @@ export function useStripe() {
     }
 
     /**
-     * Get the current user's subscription status.
+     * Get subscription status (one-time fetch, doesn't update state).
+     * Use refresh() instead if you want to update the composable's state.
      */
-    async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
-        return api.get<SubscriptionStatus>('/stripe/subscription');
+    async function getSubscriptionStatus() {
+        return stripeApi.getSubscriptionStatus();
     }
 
+    // Reset plan/expires when logged out
+    watch(
+        () => auth.isLoggedIn,
+        (loggedIn) => {
+            if (!loggedIn) {
+                plan.value = null;
+                expiresAt.value = null;
+            }
+        },
+    );
+
     return {
+        // Reactive state
+        isPremium,
+        plan: computed(() => plan.value),
+        expiresAt: computed(() => expiresAt.value),
+        loading: computed(() => loading.value),
+        error: computed(() => error.value),
+
+        // Actions
+        refresh,
         openBillingPortal,
         getSubscriptionStatus,
     };

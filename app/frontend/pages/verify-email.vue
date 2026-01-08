@@ -5,7 +5,7 @@
  */
 
 const router = useRouter();
-const authActions = useAuthActions();
+const accountActions = useAccountActions();
 const { t } = useI18n();
 
 const status = ref<'loading' | 'success' | 'error'>('loading');
@@ -22,7 +22,7 @@ onMounted(async () => {
         return;
     }
 
-    const success = await authActions.verifyEmail(token);
+    const success = await accountActions.verifyEmail(token);
 
     if (success) {
         status.value = 'success';

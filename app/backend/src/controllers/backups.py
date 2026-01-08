@@ -14,8 +14,8 @@ from fastapi.responses import FileResponse
 
 from ..helpers.auth import get_current_admin
 from ..helpers.logging import get_logger
-from ..models.backup import BackupInfo, BackupListResponse
-from ..models.user import UserRead
+from ..schemas.backup import BackupInfo, BackupListResponse
+from ..schemas.user import UserRead
 
 router = APIRouter(prefix="/admin/backups")
 logger = get_logger(__name__)

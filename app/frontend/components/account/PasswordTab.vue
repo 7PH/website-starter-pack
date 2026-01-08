@@ -1,6 +1,6 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
-const userActions = useUserActions();
+const accountActions = useAccountActions();
 const { t } = useI18n();
 
 // Loading state
@@ -43,7 +43,7 @@ async function handlePasswordChange() {
     if (!validatePassword()) return;
 
     isPasswordLoading.value = true;
-    const success = await userActions.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+    const success = await accountActions.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
     isPasswordLoading.value = false;
 
     if (success) {

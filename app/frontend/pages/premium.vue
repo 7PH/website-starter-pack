@@ -7,8 +7,8 @@ definePageMeta({
 });
 
 const { t } = useI18n();
-const { isPremium, loading, refresh } = useSubscription();
 const stripe = useStripe();
+const { isPremium, loading, refresh } = stripe;
 const config = useRuntimeConfig();
 
 // Redirect to home if Stripe is disabled

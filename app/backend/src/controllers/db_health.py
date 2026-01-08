@@ -10,13 +10,13 @@ from sqlalchemy.orm import Session
 
 from ..helpers.auth import get_current_admin
 from ..helpers.db import get_session
-from ..models.db_health import (
+from ..schemas.db_health import (
     DatabaseHealthResponse,
     IndexStats,
     Recommendation,
     TableStats,
 )
-from ..models.user import UserRead
+from ..schemas.user import UserRead
 
 router = APIRouter(prefix="/admin/db-health")
 

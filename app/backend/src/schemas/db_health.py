@@ -1,8 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-"""
-Pydantic models for database health monitoring.
-"""
+"""Pydantic schemas for database health monitoring."""
 
 from datetime import datetime
 

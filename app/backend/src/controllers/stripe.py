@@ -8,7 +8,6 @@ Provides billing portal access and webhook handling.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..crud.users import (
@@ -20,20 +19,11 @@ from ..crud.users import (
 from ..helpers import stripe as stripe_helper
 from ..helpers.auth import get_current_user
 from ..helpers.db import SessionLocal, get_session
+from ..schemas.stripe import BillingPortalResponse, SubscriptionStatus, WebhookResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/stripe", tags=["Stripe"])
-
-
-class BillingPortalResponse(BaseModel):
-    """Response from billing portal endpoint."""
-    url: str
-
-
-class WebhookResponse(BaseModel):
-    """Response from webhook endpoint."""
-    status: str
 
 
 @router.get("/portal", response_model=BillingPortalResponse)
@@ -73,7 +63,7 @@ def get_billing_portal(
     return BillingPortalResponse(url=url)
 
 
-@router.get("/subscription")
+@router.get("/subscription", response_model=SubscriptionStatus)
 def get_subscription_status(
     user=Depends(get_current_user),
     session: Session = Depends(get_session),
@@ -85,7 +75,7 @@ def get_subscription_status(
     db_user = get_user_by_id(session, user.id)
 
     if not db_user:
-        return {"is_premium": False, "plan": None, "expires_at": None}
+        return SubscriptionStatus(is_premium=False, plan=None, expires_at=None)
 
     # Always query Stripe for current status and sync DB
     if db_user.stripe_id:
@@ -95,9 +85,9 @@ def get_subscription_status(
         if stripe_status["is_premium"] != db_user.is_premium:
             set_user_premium_status(session, db_user, stripe_status["is_premium"])
 
-        return stripe_status
+        return SubscriptionStatus(**stripe_status)
 
-    return {"is_premium": False, "plan": None, "expires_at": None}
+    return SubscriptionStatus(is_premium=False, plan=None, expires_at=None)
 
 
 @router.post("/webhook", response_model=WebhookResponse, include_in_schema=False)

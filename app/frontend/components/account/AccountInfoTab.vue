@@ -1,7 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
 const auth = useAuth();
-const userActions = useUserActions();
+const accountActions = useAccountActions();
 const { t } = useI18n();
 
 // Loading states
@@ -68,7 +68,7 @@ async function handleProfileSave() {
     if (!validateProfile()) return;
 
     isProfileLoading.value = true;
-    await userActions.updateProfile(profileForm.firstName.trim(), profileForm.lastName.trim());
+    await accountActions.updateProfile(profileForm.firstName.trim(), profileForm.lastName.trim());
     isProfileLoading.value = false;
 }
 
@@ -76,7 +76,7 @@ async function handleEmailChange() {
     if (!validateEmail()) return;
 
     isEmailLoading.value = true;
-    const success = await userActions.requestEmailChange(emailForm.newEmail.trim(), emailForm.password);
+    const success = await accountActions.requestEmailChange(emailForm.newEmail.trim(), emailForm.password);
     isEmailLoading.value = false;
 
     if (success) {

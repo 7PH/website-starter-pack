@@ -12,7 +12,9 @@ import json
 
 from pydantic import TypeAdapter
 
-from .models import (
+from .schemas import (
+    AuthMessageResponse,
+    UserChangeEmail,
     UserChangeInfo,
     UserChangePassword,
     UserCreate,
@@ -22,35 +24,42 @@ from .models import (
     UserToken,
     UserTokenUpdate,
 )
-from .models.admin import (
+from .schemas.admin import (
     AdminDashboardStats,
     AdminUserListResponse,
     AdminUserRead,
     AdminUserUpdate,
     ImpersonationResponse,
 )
-from .models.backup import (
+from .schemas.backup import (
     BackupInfo,
     BackupListResponse,
 )
-from .models.db_health import (
+from .schemas.db_health import (
     DatabaseHealthResponse,
     IndexStats,
     Recommendation,
     TableStats,
 )
-from .models.event_log import (
+from .schemas.event_log import (
     EventLogFilter,
     EventLogListResponse,
     EventLogRead,
 )
+from .schemas.stripe import (
+    BillingPortalResponse,
+    SubscriptionStatus,
+)
 
 # Union of all models to export to frontend
 Models = (
+    # Auth models
+    AuthMessageResponse
     # User models
-    UserRead
+    | UserRead
     | UserPreviewRead
     | UserCreate
+    | UserChangeEmail
     | UserChangeInfo
     | UserChangePassword
     | UserToken
@@ -69,6 +78,9 @@ Models = (
     # Backup models
     | BackupInfo
     | BackupListResponse
+    # Stripe models
+    | BillingPortalResponse
+    | SubscriptionStatus
     # Database health models
     | DatabaseHealthResponse
     | TableStats

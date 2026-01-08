@@ -201,6 +201,20 @@
       "title": "AdminUserUpdate",
       "type": "object"
     },
+    "AuthMessageResponse": {
+      "description": "Standard response for auth operations.",
+      "properties": {
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "title": "AuthMessageResponse",
+      "type": "object"
+    },
     "BackupInfo": {
       "description": "Information about a single backup file.",
       "properties": {
@@ -246,6 +260,20 @@
         "total"
       ],
       "title": "BackupListResponse",
+      "type": "object"
+    },
+    "BillingPortalResponse": {
+      "description": "Response from billing portal endpoint.",
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "BillingPortalResponse",
       "type": "object"
     },
     "DatabaseHealthResponse": {
@@ -595,6 +623,44 @@
       "title": "Recommendation",
       "type": "object"
     },
+    "SubscriptionStatus": {
+      "description": "Current user's subscription status.",
+      "properties": {
+        "is_premium": {
+          "title": "Is Premium",
+          "type": "boolean"
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Plan"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expires At"
+        }
+      },
+      "required": [
+        "is_premium",
+        "plan",
+        "expires_at"
+      ],
+      "title": "SubscriptionStatus",
+      "type": "object"
+    },
     "TableStats": {
       "description": "Statistics for a database table.",
       "properties": {
@@ -650,6 +716,26 @@
         "last_vacuum"
       ],
       "title": "TableStats",
+      "type": "object"
+    },
+    "UserChangeEmail": {
+      "properties": {
+        "new_email": {
+          "maxLength": 255,
+          "title": "New Email",
+          "type": "string"
+        },
+        "password": {
+          "maxLength": 128,
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "required": [
+        "new_email",
+        "password"
+      ],
+      "title": "UserChangeEmail",
       "type": "object"
     },
     "UserChangeInfo": {
@@ -869,6 +955,9 @@
   },
   "anyOf": [
     {
+      "$ref": "#/$defs/AuthMessageResponse"
+    },
+    {
       "$ref": "#/$defs/UserRead"
     },
     {
@@ -876,6 +965,9 @@
     },
     {
       "$ref": "#/$defs/UserCreate"
+    },
+    {
+      "$ref": "#/$defs/UserChangeEmail"
     },
     {
       "$ref": "#/$defs/UserChangeInfo"
@@ -921,6 +1013,12 @@
     },
     {
       "$ref": "#/$defs/BackupListResponse"
+    },
+    {
+      "$ref": "#/$defs/BillingPortalResponse"
+    },
+    {
+      "$ref": "#/$defs/SubscriptionStatus"
     },
     {
       "$ref": "#/$defs/DatabaseHealthResponse"

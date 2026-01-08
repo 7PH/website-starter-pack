@@ -5,7 +5,7 @@ definePageMeta({
 
 const route = useRoute();
 const auth = useAuth();
-const authActions = useAuthActions();
+const accountActions = useAccountActions();
 const { t } = useI18n();
 
 // Form modes
@@ -110,7 +110,7 @@ async function handleLogin() {
     if (!validateLogin()) return;
 
     isLoading.value = true;
-    const success = await authActions.login(loginForm.email, loginForm.password);
+    const success = await accountActions.login(loginForm.email, loginForm.password);
     isLoading.value = false;
 
     if (success) {
@@ -123,12 +123,12 @@ async function handleSignup() {
     if (!validateSignup()) return;
 
     isLoading.value = true;
-    const success = await authActions.signup({
-        email: signupForm.email,
-        password: signupForm.password,
-        firstName: signupForm.firstName,
-        lastName: signupForm.lastName,
-    });
+    const success = await accountActions.signup(
+        signupForm.email,
+        signupForm.password,
+        signupForm.firstName,
+        signupForm.lastName,
+    );
     isLoading.value = false;
 
     if (success) {
@@ -141,7 +141,7 @@ async function handleForgotPassword() {
     if (!validateForgotPassword()) return;
 
     isLoading.value = true;
-    await authActions.requestPasswordReset(forgotPasswordForm.email);
+    await accountActions.requestPasswordReset(forgotPasswordForm.email);
     isLoading.value = false;
 
     mode.value = 'login';
