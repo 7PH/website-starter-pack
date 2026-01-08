@@ -1,48 +1,11 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-from .admin import (
-    AdminDashboardStats,
-    AdminUserListResponse,
-    AdminUserRead,
-    AdminUserUpdate,
-    ImpersonationResponse,
-)
-from .base import PaginatedItems
-from .user import (
-    AuthMessageResponse,
-    EmailVerificationConfirm,
-    PasswordResetConfirmJWT,
-    UserBase,
-    UserChangeInfo,
-    UserChangePassword,
-    UserCreate,
-    UserPasswordResetRequest,
-    UserPreviewRead,
-    UserRead,
-    UserToken,
-    UserTokenUpdate,
-)
+"""SQLAlchemy models (database table definitions)."""
+
+from .event_log import EventLogBase
+from .user import UserBase
 
 __all__ = [
-    # Admin models
-    "AdminDashboardStats",
-    "AdminUserListResponse",
-    "AdminUserRead",
-    "AdminUserUpdate",
-    "ImpersonationResponse",
-    # Base models
-    "PaginatedItems",
-    # User models
-    "AuthMessageResponse",
-    "EmailVerificationConfirm",
-    "PasswordResetConfirmJWT",
+    "EventLogBase",
     "UserBase",
-    "UserChangeInfo",
-    "UserChangePassword",
-    "UserCreate",
-    "UserPasswordResetRequest",
-    "UserPreviewRead",
-    "UserRead",
-    "UserToken",
-    "UserTokenUpdate",
 ]

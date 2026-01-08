@@ -11,7 +11,8 @@ from fastapi import Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..models.event_log import EventLogBase, EventLogFilter, EventLogRead
+from ..models.event_log import EventLogBase
+from ..schemas.event_log import EventLogFilter, EventLogRead
 
 
 def log_event(

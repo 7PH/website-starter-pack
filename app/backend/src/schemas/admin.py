@@ -1,8 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-"""
-Pydantic models for admin operations.
-"""
+"""Pydantic schemas for admin operations."""
 
 from datetime import datetime
 

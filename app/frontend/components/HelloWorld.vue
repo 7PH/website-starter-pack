@@ -84,11 +84,45 @@ const techStack = [
 .blob-1 {
     @apply w-96 h-96 -top-20 -right-20;
     background: linear-gradient(135deg, theme('colors.accent.400'), theme('colors.primary.500'));
+    animation: drift-1 20s ease-in-out infinite;
 }
 
 .blob-2 {
     @apply w-80 h-80 -bottom-10 -left-10;
     background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.pop.400'));
+    animation: drift-2 25s ease-in-out infinite;
+}
+
+@keyframes drift-1 {
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(-50px, 35px) rotate(8deg) scale(1.03);
+    }
+    50% {
+        transform: translate(-35px, -50px) rotate(-7deg) scale(0.97);
+    }
+    75% {
+        transform: translate(40px, -25px) rotate(6deg) scale(1.02);
+    }
+}
+
+@keyframes drift-2 {
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(45px, -40px) rotate(-7deg) scale(1.04);
+    }
+    50% {
+        transform: translate(30px, 45px) rotate(9deg) scale(0.96);
+    }
+    75% {
+        transform: translate(-40px, 30px) rotate(-6deg) scale(1.03);
+    }
 }
 
 .hero-content {

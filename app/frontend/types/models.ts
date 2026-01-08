@@ -8,9 +8,11 @@ declare global {
  */
 
 export type Models =
+  | AuthMessageResponse
   | UserRead
   | UserPreviewRead
   | UserCreate
+  | UserChangeEmail
   | UserChangeInfo
   | UserChangePassword
   | UserToken
@@ -26,10 +28,13 @@ export type Models =
   | EventLogListResponse
   | BackupInfo
   | BackupListResponse
+  | BillingPortalResponse
+  | SubscriptionStatus
   | DatabaseHealthResponse
   | TableStats
   | IndexStats
   | Recommendation;
+export type Message = string;
 export type Id = number;
 export type Email = string;
 export type FirstName = string;
@@ -43,6 +48,8 @@ export type Email1 = string;
 export type Password = string;
 export type FirstName2 = string;
 export type LastName2 = string;
+export type NewEmail = string;
+export type Password1 = string;
 export type FirstName3 = string;
 export type LastName3 = string;
 export type OldPassword = string;
@@ -85,7 +92,7 @@ export type UserAgent = string | null;
 export type CreatedAt2 = string | null;
 export type RecentEvents = EventLogRead[];
 export type AccessToken1 = string;
-export type Message = string;
+export type Message1 = string;
 export type UserId1 = number | null;
 export type Action1 = string | null;
 export type ActionPrefix = string | null;
@@ -100,6 +107,10 @@ export type Size = number;
 export type CreatedAt3 = string;
 export type Items2 = BackupInfo[];
 export type Total2 = number;
+export type Url = string;
+export type IsPremium3 = boolean;
+export type Plan = string | null;
+export type ExpiresAt1 = string | null;
 export type DatabaseSize = number;
 export type DatabaseSizePretty = string;
 export type ActiveConnections = number;
@@ -124,10 +135,16 @@ export type Indexes = IndexStats[];
 export type Type = string;
 export type Severity = string;
 export type Table1 = string | null;
-export type Message1 = string;
+export type Message2 = string;
 export type Action2 = string;
 export type Recommendations = Recommendation[];
 
+/**
+ * Standard response for auth operations.
+ */
+export interface AuthMessageResponse {
+  message: Message;
+}
 export interface UserRead {
   id: Id;
   email: Email;
@@ -146,6 +163,10 @@ export interface UserCreate {
   password: Password;
   first_name: FirstName2;
   last_name: LastName2;
+}
+export interface UserChangeEmail {
+  new_email: NewEmail;
+  password: Password1;
 }
 export interface UserChangeInfo {
   first_name: FirstName3;
@@ -231,7 +252,7 @@ export interface ImpersonationResponse {
   access_token: AccessToken1;
   token_parsed: UserToken;
   user: UserRead;
-  message: Message;
+  message: Message1;
 }
 /**
  * Query parameters for filtering event logs.
@@ -266,6 +287,20 @@ export interface BackupInfo {
 export interface BackupListResponse {
   items: Items2;
   total: Total2;
+}
+/**
+ * Response from billing portal endpoint.
+ */
+export interface BillingPortalResponse {
+  url: Url;
+}
+/**
+ * Current user's subscription status.
+ */
+export interface SubscriptionStatus {
+  is_premium: IsPremium3;
+  plan: Plan;
+  expires_at: ExpiresAt1;
 }
 /**
  * Complete database health response.
@@ -311,7 +346,7 @@ export interface Recommendation {
   type: Type;
   severity: Severity;
   table: Table1;
-  message: Message1;
+  message: Message2;
   action: Action2;
 }
 }

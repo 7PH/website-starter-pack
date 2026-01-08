@@ -28,9 +28,9 @@ from ..helpers.auth_tokens import create_email_change_token, get_email_change_ur
 from ..helpers.db import get_session
 from ..helpers.email import send_email_change_email
 from ..helpers.ratelimit import ensure_rate_limit
-from ..models.user import (
+from ..models.user import UserBase
+from ..schemas.user import (
     AuthMessageResponse,
-    UserBase,
     UserChangeEmail,
     UserChangeInfo,
     UserChangePassword,

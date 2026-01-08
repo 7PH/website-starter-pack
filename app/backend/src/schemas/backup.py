@@ -1,8 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-"""
-Pydantic models for database backup operations.
-"""
+"""Pydantic schemas for database backup operations."""
 
 from datetime import datetime
 

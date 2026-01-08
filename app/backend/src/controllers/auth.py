@@ -25,7 +25,7 @@ from ..helpers.auth_tokens import (
 from ..helpers.db import get_session
 from ..helpers.email import send_email_verification_email, send_password_reset_email
 from ..helpers.ratelimit import ensure_rate_limit
-from ..models.user import (
+from ..schemas.user import (
     AuthMessageResponse,
     EmailChangeConfirm,
     EmailVerificationConfirm,

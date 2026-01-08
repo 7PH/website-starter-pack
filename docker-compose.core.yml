@@ -37,6 +37,7 @@ x-frontend-common: &frontend-common
         - ./app/frontend/stores:/app/stores:ro
         - ./app/frontend/public:/app/public:ro
         - ./app/frontend/types:/app/types:ro
+        - ./app/frontend/utils:/app/utils:ro
     environment:
         NUXT_PUBLIC_APP_NAME: ${APP_NAME}
         NUXT_PUBLIC_API_BASE: /api

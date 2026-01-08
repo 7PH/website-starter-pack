@@ -2,9 +2,9 @@
 
 <script lang="ts" setup>
 const auth = useAuth();
-const authActions = useAuthActions();
+const accountActions = useAccountActions();
 const { t } = useI18n();
-const { isPremium, loading: subscriptionLoading } = useSubscription();
+const { isPremium, loading: subscriptionLoading } = useStripe();
 const { locale, availableLocales, setLocale } = useAppLocale();
 const { isDark, toggle: toggleColorMode } = useColorModeToggle();
 const config = useRuntimeConfig();
@@ -19,7 +19,7 @@ const localeMenuItems = computed(() => [
 ]);
 
 function onSelectLogout() {
-    authActions.logout();
+    accountActions.logout();
 }
 </script>
 

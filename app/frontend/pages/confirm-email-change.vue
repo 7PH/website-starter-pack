@@ -6,7 +6,7 @@
  */
 
 const router = useRouter();
-const authActions = useAuthActions();
+const accountActions = useAccountActions();
 const auth = useAuth();
 const { t } = useI18n();
 
@@ -24,7 +24,7 @@ onMounted(async () => {
         return;
     }
 
-    const success = await authActions.confirmEmailChange(token);
+    const success = await accountActions.confirmEmailChange(token);
 
     if (success) {
         status.value = 'success';

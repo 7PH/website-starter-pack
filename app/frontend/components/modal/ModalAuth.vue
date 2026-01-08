@@ -18,7 +18,7 @@ const MODAL_NAME = 'auth';
 const modal = useModalStore();
 const auth = useAuth();
 const { t } = useI18n();
-const authActions = useAuthActions();
+const accountActions = useAccountActions();
 
 // Register on mount
 onMounted(() => {
@@ -120,7 +120,7 @@ const title = computed(() => {
 
 // Handle logout
 function handleLogout() {
-    authActions.logout();
+    accountActions.logout();
     close();
 }
 
@@ -184,7 +184,7 @@ async function handleLogin() {
     if (!validateLogin()) return;
 
     isLoading.value = true;
-    const success = await authActions.login(loginForm.email, loginForm.password);
+    const success = await accountActions.login(loginForm.email, loginForm.password);
     isLoading.value = false;
 
     if (success) {
@@ -197,12 +197,12 @@ async function handleSignup() {
     if (!validateSignup()) return;
 
     isLoading.value = true;
-    const success = await authActions.signup({
-        email: signupForm.email,
-        password: signupForm.password,
-        firstName: signupForm.firstName,
-        lastName: signupForm.lastName,
-    });
+    const success = await accountActions.signup(
+        signupForm.email,
+        signupForm.password,
+        signupForm.firstName,
+        signupForm.lastName,
+    );
     isLoading.value = false;
 
     if (success) {
@@ -215,7 +215,7 @@ async function handleForgotPassword() {
     if (!validateForgotPassword()) return;
 
     isLoading.value = true;
-    await authActions.requestPasswordReset(forgotPasswordForm.email);
+    await accountActions.requestPasswordReset(forgotPasswordForm.email);
     isLoading.value = false;
 
     // Switch back to login mode
@@ -232,7 +232,7 @@ async function handleResetPassword() {
     }
 
     isLoading.value = true;
-    const success = await authActions.resetPassword(token, resetPasswordForm.password);
+    const success = await accountActions.resetPassword(token, resetPasswordForm.password);
     isLoading.value = false;
 
     if (success) {

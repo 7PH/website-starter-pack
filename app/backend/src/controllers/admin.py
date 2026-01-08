@@ -15,15 +15,16 @@ from ..crud.event_logs import get_events, get_user_events, log_event
 from ..crud.users import get_user_by_id, soft_delete_user, update_user
 from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id
 from ..helpers.db import get_session
-from ..models.admin import (
+from ..models.user import UserBase
+from ..schemas.admin import (
     AdminDashboardStats,
     AdminUserListResponse,
     AdminUserRead,
     AdminUserUpdate,
     ImpersonationResponse,
 )
-from ..models.event_log import EventLogFilter, EventLogListResponse
-from ..models.user import UserBase, UserRead
+from ..schemas.event_log import EventLogFilter, EventLogListResponse
+from ..schemas.user import UserRead
 
 router = APIRouter(prefix="/admin")
 

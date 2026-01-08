@@ -1,45 +1,29 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 /**
- * Composable for authentication actions (login, signup, password reset, etc.)
- * Works with the useAuth store and useApi composable.
+ * Composable for account actions (auth + user operations).
+ * Combines authentication flows and user profile management.
+ * Handles UI concerns: toasts, store updates, error handling.
  */
 
-interface AuthMessageResponse {
-    message: string;
-}
+import * as authApi from '~/utils/api/auth';
+import * as usersApi from '~/utils/api/users';
 
-export function useAuthActions() {
-    const api = useApi();
+export function useAccountActions() {
     const auth = useAuth();
     const toast = useToast();
     const { t } = useI18n();
 
+    // ============================================
+    // Auth Actions (from useAuthActions)
+    // ============================================
+
     /**
      * Login with email and password.
-     * Uses OAuth2 form format as expected by FastAPI.
      */
     async function login(email: string, password: string): Promise<boolean> {
         try {
-            const basepath = useRuntimeConfig().public.apiBase;
-
-            // FastAPI OAuth2 expects x-www-form-urlencoded format
-            const formData = new URLSearchParams();
-            formData.append('username', email);
-            formData.append('password', password);
-
-            const response = await fetch(basepath + '/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData.toString(),
-            });
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || 'Invalid credentials');
-            }
-
-            const data = (await response.json()) as UserTokenUpdate;
+            const data = await usersApi.login(email, password);
             auth.saveUserToken(data);
             toast.add({
                 color: 'success',
@@ -62,20 +46,14 @@ export function useAuthActions() {
     /**
      * Register a new user.
      */
-    async function signup(data: {
-        email: string;
-        password: string;
-        firstName: string;
-        lastName: string;
-    }): Promise<boolean> {
+    async function signup(email: string, password: string, firstName: string, lastName: string): Promise<boolean> {
         try {
-            const response = await api.post<UserTokenUpdate>('/users', {
-                email: data.email,
-                password: data.password,
-                first_name: data.firstName,
-                last_name: data.lastName,
+            const response = await usersApi.signup({
+                email,
+                password,
+                first_name: firstName,
+                last_name: lastName,
             });
-
             auth.saveUserToken(response);
             toast.add({
                 color: 'success',
@@ -105,7 +83,7 @@ export function useAuthActions() {
      */
     async function requestPasswordReset(email: string): Promise<boolean> {
         try {
-            await api.post<AuthMessageResponse>('/auth/request-password-reset', { email });
+            await authApi.requestPasswordReset(email);
         } catch {
             // Ignore errors - always show success to prevent email enumeration
         }
@@ -123,7 +101,7 @@ export function useAuthActions() {
      */
     async function resetPassword(token: string, password: string): Promise<boolean> {
         try {
-            await api.post<AuthMessageResponse>('/auth/reset-password', { token, password });
+            await authApi.resetPassword(token, password);
             toast.add({
                 color: 'success',
                 title: t('core.auth.passwordResetSuccess'),
@@ -147,7 +125,7 @@ export function useAuthActions() {
      */
     async function sendVerificationEmail(): Promise<boolean> {
         try {
-            await api.post<AuthMessageResponse>('/auth/send-verification-email', {});
+            await authApi.sendVerificationEmail();
             toast.add({
                 color: 'success',
                 title: t('core.auth.verificationEmailSent'),
@@ -166,10 +144,34 @@ export function useAuthActions() {
      */
     async function verifyEmail(token: string): Promise<boolean> {
         try {
-            await api.post<AuthMessageResponse>('/auth/verify-email', { token });
+            await authApi.verifyEmail(token);
             toast.add({
                 color: 'success',
                 title: t('core.auth.emailVerified'),
+                duration: 3000,
+            });
+            return true;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : t('core.errors.generic');
+            toast.add({
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Confirm email change with token from email link.
+     */
+    async function confirmEmailChange(token: string): Promise<boolean> {
+        try {
+            await authApi.confirmEmailChange(token);
+            toast.add({
+                color: 'success',
+                title: t('core.account.email.changeSuccess'),
                 duration: 3000,
             });
             return true;
@@ -197,15 +199,71 @@ export function useAuthActions() {
         });
     }
 
+    // ============================================
+    // User Actions (from useUserActions)
+    // ============================================
+
     /**
-     * Confirm email change with token from email link.
+     * Update user profile (first name, last name).
      */
-    async function confirmEmailChange(token: string): Promise<boolean> {
+    async function updateProfile(firstName: string, lastName: string): Promise<boolean> {
         try {
-            await api.post<AuthMessageResponse>('/auth/confirm-email-change', { token });
+            const updatedUser = await usersApi.updateProfile({
+                first_name: firstName,
+                last_name: lastName,
+            });
+            auth.updateUser(updatedUser);
             toast.add({
                 color: 'success',
-                title: t('core.account.email.changeSuccess'),
+                title: t('core.account.profileSaved'),
+                duration: 3000,
+            });
+            return true;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : t('core.errors.generic');
+            toast.add({
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Request email change. Sends confirmation email to the new address.
+     */
+    async function requestEmailChange(newEmail: string, password: string): Promise<boolean> {
+        try {
+            await usersApi.requestEmailChange({ new_email: newEmail, password });
+            toast.add({
+                color: 'success',
+                title: t('core.account.email.verificationSent'),
+                duration: 5000,
+            });
+            return true;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : t('core.errors.generic');
+            toast.add({
+                color: 'error',
+                title: t('core.errors.generic'),
+                description: message,
+                duration: 5000,
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Change password.
+     */
+    async function changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+        try {
+            await usersApi.changePassword({ old_password: oldPassword, new_password: newPassword });
+            toast.add({
+                color: 'success',
+                title: t('core.account.password.changeSuccess'),
                 duration: 3000,
             });
             return true;
@@ -222,13 +280,19 @@ export function useAuthActions() {
     }
 
     return {
+        // Auth actions
         login,
         signup,
         requestPasswordReset,
         resetPassword,
         sendVerificationEmail,
         verifyEmail,
-        logout,
         confirmEmailChange,
+        logout,
+
+        // User actions
+        updateProfile,
+        requestEmailChange,
+        changePassword,
     };
 }

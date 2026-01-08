@@ -12,7 +12,7 @@ from ..constants import (
     JWT_ALGORITHM,
     JWT_SECRET_KEY,
 )
-from ..models.user import UserRead, UserTokenUpdate
+from ..schemas.user import UserRead, UserTokenUpdate
 from .exception import InvalidTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
