@@ -87,7 +87,9 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
                 }
             }
 
-            return response.json();
+            // Only parse JSON if there's content
+            const text = await response.text();
+            return text ? JSON.parse(text) : (undefined as unknown as T);
         } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
 
