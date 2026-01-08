@@ -5,6 +5,7 @@ import { PROJECT_ACCOUNT_TABS } from '~/config/account-tabs-ext';
 
 definePageMeta({
     middleware: 'auth',
+    auth: true,
 });
 
 const { t } = useI18n();

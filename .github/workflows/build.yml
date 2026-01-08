@@ -9,20 +9,8 @@ on:
     branches: [master]
 
 jobs:
-  build-dev:
-    name: Build (dev profile)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create CI environment file
-        run: cp .env.ci .env
-
-      - name: Build dev profile
-        run: docker compose --profile dev build
-
   build-prod:
-    name: Build (prod profile)
+    name: Build (prod)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

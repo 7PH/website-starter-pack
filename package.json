@@ -24,7 +24,10 @@
     "typecheck:frontend": "cd app/frontend && npm run typecheck",
     "lint:backend": "set -a && . ./.env && set +a && docker exec ${COMPOSE_PROJECT_NAME}-backend ruff check /app/src --no-cache",
     "lint:backend:fix": "set -a && . ./.env && set +a && docker exec ${COMPOSE_PROJECT_NAME}-backend ruff check /app/src --fix --no-cache",
-    "format:backend": "set -a && . ./.env && set +a && docker exec ${COMPOSE_PROJECT_NAME}-backend ruff format /app/src --no-cache"
+    "format:backend": "set -a && . ./.env && set +a && docker exec ${COMPOSE_PROJECT_NAME}-backend ruff format /app/src --no-cache",
+    "test:e2e:start": "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-app}-e2e PUBLIC_PORT=13001 USE_TLS= DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) DOCKER_USER=$USER docker compose --env-file .env.ci -f docker-compose.core.yml -f docker-compose.test.yml --profile dev up -d --build",
+    "test:e2e:stop": "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-app}-e2e docker compose --env-file .env.ci -f docker-compose.core.yml -f docker-compose.test.yml --profile dev down",
+    "test:e2e": "cd app/frontend && E2E_BASE_URL=http://localhost:13001 npm run test:e2e"
   },
   "keywords": [],
   "author": "7PH <b.raymond@protonmail.com>",
