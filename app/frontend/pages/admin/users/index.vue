@@ -83,7 +83,7 @@ function formatDate(dateStr: string | null): string {
 
 async function impersonateUser(user: AdminUserRead) {
     try {
-        const response = await api.post<ImpersonationResponse>(`/admin/impersonate/${user.id}`);
+        const response = await api.post<ImpersonationResponse>('/admin/impersonations', { user_id: user.id });
 
         // Get the auth store
         const auth = useAuth();

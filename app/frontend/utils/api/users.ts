@@ -49,7 +49,7 @@ export async function getCurrentUser(): Promise<UserRead> {
  * Refresh auth token.
  */
 export async function refreshToken(): Promise<UserTokenUpdate> {
-    return useApi().post<UserTokenUpdate>('/users/me/token', {});
+    return useApi().put<UserTokenUpdate>('/users/me/token', {});
 }
 
 /**
@@ -70,5 +70,5 @@ export async function changePassword(data: UserChangePassword): Promise<UserRead
  * Request email change. Sends confirmation email to the new address.
  */
 export async function requestEmailChange(data: UserChangeEmail): Promise<AuthMessageResponse> {
-    return useApi().put<AuthMessageResponse>('/users/me/email', data);
+    return useApi().post<AuthMessageResponse>('/users/me/email-changes', data);
 }

@@ -10,7 +10,7 @@ const isLoading = ref(false);
 async function stopImpersonation() {
     isLoading.value = true;
     try {
-        const response = await api.post<ImpersonationResponse>('/admin/stop-impersonate');
+        const response = await api.delete<ImpersonationResponse>('/admin/impersonations');
 
         // Update the auth store with the new token
         auth.saveUserToken({

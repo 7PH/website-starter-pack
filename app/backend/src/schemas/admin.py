@@ -55,6 +55,12 @@ class AdminDashboardStats(BaseModel):
     recent_events: list[EventLogRead]
 
 
+class ImpersonationRequest(BaseModel):
+    """Request body for starting impersonation."""
+
+    user_id: int
+
+
 class ImpersonationResponse(BaseModel):
     """Response for impersonation endpoints."""
 

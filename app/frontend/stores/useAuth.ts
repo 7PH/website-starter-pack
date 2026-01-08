@@ -39,7 +39,7 @@ export const useAuth = defineStore('auth', {
             // Try to refresh the token (token already loaded synchronously via getInitialToken)
             try {
                 const freshToken = await $fetch<UserTokenUpdate>('/api/users/me/token', {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         Authorization: `Bearer ${this.token.access_token}`,
                     },
@@ -103,7 +103,7 @@ export const useAuth = defineStore('auth', {
 
             try {
                 const freshToken = await $fetch<UserTokenUpdate>('/api/users/me/token', {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         Authorization: `Bearer ${this.token.access_token}`,
                     },
