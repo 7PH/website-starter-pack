@@ -91,6 +91,8 @@ app/frontend/pages/admin/users/[id].vue
 app/frontend/plugins/auth.client.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
+app/frontend/playwright.config.ts
+app/frontend/e2e/auth.spec.ts
 
 # Traefik
 services/traefik/*.core.yml
@@ -104,5 +106,6 @@ scripts/_core/*
 # Root project files
 .env.template
 docker-compose.core.yml
+docker-compose.test.yml
 package*.json
 starter-pack-files.txt

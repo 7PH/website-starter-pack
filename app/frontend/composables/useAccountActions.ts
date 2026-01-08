@@ -197,6 +197,7 @@ export function useAccountActions() {
             title: t('core.auth.logoutSuccess'),
             duration: 3000,
         });
+        navigateTo('/');
     }
 
     // ============================================
