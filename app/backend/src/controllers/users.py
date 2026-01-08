@@ -136,7 +136,7 @@ def get_me(*, current_user: UserRead = Depends(get_current_user)):
     return current_user
 
 
-@router.post("/users/me/token", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
+@router.put("/users/me/token", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
 def refresh_token(
     *,
     session: Session = Depends(get_session),
@@ -205,7 +205,7 @@ def update_me(
 ):
     """
     Update the profile (name) of the currently authenticated user.
-    Email changes are handled separately via PUT /users/me/email.
+    Email changes are handled separately via POST /users/me/email-changes.
     """
     user = get_user_by_id(session, current_user.id)
     if not user:
@@ -271,8 +271,8 @@ def update_my_password(
     return UserRead.model_validate(user)
 
 
-@router.put(
-    "/users/me/email",
+@router.post(
+    "/users/me/email-changes",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )

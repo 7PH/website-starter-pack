@@ -44,7 +44,7 @@ PASSWORD_RESET_IP_DAILY_LIMIT = 20
 
 
 @router.post(
-    "/auth/send-verification-email",
+    "/email-verifications",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -104,7 +104,7 @@ def send_verification_email(
 
 
 @router.post(
-    "/auth/verify-email",
+    "/email-verifications/confirm",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -143,7 +143,7 @@ def verify_email(
 
 
 @router.post(
-    "/auth/request-password-reset",
+    "/password-resets",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -200,7 +200,7 @@ def request_password_reset(
 
 
 @router.post(
-    "/auth/reset-password",
+    "/password-resets/confirm",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -235,7 +235,7 @@ def reset_password(
 
 
 @router.post(
-    "/auth/confirm-email-change",
+    "/email-changes/confirm",
     response_model=AuthMessageResponse,
     status_code=status.HTTP_200_OK,
 )

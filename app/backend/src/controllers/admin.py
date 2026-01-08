@@ -21,6 +21,7 @@ from ..schemas.admin import (
     AdminUserListResponse,
     AdminUserRead,
     AdminUserUpdate,
+    ImpersonationRequest,
     ImpersonationResponse,
 )
 from ..schemas.event_log import EventLogFilter, EventLogListResponse
@@ -34,7 +35,7 @@ router = APIRouter(prefix="/admin")
 # ============================================================================
 
 
-@router.get("/dashboard", response_model=AdminDashboardStats)
+@router.get("/stats", response_model=AdminDashboardStats)
 def get_dashboard_stats(
     *,
     session: Session = Depends(get_session),
@@ -223,15 +224,16 @@ def delete_user_by_admin(
 # ============================================================================
 
 
-@router.post("/impersonate/{user_id}", response_model=ImpersonationResponse)
+@router.post("/impersonations", response_model=ImpersonationResponse)
 def start_impersonation(
     *,
     session: Session = Depends(get_session),
     request: Request,
     admin: UserRead = Depends(get_current_admin),
-    user_id: int,
+    body: ImpersonationRequest,
 ):
     """Start impersonating a user. Returns a new token for the target user."""
+    user_id = body.user_id
     if user_id == admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -263,7 +265,7 @@ def start_impersonation(
     )
 
 
-@router.post("/stop-impersonate", response_model=ImpersonationResponse)
+@router.delete("/impersonations", response_model=ImpersonationResponse)
 def stop_impersonation(
     *,
     session: Session = Depends(get_session),

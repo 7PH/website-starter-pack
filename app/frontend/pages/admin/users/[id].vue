@@ -119,7 +119,7 @@ async function impersonateUser() {
     if (!user.value) return;
 
     try {
-        const response = await api.post<ImpersonationResponse>(`/admin/impersonate/${userId.value}`);
+        const response = await api.post<ImpersonationResponse>('/admin/impersonations', { user_id: userId.value });
         const auth = useAuth();
 
         auth.saveUserToken({
