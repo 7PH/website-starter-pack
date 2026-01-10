@@ -86,6 +86,16 @@ The app uses **Tailwind CSS** for custom styling and **@nuxt/ui** for UI compone
 </style>
 ```
 
+### CSS Guidelines
+
+- **Keep `main.css` minimal**: Only theme variables, CSS reset, and truly global utilities (like `.text-gradient-brand`)
+- **No shared utility classes in main.css**: If multiple components need the same styling pattern, create a Vue component in `components/ui/` instead
+- **Use scoped styles**: Component-specific CSS should be in `<style scoped>` blocks
+- **Shared UI components** (`components/ui/`):
+  - `CardHeader.vue` - card header with title and actions slot
+  - `ModalHeader.vue` - modal header with title and close button
+  - `FormActions.vue` - form action buttons container
+
 ## Core Updates
 
 ```bash
@@ -93,3 +103,21 @@ bash scripts/_core/core-update.sh  # Sync files from starterpack repo
 ```
 
 Requires clean git state. Uses `starter-pack-files.txt` manifest to pull files from `starter-pack` remote.
+
+## Internationalization (i18n)
+
+### Admin Pages
+
+Admin pages (`/admin/*`) are **English-only** and do not require i18n translations. These pages are intended for internal use by developers and system administrators who are expected to understand English.
+
+When working on admin pages:
+- Use hardcoded English strings directly
+- Do not add translation keys to locale files
+- Keep UI text simple and technical
+
+### User-Facing Pages
+
+All other pages that end users interact with must use i18n:
+- Use `t('key')` for all user-visible text
+- Add translation keys to `locales/core-en.json` and `locales/core-fr.json`
+- Follow existing naming conventions for translation keys

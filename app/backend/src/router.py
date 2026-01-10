@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from .constants import STRIPE_ENABLED
-from .controllers import admin, auth, backups, db_health, healthcheck, stripe, users
+from .constants import ORGANIZATIONS_ENABLED, STRIPE_ENABLED
+from .controllers import admin, auth, backups, db_health, healthcheck, organizations, stripe, users
 from .router_app import router as app_router
 
 router = APIRouter()
@@ -12,6 +12,8 @@ router.include_router(auth.router, tags=["Auth"])
 router.include_router(healthcheck.router, tags=["Healthcheck"])
 if STRIPE_ENABLED:
     router.include_router(stripe.router, tags=["Stripe"])
+if ORGANIZATIONS_ENABLED:
+    router.include_router(organizations.router, tags=["Organizations"])
 router.include_router(admin.router, tags=["Admin"])
 router.include_router(backups.router, tags=["Backups"])
 router.include_router(db_health.router, tags=["Database Health"])

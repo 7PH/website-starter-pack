@@ -12,10 +12,12 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-// Merge and sort tabs
+// Merge, filter by condition, and sort tabs
 const tabs = computed(() => {
     const allTabs: AccountTabItem[] = [...CORE_ACCOUNT_TABS, ...PROJECT_ACCOUNT_TABS];
-    return allTabs.sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+    return allTabs
+        .filter((tab) => !tab.condition || tab.condition())
+        .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 });
 
 // Convert tabs to UTabs format

@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..models.organization import UserOrganizationBase
 from ..models.user import UserBase
 
 
@@ -58,8 +59,31 @@ def get_user_by_stripe_id(session: Session, stripe_id: str) -> UserBase | None:
 
 
 def set_user_premium_status(session: Session, user: UserBase, is_premium: bool) -> None:
-    """Update a user's premium status."""
+    """Update a user's premium status (legacy function, prefer update_user_premium_cache)."""
     user.is_premium = is_premium
+    session.commit()
+
+
+def update_user_premium_cache(session: Session, user_id: int) -> None:
+    """Recalculate is_premium from actual sources (personal subscription and org seats).
+
+    This should be called after any change to has_personal_subscription or has_premium_seat.
+    """
+    user = get_user_by_id(session, user_id)
+    if not user:
+        return
+
+    has_org_seat = (
+        session.execute(
+            select(UserOrganizationBase).where(
+                UserOrganizationBase.user_id == user_id,
+                UserOrganizationBase.has_premium_seat.is_(True),
+            )
+        ).scalar_one_or_none()
+        is not None
+    )
+
+    user.is_premium = user.has_personal_subscription or has_org_seat
     session.commit()
 
 

@@ -237,18 +237,19 @@ async function deleteUser() {
                 <!-- User Info Card -->
                 <UCard class="info-card">
                     <template #header>
-                        <div class="card-header">
-                            <span class="font-semibold">User Information</span>
-                            <UButton
-                                v-if="!isEditing && !user.deleted_at"
-                                label="Edit"
-                                icon="i-lucide-pencil"
-                                size="sm"
-                                color="neutral"
-                                variant="outline"
-                                @click="isEditing = true"
-                            />
-                        </div>
+                        <UiCardHeader title="User Information">
+                            <template #actions>
+                                <UButton
+                                    v-if="!isEditing && !user.deleted_at"
+                                    label="Edit"
+                                    icon="i-lucide-pencil"
+                                    size="sm"
+                                    color="neutral"
+                                    variant="outline"
+                                    @click="isEditing = true"
+                                />
+                            </template>
+                        </UiCardHeader>
                     </template>
 
                     <form v-if="isEditing" class="edit-form" @submit.prevent="saveChanges">
@@ -377,10 +378,6 @@ async function deleteUser() {
 
 .content-grid {
     @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
-}
-
-.card-header {
-    @apply flex justify-between items-center;
 }
 
 .info-grid {

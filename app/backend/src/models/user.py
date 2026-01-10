@@ -19,6 +19,7 @@ class UserBase(Base):
     is_admin = Column(Boolean, default=False)
     stripe_id = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
+    has_personal_subscription = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 

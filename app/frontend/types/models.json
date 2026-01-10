@@ -582,6 +582,769 @@
       "title": "IndexStats",
       "type": "object"
     },
+    "OrganizationCheckoutRequest": {
+      "description": "Schema for creating a checkout session.",
+      "properties": {
+        "price_id": {
+          "title": "Price Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "price_id"
+      ],
+      "title": "OrganizationCheckoutRequest",
+      "type": "object"
+    },
+    "OrganizationCheckoutResponse": {
+      "description": "Schema for checkout session response.",
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "OrganizationCheckoutResponse",
+      "type": "object"
+    },
+    "OrganizationCreate": {
+      "description": "Schema for creating a new organization.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "maxLength": 50,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phone"
+        },
+        "tax_number": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tax Number"
+        },
+        "address_line1": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line1"
+        },
+        "address_line2": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line2"
+        },
+        "city": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "postal_code": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Postal Code"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "maxLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "email": {
+          "format": "email",
+          "maxLength": 255,
+          "title": "Email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ],
+      "title": "OrganizationCreate",
+      "type": "object"
+    },
+    "OrganizationListResponse": {
+      "description": "Paginated response for organization list.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/OrganizationRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "page": {
+          "title": "Page",
+          "type": "integer"
+        },
+        "per_page": {
+          "title": "Per Page",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "page",
+        "per_page"
+      ],
+      "title": "OrganizationListResponse",
+      "type": "object"
+    },
+    "OrganizationMemberAdd": {
+      "description": "Schema for adding a member by email.",
+      "properties": {
+        "email": {
+          "format": "email",
+          "maxLength": 255,
+          "title": "Email",
+          "type": "string"
+        },
+        "is_admin": {
+          "default": false,
+          "title": "Is Admin",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "title": "OrganizationMemberAdd",
+      "type": "object"
+    },
+    "OrganizationMemberListResponse": {
+      "description": "Paginated response for member list.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/OrganizationMemberRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "page": {
+          "title": "Page",
+          "type": "integer"
+        },
+        "per_page": {
+          "title": "Per Page",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "page",
+        "per_page"
+      ],
+      "title": "OrganizationMemberListResponse",
+      "type": "object"
+    },
+    "OrganizationMemberRead": {
+      "description": "Schema for reading organization member info.",
+      "properties": {
+        "user_id": {
+          "title": "User Id",
+          "type": "integer"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "first_name": {
+          "title": "First Name",
+          "type": "string"
+        },
+        "last_name": {
+          "title": "Last Name",
+          "type": "string"
+        },
+        "is_admin": {
+          "title": "Is Admin",
+          "type": "boolean"
+        },
+        "is_premium": {
+          "title": "Is Premium",
+          "type": "boolean"
+        },
+        "has_premium_seat": {
+          "default": false,
+          "title": "Has Premium Seat",
+          "type": "boolean"
+        },
+        "joined_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Joined At"
+        }
+      },
+      "required": [
+        "user_id",
+        "email",
+        "first_name",
+        "last_name",
+        "is_admin",
+        "is_premium"
+      ],
+      "title": "OrganizationMemberRead",
+      "type": "object"
+    },
+    "OrganizationMemberUpdate": {
+      "description": "Schema for updating a member's status.",
+      "properties": {
+        "is_admin": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Admin"
+        },
+        "is_premium": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Premium"
+        }
+      },
+      "title": "OrganizationMemberUpdate",
+      "type": "object"
+    },
+    "OrganizationPlan": {
+      "description": "Schema for available organization plans.",
+      "properties": {
+        "price_id": {
+          "title": "Price Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "amount": {
+          "title": "Amount",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "seats": {
+          "title": "Seats",
+          "type": "integer"
+        },
+        "interval": {
+          "title": "Interval",
+          "type": "string"
+        }
+      },
+      "required": [
+        "price_id",
+        "name",
+        "amount",
+        "currency",
+        "seats",
+        "interval"
+      ],
+      "title": "OrganizationPlan",
+      "type": "object"
+    },
+    "OrganizationRead": {
+      "description": "Schema for reading organization info.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phone"
+        },
+        "tax_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tax Number"
+        },
+        "address_line1": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line1"
+        },
+        "address_line2": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line2"
+        },
+        "city": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "postal_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Postal Code"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "stripe_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stripe Id"
+        },
+        "stripe_premium": {
+          "title": "Stripe Premium",
+          "type": "boolean"
+        },
+        "stripe_quota": {
+          "title": "Stripe Quota",
+          "type": "integer"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "member_count": {
+          "default": 0,
+          "title": "Member Count",
+          "type": "integer"
+        },
+        "premium_member_count": {
+          "default": 0,
+          "title": "Premium Member Count",
+          "type": "integer"
+        },
+        "members": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/OrganizationMemberRead"
+          },
+          "title": "Members",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "stripe_premium",
+        "stripe_quota"
+      ],
+      "title": "OrganizationRead",
+      "type": "object"
+    },
+    "OrganizationSubscriptionStatus": {
+      "description": "Schema for organization subscription status (synced from Stripe).",
+      "properties": {
+        "stripe_premium": {
+          "title": "Stripe Premium",
+          "type": "boolean"
+        },
+        "stripe_quota": {
+          "title": "Stripe Quota",
+          "type": "integer"
+        },
+        "cancel_at_period_end": {
+          "default": false,
+          "title": "Cancel At Period End",
+          "type": "boolean"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        }
+      },
+      "required": [
+        "stripe_premium",
+        "stripe_quota"
+      ],
+      "title": "OrganizationSubscriptionStatus",
+      "type": "object"
+    },
+    "OrganizationUpdate": {
+      "description": "Schema for updating an organization.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "maxLength": 50,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phone"
+        },
+        "tax_number": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tax Number"
+        },
+        "address_line1": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line1"
+        },
+        "address_line2": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address Line2"
+        },
+        "city": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "postal_code": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Postal Code"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "maxLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "format": "email",
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
+        }
+      },
+      "title": "OrganizationUpdate",
+      "type": "object"
+    },
     "Recommendation": {
       "description": "An actionable recommendation for database optimization.",
       "properties": {
@@ -651,6 +1414,11 @@
             }
           ],
           "title": "Expires At"
+        },
+        "cancel_at_period_end": {
+          "default": false,
+          "title": "Cancel At Period End",
+          "type": "boolean"
         }
       },
       "required": [
@@ -816,6 +1584,35 @@
       "title": "UserCreate",
       "type": "object"
     },
+    "UserOrganizationInfo": {
+      "description": "Organization info for a user's memberships.",
+      "properties": {
+        "organization_id": {
+          "title": "Organization Id",
+          "type": "integer"
+        },
+        "organization_name": {
+          "title": "Organization Name",
+          "type": "string"
+        },
+        "is_admin": {
+          "title": "Is Admin",
+          "type": "boolean"
+        },
+        "has_premium_seat": {
+          "default": false,
+          "title": "Has Premium Seat",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "organization_id",
+        "organization_name",
+        "is_admin"
+      ],
+      "title": "UserOrganizationInfo",
+      "type": "object"
+    },
     "UserPasswordResetRequest": {
       "properties": {
         "email": {
@@ -877,6 +1674,19 @@
         "is_premium": {
           "title": "Is Premium",
           "type": "boolean"
+        },
+        "has_personal_subscription": {
+          "default": false,
+          "title": "Has Personal Subscription",
+          "type": "boolean"
+        },
+        "organizations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/UserOrganizationInfo"
+          },
+          "title": "Organizations",
+          "type": "array"
         }
       },
       "required": [
@@ -1031,6 +1841,45 @@
     },
     {
       "$ref": "#/$defs/Recommendation"
+    },
+    {
+      "$ref": "#/$defs/OrganizationRead"
+    },
+    {
+      "$ref": "#/$defs/OrganizationCreate"
+    },
+    {
+      "$ref": "#/$defs/OrganizationUpdate"
+    },
+    {
+      "$ref": "#/$defs/OrganizationListResponse"
+    },
+    {
+      "$ref": "#/$defs/OrganizationMemberRead"
+    },
+    {
+      "$ref": "#/$defs/OrganizationMemberAdd"
+    },
+    {
+      "$ref": "#/$defs/OrganizationMemberUpdate"
+    },
+    {
+      "$ref": "#/$defs/OrganizationMemberListResponse"
+    },
+    {
+      "$ref": "#/$defs/OrganizationPlan"
+    },
+    {
+      "$ref": "#/$defs/OrganizationCheckoutRequest"
+    },
+    {
+      "$ref": "#/$defs/OrganizationCheckoutResponse"
+    },
+    {
+      "$ref": "#/$defs/OrganizationSubscriptionStatus"
+    },
+    {
+      "$ref": "#/$defs/UserOrganizationInfo"
     }
   ]
 }

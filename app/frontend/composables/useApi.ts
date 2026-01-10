@@ -79,12 +79,14 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
                 }
 
                 // For client errors (4xx), try to parse error detail
+                let errorData: { detail?: string } = {};
                 try {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || response.statusText || 'An error occurred');
+                    errorData = await response.json();
                 } catch {
-                    throw new Error(response.statusText || 'An error occurred');
+                    throw new Error(response.statusText ?? 'An error occurred');
                 }
+
+                throw new Error(errorData.detail ?? response.statusText ?? 'An error occurred');
             }
 
             // Only parse JSON if there's content

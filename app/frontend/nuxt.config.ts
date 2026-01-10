@@ -32,6 +32,7 @@ export default defineNuxtConfig({
             appName: 'My App', // NUXT_PUBLIC_APP_NAME
             apiBase: '/api', // NUXT_PUBLIC_API_BASE - relative path, same origin
             stripeEnabled: false, // NUXT_PUBLIC_STRIPE_ENABLED - enable billing features
+            organizationsEnabled: false, // NUXT_PUBLIC_ORGANIZATIONS_ENABLED - enable org features
             adminerUrl: '', // NUXT_PUBLIC_ADMINER_URL - external URL to Adminer
             // Umami Analytics (optional)
             umamiEnabled: false, // NUXT_PUBLIC_UMAMI_ENABLED

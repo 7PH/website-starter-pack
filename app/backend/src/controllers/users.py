@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
+from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, ORGANIZATIONS_ENABLED, PUBLIC_URL, EventType
 from ..crud.event_logs import log_event
+from ..crud.organizations import get_user_organizations
 from ..crud.users import (
     create_user,
     get_user_by_email,
@@ -35,6 +36,7 @@ from ..schemas.user import (
     UserChangeInfo,
     UserChangePassword,
     UserCreate,
+    UserOrganizationInfo,
     UserRead,
     UserTokenUpdate,
 )
@@ -50,6 +52,7 @@ REGISTER_RATE_LIMIT_PER_IP = 5  # max attempts per IP
 REGISTER_RATE_LIMIT_MINUTES = 15
 EMAIL_CHANGE_COOLDOWN_MINUTES = 5
 EMAIL_CHANGE_DAILY_LIMIT = 5
+TOKEN_REFRESH_COOLDOWN_SECONDS = 300  # 5 minutes
 
 
 @router.post("/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED)
@@ -81,6 +84,7 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
             user_id=user.id,
             email=user.email,
             name=f"{user.first_name} {user.last_name}",
+            check_user_exists=lambda uid: get_user_by_id(session, uid) is not None,
         )
         stripe_helper.create_subscription(user.stripe_id)
         update_user(session, user)
@@ -125,58 +129,88 @@ def login_user(
     # Log the login event
     log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
 
-    return create_access_token(UserRead.model_validate(user))
+    return create_access_token(_build_user_read_with_orgs(session, user))
+
+
+def _build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
+    """Build a UserRead object with organization memberships (if feature enabled)."""
+    organizations: list[UserOrganizationInfo] = []
+    if ORGANIZATIONS_ENABLED:
+        memberships = get_user_organizations(session, user.id)
+        organizations = [
+            UserOrganizationInfo(
+                organization_id=m.organization_id,
+                organization_name=m.organization.name if m.organization else "Unknown",
+                is_admin=m.is_admin,
+                has_premium_seat=m.has_premium_seat,
+            )
+            for m in memberships
+            if m.organization and not m.organization.deleted_at
+        ]
+    return UserRead(
+        id=user.id,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        is_admin=user.is_admin,
+        is_premium=user.is_premium,
+        has_personal_subscription=user.has_personal_subscription,
+        organizations=organizations,
+    )
 
 
 @router.get("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
-def get_me(*, current_user: UserRead = Depends(get_current_user)):
+def get_me(*, session: Session = Depends(get_session), current_user: UserRead = Depends(get_current_user)):
     """
-    Get the details of the currently authenticated user.
+    Get the details of the currently authenticated user, including organization memberships.
     """
-    return current_user
+    user = get_user_by_id(session, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return _build_user_read_with_orgs(session, user)
 
 
 @router.put("/users/me/token", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
 def refresh_token(
     *,
     session: Session = Depends(get_session),
-    current_user: UserRead = Depends(get_current_user),
     token: str = Depends(oauth2_scheme),
 ):
     """
     Refresh the current user's token.
     Rate limited: won't issue new token if current one is less than 5 minutes old.
     """
-    # Decode current token to check creation time
     payload = decode_access_token(token)
 
-    # Check if token was issued less than 5 minutes ago
     token_exp = payload.get("exp", 0)
     token_created = token_exp - (JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
     now = datetime.now(UTC).timestamp()
 
-    if now - token_created < 300:  # 5 minutes
-        # Return current token info without generating new one
-        return UserTokenUpdate(
-            access_token=token,
-            token_parsed=dict(
-                user=current_user,
-                created_at=datetime.fromtimestamp(token_created, tz=UTC),
-                expires_at=datetime.fromtimestamp(token_exp, tz=UTC),
-            ),
-            user=current_user,
-        )
-
-    # Fetch fresh user data and issue new token
-    user = get_user_by_id(session, current_user.id)
+    # Always fetch fresh user data with organizations
+    user_id = payload.get("id")
+    user = get_user_by_id(session, user_id)
     if not user:
-        # User was deleted - force logout by returning 401
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Account no longer exists",
         )
 
-    return create_access_token(UserRead.model_validate(user))
+    user_read = _build_user_read_with_orgs(session, user)
+
+    if now - token_created < TOKEN_REFRESH_COOLDOWN_SECONDS:
+        # Return current token info without generating new one, but with fresh user data
+        return UserTokenUpdate(
+            access_token=token,
+            token_parsed=dict(
+                user=user_read,
+                created_at=datetime.fromtimestamp(token_created, tz=UTC),
+                expires_at=datetime.fromtimestamp(token_exp, tz=UTC),
+            ),
+            user=user_read,
+        )
+
+    return create_access_token(user_read)
 
 
 @router.get("/users/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -187,12 +221,16 @@ def get_user(
     current_user: UserRead = Depends(get_current_user),
 ):
     """
-    Get user details by ID. Restricted to authenticated users.
+    Get user details by ID. Only accessible by the user themselves or system admins.
     """
+    # Users can only view their own details unless they're system admins
+    if current_user.id != user_id and not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
     user = get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+    return _build_user_read_with_orgs(session, user)
 
 
 @router.patch("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -298,7 +336,9 @@ def request_email_change(
     # Normalize and validate new email
     new_email = body.new_email.lower().strip()
     if new_email == user.email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New email must be different from current email")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="New email must be different from current email"
+        )
 
     # Check if new email is already taken
     if is_email_taken(session, new_email):

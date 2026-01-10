@@ -42,6 +42,7 @@ x-frontend-common: &frontend-common
         NUXT_PUBLIC_APP_NAME: ${APP_NAME}
         NUXT_PUBLIC_API_BASE: /api
         NUXT_PUBLIC_STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
+        NUXT_PUBLIC_ORGANIZATIONS_ENABLED: ${ORGANIZATIONS_ENABLED:-false}
         NUXT_PUBLIC_ADMINER_URL: ${NUXT_PUBLIC_ADMINER_URL:-}
         NUXT_PUBLIC_UMAMI_DASHBOARD_URL: ${NUXT_PUBLIC_UMAMI_DASHBOARD_URL:-}
     networks:
@@ -141,15 +142,15 @@ services:
         profiles:
             - prod
             - dev
-            - debug
         networks:
             - web
         depends_on:
             - db
 
-    # Backend for Development
+    # Backend for Development (with debugpy for optional debugging)
     backend-dev:
         <<: *backend-common
+        entrypoint: python3 -m debugpy --log-to-stderr --listen 0.0.0.0:5679 -m
         command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api"]
         environment:
             MODE: DEVELOPMENT
@@ -158,22 +159,6 @@ services:
             - "5679:5679"
         profiles:
             - dev
-        depends_on:
-            db:
-                condition: service_healthy
-
-    # Backend for Debugging
-    backend-debug:
-        <<: *backend-common
-        entrypoint: python3 -m debugpy --log-to-stderr --listen 0.0.0.0:5679 --wait-for-client -m
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api"]
-        environment:
-            MODE: DEVELOPMENT
-        ports:
-            - "8082:80"
-            - "5679:5679"
-        profiles:
-            - debug
         depends_on:
             db:
                 condition: service_healthy
