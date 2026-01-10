@@ -34,7 +34,9 @@ const navItems = computed(() => {
         });
     }
 
-    return items.sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+    return items
+        .filter((item) => !item.condition || item.condition())
+        .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 });
 
 // Check if a nav item is active

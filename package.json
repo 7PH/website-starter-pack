@@ -6,9 +6,8 @@
   "main": "index.js",
   "scripts": {
     "start": "docker compose --profile prod up -d --build",
-    "debug": "docker compose --profile debug up",
     "dev": "docker compose --profile dev up --build",
-    "stop": "docker compose --profile dev --profile prod --profile debug down --remove-orphans",
+    "stop": "docker compose --profile dev --profile prod down --remove-orphans",
     "restart": "npm run stop && npm run dev",
     "logs": "docker compose logs -f",
     "build": "docker compose --profile dev build",

@@ -6,6 +6,8 @@ import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from .organization import UserOrganizationInfo
+
 
 class UserRead(BaseModel):
     id: int
@@ -14,6 +16,8 @@ class UserRead(BaseModel):
     last_name: str
     is_admin: bool
     is_premium: bool
+    has_personal_subscription: bool = False
+    organizations: list[UserOrganizationInfo] = []
 
     class Config:
         from_attributes = True

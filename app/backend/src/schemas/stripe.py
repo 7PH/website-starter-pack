@@ -15,6 +15,7 @@ class SubscriptionStatus(BaseModel):
     is_premium: bool
     plan: str | None
     expires_at: str | None
+    cancel_at_period_end: bool = False
 
 
 class WebhookResponse(BaseModel):

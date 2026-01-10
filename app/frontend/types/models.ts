@@ -33,7 +33,20 @@ export type Models =
   | DatabaseHealthResponse
   | TableStats
   | IndexStats
-  | Recommendation;
+  | Recommendation
+  | OrganizationRead
+  | OrganizationCreate
+  | OrganizationUpdate
+  | OrganizationListResponse
+  | OrganizationMemberRead
+  | OrganizationMemberAdd
+  | OrganizationMemberUpdate
+  | OrganizationMemberListResponse
+  | OrganizationPlan
+  | OrganizationCheckoutRequest
+  | OrganizationCheckoutResponse
+  | OrganizationSubscriptionStatus
+  | UserOrganizationInfo;
 export type Message = string;
 export type Id = number;
 export type Email = string;
@@ -41,6 +54,12 @@ export type FirstName = string;
 export type LastName = string;
 export type IsAdmin = boolean;
 export type IsPremium = boolean;
+export type HasPersonalSubscription = boolean;
+export type OrganizationId = number;
+export type OrganizationName = string;
+export type IsAdmin1 = boolean;
+export type HasPremiumSeat = boolean;
+export type Organizations = UserOrganizationInfo[];
 export type Id1 = number;
 export type FirstName1 = string;
 export type LastName1 = string;
@@ -64,7 +83,7 @@ export type Id2 = number;
 export type Email3 = string;
 export type FirstName4 = string;
 export type LastName4 = string;
-export type IsAdmin1 = boolean;
+export type IsAdmin2 = boolean;
 export type IsPremium1 = boolean;
 export type EmailConfirmed = boolean;
 export type CreatedAt1 = string | null;
@@ -72,7 +91,7 @@ export type DeletedAt = string | null;
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
 export type Email4 = string | null;
-export type IsAdmin2 = boolean | null;
+export type IsAdmin3 = boolean | null;
 export type IsPremium2 = boolean | null;
 export type Items = AdminUserRead[];
 export type Total = number;
@@ -111,6 +130,7 @@ export type Url = string;
 export type IsPremium3 = boolean;
 export type Plan = string | null;
 export type ExpiresAt1 = string | null;
+export type CancelAtPeriodEnd = boolean;
 export type DatabaseSize = number;
 export type DatabaseSizePretty = string;
 export type ActiveConnections = number;
@@ -138,6 +158,80 @@ export type Table1 = string | null;
 export type Message2 = string;
 export type Action2 = string;
 export type Recommendations = Recommendation[];
+export type Id4 = number;
+export type Name2 = string;
+export type Email5 = string;
+export type Description = string | null;
+export type Phone = string | null;
+export type TaxNumber = string | null;
+export type AddressLine1 = string | null;
+export type AddressLine2 = string | null;
+export type City = string | null;
+export type State = string | null;
+export type PostalCode = string | null;
+export type Country = string | null;
+export type StripeId = string | null;
+export type StripePremium = boolean;
+export type StripeQuota = number;
+export type CreatedAt4 = string | null;
+export type DeletedAt1 = string | null;
+export type MemberCount = number;
+export type PremiumMemberCount = number;
+export type UserId2 = number;
+export type Email6 = string;
+export type FirstName6 = string;
+export type LastName6 = string;
+export type IsAdmin4 = boolean;
+export type IsPremium4 = boolean;
+export type HasPremiumSeat1 = boolean;
+export type JoinedAt = string | null;
+export type Members = OrganizationMemberRead[];
+export type Description1 = string | null;
+export type Phone1 = string | null;
+export type TaxNumber1 = string | null;
+export type AddressLine11 = string | null;
+export type AddressLine21 = string | null;
+export type City1 = string | null;
+export type State1 = string | null;
+export type PostalCode1 = string | null;
+export type Country1 = string | null;
+export type Name3 = string;
+export type Email7 = string;
+export type Description2 = string | null;
+export type Phone2 = string | null;
+export type TaxNumber2 = string | null;
+export type AddressLine12 = string | null;
+export type AddressLine22 = string | null;
+export type City2 = string | null;
+export type State2 = string | null;
+export type PostalCode2 = string | null;
+export type Country2 = string | null;
+export type Name4 = string | null;
+export type Email8 = string | null;
+export type Items3 = OrganizationRead[];
+export type Total3 = number;
+export type Page = number;
+export type PerPage = number;
+export type Email9 = string;
+export type IsAdmin5 = boolean;
+export type IsAdmin6 = boolean | null;
+export type IsPremium5 = boolean | null;
+export type Items4 = OrganizationMemberRead[];
+export type Total4 = number;
+export type Page1 = number;
+export type PerPage1 = number;
+export type PriceId = string;
+export type Name5 = string;
+export type Amount = number;
+export type Currency = string;
+export type Seats = number;
+export type Interval = string;
+export type PriceId1 = string;
+export type Url1 = string;
+export type StripePremium1 = boolean;
+export type StripeQuota1 = number;
+export type CancelAtPeriodEnd1 = boolean;
+export type ExpiresAt2 = string | null;
 
 /**
  * Standard response for auth operations.
@@ -152,6 +246,17 @@ export interface UserRead {
   last_name: LastName;
   is_admin: IsAdmin;
   is_premium: IsPremium;
+  has_personal_subscription?: HasPersonalSubscription;
+  organizations?: Organizations;
+}
+/**
+ * Organization info for a user's memberships.
+ */
+export interface UserOrganizationInfo {
+  organization_id: OrganizationId;
+  organization_name: OrganizationName;
+  is_admin: IsAdmin1;
+  has_premium_seat?: HasPremiumSeat;
 }
 export interface UserPreviewRead {
   id: Id1;
@@ -199,7 +304,7 @@ export interface AdminUserRead {
   email: Email3;
   first_name: FirstName4;
   last_name: LastName4;
-  is_admin: IsAdmin1;
+  is_admin: IsAdmin2;
   is_premium: IsPremium1;
   email_confirmed: EmailConfirmed;
   created_at: CreatedAt1;
@@ -212,7 +317,7 @@ export interface AdminUserUpdate {
   first_name?: FirstName5;
   last_name?: LastName5;
   email?: Email4;
-  is_admin?: IsAdmin2;
+  is_admin?: IsAdmin3;
   is_premium?: IsPremium2;
 }
 /**
@@ -301,6 +406,7 @@ export interface SubscriptionStatus {
   is_premium: IsPremium3;
   plan: Plan;
   expires_at: ExpiresAt1;
+  cancel_at_period_end?: CancelAtPeriodEnd;
 }
 /**
  * Complete database health response.
@@ -348,5 +454,139 @@ export interface Recommendation {
   table: Table1;
   message: Message2;
   action: Action2;
+}
+/**
+ * Schema for reading organization info.
+ */
+export interface OrganizationRead {
+  id: Id4;
+  name: Name2;
+  email: Email5;
+  description?: Description;
+  phone?: Phone;
+  tax_number?: TaxNumber;
+  address_line1?: AddressLine1;
+  address_line2?: AddressLine2;
+  city?: City;
+  state?: State;
+  postal_code?: PostalCode;
+  country?: Country;
+  stripe_id?: StripeId;
+  stripe_premium: StripePremium;
+  stripe_quota: StripeQuota;
+  created_at?: CreatedAt4;
+  deleted_at?: DeletedAt1;
+  member_count?: MemberCount;
+  premium_member_count?: PremiumMemberCount;
+  members?: Members;
+}
+/**
+ * Schema for reading organization member info.
+ */
+export interface OrganizationMemberRead {
+  user_id: UserId2;
+  email: Email6;
+  first_name: FirstName6;
+  last_name: LastName6;
+  is_admin: IsAdmin4;
+  is_premium: IsPremium4;
+  has_premium_seat?: HasPremiumSeat1;
+  joined_at?: JoinedAt;
+}
+/**
+ * Schema for creating a new organization.
+ */
+export interface OrganizationCreate {
+  description?: Description1;
+  phone?: Phone1;
+  tax_number?: TaxNumber1;
+  address_line1?: AddressLine11;
+  address_line2?: AddressLine21;
+  city?: City1;
+  state?: State1;
+  postal_code?: PostalCode1;
+  country?: Country1;
+  name: Name3;
+  email: Email7;
+}
+/**
+ * Schema for updating an organization.
+ */
+export interface OrganizationUpdate {
+  description?: Description2;
+  phone?: Phone2;
+  tax_number?: TaxNumber2;
+  address_line1?: AddressLine12;
+  address_line2?: AddressLine22;
+  city?: City2;
+  state?: State2;
+  postal_code?: PostalCode2;
+  country?: Country2;
+  name?: Name4;
+  email?: Email8;
+}
+/**
+ * Paginated response for organization list.
+ */
+export interface OrganizationListResponse {
+  items: Items3;
+  total: Total3;
+  page: Page;
+  per_page: PerPage;
+}
+/**
+ * Schema for adding a member by email.
+ */
+export interface OrganizationMemberAdd {
+  email: Email9;
+  is_admin?: IsAdmin5;
+}
+/**
+ * Schema for updating a member's status.
+ */
+export interface OrganizationMemberUpdate {
+  is_admin?: IsAdmin6;
+  is_premium?: IsPremium5;
+}
+/**
+ * Paginated response for member list.
+ */
+export interface OrganizationMemberListResponse {
+  items: Items4;
+  total: Total4;
+  page: Page1;
+  per_page: PerPage1;
+}
+/**
+ * Schema for available organization plans.
+ */
+export interface OrganizationPlan {
+  price_id: PriceId;
+  name: Name5;
+  amount: Amount;
+  currency: Currency;
+  seats: Seats;
+  interval: Interval;
+}
+/**
+ * Schema for creating a checkout session.
+ */
+export interface OrganizationCheckoutRequest {
+  price_id: PriceId1;
+}
+/**
+ * Schema for checkout session response.
+ */
+export interface OrganizationCheckoutResponse {
+  url: Url1;
+}
+/**
+ * Schema for organization subscription status (synced from Stripe).
+ */
+export interface OrganizationSubscriptionStatus {
+  stripe_premium: StripePremium1;
+  stripe_quota: StripeQuota1;
+  cancel_at_period_end?: CancelAtPeriodEnd1;
+  expires_at?: ExpiresAt2;
 }
 }

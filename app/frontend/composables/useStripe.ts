@@ -27,6 +27,7 @@ export function useStripe() {
     // Subscription state
     const plan = ref<string | null>(null);
     const expiresAt = ref<Date | null>(null);
+    const cancelAtPeriodEnd = ref(false);
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -51,6 +52,7 @@ export function useStripe() {
             const data = await stripeApi.getSubscriptionStatus();
             plan.value = data.plan ?? null;
             expiresAt.value = data.expires_at ? new Date(data.expires_at) : null;
+            cancelAtPeriodEnd.value = data.cancel_at_period_end ?? false;
 
             // If premium status changed, refresh token to get updated value
             if (data.is_premium !== undefined && data.is_premium !== auth.user?.is_premium) {
@@ -60,6 +62,7 @@ export function useStripe() {
             // Stripe not configured or user has no stripe_id
             plan.value = null;
             expiresAt.value = null;
+            cancelAtPeriodEnd.value = false;
         } finally {
             loading.value = false;
         }
@@ -86,24 +89,26 @@ export function useStripe() {
         return stripeApi.getSubscriptionStatus();
     }
 
-    // Reset plan/expires when logged out
+    // Reset subscription state when logged out
     watch(
         () => auth.isLoggedIn,
         (loggedIn) => {
             if (!loggedIn) {
                 plan.value = null;
                 expiresAt.value = null;
+                cancelAtPeriodEnd.value = false;
             }
         },
     );
 
     return {
-        // Reactive state
+        // Reactive state (readonly refs prevent external mutation)
         isPremium,
-        plan: computed(() => plan.value),
-        expiresAt: computed(() => expiresAt.value),
-        loading: computed(() => loading.value),
-        error: computed(() => error.value),
+        plan: readonly(plan),
+        expiresAt: readonly(expiresAt),
+        cancelAtPeriodEnd: readonly(cancelAtPeriodEnd),
+        loading: readonly(loading),
+        error: readonly(error),
 
         // Actions
         refresh,

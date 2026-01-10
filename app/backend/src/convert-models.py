@@ -46,6 +46,21 @@ from .schemas.event_log import (
     EventLogListResponse,
     EventLogRead,
 )
+from .schemas.organization import (
+    OrganizationCheckoutRequest,
+    OrganizationCheckoutResponse,
+    OrganizationCreate,
+    OrganizationListResponse,
+    OrganizationMemberAdd,
+    OrganizationMemberListResponse,
+    OrganizationMemberRead,
+    OrganizationMemberUpdate,
+    OrganizationPlan,
+    OrganizationRead,
+    OrganizationSubscriptionStatus,
+    OrganizationUpdate,
+    UserOrganizationInfo,
+)
 from .schemas.stripe import (
     BillingPortalResponse,
     SubscriptionStatus,
@@ -86,6 +101,20 @@ Models = (
     | TableStats
     | IndexStats
     | Recommendation
+    # Organization models
+    | OrganizationRead
+    | OrganizationCreate
+    | OrganizationUpdate
+    | OrganizationListResponse
+    | OrganizationMemberRead
+    | OrganizationMemberAdd
+    | OrganizationMemberUpdate
+    | OrganizationMemberListResponse
+    | OrganizationPlan
+    | OrganizationCheckoutRequest
+    | OrganizationCheckoutResponse
+    | OrganizationSubscriptionStatus
+    | UserOrganizationInfo
 )
 
 if __name__ == "__main__":

@@ -23,6 +23,14 @@ PASSWORD_MIN_LENGTH = 8
 STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "false").lower() == "true"
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
+# Organizations
+ORGANIZATIONS_ENABLED = os.environ.get("ORGANIZATIONS_ENABLED", "false").lower() == "true"
+ORG_MAX_PER_USER = int(os.environ.get("ORG_MAX_PER_USER", "1"))
+ORG_MAX_MEMBERS = int(os.environ.get("ORG_MAX_MEMBERS", "50"))
+ORG_STRIPE_PRICE_IDS = [
+    p.strip() for p in os.environ.get("ORG_STRIPE_PRICE_IDS", "").split(",") if p.strip()
+]
+
 # Event log types - core events managed by starterpack
 # Projects can extend by creating src/events.py with custom event types
 
@@ -45,6 +53,17 @@ class EventType(StrEnum):
     ADMIN_IMPERSONATE_STOP = "admin.impersonate_stop"
     ADMIN_USER_UPDATE = "admin.user_update"
     ADMIN_USER_DELETE = "admin.user_delete"
+    # Organization events
+    ORG_CREATED = "org.created"
+    ORG_UPDATED = "org.updated"
+    ORG_DELETED = "org.deleted"
+    ORG_MEMBER_ADDED = "org.member_added"
+    ORG_MEMBER_REMOVED = "org.member_removed"
+    ORG_MEMBER_LEFT = "org.member_left"
+    ORG_MEMBER_ADMIN_CHANGED = "org.member_admin_changed"
+    ORG_MEMBER_PREMIUM_CHANGED = "org.member_premium_changed"
+    ORG_SUBSCRIPTION_CREATED = "org.subscription_created"
+    ORG_SUBSCRIPTION_CANCELED = "org.subscription_canceled"
 
 
 # Metadata for event types (labels and categories for UI)
@@ -61,4 +80,14 @@ CORE_EVENT_TYPES = {
     EventType.ADMIN_IMPERSONATE_STOP: {"label": "Impersonation Stopped", "category": "admin"},
     EventType.ADMIN_USER_UPDATE: {"label": "User Updated by Admin", "category": "admin"},
     EventType.ADMIN_USER_DELETE: {"label": "User Deleted by Admin", "category": "admin"},
+    EventType.ORG_CREATED: {"label": "Organization Created", "category": "organization"},
+    EventType.ORG_UPDATED: {"label": "Organization Updated", "category": "organization"},
+    EventType.ORG_DELETED: {"label": "Organization Deleted", "category": "organization"},
+    EventType.ORG_MEMBER_ADDED: {"label": "Member Added to Organization", "category": "organization"},
+    EventType.ORG_MEMBER_REMOVED: {"label": "Member Removed from Organization", "category": "organization"},
+    EventType.ORG_MEMBER_LEFT: {"label": "Member Left Organization", "category": "organization"},
+    EventType.ORG_MEMBER_ADMIN_CHANGED: {"label": "Member Admin Status Changed", "category": "organization"},
+    EventType.ORG_MEMBER_PREMIUM_CHANGED: {"label": "Member Premium Status Changed", "category": "organization"},
+    EventType.ORG_SUBSCRIPTION_CREATED: {"label": "Organization Subscription Created", "category": "organization"},
+    EventType.ORG_SUBSCRIPTION_CANCELED: {"label": "Organization Subscription Canceled", "category": "organization"},
 }

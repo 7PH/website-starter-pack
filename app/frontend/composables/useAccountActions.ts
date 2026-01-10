@@ -11,8 +11,8 @@ import * as usersApi from '~/utils/api/users';
 
 export function useAccountActions() {
     const auth = useAuth();
-    const toast = useToast();
     const { t } = useI18n();
+    const { showSuccess, showError } = useToastHelpers();
 
     // ============================================
     // Auth Actions (from useAuthActions)
@@ -25,20 +25,10 @@ export function useAccountActions() {
         try {
             const data = await usersApi.login(email, password);
             auth.saveUserToken(data);
-            toast.add({
-                color: 'success',
-                title: t('core.auth.loginSuccess'),
-                duration: 3000,
-            });
+            showSuccess(t('core.auth.loginSuccess'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.auth.invalidCredentials');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.auth.invalidCredentials');
             return false;
         }
     }
@@ -55,24 +45,14 @@ export function useAccountActions() {
                 last_name: lastName,
             });
             auth.saveUserToken(response);
-            toast.add({
-                color: 'success',
-                title: t('core.auth.registerSuccess'),
-                duration: 3000,
-            });
+            showSuccess(t('core.auth.registerSuccess'));
 
             // Trigger email verification send (fire and forget)
             sendVerificationEmail().catch(() => {});
 
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -88,11 +68,7 @@ export function useAccountActions() {
             // Ignore errors - always show success to prevent email enumeration
         }
 
-        toast.add({
-            color: 'success',
-            title: t('core.auth.passwordResetSent'),
-            duration: 3000,
-        });
+        showSuccess(t('core.auth.passwordResetSent'));
         return true;
     }
 
@@ -102,20 +78,10 @@ export function useAccountActions() {
     async function resetPassword(token: string, password: string): Promise<boolean> {
         try {
             await authApi.resetPassword(token, password);
-            toast.add({
-                color: 'success',
-                title: t('core.auth.passwordResetSuccess'),
-                duration: 3000,
-            });
+            showSuccess(t('core.auth.passwordResetSuccess'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -126,11 +92,7 @@ export function useAccountActions() {
     async function sendVerificationEmail(): Promise<boolean> {
         try {
             await authApi.sendVerificationEmail();
-            toast.add({
-                color: 'success',
-                title: t('core.auth.verificationEmailSent'),
-                duration: 3000,
-            });
+            showSuccess(t('core.auth.verificationEmailSent'));
             return true;
         } catch (error) {
             // Non-critical - just log
@@ -145,20 +107,10 @@ export function useAccountActions() {
     async function verifyEmail(token: string): Promise<boolean> {
         try {
             await authApi.verifyEmail(token);
-            toast.add({
-                color: 'success',
-                title: t('core.auth.emailVerified'),
-                duration: 3000,
-            });
+            showSuccess(t('core.auth.emailVerified'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -169,20 +121,10 @@ export function useAccountActions() {
     async function confirmEmailChange(token: string): Promise<boolean> {
         try {
             await authApi.confirmEmailChange(token);
-            toast.add({
-                color: 'success',
-                title: t('core.account.email.changeSuccess'),
-                duration: 3000,
-            });
+            showSuccess(t('core.account.email.changeSuccess'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -192,11 +134,7 @@ export function useAccountActions() {
      */
     function logout(): void {
         auth.logout();
-        toast.add({
-            color: 'success',
-            title: t('core.auth.logoutSuccess'),
-            duration: 3000,
-        });
+        showSuccess(t('core.auth.logoutSuccess'));
         navigateTo('/');
     }
 
@@ -214,20 +152,10 @@ export function useAccountActions() {
                 last_name: lastName,
             });
             auth.updateUser(updatedUser);
-            toast.add({
-                color: 'success',
-                title: t('core.account.profileSaved'),
-                duration: 3000,
-            });
+            showSuccess(t('core.account.profileSaved'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -238,20 +166,10 @@ export function useAccountActions() {
     async function requestEmailChange(newEmail: string, password: string): Promise<boolean> {
         try {
             await usersApi.requestEmailChange({ new_email: newEmail, password });
-            toast.add({
-                color: 'success',
-                title: t('core.account.email.verificationSent'),
-                duration: 5000,
-            });
+            showSuccess(t('core.account.email.verificationSent'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }
@@ -262,20 +180,10 @@ export function useAccountActions() {
     async function changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
         try {
             await usersApi.changePassword({ old_password: oldPassword, new_password: newPassword });
-            toast.add({
-                color: 'success',
-                title: t('core.account.password.changeSuccess'),
-                duration: 3000,
-            });
+            showSuccess(t('core.account.password.changeSuccess'));
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : t('core.errors.generic');
-            toast.add({
-                color: 'error',
-                title: t('core.errors.generic'),
-                description: message,
-                duration: 5000,
-            });
+            showError(error, 'core.errors.generic');
             return false;
         }
     }

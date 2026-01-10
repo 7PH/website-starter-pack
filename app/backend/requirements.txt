@@ -8,6 +8,7 @@ charset-normalizer==3.4.2
 click==8.1.8
 cryptography==45.0.4
 debugpy==1.8.12
+email-validator==2.2.0
 exceptiongroup==1.2.2
 fastapi==0.128.0
 fastapi-utils==0.8.0

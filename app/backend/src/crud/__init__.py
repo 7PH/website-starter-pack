@@ -1,5 +1,27 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+from .organizations import (
+    add_organization_member,
+    count_org_admins,
+    count_org_premium_members,
+    count_organization_members,
+    count_user_organizations,
+    create_organization,
+    get_organization_by_email,
+    get_organization_by_id,
+    get_organization_by_stripe_id,
+    get_organization_members,
+    get_organizations,
+    get_user_org_membership,
+    get_user_organizations,
+    is_org_admin,
+    is_org_email_taken,
+    remove_organization_member,
+    reset_org_members_premium,
+    soft_delete_organization,
+    update_organization,
+    update_organization_member,
+)
 from .users import (
     create_user,
     get_user_by_email,
@@ -9,6 +31,28 @@ from .users import (
 )
 
 __all__ = [
+    # Organizations
+    "add_organization_member",
+    "count_org_admins",
+    "count_org_premium_members",
+    "count_organization_members",
+    "count_user_organizations",
+    "create_organization",
+    "get_organization_by_email",
+    "get_organization_by_id",
+    "get_organization_by_stripe_id",
+    "get_organization_members",
+    "get_organizations",
+    "get_user_org_membership",
+    "get_user_organizations",
+    "is_org_admin",
+    "is_org_email_taken",
+    "remove_organization_member",
+    "reset_org_members_premium",
+    "soft_delete_organization",
+    "update_organization",
+    "update_organization_member",
+    # Users
     "create_user",
     "get_user_by_email",
     "get_user_by_id",

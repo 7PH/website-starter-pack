@@ -18,6 +18,8 @@ export interface AccountTabItem {
     component: Component;
     /** Sort order (lower = left in tab bar) */
     order?: number;
+    /** Optional condition function - tab hidden if returns false */
+    condition?: () => boolean;
 }
 
 /**
@@ -38,5 +40,13 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         icon: 'i-lucide-lock',
         component: defineAsyncComponent(() => import('~/components/account/PasswordTab.vue')),
         order: 20,
+    },
+    {
+        id: 'organizations',
+        label: 'core.account.tabs.organizations',
+        icon: 'i-lucide-building-2',
+        component: defineAsyncComponent(() => import('~/components/account/OrganizationsTab.vue')),
+        order: 30,
+        condition: () => useRuntimeConfig().public.organizationsEnabled === true,
     },
 ];

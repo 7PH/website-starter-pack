@@ -18,6 +18,8 @@ export interface AdminNavItem {
     external?: boolean;
     /** Sort order (lower = higher in list) */
     order?: number;
+    /** Optional condition function - item hidden if returns false */
+    condition?: () => boolean;
 }
 
 /**
@@ -30,6 +32,13 @@ export const CORE_ADMIN_NAV: AdminNavItem[] = [
         icon: 'i-lucide-users',
         to: '/admin/users',
         order: 10,
+    },
+    {
+        label: 'Organizations',
+        icon: 'i-lucide-building-2',
+        to: '/admin/organizations',
+        order: 15,
+        condition: () => useRuntimeConfig().public.organizationsEnabled === true,
     },
     {
         label: 'Event Logs',
