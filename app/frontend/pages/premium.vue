@@ -60,7 +60,16 @@ const benefits: { icon: string; label: string }[] = [];
 </script>
 
 <template>
-    <div class="premium-page">
+    <div class="page-box">
+        <UiPageTitleBanner compact>
+            {{ t('core.billing.premium') }}
+            <template #subtitle>
+                <p class="text-slate-600 dark:text-slate-400">
+                    {{ t('core.billing.premiumPageSubtitle') }}
+                </p>
+            </template>
+        </UiPageTitleBanner>
+
         <ClientOnly>
             <!-- Loading State -->
             <div v-if="loading" class="space-y-6">
@@ -210,15 +219,10 @@ const benefits: { icon: string; label: string }[] = [];
 
                         <!-- Premium with personal subscription only -->
                         <template v-else-if="isPremium && premiumSource === PREMIUM_SOURCE.PERSONAL">
-                            <UButton
-                                :label="t('core.billing.manage')"
-                                :loading="openingPortal"
-                                icon="i-lucide-external-link"
-                                trailing
-                                color="neutral"
-                                variant="outline"
-                                @click="openBillingPortal"
-                            />
+                            <UiGradientButton size="lg" :loading="openingPortal" @click="openBillingPortal">
+                                {{ t('core.billing.manage') }}
+                                <UIcon name="i-lucide-external-link" class="ml-2" />
+                            </UiGradientButton>
                         </template>
 
                         <!-- Premium via organization only -->
@@ -235,15 +239,10 @@ const benefits: { icon: string; label: string }[] = [];
 
                         <!-- Premium but unknown source (fallback - just show manage billing) -->
                         <template v-else-if="isPremium">
-                            <UButton
-                                :label="t('core.billing.manage')"
-                                :loading="openingPortal"
-                                icon="i-lucide-external-link"
-                                trailing
-                                color="neutral"
-                                variant="outline"
-                                @click="openBillingPortal"
-                            />
+                            <UiGradientButton size="lg" :loading="openingPortal" @click="openBillingPortal">
+                                {{ t('core.billing.manage') }}
+                                <UIcon name="i-lucide-external-link" class="ml-2" />
+                            </UiGradientButton>
                         </template>
 
                         <!-- Free user - org admin -->
@@ -309,9 +308,6 @@ const benefits: { icon: string; label: string }[] = [];
 
 <style scoped>
 @reference "~/assets/css/main.css";
-.premium-page {
-    @apply max-w-2xl mx-auto py-8 px-4;
-}
 
 .status-card {
     @apply overflow-hidden;

@@ -20,6 +20,25 @@ const techStack = [
     { name: 'PostgreSQL', icon: 'i-lucide-database', color: 'pop' },
     { name: 'Tailwind', icon: 'i-lucide-palette', color: 'accent' },
 ];
+
+const features = [
+    {
+        icon: 'i-lucide-shield-check',
+        title: 'Authentication',
+        description: 'Built-in auth with email/password and social logins',
+    },
+    {
+        icon: 'i-lucide-credit-card',
+        title: 'Payments',
+        description: 'Stripe integration for subscriptions and billing',
+    },
+    { icon: 'i-lucide-users', title: 'Organizations', description: 'Multi-tenant support with team management' },
+    {
+        icon: 'i-lucide-globe',
+        title: 'i18n Ready',
+        description: 'Internationalization with English and French included',
+    },
+];
 </script>
 
 <template>
@@ -29,41 +48,73 @@ const techStack = [
         <div class="blob blob-2" />
 
         <div class="hero-content">
-            <h1 class="hero-title text-gradient-brand">Website Starter Pack</h1>
-            <p class="hero-subtitle">
-                Full-stack web application template with Nuxt 3, FastAPI, PostgreSQL, and Traefik.
-            </p>
+            <UiAnimateFadeUp>
+                <h1 class="hero-title text-gradient-brand">Website Starter Pack</h1>
+            </UiAnimateFadeUp>
+
+            <UiAnimateFadeUp :delay="100">
+                <p class="hero-subtitle">
+                    Full-stack web application template with Nuxt 3, FastAPI, PostgreSQL, and Traefik.
+                </p>
+            </UiAnimateFadeUp>
 
             <!-- Tech Stack Badges -->
-            <div class="tech-badges">
-                <span v-for="tech in techStack" :key="tech.name" :class="['tech-badge', tech.color]">
-                    <UIcon :name="tech.icon" />
-                    {{ tech.name }}
-                </span>
-            </div>
+            <UiAnimateFadeUp :delay="200">
+                <div class="tech-badges">
+                    <span v-for="tech in techStack" :key="tech.name" :class="['tech-badge', tech.color]">
+                        <UIcon :name="tech.icon" />
+                        {{ tech.name }}
+                    </span>
+                </div>
+            </UiAnimateFadeUp>
 
             <!-- CTA Button -->
-            <div class="cta-section">
-                <UiGradientButton size="lg" @click="modal.open('auth', { initialMode: 'signup' })">
-                    <UIcon name="i-lucide-arrow-right" class="mr-2" />
-                    Get Started
-                </UiGradientButton>
-            </div>
+            <UiAnimateFadeUp :delay="300">
+                <div class="cta-section">
+                    <UiGradientButton size="lg" @click="modal.open('auth', { initialMode: 'signup' })">
+                        <UIcon name="i-lucide-arrow-right" class="mr-2" />
+                        Get Started
+                    </UiGradientButton>
+                </div>
+            </UiAnimateFadeUp>
 
             <!-- API Status -->
-            <div class="api-status">
-                <span
-                    class="status-dot"
-                    :class="{
-                        online: apiStatus === 'online',
-                        offline: apiStatus === 'offline',
-                        loading: apiStatus === 'loading',
-                    }"
-                />
-                <span class="status-text">
-                    API {{ apiStatus === 'online' ? 'Connected' : apiStatus === 'offline' ? 'Offline' : 'Checking...' }}
-                </span>
-            </div>
+            <UiAnimateFadeUp :delay="400">
+                <div class="api-status">
+                    <span
+                        class="status-dot"
+                        :class="{
+                            online: apiStatus === 'online',
+                            offline: apiStatus === 'offline',
+                            loading: apiStatus === 'loading',
+                        }"
+                    />
+                    <span class="status-text">
+                        API
+                        {{ apiStatus === 'online' ? 'Connected' : apiStatus === 'offline' ? 'Offline' : 'Checking...' }}
+                    </span>
+                </div>
+            </UiAnimateFadeUp>
+        </div>
+    </div>
+
+    <!-- Features Section (showcases AnimateOnScroll) -->
+    <div class="features-section">
+        <div class="features-grid">
+            <UiAnimateOnScroll
+                v-for="(feature, index) in features"
+                :key="feature.title"
+                animation="fade-up"
+                :delay="index * 100"
+            >
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <UIcon :name="feature.icon" class="text-2xl" />
+                    </div>
+                    <h3 class="feature-title">{{ feature.title }}</h3>
+                    <p class="feature-description">{{ feature.description }}</p>
+                </div>
+            </UiAnimateOnScroll>
         </div>
     </div>
 </template>
@@ -192,5 +243,44 @@ const techStack = [
 
 .status-text {
     @apply text-gray-500 dark:text-gray-400;
+}
+
+/* Features Section */
+.features-section {
+    @apply py-16 px-4;
+    @apply bg-white/50 dark:bg-slate-800/50;
+    @apply border-t border-gray-200 dark:border-slate-700;
+}
+
+.features-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+    @apply max-w-6xl mx-auto;
+}
+
+.feature-card {
+    @apply p-6 rounded-xl text-center;
+    @apply bg-white dark:bg-slate-800;
+    @apply border border-gray-200 dark:border-slate-700;
+    @apply transition-all duration-300;
+}
+
+.feature-card:hover {
+    @apply -translate-y-1 shadow-lg;
+    @apply border-primary-300 dark:border-primary-600;
+}
+
+.feature-icon {
+    @apply w-12 h-12 mx-auto mb-4 rounded-full;
+    @apply flex items-center justify-center;
+    @apply bg-primary-100 text-primary-600;
+    @apply dark:bg-primary-900/30 dark:text-primary-400;
+}
+
+.feature-title {
+    @apply font-semibold text-gray-900 dark:text-gray-100 mb-2;
+}
+
+.feature-description {
+    @apply text-sm text-gray-600 dark:text-gray-400;
 }
 </style>

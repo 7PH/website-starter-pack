@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -127,80 +126,90 @@ async function deleteBackup() {
 </script>
 
 <template>
-    <div class="admin-backups">
-        <div class="page-header">
-            <h1 class="page-title">Database Backups</h1>
-            <UButton icon="i-lucide-plus" label="Create Backup" :loading="creating" @click="createBackup" />
-        </div>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
 
-        <!-- Backups Table -->
-        <UCard>
-            <UTable :columns="columns" :data="backupsData?.items ?? []" :loading="pending">
-                <template #size-cell="{ row }">
-                    {{ formatSize(row.original.size) }}
-                </template>
-
-                <template #created_at-cell="{ row }">
-                    {{ formatDate(row.original.created_at) }}
-                </template>
-
-                <template #actions-cell="{ row }">
-                    <div class="actions">
-                        <UTooltip text="Download">
-                            <UButton
-                                icon="i-lucide-download"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="downloadBackup(row.original.filename)"
-                            />
-                        </UTooltip>
-                        <UTooltip text="Delete">
-                            <UButton
-                                icon="i-lucide-trash-2"
-                                color="error"
-                                variant="ghost"
-                                size="xs"
-                                :loading="deleting === row.original.filename"
-                                @click="confirmDelete(row.original.filename)"
-                            />
-                        </UTooltip>
-                    </div>
-                </template>
-            </UTable>
-
-            <div class="table-footer">
-                <span class="total-count">{{ backupsData?.total ?? 0 }} backups (max 7 retained)</span>
+        <div class="admin-backups">
+            <div class="page-header">
+                <h1 class="page-title">Database Backups</h1>
+                <UButton icon="i-lucide-plus" label="Create Backup" :loading="creating" @click="createBackup" />
             </div>
-        </UCard>
 
-        <div class="info-text">
-            <p>Backups are automatically created daily at 4:00 AM. Only the 7 most recent backups are retained.</p>
-        </div>
-
-        <!-- Delete Confirmation Modal -->
-        <UModal v-model:open="showDeleteModal">
-            <template #content>
-                <UCard>
-                    <template #header>
-                        <h3 class="modal-title">Delete Backup</h3>
+            <!-- Backups Table -->
+            <UCard>
+                <UTable :columns="columns" :data="backupsData?.items ?? []" :loading="pending">
+                    <template #size-cell="{ row }">
+                        {{ formatSize(row.original.size) }}
                     </template>
-                    <p>Are you sure you want to delete this backup?</p>
-                    <p class="filename-text">{{ backupToDelete }}</p>
-                    <template #footer>
-                        <div class="modal-actions">
-                            <UButton
-                                label="Cancel"
-                                color="neutral"
-                                variant="outline"
-                                @click="showDeleteModal = false"
-                            />
-                            <UButton label="Delete" color="error" :loading="!!deleting" @click="deleteBackup" />
+
+                    <template #created_at-cell="{ row }">
+                        {{ formatDate(row.original.created_at) }}
+                    </template>
+
+                    <template #actions-cell="{ row }">
+                        <div class="actions">
+                            <UTooltip text="Download">
+                                <UButton
+                                    icon="i-lucide-download"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    @click="downloadBackup(row.original.filename)"
+                                />
+                            </UTooltip>
+                            <UTooltip text="Delete">
+                                <UButton
+                                    icon="i-lucide-trash-2"
+                                    color="error"
+                                    variant="ghost"
+                                    size="xs"
+                                    :loading="deleting === row.original.filename"
+                                    @click="confirmDelete(row.original.filename)"
+                                />
+                            </UTooltip>
                         </div>
                     </template>
-                </UCard>
-            </template>
-        </UModal>
+                </UTable>
+
+                <div class="table-footer">
+                    <span class="total-count">{{ backupsData?.total ?? 0 }} backups (max 7 retained)</span>
+                </div>
+            </UCard>
+
+            <div class="info-text">
+                <p>Backups are automatically created daily at 4:00 AM. Only the 7 most recent backups are retained.</p>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <UModal v-model:open="showDeleteModal">
+                <template #content>
+                    <UCard>
+                        <template #header>
+                            <h3 class="modal-title">Delete Backup</h3>
+                        </template>
+                        <p>Are you sure you want to delete this backup?</p>
+                        <p class="filename-text">{{ backupToDelete }}</p>
+                        <template #footer>
+                            <div class="modal-actions">
+                                <UButton
+                                    label="Cancel"
+                                    color="neutral"
+                                    variant="outline"
+                                    @click="showDeleteModal = false"
+                                />
+                                <UButton label="Delete" color="error" :loading="!!deleting" @click="deleteBackup" />
+                            </div>
+                        </template>
+                    </UCard>
+                </template>
+            </UModal>
+        </div>
     </div>
 </template>
 

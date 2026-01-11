@@ -9,16 +9,18 @@ import ModalAuth from '~/components/modal/ModalAuth.vue';
 </script>
 
 <template>
-    <UApp class="min-h-dvh flex flex-col">
-        <ImpersonationBanner />
-        <PageHeader />
-        <main class="flex-1 flex flex-col">
-            <NuxtPage />
-        </main>
-        <PageFooter />
+    <UiPageWrapper>
+        <UApp>
+            <ImpersonationBanner />
+            <PageHeader />
+            <main class="flex-1 flex flex-col">
+                <NuxtPage />
+            </main>
+            <PageFooter />
 
-        <!-- Global modals -->
-        <ModalConfirm />
-        <ModalAuth />
-    </UApp>
+            <!-- Global modals -->
+            <ModalConfirm />
+            <ModalAuth />
+        </UApp>
+    </UiPageWrapper>
 </template>

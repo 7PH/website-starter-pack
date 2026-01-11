@@ -53,8 +53,13 @@ function onTabChange(key: string | number) {
 </script>
 
 <template>
-    <div class="w-full max-w-2xl mx-auto py-8 px-4">
-        <h1 class="text-2xl font-bold mb-8">{{ t('core.account.title') }}</h1>
+    <div class="page-box">
+        <UiPageTitleBanner compact>
+            {{ t('core.account.title') }}
+            <template #subtitle>
+                {{ t('core.account.subtitle') }}
+            </template>
+        </UiPageTitleBanner>
 
         <ClientOnly>
             <!-- Tab Navigation -->

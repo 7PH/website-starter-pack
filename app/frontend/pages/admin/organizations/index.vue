@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -150,153 +149,165 @@ async function deleteOrganization(org: OrganizationRead) {
 </script>
 
 <template>
-    <div class="admin-orgs">
-        <div class="page-header">
-            <div class="header-left">
-                <h1 class="page-title">Organizations</h1>
-                <span class="org-count">{{ orgsData?.total ?? 0 }} total</span>
-            </div>
-            <UButton label="Create Organization" icon="i-lucide-plus" @click="showCreateModal = true" />
-        </div>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
 
-        <!-- Filters -->
-        <div class="filters">
-            <UInput
-                v-model="search"
-                placeholder="Search by name or email..."
-                icon="i-lucide-search"
-                class="search-input"
-            />
-            <div class="filter-item">
-                <label class="filter-label">Premium</label>
-                <USelect v-model="premiumFilter" :items="filterOptions" class="w-24" />
-            </div>
-            <div class="filter-item">
-                <label class="filter-label">Deleted</label>
-                <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
-            </div>
-        </div>
-
-        <!-- Organizations Table -->
-        <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UTable :columns="columns" :data="orgsData?.items ?? []" :loading="pending">
-                <template #name-cell="{ row }">
-                    <NuxtLink :to="`/admin/organizations/${row.original.id}`" class="org-link">
-                        {{ row.original.name }}
-                    </NuxtLink>
-                </template>
-
-                <template #members-cell="{ row }">
-                    <div class="member-info">
-                        <span>{{ row.original.member_count }} members</span>
-                        <span
-                            v-if="
-                                row.original.stripe_premium &&
-                                (row.original.premium_member_count ?? 0) > row.original.stripe_quota
-                            "
-                            class="over-quota"
-                        >
-                            ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }}
-                            premium - over quota!)
-                        </span>
-                        <span v-else-if="row.original.stripe_premium" class="quota-info">
-                            ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }} premium)
-                        </span>
-                    </div>
-                </template>
-
-                <template #status-cell="{ row }">
-                    <div class="status-badges">
-                        <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
-                        <UBadge v-if="row.original.stripe_premium" label="Premium" color="warning" />
-                        <UBadge
-                            v-if="
-                                row.original.stripe_premium &&
-                                (row.original.premium_member_count ?? 0) > row.original.stripe_quota
-                            "
-                            label="Over Quota"
-                            color="error"
-                        />
-                    </div>
-                </template>
-
-                <template #created_at-cell="{ row }">
-                    {{ formatDate(row.original.created_at) }}
-                </template>
-
-                <template #actions-cell="{ row }">
-                    <div v-if="!row.original.deleted_at" class="actions">
-                        <UTooltip text="Edit">
-                            <NuxtLink :to="`/admin/organizations/${row.original.id}`">
-                                <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
-                            </NuxtLink>
-                        </UTooltip>
-                        <UTooltip text="Delete">
-                            <UButton
-                                icon="i-lucide-trash-2"
-                                color="error"
-                                variant="ghost"
-                                size="xs"
-                                @click="deleteOrganization(getOrg(row))"
-                            />
-                        </UTooltip>
-                    </div>
-                    <NuxtLink v-else :to="`/admin/organizations/${row.original.id}`" class="view-link"> View </NuxtLink>
-                </template>
-            </UTable>
-
-            <!-- Pagination -->
-            <div v-if="totalPages > 1" class="pagination-footer">
-                <div class="pagination-info">
-                    Showing {{ (page - 1) * ITEMS_PER_PAGE + 1 }}-{{
-                        Math.min(page * ITEMS_PER_PAGE, orgsData?.total ?? 0)
-                    }}
-                    of {{ orgsData?.total ?? 0 }}
+        <div class="admin-orgs">
+            <div class="page-header">
+                <div class="header-left">
+                    <h1 class="page-title">Organizations</h1>
+                    <span class="org-count">{{ orgsData?.total ?? 0 }} total</span>
                 </div>
-                <UPagination v-model="page" :total="orgsData?.total ?? 0" :items-per-page="ITEMS_PER_PAGE" />
+                <UButton label="Create Organization" icon="i-lucide-plus" @click="showCreateModal = true" />
             </div>
-        </UCard>
 
-        <!-- Create Organization Modal -->
-        <UModal v-model:open="showCreateModal">
-            <template #content>
-                <UCard>
-                    <template #header>
-                        <UiModalHeader title="Create Organization" @close="showCreateModal = false" />
+            <!-- Filters -->
+            <div class="filters">
+                <UInput
+                    v-model="search"
+                    placeholder="Search by name or email..."
+                    icon="i-lucide-search"
+                    class="search-input"
+                />
+                <div class="filter-item">
+                    <label class="filter-label">Premium</label>
+                    <USelect v-model="premiumFilter" :items="filterOptions" class="w-24" />
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">Deleted</label>
+                    <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
+                </div>
+            </div>
+
+            <!-- Organizations Table -->
+            <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                <UTable :columns="columns" :data="orgsData?.items ?? []" :loading="pending">
+                    <template #name-cell="{ row }">
+                        <NuxtLink :to="`/admin/organizations/${row.original.id}`" class="org-link">
+                            {{ row.original.name }}
+                        </NuxtLink>
                     </template>
 
-                    <form class="create-form" @submit.prevent="createOrganization">
-                        <UFormField label="Name" required>
-                            <UInput v-model="createForm.name" placeholder="Organization name" />
-                        </UFormField>
-                        <UFormField label="Email" required>
-                            <UInput v-model="createForm.email" type="email" placeholder="contact@example.com" />
-                        </UFormField>
-                        <UFormField label="Description">
-                            <UTextarea
-                                v-model="createForm.description"
-                                placeholder="Optional description..."
-                                :rows="3"
+                    <template #members-cell="{ row }">
+                        <div class="member-info">
+                            <span>{{ row.original.member_count }} members</span>
+                            <span
+                                v-if="
+                                    row.original.stripe_premium &&
+                                    (row.original.premium_member_count ?? 0) > row.original.stripe_quota
+                                "
+                                class="over-quota"
+                            >
+                                ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }}
+                                premium - over quota!)
+                            </span>
+                            <span v-else-if="row.original.stripe_premium" class="quota-info">
+                                ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }} premium)
+                            </span>
+                        </div>
+                    </template>
+
+                    <template #status-cell="{ row }">
+                        <div class="status-badges">
+                            <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
+                            <UBadge v-if="row.original.stripe_premium" label="Premium" color="warning" />
+                            <UBadge
+                                v-if="
+                                    row.original.stripe_premium &&
+                                    (row.original.premium_member_count ?? 0) > row.original.stripe_quota
+                                "
+                                label="Over Quota"
+                                color="error"
                             />
-                        </UFormField>
-                        <UiFormActions>
-                            <UButton
-                                label="Cancel"
-                                color="neutral"
-                                variant="outline"
-                                @click="showCreateModal = false"
-                            />
-                            <UButton
-                                type="submit"
-                                label="Create"
-                                :loading="isCreating"
-                                :disabled="!createForm.name || !createForm.email"
-                            />
-                        </UiFormActions>
-                    </form>
-                </UCard>
-            </template>
-        </UModal>
+                        </div>
+                    </template>
+
+                    <template #created_at-cell="{ row }">
+                        {{ formatDate(row.original.created_at) }}
+                    </template>
+
+                    <template #actions-cell="{ row }">
+                        <div v-if="!row.original.deleted_at" class="actions">
+                            <UTooltip text="Edit">
+                                <NuxtLink :to="`/admin/organizations/${row.original.id}`">
+                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
+                                </NuxtLink>
+                            </UTooltip>
+                            <UTooltip text="Delete">
+                                <UButton
+                                    icon="i-lucide-trash-2"
+                                    color="error"
+                                    variant="ghost"
+                                    size="xs"
+                                    @click="deleteOrganization(getOrg(row))"
+                                />
+                            </UTooltip>
+                        </div>
+                        <NuxtLink v-else :to="`/admin/organizations/${row.original.id}`" class="view-link">
+                            View
+                        </NuxtLink>
+                    </template>
+                </UTable>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="pagination-footer">
+                    <div class="pagination-info">
+                        Showing {{ (page - 1) * ITEMS_PER_PAGE + 1 }}-{{
+                            Math.min(page * ITEMS_PER_PAGE, orgsData?.total ?? 0)
+                        }}
+                        of {{ orgsData?.total ?? 0 }}
+                    </div>
+                    <UPagination v-model="page" :total="orgsData?.total ?? 0" :items-per-page="ITEMS_PER_PAGE" />
+                </div>
+            </UCard>
+
+            <!-- Create Organization Modal -->
+            <UModal v-model:open="showCreateModal">
+                <template #content>
+                    <UCard>
+                        <template #header>
+                            <UiModalHeader title="Create Organization" @close="showCreateModal = false" />
+                        </template>
+
+                        <form class="create-form" @submit.prevent="createOrganization">
+                            <UFormField label="Name" required>
+                                <UInput v-model="createForm.name" placeholder="Organization name" />
+                            </UFormField>
+                            <UFormField label="Email" required>
+                                <UInput v-model="createForm.email" type="email" placeholder="contact@example.com" />
+                            </UFormField>
+                            <UFormField label="Description">
+                                <UTextarea
+                                    v-model="createForm.description"
+                                    placeholder="Optional description..."
+                                    :rows="3"
+                                />
+                            </UFormField>
+                            <UiFormActions>
+                                <UButton
+                                    label="Cancel"
+                                    color="neutral"
+                                    variant="outline"
+                                    @click="showCreateModal = false"
+                                />
+                                <UButton
+                                    type="submit"
+                                    label="Create"
+                                    :loading="isCreating"
+                                    :disabled="!createForm.name || !createForm.email"
+                                />
+                            </UiFormActions>
+                        </form>
+                    </UCard>
+                </template>
+            </UModal>
+        </div>
     </div>
 </template>
 

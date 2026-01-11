@@ -6,9 +6,7 @@ const { t } = useI18n();
     <UApp>
         <div class="min-h-screen flex">
             <!-- Left panel - Branding (hidden on mobile) -->
-            <div
-                class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white p-12 flex-col justify-between"
-            >
+            <div class="auth-brand-panel">
                 <div>
                     <NuxtLink to="/" class="text-2xl font-bold">
                         {{ t('core.app.name') }}
@@ -43,3 +41,12 @@ const { t } = useI18n();
         </div>
     </UApp>
 </template>
+
+<style scoped>
+@reference "~/assets/css/main.css";
+
+.auth-brand-panel {
+    @apply hidden lg:flex lg:w-1/2 text-white p-12 flex-col justify-between;
+    background: var(--gradient-brand);
+}
+</style>
