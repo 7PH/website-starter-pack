@@ -78,6 +78,12 @@ app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
 app/frontend/components/ui/ModalHeader.vue
 app/frontend/components/ui/FormActions.vue
+app/frontend/components/ui/GradientBorder.vue
+app/frontend/components/ui/PageWrapper.vue
+app/frontend/components/ui/AnimateFadeUp.vue
+app/frontend/components/ui/AnimateOnScroll.vue
+app/frontend/components/ui/HoverCard.vue
+app/frontend/components/ui/PageTitleBanner.vue
 app/frontend/components/EmptyState.vue
 app/frontend/components/ErrorBoundary.vue
 app/frontend/components/LegalPage.vue
@@ -101,8 +107,7 @@ app/frontend/composables/organizations/useOrganizationForm.ts
 app/frontend/composables/organizations/useOrganizationMembers.ts
 app/frontend/composables/organizations/useOrganizationStatus.ts
 app/frontend/composables/organizations/useOrganizationSubscription.ts
-app/frontend/layouts/admin.vue
-app/frontend/components/admin/AdminNav.vue
+app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/pages/admin/backups/index.vue
 app/frontend/pages/admin/db-health/index.vue

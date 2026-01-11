@@ -25,8 +25,6 @@ defineProps<{
 .gradient-btn {
     --btn-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
     --btn-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
-    --btn-shadow-glow-brand: 0 0 20px rgba(139, 92, 246, 0.35), 0 0 40px rgba(139, 92, 246, 0.2);
-    --btn-shadow-glow-pop: 0 0 20px rgba(217, 70, 239, 0.35), 0 0 40px rgba(217, 70, 239, 0.2);
 
     @apply relative font-bold uppercase text-white rounded-lg cursor-pointer overflow-hidden;
     @apply inline-flex items-center justify-center;
@@ -66,27 +64,27 @@ defineProps<{
     @apply px-5 py-3 text-sm;
 }
 
-/* Primary variant: cyan → violet → fuchsia */
+/* Primary variant: uses theme gradient */
 .gradient-btn.primary {
-    @apply bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500;
+    background: var(--gradient-brand);
     background-size: 200% 200%;
     background-position: 0% 0%;
 }
 
 .gradient-btn.primary:hover:not(:disabled) {
-    box-shadow: var(--btn-shadow-glow-brand);
+    box-shadow: var(--shadow-glow-brand);
     background-position: 100% 100%;
 }
 
-/* Secondary variant: fuchsia → violet */
+/* Secondary variant: pop → brand */
 .gradient-btn.secondary {
-    @apply bg-gradient-to-br from-fuchsia-500 to-violet-600;
+    background: linear-gradient(to bottom right, rgb(var(--theme-pop-rgb)), rgb(var(--theme-brand-rgb)));
     background-size: 200% 200%;
     background-position: 0% 0%;
 }
 
 .gradient-btn.secondary:hover:not(:disabled) {
-    box-shadow: var(--btn-shadow-glow-pop);
+    box-shadow: var(--shadow-glow-pop);
     background-position: 100% 100%;
 }
 
@@ -97,6 +95,7 @@ defineProps<{
 
 /* Focus ring */
 .gradient-btn:focus-visible {
-    @apply outline-none ring-2 ring-violet-400 ring-offset-2;
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: var(--ring-brand);
 }
 </style>

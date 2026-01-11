@@ -58,13 +58,13 @@ export function useOrganizationSubscription(
     }
 
     /**
-     * Open the Stripe billing portal.
+     * Open the Stripe billing portal in a new tab.
      */
     async function openBillingPortal() {
         const response = await api.get<{ url: string }>(`/organizations/${orgId.value}/portal`, {
             return_url: window.location.href,
         });
-        window.location.href = response.url;
+        window.open(response.url, '_blank');
     }
 
     /**

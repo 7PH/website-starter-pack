@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -10,9 +9,19 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <OrganizationsDetail
-        :is-admin-view="true"
-        back-link="/admin/organizations"
-        :back-link-text="t('core.organizations.backToList')"
-    />
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
+
+        <OrganizationsDetail
+            :is-admin-view="true"
+            back-link="/admin/organizations"
+            :back-link-text="t('core.organizations.backToList')"
+        />
+    </div>
 </template>

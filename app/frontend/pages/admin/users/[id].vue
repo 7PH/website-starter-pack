@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -179,158 +178,168 @@ async function deleteUser() {
 </script>
 
 <template>
-    <div class="user-detail">
-        <!-- Back link -->
-        <NuxtLink to="/admin/users" class="back-link">
-            <UIcon name="i-lucide-arrow-left" />
-            Back to Users
-        </NuxtLink>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
 
-        <div v-if="userPending" class="loading">
-            <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary-500" />
-        </div>
+        <div class="user-detail">
+            <!-- Back link -->
+            <NuxtLink to="/admin/users" class="back-link">
+                <UIcon name="i-lucide-arrow-left" />
+                Back to Users
+            </NuxtLink>
 
-        <template v-else-if="user">
-            <!-- Header -->
-            <div class="page-header">
-                <div class="header-info">
-                    <h1 class="page-title">{{ user.first_name }} {{ user.last_name }}</h1>
-                    <span class="user-email">{{ user.email }}</span>
-                    <div class="badges">
-                        <UBadge v-if="user.deleted_at" label="Deleted" color="error" />
-                        <UBadge v-if="user.is_admin" label="Admin" color="info" />
-                        <UBadge v-if="user.is_premium" label="Premium" color="warning" />
-                        <UBadge v-if="user.email_confirmed" label="Verified" color="success" />
-                        <UBadge v-else-if="!user.deleted_at" label="Unverified" color="neutral" />
-                    </div>
-                </div>
-                <div v-if="!user.deleted_at" class="header-actions">
-                    <UButton
-                        label="Impersonate"
-                        icon="i-lucide-user"
-                        color="neutral"
-                        variant="outline"
-                        @click="impersonateUser"
-                    />
-                    <UButton
-                        label="Delete"
-                        icon="i-lucide-trash-2"
-                        color="error"
-                        variant="outline"
-                        @click="deleteUser"
-                    />
-                </div>
+            <div v-if="userPending" class="loading">
+                <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary-500" />
             </div>
 
-            <!-- Deleted user alert -->
-            <UAlert
-                v-if="user.deleted_at"
-                color="error"
-                variant="subtle"
-                icon="i-lucide-trash-2"
-                title="This user has been deleted"
-                :description="`Deleted on ${formatDate(user.deleted_at)}. Personal data has been anonymized.`"
-                class="mb-6"
-            />
+            <template v-else-if="user">
+                <!-- Header -->
+                <div class="page-header">
+                    <div class="header-info">
+                        <h1 class="page-title">{{ user.first_name }} {{ user.last_name }}</h1>
+                        <span class="user-email">{{ user.email }}</span>
+                        <div class="badges">
+                            <UBadge v-if="user.deleted_at" label="Deleted" color="error" />
+                            <UBadge v-if="user.is_admin" label="Admin" color="info" />
+                            <UBadge v-if="user.is_premium" label="Premium" color="warning" />
+                            <UBadge v-if="user.email_confirmed" label="Verified" color="success" />
+                            <UBadge v-else-if="!user.deleted_at" label="Unverified" color="neutral" />
+                        </div>
+                    </div>
+                    <div v-if="!user.deleted_at" class="header-actions">
+                        <UButton
+                            label="Impersonate"
+                            icon="i-lucide-user"
+                            color="neutral"
+                            variant="outline"
+                            @click="impersonateUser"
+                        />
+                        <UButton
+                            label="Delete"
+                            icon="i-lucide-trash-2"
+                            color="error"
+                            variant="outline"
+                            @click="deleteUser"
+                        />
+                    </div>
+                </div>
 
-            <div class="content-grid">
-                <!-- User Info Card -->
-                <UCard class="info-card">
-                    <template #header>
-                        <UiCardHeader title="User Information">
-                            <template #actions>
-                                <UButton
-                                    v-if="!isEditing && !user.deleted_at"
-                                    label="Edit"
-                                    icon="i-lucide-pencil"
-                                    size="sm"
-                                    color="neutral"
-                                    variant="outline"
-                                    @click="isEditing = true"
-                                />
+                <!-- Deleted user alert -->
+                <UAlert
+                    v-if="user.deleted_at"
+                    color="error"
+                    variant="subtle"
+                    icon="i-lucide-trash-2"
+                    title="This user has been deleted"
+                    :description="`Deleted on ${formatDate(user.deleted_at)}. Personal data has been anonymized.`"
+                    class="mb-6"
+                />
+
+                <div class="content-grid">
+                    <!-- User Info Card -->
+                    <UCard class="info-card">
+                        <template #header>
+                            <UiCardHeader title="User Information">
+                                <template #actions>
+                                    <UButton
+                                        v-if="!isEditing && !user.deleted_at"
+                                        label="Edit"
+                                        icon="i-lucide-pencil"
+                                        size="sm"
+                                        color="neutral"
+                                        variant="outline"
+                                        @click="isEditing = true"
+                                    />
+                                </template>
+                            </UiCardHeader>
+                        </template>
+
+                        <form v-if="isEditing" class="edit-form" @submit.prevent="saveChanges">
+                            <div class="form-row">
+                                <UFormField label="First Name" class="flex-1">
+                                    <UInput v-model="form.first_name" />
+                                </UFormField>
+                                <UFormField label="Last Name" class="flex-1">
+                                    <UInput v-model="form.last_name" />
+                                </UFormField>
+                            </div>
+                            <UFormField label="Email">
+                                <UInput v-model="form.email" type="email" />
+                            </UFormField>
+                            <div class="form-row">
+                                <UCheckbox v-model="form.is_admin" label="Admin" />
+                                <UCheckbox v-model="form.is_premium" label="Premium" />
+                            </div>
+                            <div class="form-actions">
+                                <UButton label="Cancel" color="neutral" variant="outline" @click="cancelEdit" />
+                                <UButton type="submit" label="Save Changes" :loading="isSaving" />
+                            </div>
+                        </form>
+
+                        <div v-else class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">User ID</span>
+                                <span class="info-value">#{{ user.id }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email</span>
+                                <span class="info-value">{{ user.email }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Name</span>
+                                <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Created</span>
+                                <span class="info-value">{{ formatDate(user.created_at) }}</span>
+                            </div>
+                            <div v-if="user.deleted_at" class="info-item">
+                                <span class="info-label">Deleted</span>
+                                <span class="info-value deleted-value">{{ formatDate(user.deleted_at) }}</span>
+                            </div>
+                        </div>
+                    </UCard>
+
+                    <!-- Event Log Card -->
+                    <UCard class="events-card">
+                        <template #header>
+                            <span class="font-semibold">Event Log</span>
+                        </template>
+
+                        <UTable
+                            :columns="eventColumns"
+                            :data="eventsData?.items ?? []"
+                            :loading="eventsPending"
+                            class="max-h-[400px] overflow-auto"
+                        >
+                            <template #action-cell="{ row }">
+                                <UBadge :label="formatAction(row.original.action)" />
                             </template>
-                        </UiCardHeader>
-                    </template>
 
-                    <form v-if="isEditing" class="edit-form" @submit.prevent="saveChanges">
-                        <div class="form-row">
-                            <UFormField label="First Name" class="flex-1">
-                                <UInput v-model="form.first_name" />
-                            </UFormField>
-                            <UFormField label="Last Name" class="flex-1">
-                                <UInput v-model="form.last_name" />
-                            </UFormField>
-                        </div>
-                        <UFormField label="Email">
-                            <UInput v-model="form.email" type="email" />
-                        </UFormField>
-                        <div class="form-row">
-                            <UCheckbox v-model="form.is_admin" label="Admin" />
-                            <UCheckbox v-model="form.is_premium" label="Premium" />
-                        </div>
-                        <div class="form-actions">
-                            <UButton label="Cancel" color="neutral" variant="outline" @click="cancelEdit" />
-                            <UButton type="submit" label="Save Changes" :loading="isSaving" />
-                        </div>
-                    </form>
+                            <template #created_at-cell="{ row }">
+                                {{ formatDate(row.original.created_at) }}
+                            </template>
 
-                    <div v-else class="info-grid">
-                        <div class="info-item">
-                            <span class="info-label">User ID</span>
-                            <span class="info-value">#{{ user.id }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Email</span>
-                            <span class="info-value">{{ user.email }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Name</span>
-                            <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Created</span>
-                            <span class="info-value">{{ formatDate(user.created_at) }}</span>
-                        </div>
-                        <div v-if="user.deleted_at" class="info-item">
-                            <span class="info-label">Deleted</span>
-                            <span class="info-value deleted-value">{{ formatDate(user.deleted_at) }}</span>
-                        </div>
-                    </div>
-                </UCard>
-
-                <!-- Event Log Card -->
-                <UCard class="events-card">
-                    <template #header>
-                        <span class="font-semibold">Event Log</span>
-                    </template>
-
-                    <UTable
-                        :columns="eventColumns"
-                        :data="eventsData?.items ?? []"
-                        :loading="eventsPending"
-                        class="max-h-[400px] overflow-auto"
-                    >
-                        <template #action-cell="{ row }">
-                            <UBadge :label="formatAction(row.original.action)" />
-                        </template>
-
-                        <template #created_at-cell="{ row }">
-                            {{ formatDate(row.original.created_at) }}
-                        </template>
-
-                        <template #details-cell="{ row }">
-                            <code
-                                v-if="row.original.details && Object.keys(row.original.details).length > 0"
-                                class="details-code"
-                            >
-                                {{ JSON.stringify(row.original.details) }}
-                            </code>
-                            <span v-else class="text-muted">-</span>
-                        </template>
-                    </UTable>
-                </UCard>
-            </div>
-        </template>
+                            <template #details-cell="{ row }">
+                                <code
+                                    v-if="row.original.details && Object.keys(row.original.details).length > 0"
+                                    class="details-code"
+                                >
+                                    {{ JSON.stringify(row.original.details) }}
+                                </code>
+                                <span v-else class="text-muted">-</span>
+                            </template>
+                        </UTable>
+                    </UCard>
+                </div>
+            </template>
+        </div>
     </div>
 </template>
 

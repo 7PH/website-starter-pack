@@ -24,7 +24,14 @@ function onSelectLogout() {
 </script>
 
 <template>
-    <header class="navbar">
+    <header class="header">
+        <!-- Backdrop blur layer -->
+        <div class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md -z-10" />
+        <!-- Gradient bottom border -->
+        <div
+            class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-400 to-transparent dark:via-primary-500/50"
+        />
+
         <!-- Left: Navigation -->
         <nav class="nav-links">
             <NuxtLink to="/" class="nav-link">
@@ -110,10 +117,9 @@ function onSelectLogout() {
 
 <style scoped>
 @reference "~/assets/css/main.css";
-.navbar {
-    @apply flex items-center justify-between px-6 py-3;
-    @apply bg-white dark:bg-transparent;
-    @apply border-b border-slate-200 dark:border-primary-500;
+.header {
+    @apply relative flex items-center justify-between px-6 py-3;
+    @apply border-b border-slate-200/50 dark:border-slate-700/50;
 }
 
 .nav-links {

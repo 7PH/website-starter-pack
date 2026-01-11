@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -81,90 +80,103 @@ function clearFilters() {
 </script>
 
 <template>
-    <div class="admin-events">
-        <h1 class="page-title">Event Logs</h1>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
 
-        <!-- Filters -->
-        <UCard class="filters-card mb-4">
-            <div class="filters">
-                <div class="filter-item">
-                    <label class="filter-label">Event Type</label>
-                    <USelect v-model="actionFilter" :items="actionCategories" placeholder="All Events" class="w-40" />
-                </div>
-                <div class="filter-item">
-                    <label class="filter-label">User ID</label>
-                    <UInput v-model="userIdFilter" type="number" placeholder="User ID" class="w-28" />
-                </div>
-                <div class="filter-item">
-                    <label class="filter-label">From Date</label>
-                    <UInput v-model="fromDateStr" type="datetime-local" class="w-48" />
-                </div>
-                <div class="filter-item">
-                    <label class="filter-label">To Date</label>
-                    <UInput v-model="toDateStr" type="datetime-local" class="w-48" />
-                </div>
-                <div class="filter-actions">
-                    <UButton label="Clear" color="neutral" variant="outline" size="sm" @click="clearFilters" />
-                    <UTooltip text="Refresh">
-                        <UButton
-                            icon="i-lucide-refresh-cw"
-                            color="neutral"
-                            variant="outline"
-                            size="sm"
-                            @click="() => refresh()"
+        <div class="admin-events">
+            <h1 class="page-title">Event Logs</h1>
+
+            <!-- Filters -->
+            <UCard class="filters-card mb-4">
+                <div class="filters">
+                    <div class="filter-item">
+                        <label class="filter-label">Event Type</label>
+                        <USelect
+                            v-model="actionFilter"
+                            :items="actionCategories"
+                            placeholder="All Events"
+                            class="w-40"
                         />
-                    </UTooltip>
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label">User ID</label>
+                        <UInput v-model="userIdFilter" type="number" placeholder="User ID" class="w-28" />
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label">From Date</label>
+                        <UInput v-model="fromDateStr" type="datetime-local" class="w-48" />
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label">To Date</label>
+                        <UInput v-model="toDateStr" type="datetime-local" class="w-48" />
+                    </div>
+                    <div class="filter-actions">
+                        <UButton label="Clear" color="neutral" variant="outline" size="sm" @click="clearFilters" />
+                        <UTooltip text="Refresh">
+                            <UButton
+                                icon="i-lucide-refresh-cw"
+                                color="neutral"
+                                variant="outline"
+                                size="sm"
+                                @click="() => refresh()"
+                            />
+                        </UTooltip>
+                    </div>
                 </div>
-            </div>
-        </UCard>
+            </UCard>
 
-        <!-- Events Table -->
-        <UCard>
-            <UTable
-                :columns="columns"
-                :data="eventsData?.items ?? []"
-                :loading="pending"
-                class="max-h-[calc(100vh-20rem)] overflow-auto"
-            >
-                <template #action-cell="{ row }">
-                    <UBadge :label="formatAction(row.original.action)" :color="getActionColor(row.original.action)" />
-                </template>
+            <!-- Events Table -->
+            <UCard>
+                <UTable :columns="columns" :data="eventsData?.items ?? []" :loading="pending">
+                    <template #action-cell="{ row }">
+                        <UBadge
+                            :label="formatAction(row.original.action)"
+                            :color="getActionColor(row.original.action)"
+                        />
+                    </template>
 
-                <template #user_id-cell="{ row }">
-                    <NuxtLink
-                        v-if="row.original.user_id"
-                        :to="`/admin/users/${row.original.user_id}`"
-                        class="user-link"
-                    >
-                        #{{ row.original.user_id }}
-                    </NuxtLink>
-                    <span v-else class="text-muted">-</span>
-                </template>
+                    <template #user_id-cell="{ row }">
+                        <NuxtLink
+                            v-if="row.original.user_id"
+                            :to="`/admin/users/${row.original.user_id}`"
+                            class="user-link"
+                        >
+                            #{{ row.original.user_id }}
+                        </NuxtLink>
+                        <span v-else class="text-muted">-</span>
+                    </template>
 
-                <template #ip_address-cell="{ row }">
-                    <code v-if="row.original.ip_address" class="ip-code">{{ row.original.ip_address }}</code>
-                    <span v-else class="text-muted">-</span>
-                </template>
+                    <template #ip_address-cell="{ row }">
+                        <code v-if="row.original.ip_address" class="ip-code">{{ row.original.ip_address }}</code>
+                        <span v-else class="text-muted">-</span>
+                    </template>
 
-                <template #created_at-cell="{ row }">
-                    {{ row.original.created_at ? formatDate(row.original.created_at) : '-' }}
-                </template>
+                    <template #created_at-cell="{ row }">
+                        {{ row.original.created_at ? formatDate(row.original.created_at) : '-' }}
+                    </template>
 
-                <template #details-cell="{ row }">
-                    <code
-                        v-if="row.original.details && Object.keys(row.original.details).length > 0"
-                        class="details-code"
-                    >
-                        {{ JSON.stringify(row.original.details) }}
-                    </code>
-                    <span v-else class="text-muted">-</span>
-                </template>
-            </UTable>
+                    <template #details-cell="{ row }">
+                        <code
+                            v-if="row.original.details && Object.keys(row.original.details).length > 0"
+                            class="details-code"
+                        >
+                            {{ JSON.stringify(row.original.details) }}
+                        </code>
+                        <span v-else class="text-muted">-</span>
+                    </template>
+                </UTable>
 
-            <div class="table-footer">
-                <span class="total-count">{{ eventsData?.total ?? 0 }} events</span>
-            </div>
-        </UCard>
+                <div class="table-footer">
+                    <span class="total-count">{{ eventsData?.total ?? 0 }} events</span>
+                </div>
+            </UCard>
+        </div>
     </div>
 </template>
 
@@ -215,7 +227,7 @@ function clearFilters() {
 }
 
 .table-footer {
-    @apply flex justify-end pt-4;
+    @apply flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4;
 }
 
 .total-count {

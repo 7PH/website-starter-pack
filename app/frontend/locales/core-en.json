@@ -130,7 +130,8 @@
             "contactOrgAdmin": "Contact your organization admin for premium access, or get a personal subscription.",
             "subscribePersonally": "Subscribe Personally",
             "subscriptionCanceling": "Subscription ending soon",
-            "subscriptionCancelingDescription": "Your subscription will end on {date}. You'll keep premium access until then."
+            "subscriptionCancelingDescription": "Your subscription will end on {date}. You'll keep premium access until then.",
+            "premiumPageSubtitle": "Manage your subscription and billing"
         },
         "legal": {
             "lastUpdated": "Last updated",
@@ -145,6 +146,7 @@
         },
         "account": {
             "title": "Account Settings",
+            "subtitle": "Manage your profile, password, and preferences",
             "save": "Save",
             "cancel": "Cancel",
             "goHome": "Go to Home",

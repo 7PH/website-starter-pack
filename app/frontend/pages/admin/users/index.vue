@@ -2,7 +2,6 @@
 
 <script lang="ts" setup>
 definePageMeta({
-    layout: 'admin',
     middleware: ['admin'],
 });
 
@@ -146,98 +145,110 @@ async function deleteUser(user: AdminUserRead) {
 </script>
 
 <template>
-    <div class="admin-users">
-        <div class="page-header">
-            <h1 class="page-title">Users</h1>
-            <span class="user-count">{{ usersData?.total ?? 0 }} total</span>
-        </div>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
 
-        <!-- Filters -->
-        <div class="filters">
-            <UInput
-                v-model="search"
-                placeholder="Search by email or name..."
-                icon="i-lucide-search"
-                class="search-input"
-            />
-            <div class="filter-item">
-                <label class="filter-label">Admin</label>
-                <USelect v-model="isAdminFilter" :items="filterOptions" class="w-24" />
+        <div class="admin-users">
+            <div class="page-header">
+                <h1 class="page-title">Users</h1>
+                <span class="user-count">{{ usersData?.total ?? 0 }} total</span>
             </div>
-            <div class="filter-item">
-                <label class="filter-label">Premium</label>
-                <USelect v-model="isPremiumFilter" :items="filterOptions" class="w-24" />
-            </div>
-            <div class="filter-item">
-                <label class="filter-label">Deleted</label>
-                <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
-            </div>
-        </div>
 
-        <!-- Users Table -->
-        <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UTable :columns="columns" :data="usersData?.items ?? []" :loading="pending">
-                <template #email-cell="{ row }">
-                    <NuxtLink :to="`/admin/users/${row.original.id}`" class="user-link">
-                        {{ row.original.email }}
-                    </NuxtLink>
-                </template>
-
-                <template #name-cell="{ row }"> {{ row.original.first_name }} {{ row.original.last_name }} </template>
-
-                <template #status-cell="{ row }">
-                    <div class="status-badges">
-                        <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
-                        <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
-                        <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
-                    </div>
-                </template>
-
-                <template #created_at-cell="{ row }">
-                    {{ formatDate(row.original.created_at) }}
-                </template>
-
-                <template #actions-cell="{ row }">
-                    <div v-if="!row.original.deleted_at" class="actions">
-                        <UTooltip text="Impersonate">
-                            <UButton
-                                icon="i-lucide-user"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="impersonateUser(row.original as AdminUserRead)"
-                            />
-                        </UTooltip>
-                        <UTooltip text="Edit">
-                            <NuxtLink :to="`/admin/users/${row.original.id}`">
-                                <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
-                            </NuxtLink>
-                        </UTooltip>
-                        <UTooltip text="Delete">
-                            <UButton
-                                icon="i-lucide-trash-2"
-                                color="error"
-                                variant="ghost"
-                                size="xs"
-                                @click="deleteUser(row.original as AdminUserRead)"
-                            />
-                        </UTooltip>
-                    </div>
-                    <NuxtLink v-else :to="`/admin/users/${row.original.id}`" class="view-link"> View </NuxtLink>
-                </template>
-            </UTable>
-
-            <!-- Pagination -->
-            <div v-if="totalPages > 1" class="pagination-footer">
-                <div class="pagination-info">
-                    Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
-                        Math.min(page * itemsPerPage, usersData?.total ?? 0)
-                    }}
-                    of {{ usersData?.total ?? 0 }}
+            <!-- Filters -->
+            <div class="filters">
+                <UInput
+                    v-model="search"
+                    placeholder="Search by email or name..."
+                    icon="i-lucide-search"
+                    class="search-input"
+                />
+                <div class="filter-item">
+                    <label class="filter-label">Admin</label>
+                    <USelect v-model="isAdminFilter" :items="filterOptions" class="w-24" />
                 </div>
-                <UPagination v-model="page" :total="usersData?.total ?? 0" :items-per-page="itemsPerPage" />
+                <div class="filter-item">
+                    <label class="filter-label">Premium</label>
+                    <USelect v-model="isPremiumFilter" :items="filterOptions" class="w-24" />
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">Deleted</label>
+                    <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
+                </div>
             </div>
-        </UCard>
+
+            <!-- Users Table -->
+            <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                <UTable :columns="columns" :data="usersData?.items ?? []" :loading="pending">
+                    <template #email-cell="{ row }">
+                        <NuxtLink :to="`/admin/users/${row.original.id}`" class="user-link">
+                            {{ row.original.email }}
+                        </NuxtLink>
+                    </template>
+
+                    <template #name-cell="{ row }">
+                        {{ row.original.first_name }} {{ row.original.last_name }}
+                    </template>
+
+                    <template #status-cell="{ row }">
+                        <div class="status-badges">
+                            <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
+                            <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
+                            <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
+                        </div>
+                    </template>
+
+                    <template #created_at-cell="{ row }">
+                        {{ formatDate(row.original.created_at) }}
+                    </template>
+
+                    <template #actions-cell="{ row }">
+                        <div v-if="!row.original.deleted_at" class="actions">
+                            <UTooltip text="Impersonate">
+                                <UButton
+                                    icon="i-lucide-user"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    @click="impersonateUser(row.original as AdminUserRead)"
+                                />
+                            </UTooltip>
+                            <UTooltip text="Edit">
+                                <NuxtLink :to="`/admin/users/${row.original.id}`">
+                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
+                                </NuxtLink>
+                            </UTooltip>
+                            <UTooltip text="Delete">
+                                <UButton
+                                    icon="i-lucide-trash-2"
+                                    color="error"
+                                    variant="ghost"
+                                    size="xs"
+                                    @click="deleteUser(row.original as AdminUserRead)"
+                                />
+                            </UTooltip>
+                        </div>
+                        <NuxtLink v-else :to="`/admin/users/${row.original.id}`" class="view-link"> View </NuxtLink>
+                    </template>
+                </UTable>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="pagination-footer">
+                    <div class="pagination-info">
+                        Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
+                            Math.min(page * itemsPerPage, usersData?.total ?? 0)
+                        }}
+                        of {{ usersData?.total ?? 0 }}
+                    </div>
+                    <UPagination v-model="page" :total="usersData?.total ?? 0" :items-per-page="itemsPerPage" />
+                </div>
+            </UCard>
+        </div>
     </div>
 </template>
 

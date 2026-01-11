@@ -14,6 +14,7 @@ export default defineNuxtConfig({
         head: {
             title: process.env.NUXT_PUBLIC_APP_NAME || 'My App',
         },
+        pageTransition: { name: 'page', mode: 'out-in' },
     },
 
     // Vite config for Docker/WSL2 file watching

@@ -130,7 +130,8 @@
             "contactOrgAdmin": "Contactez l'administrateur de votre organisation pour un accès premium, ou obtenez un abonnement personnel.",
             "subscribePersonally": "S'abonner personnellement",
             "subscriptionCanceling": "Abonnement bientôt terminé",
-            "subscriptionCancelingDescription": "Votre abonnement se termine le {date}. Vous conserverez l'accès premium jusqu'à cette date."
+            "subscriptionCancelingDescription": "Votre abonnement se termine le {date}. Vous conserverez l'accès premium jusqu'à cette date.",
+            "premiumPageSubtitle": "Gérez votre abonnement et facturation"
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",
@@ -145,6 +146,7 @@
         },
         "account": {
             "title": "Paramètres du compte",
+            "subtitle": "Gérez votre profil, mot de passe et préférences",
             "save": "Enregistrer",
             "cancel": "Annuler",
             "goHome": "Retour à l'accueil",

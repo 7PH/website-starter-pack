@@ -80,34 +80,50 @@ async function leaveOrganization(org: UserOrganizationInfo) {
 
             <!-- Organizations list -->
             <div v-else class="space-y-4">
-                <div v-for="org in organizations" :key="org.organization_id" class="org-item">
-                    <div class="org-info">
-                        <div class="org-name">{{ org.organization_name }}</div>
-                        <UBadge
-                            :label="org.is_admin ? t('core.organizations.admin') : t('core.organizations.member')"
-                            :color="org.is_admin ? 'info' : 'neutral'"
-                            size="xs"
-                        />
-                    </div>
-                    <div class="org-actions">
-                        <NuxtLink v-if="org.is_admin" :to="`/organizations/${org.organization_id}`">
+                <template v-for="org in organizations">
+                    <!-- Admin: clickable card -->
+                    <NuxtLink
+                        v-if="org.is_admin"
+                        :key="`admin-${org.organization_id}`"
+                        :to="`/organizations/${org.organization_id}`"
+                        class="org-card-wrapper"
+                    >
+                        <UiHoverCard class="org-item">
+                            <div class="org-info">
+                                <div class="org-name">{{ org.organization_name }}</div>
+                                <UBadge :label="t('core.organizations.admin')" color="info" size="xs" />
+                            </div>
+                            <div class="org-actions" @click.stop>
+                                <UButton
+                                    :label="t('core.organizations.leave')"
+                                    color="error"
+                                    variant="ghost"
+                                    size="xs"
+                                    :loading="isLeaving === org.organization_id"
+                                    @click="leaveOrganization(org)"
+                                />
+                            </div>
+                        </UiHoverCard>
+                    </NuxtLink>
+
+                    <!-- Member: non-clickable card -->
+                    <UiHoverCard v-else :key="`member-${org.organization_id}`" class="org-item">
+                        <div class="org-info">
+                            <div class="org-name">{{ org.organization_name }}</div>
+                            <UBadge :label="t('core.organizations.member')" color="neutral" size="xs" />
+                        </div>
+                        <div class="org-actions">
                             <UButton
-                                :label="t('core.organizations.manage')"
-                                color="primary"
+                                :label="t('core.organizations.leave')"
+                                color="error"
                                 variant="ghost"
                                 size="xs"
+                                :loading="isLeaving === org.organization_id"
+                                @click="leaveOrganization(org)"
                             />
-                        </NuxtLink>
-                        <UButton
-                            :label="t('core.organizations.leave')"
-                            color="error"
-                            variant="ghost"
-                            size="xs"
-                            :loading="isLeaving === org.organization_id"
-                            @click="leaveOrganization(org)"
-                        />
-                    </div>
-                </div>
+                        </div>
+                    </UiHoverCard>
+                </template>
             </div>
         </UCard>
     </div>
@@ -115,9 +131,13 @@ async function leaveOrganization(org: UserOrganizationInfo) {
 
 <style scoped>
 @reference "~/assets/css/main.css";
+
+.org-card-wrapper {
+    @apply block no-underline;
+}
+
 .org-item {
     @apply flex items-center justify-between py-3 px-4;
-    @apply border border-gray-200 dark:border-gray-700 rounded-lg;
 }
 
 .org-info {
