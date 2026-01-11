@@ -60,6 +60,8 @@ x-backend-common: &backend-common
   env_file: .env
   volumes:
     - ./app/backend/src:/app/src
+    - ./app/backend/tests:/app/tests
+    - ./app/backend/pytest.ini:/app/pytest.ini:ro
     - ./app/backend/ruff.toml:/app/ruff.toml:ro
     - ./static:/app/static:rw
     - ./backups:/app/backups:rw

@@ -1,6 +1,31 @@
+<!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
+
 # Website Starter Pack
 
 Full-stack web app template: Nuxt 3 frontend + FastAPI backend + PostgreSQL + Traefik reverse proxy.
+
+## Before Claiming Done
+
+**Always validate your changes before saying you're done.** Run the relevant checks:
+
+```bash
+# Code quality (no containers needed)
+npm run lint:frontend                    # ESLint
+npm run lint:backend                     # Ruff
+npm run typecheck:frontend               # TypeScript
+
+# Tests (no containers needed)
+npm run test:unit:backend                # pytest
+npm run test:unit:frontend               # vitest
+
+# If modifying core files
+bash scripts/_core/validate-core-files.sh
+
+# If modifying dependencies or Dockerfile
+npm run build                            # Rebuild containers
+```
+
+Fix any errors before claiming the task is complete.
 
 ## Quick Commands
 
@@ -58,6 +83,45 @@ npm run build && npm run dev  # After requirements.txt changes
 npm run db-connect            # Connect to database
 npm run db-dump / db-restore  # Backup/restore database
 ```
+
+## Testing Strategy
+
+### Philosophy
+
+- **Unit tests**: Only for complex functions with non-trivial logic (algorithms, data transformations, validation)
+- **E2E tests**: For high-value, user-centric workflows (auth, payments, critical paths)
+- Don't test simple CRUD or framework boilerplate—rely on types + linting
+
+### Quick Commands
+
+```bash
+npm run test:unit:backend   # Run backend unit tests (pytest)
+npm run test:unit:frontend  # Run frontend unit tests (vitest)
+npm run test:e2e:start      # Start E2E test environment
+npm run test:e2e            # Run E2E tests (Playwright)
+npm run test:e2e:stop       # Stop E2E test environment
+```
+
+### Test Locations
+
+| Type | Framework | Location |
+|------|-----------|----------|
+| Backend unit | pytest | `app/backend/tests/` |
+| Frontend unit | Vitest | `app/frontend/tests/` |
+| E2E | Playwright | `app/frontend/e2e/` |
+
+### When to Write Tests
+
+| Scenario | Test Type |
+|----------|-----------|
+| Complex algorithm/business logic | Unit test |
+| Data transformation functions | Unit test |
+| Input validation/sanitization | Unit test |
+| User authentication flow | E2E test |
+| Payment/checkout flow | E2E test |
+| Critical user journeys | E2E test |
+| Simple CRUD endpoint | Skip (types + linting) |
+| UI component rendering | Skip (manual testing) |
 
 ## Theming & Dark Mode
 

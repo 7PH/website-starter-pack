@@ -8,7 +8,7 @@ ARG DOCKER_USER
 ARG DOCKER_UID
 ARG DOCKER_GID
 
-RUN apk add --no-cache gcc python3-dev musl-dev linux-headers postgresql-dev postgresql-client
+RUN apk add --no-cache gcc python3-dev musl-dev linux-headers postgresql-dev postgresql-client libmagic
 
 WORKDIR /app
 
