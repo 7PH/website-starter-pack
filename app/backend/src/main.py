@@ -98,4 +98,21 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     )
 
 
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all handler for unhandled exceptions.
+    Prevents stack traces from being exposed to clients while logging
+    the full error details server-side for debugging.
+    """
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        content={
+            "error": "Internal server error",
+            "detail": "An unexpected error occurred",
+        },
+        status_code=500,
+    )
+
+
 app.include_router(api_router)
