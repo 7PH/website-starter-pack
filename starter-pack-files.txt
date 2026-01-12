@@ -60,6 +60,7 @@ app/frontend/app.config.ts
 app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
 app/frontend/config/i18n.ts
+app/frontend/config/main-nav.ts
 app/frontend/stores/useAuth.ts
 app/frontend/stores/useModal.ts
 app/frontend/composables/useApi.ts

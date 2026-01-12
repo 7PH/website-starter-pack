@@ -1,7 +1,10 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { useMainNavExtensions } from '~/config/main-nav-ext';
+
 const auth = useAuth();
+const navExtensions = useMainNavExtensions();
 const accountActions = useAccountActions();
 const { t } = useI18n();
 const { isPremium, loading: subscriptionLoading } = useStripe();
@@ -42,6 +45,10 @@ function onSelectLogout() {
                 <NuxtLink v-if="auth.user?.is_admin" to="/admin/users" class="nav-link">
                     <UIcon name="i-lucide-settings" />
                     <span>Admin</span>
+                </NuxtLink>
+                <NuxtLink v-for="item in navExtensions" :key="item.to" :to="item.to" class="nav-link">
+                    <UIcon :name="item.icon" />
+                    <span>{{ item.label }}</span>
                 </NuxtLink>
             </ClientOnly>
         </nav>
