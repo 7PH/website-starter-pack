@@ -26,10 +26,49 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Arrays to track changes
-ADDED_FILES=()
-MODIFIED_FILES=()
-DELETED_FILES=()
+# Arrays to track changes by mode
+# Sync mode: full overwrite
+SYNC_ADDED=()
+SYNC_MODIFIED=()
+SYNC_REMOVED=()
+
+# Template mode: create if missing, never overwrite
+TEMPLATE_CREATED=()
+TEMPLATE_SKIPPED=()
+
+# Delete mode: remove if exists
+DELETE_REMOVED=()
+DELETE_SKIPPED=()
+
+# Associative array to store file modes from manifest
+declare -A FILE_MODES
+
+#######################################
+# Parse manifest entry to extract path and mode
+# Format: path/to/file.ts:mode or just path/to/file.ts
+# Valid modes: sync (default), template, delete
+#######################################
+parse_manifest_entry() {
+    local entry="$1"
+    local path mode
+
+    # Check for known mode suffixes
+    if [[ "$entry" == *":sync" ]]; then
+        path="${entry%:sync}"
+        mode="sync"
+    elif [[ "$entry" == *":template" ]]; then
+        path="${entry%:template}"
+        mode="template"
+    elif [[ "$entry" == *":delete" ]]; then
+        path="${entry%:delete}"
+        mode="delete"
+    else
+        path="$entry"
+        mode="sync"
+    fi
+
+    echo "$path|$mode"
+}
 
 #######################################
 # Check prerequisites
@@ -95,6 +134,7 @@ expand_pattern() {
 
 #######################################
 # Read manifest and expand all patterns
+# Also populates FILE_MODES associative array
 #######################################
 get_upstream_files() {
     local files=()
@@ -106,12 +146,18 @@ get_upstream_files() {
             continue
         fi
 
-        # Expand pattern and add to files array
+        # Parse entry to get path and mode
+        local parsed=$(parse_manifest_entry "$line")
+        local pattern="${parsed%|*}"
+        local mode="${parsed#*|}"
+
+        # Expand pattern and add to files array with mode
         while IFS= read -r file; do
             if [ -n "$file" ]; then
                 files+=("$file")
+                FILE_MODES["$file"]="$mode"
             fi
-        done < <(expand_pattern "$line" "$UPSTREAM_DIR")
+        done < <(expand_pattern "$pattern" "$UPSTREAM_DIR")
     done < "$UPSTREAM_DIR/$MANIFEST"
 
     printf '%s\n' "${files[@]}" | sort -u
@@ -141,33 +187,57 @@ get_local_files() {
 
 #######################################
 # Compare files and categorize changes
+# Handles sync, template, and delete modes
 #######################################
 compare_files() {
     echo -e "${BLUE}Comparing files...${NC}"
 
-    # Get file lists
+    # Get file lists (also populates FILE_MODES)
     local upstream_files=$(get_upstream_files)
     local local_files=$(get_local_files)
 
-    # Check each upstream file
+    # Process each upstream file based on its mode
     while IFS= read -r file; do
         [ -z "$file" ] && continue
 
-        if [ ! -f "$file" ]; then
-            # File doesn't exist locally - it's new
-            ADDED_FILES+=("$file")
-        elif ! diff -q "$file" "$UPSTREAM_DIR/$file" >/dev/null 2>&1; then
-            # File exists but is different
-            MODIFIED_FILES+=("$file")
-        fi
+        local mode="${FILE_MODES[$file]:-sync}"
+
+        case "$mode" in
+            sync)
+                # Sync mode: track added/modified files
+                if [ ! -f "$file" ]; then
+                    SYNC_ADDED+=("$file")
+                elif ! diff -q "$file" "$UPSTREAM_DIR/$file" >/dev/null 2>&1; then
+                    SYNC_MODIFIED+=("$file")
+                fi
+                ;;
+            template)
+                # Template mode: create if missing, skip if exists
+                if [ ! -f "$file" ]; then
+                    TEMPLATE_CREATED+=("$file")
+                else
+                    TEMPLATE_SKIPPED+=("$file")
+                fi
+                ;;
+            delete)
+                # Delete mode: remove if exists
+                if [ -f "$file" ]; then
+                    DELETE_REMOVED+=("$file")
+                else
+                    DELETE_SKIPPED+=("$file")
+                fi
+                ;;
+        esac
     done <<< "$upstream_files"
 
-    # Check for deleted files (in local but not in upstream)
+    # Check for files removed from manifest (sync mode only)
+    # These are files that exist locally but are no longer in upstream manifest
     while IFS= read -r file; do
         [ -z "$file" ] && continue
 
-        if [ ! -f "$UPSTREAM_DIR/$file" ]; then
-            DELETED_FILES+=("$file")
+        # Only track removals for files that were previously synced
+        if [ ! -f "$UPSTREAM_DIR/$file" ] && [ -z "${FILE_MODES[$file]}" ]; then
+            SYNC_REMOVED+=("$file")
         fi
     done <<< "$local_files"
 }
@@ -176,7 +246,11 @@ compare_files() {
 # Check if there are any changes
 #######################################
 has_changes() {
-    local total=$((${#ADDED_FILES[@]} + ${#MODIFIED_FILES[@]} + ${#DELETED_FILES[@]}))
+    local total=$((
+        ${#SYNC_ADDED[@]} + ${#SYNC_MODIFIED[@]} + ${#SYNC_REMOVED[@]} +
+        ${#TEMPLATE_CREATED[@]} +
+        ${#DELETE_REMOVED[@]}
+    ))
     [ $total -gt 0 ]
 }
 
@@ -190,26 +264,53 @@ show_summary() {
     echo -e "${BLUE}═══════════════════════════════════════${NC}"
     echo ""
 
-    if [ ${#ADDED_FILES[@]} -gt 0 ]; then
-        echo -e "${GREEN}+ ${#ADDED_FILES[@]} file(s) to add:${NC}"
-        for file in "${ADDED_FILES[@]}"; do
+    # Sync mode changes
+    if [ ${#SYNC_ADDED[@]} -gt 0 ]; then
+        echo -e "${GREEN}+ ${#SYNC_ADDED[@]} file(s) to add:${NC}"
+        for file in "${SYNC_ADDED[@]}"; do
             echo -e "    ${GREEN}+ $file${NC}"
         done
         echo ""
     fi
 
-    if [ ${#MODIFIED_FILES[@]} -gt 0 ]; then
-        echo -e "${YELLOW}~ ${#MODIFIED_FILES[@]} file(s) to update:${NC}"
-        for file in "${MODIFIED_FILES[@]}"; do
+    if [ ${#SYNC_MODIFIED[@]} -gt 0 ]; then
+        echo -e "${YELLOW}~ ${#SYNC_MODIFIED[@]} file(s) to update:${NC}"
+        for file in "${SYNC_MODIFIED[@]}"; do
             echo -e "    ${YELLOW}~ $file${NC}"
         done
         echo ""
     fi
 
-    if [ ${#DELETED_FILES[@]} -gt 0 ]; then
-        echo -e "${RED}- ${#DELETED_FILES[@]} file(s) to remove:${NC}"
-        for file in "${DELETED_FILES[@]}"; do
+    if [ ${#SYNC_REMOVED[@]} -gt 0 ]; then
+        echo -e "${RED}- ${#SYNC_REMOVED[@]} file(s) to remove:${NC}"
+        for file in "${SYNC_REMOVED[@]}"; do
             echo -e "    ${RED}- $file${NC}"
+        done
+        echo ""
+    fi
+
+    # Template mode changes
+    if [ ${#TEMPLATE_CREATED[@]} -gt 0 ]; then
+        echo -e "${GREEN}+ ${#TEMPLATE_CREATED[@]} template file(s) to create:${NC}"
+        for file in "${TEMPLATE_CREATED[@]}"; do
+            echo -e "    ${GREEN}+ $file${NC} (template)"
+        done
+        echo ""
+    fi
+
+    if [ ${#TEMPLATE_SKIPPED[@]} -gt 0 ]; then
+        echo -e "${BLUE}  ${#TEMPLATE_SKIPPED[@]} template file(s) already exist (preserved):${NC}"
+        for file in "${TEMPLATE_SKIPPED[@]}"; do
+            echo -e "    ${BLUE}  $file${NC}"
+        done
+        echo ""
+    fi
+
+    # Delete mode changes
+    if [ ${#DELETE_REMOVED[@]} -gt 0 ]; then
+        echo -e "${RED}- ${#DELETE_REMOVED[@]} deprecated file(s) to remove:${NC}"
+        for file in "${DELETE_REMOVED[@]}"; do
+            echo -e "    ${RED}- $file${NC} (deprecated)"
         done
         echo ""
     fi
@@ -219,7 +320,7 @@ show_summary() {
 # Show diffs for modified files
 #######################################
 show_diffs() {
-    if [ ${#MODIFIED_FILES[@]} -eq 0 ]; then
+    if [ ${#SYNC_MODIFIED[@]} -eq 0 ]; then
         return
     fi
 
@@ -227,7 +328,7 @@ show_diffs() {
     echo -e "${BLUE}              CHANGES                  ${NC}"
     echo -e "${BLUE}───────────────────────────────────────${NC}"
 
-    for file in "${MODIFIED_FILES[@]}"; do
+    for file in "${SYNC_MODIFIED[@]}"; do
         echo ""
         echo -e "${YELLOW}==> $file${NC}"
         diff --color=always -u "$file" "$UPSTREAM_DIR/$file" 2>/dev/null || true
@@ -242,23 +343,36 @@ show_diffs() {
 apply_changes() {
     echo -e "${BLUE}Applying changes...${NC}"
 
-    # Add new files
-    for file in "${ADDED_FILES[@]}"; do
+    # Sync mode: add new files
+    for file in "${SYNC_ADDED[@]}"; do
         mkdir -p "$(dirname "$file")"
         cp "$UPSTREAM_DIR/$file" "$file"
         echo -e "${GREEN}+ Added: $file${NC}"
     done
 
-    # Update modified files
-    for file in "${MODIFIED_FILES[@]}"; do
+    # Sync mode: update modified files
+    for file in "${SYNC_MODIFIED[@]}"; do
         cp "$UPSTREAM_DIR/$file" "$file"
         echo -e "${YELLOW}~ Updated: $file${NC}"
     done
 
-    # Delete removed files
-    for file in "${DELETED_FILES[@]}"; do
+    # Sync mode: delete removed files
+    for file in "${SYNC_REMOVED[@]}"; do
         rm -f "$file"
         echo -e "${RED}- Removed: $file${NC}"
+    done
+
+    # Template mode: create missing files
+    for file in "${TEMPLATE_CREATED[@]}"; do
+        mkdir -p "$(dirname "$file")"
+        cp "$UPSTREAM_DIR/$file" "$file"
+        echo -e "${GREEN}+ Created template: $file${NC}"
+    done
+
+    # Delete mode: remove deprecated files
+    for file in "${DELETE_REMOVED[@]}"; do
+        rm -f "$file"
+        echo -e "${RED}- Removed deprecated: $file${NC}"
     done
 
     echo ""

@@ -20,6 +20,22 @@ EXCEPTIONS=(
     "core-fr.json"
 )
 
+# Parse manifest entry to extract path and mode
+# Format: path/to/file.ts:mode or just path/to/file.ts
+parse_manifest_entry() {
+    local entry="$1"
+
+    if [[ "$entry" == *":sync" ]]; then
+        echo "${entry%:sync}|sync"
+    elif [[ "$entry" == *":template" ]]; then
+        echo "${entry%:template}|template"
+    elif [[ "$entry" == *":delete" ]]; then
+        echo "${entry%:delete}|delete"
+    else
+        echo "$entry|sync"
+    fi
+}
+
 # Check if a filename is in the exceptions list
 is_exception() {
     local file="$1"
@@ -45,15 +61,40 @@ expand_pattern() {
     done
 }
 
-# Get all files from manifest (expanded from patterns)
-get_manifest_files() {
+# Get all sync-mode files from manifest (expanded from patterns)
+# Only returns files that need the STARTERPACK CORE header
+get_manifest_sync_files() {
     while IFS= read -r line || [[ -n "$line" ]]; do
         # Skip comments and blank lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
 
-        # Expand the pattern
-        expand_pattern "$line"
+        # Parse entry to get path and mode
+        local parsed
+        parsed=$(parse_manifest_entry "$line")
+        local pattern="${parsed%|*}"
+        local mode="${parsed#*|}"
+
+        # Only include sync mode files (they need CORE header)
+        if [[ "$mode" == "sync" ]]; then
+            expand_pattern "$pattern"
+        fi
+    done < "$MANIFEST"
+}
+
+# Get all files from manifest (all modes, for matching check)
+get_all_manifest_patterns() {
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip comments and blank lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+
+        # Parse entry to get path only (strip mode)
+        local parsed
+        parsed=$(parse_manifest_entry "$line")
+        local pattern="${parsed%|*}"
+
+        echo "$pattern"
     done < "$MANIFEST"
 }
 
@@ -84,7 +125,7 @@ get_files_with_header() {
     done | sort -u
 }
 
-# Check if a file matches any pattern in the manifest
+# Check if a file matches any pattern in the manifest (any mode)
 matches_manifest() {
     local file="$1"
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -92,15 +133,20 @@ matches_manifest() {
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
 
+        # Parse entry to get path (strip mode)
+        local parsed
+        parsed=$(parse_manifest_entry "$line")
+        local pattern="${parsed%|*}"
+
         # Check if the file matches this pattern
         # For exact matches
-        if [[ "$file" == "$line" ]]; then
+        if [[ "$file" == "$pattern" ]]; then
             return 0
         fi
 
         # For glob patterns, expand and check
         shopt -s nullglob globstar
-        for match in $line; do
+        for match in $pattern; do
             if [[ "$file" == "$match" ]]; then
                 return 0
             fi
@@ -114,9 +160,9 @@ echo
 
 errors=0
 
-# Check 1: All manifest files should have the header (except exceptions)
-echo "Check 1: Files in manifest should have STARTERPACK CORE header"
-manifest_files=$(get_manifest_files | sort -u)
+# Check 1: All sync-mode manifest files should have the header (except exceptions)
+echo "Check 1: Sync-mode files in manifest should have STARTERPACK CORE header"
+manifest_files=$(get_manifest_sync_files | sort -u)
 manifest_count=0
 missing_header=()
 
