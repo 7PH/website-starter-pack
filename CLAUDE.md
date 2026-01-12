@@ -160,6 +160,18 @@ The app uses **Tailwind CSS** for custom styling and **@nuxt/ui** for UI compone
   - `ModalHeader.vue` - modal header with title and close button
   - `FormActions.vue` - form action buttons container
 
+## Type Generation (Backend → Frontend)
+
+TypeScript types are auto-generated from Pydantic schemas. Don't manually define interfaces that mirror backend models.
+
+```bash
+./scripts/_core/convert-models.sh  # Regenerate after schema changes
+```
+
+- Schemas: `app/backend/src/schemas/`
+- Register in: `app/backend/src/convert-models.py`
+- Output: `app/frontend/types/models.ts`
+
 ## Core Updates
 
 ```bash
