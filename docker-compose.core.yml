@@ -40,7 +40,7 @@ x-frontend-common: &frontend-common
         - ./app/frontend/utils:/app/utils:ro
     environment:
         NUXT_PUBLIC_APP_NAME: ${APP_NAME}
-        NUXT_PUBLIC_API_BASE: /api
+        NUXT_PUBLIC_API_BASE: /api/v1
         NUXT_PUBLIC_STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
         NUXT_PUBLIC_ORGANIZATIONS_ENABLED: ${ORGANIZATIONS_ENABLED:-false}
         NUXT_PUBLIC_ADMINER_URL: ${NUXT_PUBLIC_ADMINER_URL:-}

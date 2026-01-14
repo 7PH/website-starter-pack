@@ -12,6 +12,7 @@ from .helpers.logging import configure_logging, get_logger, set_request_id
 from .helpers.ratelimit import cleanup_entries
 from .helpers.security_headers import SecurityHeadersMiddleware
 from .helpers.stripe import init_stripe
+from .main_ext import extend_app
 from .router import router as api_router
 from .tasks import register_core_tasks
 
@@ -79,9 +80,7 @@ async def custom_form_validation_error(request: Request, exc: RequestValidationE
     return JSONResponse(
         content={
             "error": "Validation error",
-            "message": ", ".join(
-                reformatted_message
-            ),  # User-friendly reformatted message
+            "message": ", ".join(reformatted_message),  # User-friendly reformatted message
         },
         status_code=400,
     )
@@ -120,3 +119,5 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(api_router)
+
+extend_app(app, api_router)
