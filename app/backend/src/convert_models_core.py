@@ -40,6 +40,11 @@ from .schemas.event_log import (
     EventLogListResponse,
     EventLogRead,
 )
+from .schemas.oauth import (
+    OAuthCallbackRequest,
+    OAuthStatusResponse,
+    OAuthUrlResponse,
+)
 from .schemas.organization import (
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
@@ -109,4 +114,8 @@ CoreModels = (
     | OrganizationCheckoutResponse
     | OrganizationSubscriptionStatus
     | UserOrganizationInfo
+    # OAuth models
+    | OAuthStatusResponse
+    | OAuthUrlResponse
+    | OAuthCallbackRequest
 )

@@ -46,7 +46,10 @@ export type Models =
   | OrganizationCheckoutRequest
   | OrganizationCheckoutResponse
   | OrganizationSubscriptionStatus
-  | UserOrganizationInfo;
+  | UserOrganizationInfo
+  | OAuthStatusResponse
+  | OAuthUrlResponse
+  | OAuthCallbackRequest;
 export type Message = string;
 export type Id = number;
 export type Email = string;
@@ -232,6 +235,12 @@ export type StripePremium1 = boolean;
 export type StripeQuota1 = number;
 export type CancelAtPeriodEnd1 = boolean;
 export type ExpiresAt2 = string | null;
+export type Enabled = boolean;
+export type Providers = string[];
+export type Url2 = string;
+export type State3 = string;
+export type Code = string;
+export type State4 = string;
 
 /**
  * Standard response for auth operations.
@@ -588,5 +597,26 @@ export interface OrganizationSubscriptionStatus {
   stripe_quota: StripeQuota1;
   cancel_at_period_end?: CancelAtPeriodEnd1;
   expires_at?: ExpiresAt2;
+}
+/**
+ * Response indicating OAuth availability.
+ */
+export interface OAuthStatusResponse {
+  enabled: Enabled;
+  providers: Providers;
+}
+/**
+ * Response containing the OAuth authorization URL.
+ */
+export interface OAuthUrlResponse {
+  url: Url2;
+  state: State3;
+}
+/**
+ * Request body for OAuth callback.
+ */
+export interface OAuthCallbackRequest {
+  code: Code;
+  state: State4;
 }
 }

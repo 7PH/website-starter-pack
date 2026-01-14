@@ -9,6 +9,27 @@ Ensure you have `git` and `docker` on your machine, then:
 - Execute `npm run setup`
 - Fill the `.env` file
 
+## OAuth (Google Sign-In)
+
+To enable "Continue with Google" on the login page:
+
+1. **Create OAuth credentials** in [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
+
+   - Go to "Credentials" → "Create Credentials" → "OAuth client ID"
+   - Application type: "Web application"
+   - Add authorized redirect URIs:
+     - Production: `https://YOUR_DOMAIN/oauth/callback`
+     - Local dev: `http://localhost:3000/oauth/callback` (Google only allows plain `localhost`, not custom `.localhost` domains)
+
+2. **Configure environment variables** in `.env`:
+   ```
+   OAUTH_ENABLED=true
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   ```
+
+The Google sign-in button will appear on the login and signup pages when properly configured.
+
 ## Running
 
 For running in production, run `npm start`

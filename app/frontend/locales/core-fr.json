@@ -37,6 +37,19 @@
             "sendResetLink": "Envoyer le lien",
             "backToLogin": "Retour à la connexion"
         },
+        "oauth": {
+            "continueWithGoogle": "Continuer avec Google",
+            "or": "ou",
+            "signingIn": "Connexion en cours",
+            "pleaseWait": "Veuillez patienter pendant que nous finalisons la connexion...",
+            "success": "Connexion réussie",
+            "redirecting": "Redirection vers l'application...",
+            "errorTitle": "Échec de la connexion",
+            "errorStarting": "Impossible de démarrer la connexion. Veuillez réessayer.",
+            "errorCallback": "Impossible de finaliser la connexion. Veuillez réessayer.",
+            "accessDenied": "Accès refusé. Veuillez réessayer ou utiliser email/mot de passe.",
+            "missingParams": "Callback invalide. Veuillez vous reconnecter."
+        },
         "common": {
             "save": "Enregistrer",
             "cancel": "Annuler",

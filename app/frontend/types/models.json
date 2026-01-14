@@ -582,6 +582,66 @@
       "title": "IndexStats",
       "type": "object"
     },
+    "OAuthCallbackRequest": {
+      "description": "Request body for OAuth callback.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "state"
+      ],
+      "title": "OAuthCallbackRequest",
+      "type": "object"
+    },
+    "OAuthStatusResponse": {
+      "description": "Response indicating OAuth availability.",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "providers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Providers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "enabled",
+        "providers"
+      ],
+      "title": "OAuthStatusResponse",
+      "type": "object"
+    },
+    "OAuthUrlResponse": {
+      "description": "Response containing the OAuth authorization URL.",
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "state"
+      ],
+      "title": "OAuthUrlResponse",
+      "type": "object"
+    },
     "OrganizationCheckoutRequest": {
       "description": "Schema for creating a checkout session.",
       "properties": {
@@ -1880,6 +1940,15 @@
     },
     {
       "$ref": "#/$defs/UserOrganizationInfo"
+    },
+    {
+      "$ref": "#/$defs/OAuthStatusResponse"
+    },
+    {
+      "$ref": "#/$defs/OAuthUrlResponse"
+    },
+    {
+      "$ref": "#/$defs/OAuthCallbackRequest"
     }
   ]
 }

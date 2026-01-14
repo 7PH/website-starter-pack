@@ -37,6 +37,19 @@
             "sendResetLink": "Send reset link",
             "backToLogin": "Back to login"
         },
+        "oauth": {
+            "continueWithGoogle": "Continue with Google",
+            "or": "or",
+            "signingIn": "Signing you in",
+            "pleaseWait": "Please wait while we complete the sign-in process...",
+            "success": "Sign in successful",
+            "redirecting": "Redirecting you to the app...",
+            "errorTitle": "Sign in failed",
+            "errorStarting": "Failed to start sign-in. Please try again.",
+            "errorCallback": "Failed to complete sign-in. Please try again.",
+            "accessDenied": "Access was denied. Please try again or use email/password.",
+            "missingParams": "Invalid callback. Please try signing in again."
+        },
         "common": {
             "save": "Save",
             "cancel": "Cancel",
