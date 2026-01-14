@@ -157,6 +157,9 @@ function switchMode(newMode: AuthMode) {
     <div>
         <h1 class="text-2xl font-bold mb-6 text-gradient-brand">{{ title }}</h1>
 
+        <!-- OAuth Buttons (shown for login and signup modes) -->
+        <AuthOAuthButtons v-if="mode === 'login' || mode === 'signup'" />
+
         <!-- Login Form -->
         <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
             <UFormField :label="t('core.auth.email')" :error="errors.email">

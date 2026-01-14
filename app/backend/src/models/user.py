@@ -22,6 +22,8 @@ class UserBase(Base):
     has_personal_subscription = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    oauth_provider = Column(String, nullable=True)  # OAuthProvider value
+    oauth_id = Column(String, nullable=True)  # Provider's unique user ID
 
     # This table is used for polymorphic inheritance
     __mapper_args__ = {"polymorphic_identity": "userbase"}
