@@ -10,6 +10,7 @@ from .constants import IS_PROD
 from .helpers.db import create_db_and_tables
 from .helpers.logging import configure_logging, get_logger, set_request_id
 from .helpers.ratelimit import cleanup_entries
+from .helpers.security_headers import SecurityHeadersMiddleware
 from .helpers.stripe import init_stripe
 from .router import router as api_router
 from .tasks import register_core_tasks
@@ -45,6 +46,9 @@ if not IS_PROD:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Add security headers to all responses
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.middleware("http")
