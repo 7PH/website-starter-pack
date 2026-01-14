@@ -1,12 +1,30 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite';
+import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
+
+// Default security headers (merged with project overrides)
+const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+};
+
+// Merge and filter out empty values (empty string = remove header)
+const securityHeaders = Object.fromEntries(
+    Object.entries({ ...DEFAULT_SECURITY_HEADERS, ...SECURITY_HEADERS_OVERRIDE }).filter(([, value]) => value !== ''),
+);
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-01-01',
 
-    // Disable SSR for admin pages (auth is client-side, no SEO needed)
+    // Route-specific rules
     routeRules: {
+        // Security headers for all routes (customize in config/security-headers.ts)
+        '/**': { headers: securityHeaders },
+        // Disable SSR for admin pages (auth is client-side, no SEO needed)
         '/admin/**': { ssr: false },
     },
 

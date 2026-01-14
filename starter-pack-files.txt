@@ -31,6 +31,8 @@ app/backend/src/helpers/stripe.py
 app/backend/src/helpers/file_upload.py
 app/backend/src/helpers/sanitize.py
 app/backend/src/helpers/oauth.py
+app/backend/src/helpers/security_headers.py
+app/backend/src/helpers/security_headers_ext.py:template
 app/backend/src/models/__init__.py
 app/backend/src/models/event_log.py
 app/backend/src/models/organization.py
@@ -66,6 +68,7 @@ app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
 app/frontend/config/i18n.ts
 app/frontend/config/main-nav.ts
+app/frontend/config/security-headers.ts:template
 app/frontend/stores/useAuth.ts
 app/frontend/stores/useModal.ts
 app/frontend/composables/useApi.ts

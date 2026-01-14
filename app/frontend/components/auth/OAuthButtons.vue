@@ -72,4 +72,3 @@ async function handleGoogleClick() {
         </div>
     </div>
 </template>
-
