@@ -8,6 +8,7 @@ app/backend/migrations/2026-01-09-organizations.sql
 app/backend/migrations/2026-01-14-oauth-provider.sql
 app/backend/ruff.toml
 app/backend/src/main.py
+app/backend/src/main_ext.py:template
 app/backend/src/constants.py
 app/backend/src/router.py
 app/backend/src/controllers/__init__.py

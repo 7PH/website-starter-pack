@@ -6,15 +6,25 @@ from .constants import ORGANIZATIONS_ENABLED, STRIPE_ENABLED
 from .controllers import admin, auth, backups, db_health, healthcheck, organizations, stripe, users
 from .router_app import router as app_router
 
-router = APIRouter()
-router.include_router(users.router, tags=["Users"])
-router.include_router(auth.router, tags=["Auth"])
-router.include_router(healthcheck.router, tags=["Healthcheck"])
+# Unversioned routes (healthcheck for load balancers/infrastructure)
+router_unversioned = APIRouter()
+router_unversioned.include_router(healthcheck.router, tags=["Healthcheck"])
+
+# V1 API routes
+router_v1 = APIRouter(prefix="/v1")
+router_v1.include_router(healthcheck.router, tags=["Healthcheck"])  # Also available versioned for frontend
+router_v1.include_router(users.router, tags=["Users"])
+router_v1.include_router(auth.router, tags=["Auth"])
 if STRIPE_ENABLED:
-    router.include_router(stripe.router, tags=["Stripe"])
+    router_v1.include_router(stripe.router, tags=["Stripe"])
 if ORGANIZATIONS_ENABLED:
-    router.include_router(organizations.router, tags=["Organizations"])
-router.include_router(admin.router, tags=["Admin"])
-router.include_router(backups.router, tags=["Backups"])
-router.include_router(db_health.router, tags=["Database Health"])
-router.include_router(app_router)
+    router_v1.include_router(organizations.router, tags=["Organizations"])
+router_v1.include_router(admin.router, tags=["Admin"])
+router_v1.include_router(backups.router, tags=["Backups"])
+router_v1.include_router(db_health.router, tags=["Database Health"])
+router_v1.include_router(app_router)
+
+# Main router combines all versions
+router = APIRouter()
+router.include_router(router_unversioned)
+router.include_router(router_v1)
