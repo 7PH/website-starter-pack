@@ -386,7 +386,7 @@ async function deleteUser() {
 }
 
 .content-grid {
-    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+    @apply flex flex-col gap-6;
 }
 
 .info-grid {

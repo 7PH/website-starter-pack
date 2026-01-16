@@ -16,7 +16,7 @@ const showFooter = computed(() => !route.meta.hideFooter);
         <UApp class="flex flex-col flex-1 min-h-0">
             <ImpersonationBanner />
             <PageHeader />
-            <main class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+            <main class="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden">
                 <NuxtPage />
             </main>
             <PageFooter v-if="showFooter" />

@@ -48,6 +48,7 @@
 
     /* Page layout */
     --page-max-width: 1000px;
+    --page-header-height: 60px;
 
     /* Theme gradient colors (RGB values for use with rgba()) */
     --theme-brand-rgb: 139, 92, 246; /* violet-500 */
@@ -81,15 +82,28 @@
     --border-brand-dark: rgba(var(--theme-brand-rgb), 0.15);
 
     /* Glow shadows (using theme colors) */
-    --shadow-glow-brand: 0 0 20px rgba(var(--theme-brand-rgb), 0.35),
-        0 0 40px rgba(var(--theme-brand-rgb), 0.2);
-    --shadow-glow-accent: 0 0 20px rgba(var(--theme-accent-rgb), 0.35),
-        0 0 40px rgba(var(--theme-accent-rgb), 0.2);
-    --shadow-glow-pop: 0 0 20px rgba(var(--theme-pop-rgb), 0.35),
-        0 0 40px rgba(var(--theme-pop-rgb), 0.2);
+    --shadow-glow-brand: 0 0 20px rgba(var(--theme-brand-rgb), 0.35), 0 0 40px rgba(var(--theme-brand-rgb), 0.2);
+    --shadow-glow-accent: 0 0 20px rgba(var(--theme-accent-rgb), 0.35), 0 0 40px rgba(var(--theme-accent-rgb), 0.2);
+    --shadow-glow-pop: 0 0 20px rgba(var(--theme-pop-rgb), 0.35), 0 0 40px rgba(var(--theme-pop-rgb), 0.2);
 
     /* Focus ring color */
     --ring-brand: rgb(var(--theme-brand-rgb));
+}
+
+/* Layout */
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+    @apply h-dvh flex flex-col;
+}
+
+#__nuxt {
+    @apply min-h-0 flex-1 flex flex-col;
 }
 
 /* Page content container - fixed width to prevent layout shifts */
@@ -100,21 +114,6 @@
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
-}
-
-html {
-    height: 100vh;
-}
-
-body {
-    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100;
-    height: 100%;
-}
-
-#__nuxt {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
 }
 
 /* Gradient text utility - use class="text-gradient-brand" */

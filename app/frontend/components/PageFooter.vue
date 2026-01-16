@@ -33,9 +33,9 @@ const currentYear = new Date().getFullYear();
 @reference "~/assets/css/main.css";
 
 .page-footer {
-    @apply py-6 px-4 mt-auto;
+    @apply relative z-10 py-3 px-4 mt-auto;
     @apply border-t border-gray-200 dark:border-gray-800;
-    @apply bg-white dark:bg-transparent;
+    @apply bg-white dark:bg-slate-900;
 }
 
 .footer-content {

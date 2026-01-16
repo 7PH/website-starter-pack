@@ -161,22 +161,15 @@ function getSeverityIcon(severity: string): string {
             <!-- Recommendations -->
             <UCard v-if="data?.recommendations?.length" class="recommendations-card">
                 <template #header>
-                    <h2 class="section-title">Recommendations</h2>
+                    <h2 class="section-title">Recommendations ({{ data.recommendations.length }})</h2>
                 </template>
                 <div class="recommendations-list">
                     <div v-for="(rec, index) in data.recommendations" :key="index" class="recommendation-item">
-                        <div class="recommendation-header">
-                            <UBadge :color="getSeverityColor(rec.severity)" variant="subtle">
-                                <UIcon :name="getSeverityIcon(rec.severity)" class="mr-1" />
-                                {{ rec.severity }}
-                            </UBadge>
-                            <span v-if="rec.table" class="recommendation-table">{{ rec.table }}</span>
-                        </div>
-                        <div class="recommendation-message">{{ rec.message }}</div>
-                        <div class="recommendation-action">
-                            <UIcon name="i-lucide-arrow-right" class="mr-1" />
-                            {{ rec.action }}
-                        </div>
+                        <UBadge :color="getSeverityColor(rec.severity)" variant="subtle" size="xs">
+                            {{ rec.severity }}
+                        </UBadge>
+                        <span v-if="rec.table" class="recommendation-table">{{ rec.table }}:</span>
+                        <span class="recommendation-message">{{ rec.action }}</span>
                     </div>
                 </div>
             </UCard>
@@ -279,27 +272,19 @@ function getSeverityIcon(severity: string): string {
 }
 
 .recommendations-list {
-    @apply space-y-4;
+    @apply space-y-2 max-h-[200px] overflow-y-auto;
 }
 
 .recommendation-item {
-    @apply border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0;
-}
-
-.recommendation-header {
-    @apply flex items-center gap-2 mb-1;
+    @apply flex items-center gap-2 text-sm;
 }
 
 .recommendation-table {
-    @apply text-sm font-mono text-gray-500 dark:text-gray-400;
+    @apply font-mono text-gray-500 dark:text-gray-400;
 }
 
 .recommendation-message {
-    @apply text-gray-900 dark:text-gray-100 mb-1;
-}
-
-.recommendation-action {
-    @apply text-sm text-primary-600 dark:text-primary-400 flex items-center;
+    @apply text-gray-700 dark:text-gray-300;
 }
 
 .tabs-container {
