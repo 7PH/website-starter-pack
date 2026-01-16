@@ -285,7 +285,7 @@ onMounted(() => {
                 class="mb-6"
             />
 
-            <div class="content-grid" :class="{ 'admin-grid': isAdminView }">
+            <div class="content-grid">
                 <!-- Organization Info Card -->
                 <OrganizationsInfoCard
                     v-model:form-name="form.name"
@@ -381,9 +381,5 @@ onMounted(() => {
 
 .content-grid {
     @apply flex flex-col gap-6;
-}
-
-.content-grid.admin-grid {
-    @apply grid grid-cols-1 lg:grid-cols-2;
 }
 </style>

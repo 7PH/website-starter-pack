@@ -125,8 +125,9 @@ function onSelectLogout() {
 <style scoped>
 @reference "~/assets/css/main.css";
 .header {
-    @apply relative flex items-center justify-between px-6 py-3;
+    @apply sticky top-0 z-40 flex items-center justify-between px-6;
     @apply border-b border-slate-200/50 dark:border-slate-700/50;
+    min-height: var(--page-header-height);
 }
 
 .nav-links {

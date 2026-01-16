@@ -21,7 +21,7 @@ withDefaults(
 @reference "~/assets/css/main.css";
 
 .page-wrapper {
-    @apply min-h-dvh flex flex-col;
+    @apply flex-1 flex flex-col min-h-0;
     @apply bg-gray-50 dark:bg-slate-900;
 }
 
