@@ -10,7 +10,16 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
-from ..constants import ORG_MAX_MEMBERS, ORG_MAX_PER_USER, ORG_STRIPE_PRICE_IDS, PUBLIC_URL, STRIPE_ENABLED, EventType
+from ..constants import (
+    ORG_MAX_MEMBERS,
+    ORG_MAX_PER_USER,
+    ORG_SELF_SERVICE_CREATION,
+    ORG_SELF_SERVICE_SUBSCRIPTIONS,
+    ORG_STRIPE_PRICE_IDS,
+    PUBLIC_URL,
+    STRIPE_ENABLED,
+    EventType,
+)
 from ..crud.event_logs import log_event
 from ..crud.organizations import (
     add_organization_member,
@@ -228,10 +237,31 @@ def create_new_organization(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    admin: UserRead = Depends(get_current_admin),
+    user: UserRead = Depends(get_current_user),
     org_data: OrganizationCreate,
 ):
-    """Create a new organization (system admin only). Creator becomes first admin."""
+    """Create a new organization. Creator becomes first admin.
+
+    Access:
+    - System admins can always create organizations
+    - Regular users can create if ORG_SELF_SERVICE_CREATION is enabled
+    """
+    # Block non-admins if self-service creation is disabled
+    if not ORG_SELF_SERVICE_CREATION and not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization creation is disabled",
+        )
+
+    # Check max orgs per user (skip for system admins)
+    if not user.is_admin:
+        user_org_count = count_user_organizations(session, user.id)
+        if user_org_count >= ORG_MAX_PER_USER:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Maximum of {ORG_MAX_PER_USER} organization(s) reached",
+            )
+
     # Check if email is taken
     if is_org_email_taken(session, org_data.email):
         raise HTTPException(
@@ -256,13 +286,13 @@ def create_new_organization(
     org = create_organization(session, org)
 
     # Add creator as first admin
-    add_organization_member(session, admin.id, org.id, is_admin=True)
+    add_organization_member(session, user.id, org.id, is_admin=True)
 
     # Log event
     log_event(
         session,
         action=EventType.ORG_CREATED,
-        user_id=admin.id,
+        user_id=user.id,
         details={"org_id": org.id, "org_name": org.name},
         request=request,
     )
@@ -681,6 +711,10 @@ def create_org_checkout(
     if not STRIPE_ENABLED or not stripe_helper.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
 
+    # Block self-service if disabled (unless user is app admin)
+    if not ORG_SELF_SERVICE_SUBSCRIPTIONS and not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Self-service subscriptions are disabled")
+
     org = _check_org_access(session, org_id, user, require_admin=True)
 
     # Validate price_id is an allowed org price
@@ -733,6 +767,10 @@ def get_org_billing_portal(
     """Get a Stripe billing portal URL for the organization. Org admin only."""
     if not STRIPE_ENABLED or not stripe_helper.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+    # Block self-service if disabled (unless user is app admin)
+    if not ORG_SELF_SERVICE_SUBSCRIPTIONS and not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Self-service subscriptions are disabled")
 
     org = _check_org_access(session, org_id, user, require_admin=True)
 

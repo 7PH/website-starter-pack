@@ -5,8 +5,10 @@
 const auth = useAuth();
 const api = useApi();
 const modal = useModalStore();
+const router = useRouter();
 const { t } = useI18n();
 const { showSuccess, showError } = useToastHelpers();
+const config = useRuntimeConfig();
 
 // Fetch user's organizations
 const {
@@ -24,6 +26,31 @@ const {
 );
 
 const isLeaving = ref<number | null>(null);
+
+// Create organization
+const canCreateOrg = computed(() => config.public.orgSelfServiceCreation);
+const showCreateModal = ref(false);
+const isCreating = ref(false);
+
+async function createOrganization(formData: { name: string; email: string; description: string }) {
+    isCreating.value = true;
+    try {
+        const newOrg = await api.post<OrganizationRead>('/organizations', formData);
+        showSuccess(
+            t('core.organizations.createSuccess'),
+            t('core.organizations.createSuccessDescription', { name: formData.name }),
+        );
+        showCreateModal.value = false;
+        // Refresh user data to get the new org
+        await auth.refreshToken();
+        // Navigate to the new organization
+        router.push(`/organizations/${newOrg.id}`);
+    } catch (error: unknown) {
+        showError(error, 'core.organizations.createFailed');
+    } finally {
+        isCreating.value = false;
+    }
+}
 
 async function leaveOrganization(org: UserOrganizationInfo) {
     const confirmed = await modal.open('confirm', {
@@ -57,11 +84,19 @@ async function leaveOrganization(org: UserOrganizationInfo) {
     <div class="space-y-6">
         <UCard>
             <template #header>
-                <div>
-                    <h2 class="text-lg font-semibold">{{ t('core.organizations.title') }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('core.organizations.description') }}
-                    </p>
+                <div class="org-header">
+                    <div>
+                        <h2 class="text-lg font-semibold">{{ t('core.organizations.title') }}</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ t('core.organizations.description') }}
+                        </p>
+                    </div>
+                    <UButton
+                        v-if="canCreateOrg"
+                        :label="t('core.organizations.createOrganization')"
+                        icon="i-lucide-plus"
+                        @click="showCreateModal = true"
+                    />
                 </div>
             </template>
 
@@ -126,11 +161,22 @@ async function leaveOrganization(org: UserOrganizationInfo) {
                 </template>
             </div>
         </UCard>
+
+        <!-- Create Organization Modal -->
+        <OrganizationsCreateModal
+            v-model:open="showCreateModal"
+            :is-creating="isCreating"
+            @create="createOrganization"
+        />
     </div>
 </template>
 
 <style scoped>
 @reference "~/assets/css/main.css";
+
+.org-header {
+    @apply flex items-start justify-between gap-4;
+}
 
 .org-card-wrapper {
     @apply block no-underline;

@@ -86,25 +86,19 @@ function getOrg(row: { original: unknown }): OrganizationRead {
 
 // Create organization modal
 const showCreateModal = ref(false);
-const createForm = ref({
-    name: '',
-    email: '',
-    description: '',
-});
 const isCreating = ref(false);
 
-async function createOrganization() {
+async function createOrganization(formData: { name: string; email: string; description: string }) {
     isCreating.value = true;
     try {
-        await api.post('/organizations', createForm.value);
+        await api.post('/organizations', formData);
         toast.add({
             title: 'Organization created',
-            description: `${createForm.value.name} has been created`,
+            description: `${formData.name} has been created`,
             color: 'success',
             duration: 3000,
         });
         showCreateModal.value = false;
-        createForm.value = { name: '', email: '', description: '' };
         refresh();
     } catch (error: unknown) {
         toast.add({
@@ -268,45 +262,11 @@ async function deleteOrganization(org: OrganizationRead) {
             </UCard>
 
             <!-- Create Organization Modal -->
-            <UModal v-model:open="showCreateModal">
-                <template #content>
-                    <UCard>
-                        <template #header>
-                            <UiModalHeader title="Create Organization" @close="showCreateModal = false" />
-                        </template>
-
-                        <form class="create-form" @submit.prevent="createOrganization">
-                            <UFormField label="Name" required>
-                                <UInput v-model="createForm.name" placeholder="Organization name" />
-                            </UFormField>
-                            <UFormField label="Email" required>
-                                <UInput v-model="createForm.email" type="email" placeholder="contact@example.com" />
-                            </UFormField>
-                            <UFormField label="Description">
-                                <UTextarea
-                                    v-model="createForm.description"
-                                    placeholder="Optional description..."
-                                    :rows="3"
-                                />
-                            </UFormField>
-                            <UiFormActions>
-                                <UButton
-                                    label="Cancel"
-                                    color="neutral"
-                                    variant="outline"
-                                    @click="showCreateModal = false"
-                                />
-                                <UButton
-                                    type="submit"
-                                    label="Create"
-                                    :loading="isCreating"
-                                    :disabled="!createForm.name || !createForm.email"
-                                />
-                            </UiFormActions>
-                        </form>
-                    </UCard>
-                </template>
-            </UModal>
+            <OrganizationsCreateModal
+                v-model:open="showCreateModal"
+                :is-creating="isCreating"
+                @create="createOrganization"
+            />
         </div>
     </div>
 </template>
@@ -387,9 +347,5 @@ async function deleteOrganization(org: OrganizationRead) {
 
 .pagination-info {
     @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.create-form {
-    @apply flex flex-col gap-4;
 }
 </style>

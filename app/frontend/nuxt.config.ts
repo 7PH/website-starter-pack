@@ -52,6 +52,8 @@ export default defineNuxtConfig({
             apiBase: '/api/v1', // NUXT_PUBLIC_API_BASE - relative path, same origin
             stripeEnabled: false, // NUXT_PUBLIC_STRIPE_ENABLED - enable billing features
             organizationsEnabled: false, // NUXT_PUBLIC_ORGANIZATIONS_ENABLED - enable org features
+            orgSelfServiceSubscriptions: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_SUBSCRIPTIONS - allow org admins to subscribe
+            orgSelfServiceCreation: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_CREATION - allow users to create orgs
             adminerUrl: '', // NUXT_PUBLIC_ADMINER_URL - external URL to Adminer
             // Umami Analytics (optional)
             umamiEnabled: false, // NUXT_PUBLIC_UMAMI_ENABLED

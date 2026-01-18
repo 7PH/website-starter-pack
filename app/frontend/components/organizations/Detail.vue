@@ -101,7 +101,15 @@ const {
 
 // Stripe config
 const config = useRuntimeConfig();
-const stripeEnabled = computed(() => config.public.stripeEnabled);
+
+// Determine if subscription management buttons should be shown
+// Admin view: always show if Stripe enabled
+// User view: only show if self-service subscriptions are enabled
+const canManageSubscription = computed(() => {
+    const stripeEnabled = config.public.stripeEnabled;
+    const selfServiceEnabled = String(config.public.orgSelfServiceSubscriptions) === 'true';
+    return stripeEnabled && (props.isAdminView || selfServiceEnabled);
+});
 
 async function saveChanges() {
     isSaving.value = true;
@@ -228,7 +236,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <div v-if="!org.deleted_at" class="header-actions">
-                    <template v-if="stripeEnabled">
+                    <template v-if="canManageSubscription">
                         <UButton
                             v-if="org.stripe_premium"
                             :label="t('core.organizations.manageBilling')"
