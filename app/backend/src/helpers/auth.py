@@ -15,7 +15,7 @@ from ..constants import (
 from ..schemas.user import UserRead, UserTokenUpdate
 from .exception import InvalidTokenException
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 
 
 def hash_password(password: str) -> str:
