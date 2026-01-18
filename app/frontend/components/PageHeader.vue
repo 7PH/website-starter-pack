@@ -78,6 +78,12 @@ function onSelectLogout() {
                         <span>{{ isPremium ? t('core.billing.premium') : t('core.billing.upgrade') }}</span>
                     </NuxtLink>
 
+                    <!-- Messages link -->
+                    <NuxtLink to="/messages" class="nav-link">
+                        <UIcon name="i-lucide-message-square" />
+                        <span>{{ t('core.messages.title') }}</span>
+                    </NuxtLink>
+
                     <NuxtLink to="/account" class="nav-user-link">
                         <UIcon name="i-lucide-user" />
                         <span>{{ auth.user?.first_name }}</span>

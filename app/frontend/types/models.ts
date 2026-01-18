@@ -49,7 +49,15 @@ export type Models =
   | UserOrganizationInfo
   | OAuthStatusResponse
   | OAuthUrlResponse
-  | OAuthCallbackRequest;
+  | OAuthCallbackRequest
+  | ConversationCreate
+  | ConversationRead
+  | ConversationDetail
+  | ConversationListResponse
+  | ConversationUserPreview
+  | MessageCreate
+  | MessageRead
+  | MessageListResponse;
 export type Message = string;
 export type Id = number;
 export type Email = string;
@@ -241,6 +249,47 @@ export type Url2 = string;
 export type State3 = string;
 export type Code = string;
 export type State4 = string;
+export type Subject = string;
+export type Content = string;
+export type Id5 = number;
+export type Type1 = string;
+export type Subject1 = string | null;
+export type CreatedById = number | null;
+export type Id6 = number;
+export type Email10 = string;
+export type FirstName7 = string;
+export type LastName7 = string;
+export type IsClosed = boolean;
+export type ClosedAt = string | null;
+export type CreatedAt5 = string | null;
+export type UpdatedAt = string | null;
+export type UnreadCount = number;
+export type Id7 = number;
+export type ConversationId = number;
+export type SenderId = number | null;
+export type Content1 = string;
+export type IsAdminResponse = boolean;
+export type CreatedAt6 = string | null;
+export type Id8 = number;
+export type Type2 = string;
+export type Subject2 = string | null;
+export type CreatedById1 = number | null;
+export type IsClosed1 = boolean;
+export type ClosedAt1 = string | null;
+export type CreatedAt7 = string | null;
+export type UpdatedAt1 = string | null;
+export type UnreadCount1 = number;
+export type Messages = MessageRead[];
+export type Items5 = ConversationRead[];
+export type Total5 = number;
+export type Limit2 = number;
+export type Offset2 = number;
+export type Content2 = string;
+export type Items6 = MessageRead[];
+export type Total6 = number;
+export type Limit3 = number;
+export type Offset3 = number;
+export type HasMore = boolean;
 
 /**
  * Standard response for auth operations.
@@ -618,5 +667,91 @@ export interface OAuthUrlResponse {
 export interface OAuthCallbackRequest {
   code: Code;
   state: State4;
+}
+/**
+ * Schema for creating a new support conversation.
+ */
+export interface ConversationCreate {
+  subject: Subject;
+  content: Content;
+}
+/**
+ * Schema for reading a conversation.
+ */
+export interface ConversationRead {
+  id: Id5;
+  type: Type1;
+  subject?: Subject1;
+  created_by_id?: CreatedById;
+  created_by?: ConversationUserPreview | null;
+  is_closed?: IsClosed;
+  closed_at?: ClosedAt;
+  created_at?: CreatedAt5;
+  updated_at?: UpdatedAt;
+  unread_count?: UnreadCount;
+  last_message?: MessageRead | null;
+}
+/**
+ * User preview for conversation context, includes email for admin visibility.
+ */
+export interface ConversationUserPreview {
+  id: Id6;
+  email: Email10;
+  first_name: FirstName7;
+  last_name: LastName7;
+}
+/**
+ * Schema for reading a message.
+ */
+export interface MessageRead {
+  id: Id7;
+  conversation_id: ConversationId;
+  sender_id: SenderId;
+  sender?: ConversationUserPreview | null;
+  content: Content1;
+  is_admin_response?: IsAdminResponse;
+  created_at?: CreatedAt6;
+}
+/**
+ * Schema for conversation with messages.
+ */
+export interface ConversationDetail {
+  id: Id8;
+  type: Type2;
+  subject?: Subject2;
+  created_by_id?: CreatedById1;
+  created_by?: ConversationUserPreview | null;
+  is_closed?: IsClosed1;
+  closed_at?: ClosedAt1;
+  created_at?: CreatedAt7;
+  updated_at?: UpdatedAt1;
+  unread_count?: UnreadCount1;
+  last_message?: MessageRead | null;
+  messages?: Messages;
+}
+/**
+ * Paginated response for conversation list.
+ */
+export interface ConversationListResponse {
+  items: Items5;
+  total: Total5;
+  limit: Limit2;
+  offset: Offset2;
+}
+/**
+ * Schema for creating a new message.
+ */
+export interface MessageCreate {
+  content: Content2;
+}
+/**
+ * Paginated response for messages in a conversation.
+ */
+export interface MessageListResponse {
+  items: Items6;
+  total: Total6;
+  limit: Limit3;
+  offset: Offset3;
+  has_more: HasMore;
 }
 }

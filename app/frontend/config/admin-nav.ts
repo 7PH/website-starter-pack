@@ -34,6 +34,12 @@ export const CORE_ADMIN_NAV: AdminNavItem[] = [
         order: 10,
     },
     {
+        label: 'Messages',
+        icon: 'i-lucide-message-square',
+        to: '/admin/messages',
+        order: 12,
+    },
+    {
         label: 'Organizations',
         icon: 'i-lucide-building-2',
         to: '/admin/organizations',

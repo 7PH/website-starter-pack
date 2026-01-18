@@ -276,6 +276,326 @@
       "title": "BillingPortalResponse",
       "type": "object"
     },
+    "ConversationCreate": {
+      "description": "Schema for creating a new support conversation.",
+      "properties": {
+        "subject": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "content": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subject",
+        "content"
+      ],
+      "title": "ConversationCreate",
+      "type": "object"
+    },
+    "ConversationDetail": {
+      "description": "Schema for conversation with messages.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "created_by_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created By Id"
+        },
+        "created_by": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConversationUserPreview"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "is_closed": {
+          "default": false,
+          "title": "Is Closed",
+          "type": "boolean"
+        },
+        "closed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Closed At"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "unread_count": {
+          "default": 0,
+          "title": "Unread Count",
+          "type": "integer"
+        },
+        "last_message": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MessageRead"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "messages": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/MessageRead"
+          },
+          "title": "Messages",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "title": "ConversationDetail",
+      "type": "object"
+    },
+    "ConversationListResponse": {
+      "description": "Paginated response for conversation list.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ConversationRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "limit",
+        "offset"
+      ],
+      "title": "ConversationListResponse",
+      "type": "object"
+    },
+    "ConversationRead": {
+      "description": "Schema for reading a conversation.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "created_by_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created By Id"
+        },
+        "created_by": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConversationUserPreview"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "is_closed": {
+          "default": false,
+          "title": "Is Closed",
+          "type": "boolean"
+        },
+        "closed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Closed At"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "unread_count": {
+          "default": 0,
+          "title": "Unread Count",
+          "type": "integer"
+        },
+        "last_message": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MessageRead"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "title": "ConversationRead",
+      "type": "object"
+    },
+    "ConversationUserPreview": {
+      "description": "User preview for conversation context, includes email for admin visibility.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "first_name": {
+          "title": "First Name",
+          "type": "string"
+        },
+        "last_name": {
+          "title": "Last Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "first_name",
+        "last_name"
+      ],
+      "title": "ConversationUserPreview",
+      "type": "object"
+    },
     "DatabaseHealthResponse": {
       "description": "Complete database health response.",
       "properties": {
@@ -580,6 +900,124 @@
         "is_unused"
       ],
       "title": "IndexStats",
+      "type": "object"
+    },
+    "MessageCreate": {
+      "description": "Schema for creating a new message.",
+      "properties": {
+        "content": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "MessageCreate",
+      "type": "object"
+    },
+    "MessageListResponse": {
+      "description": "Paginated response for messages in a conversation.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/MessageRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "limit",
+        "offset",
+        "has_more"
+      ],
+      "title": "MessageListResponse",
+      "type": "object"
+    },
+    "MessageRead": {
+      "description": "Schema for reading a message.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "conversation_id": {
+          "title": "Conversation Id",
+          "type": "integer"
+        },
+        "sender_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sender Id"
+        },
+        "sender": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConversationUserPreview"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "is_admin_response": {
+          "default": false,
+          "title": "Is Admin Response",
+          "type": "boolean"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        }
+      },
+      "required": [
+        "id",
+        "conversation_id",
+        "sender_id",
+        "content"
+      ],
+      "title": "MessageRead",
       "type": "object"
     },
     "OAuthCallbackRequest": {
@@ -1949,6 +2387,30 @@
     },
     {
       "$ref": "#/$defs/OAuthCallbackRequest"
+    },
+    {
+      "$ref": "#/$defs/ConversationCreate"
+    },
+    {
+      "$ref": "#/$defs/ConversationRead"
+    },
+    {
+      "$ref": "#/$defs/ConversationDetail"
+    },
+    {
+      "$ref": "#/$defs/ConversationListResponse"
+    },
+    {
+      "$ref": "#/$defs/ConversationUserPreview"
+    },
+    {
+      "$ref": "#/$defs/MessageCreate"
+    },
+    {
+      "$ref": "#/$defs/MessageRead"
+    },
+    {
+      "$ref": "#/$defs/MessageListResponse"
     }
   ]
 }

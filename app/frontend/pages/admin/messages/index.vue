@@ -1,0 +1,231 @@
+<script lang="ts" setup>
+import * as conversationsApi from '~/utils/api/conversations';
+
+definePageMeta({
+    middleware: ['admin'],
+});
+
+// Filters
+const includeClosed = ref(false);
+
+// Pagination
+const page = ref(1);
+const itemsPerPage = 50;
+
+// Reset page when filters change
+watch([includeClosed], () => {
+    page.value = 1;
+});
+
+const {
+    data: conversationsData,
+    pending,
+    refresh,
+} = await useAsyncData<ConversationListResponse>(
+    'admin-conversations',
+    () =>
+        conversationsApi.adminGetConversations({
+            includeClosed: includeClosed.value,
+            limit: itemsPerPage,
+            offset: (page.value - 1) * itemsPerPage,
+        }),
+    { watch: [includeClosed, page], server: false },
+);
+
+const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / itemsPerPage));
+
+// Table columns configuration
+const columns = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'subject', header: 'Subject' },
+    { accessorKey: 'created_by', header: 'From' },
+    { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'updated_at', header: 'Last Activity' },
+    { accessorKey: 'actions', header: 'Actions' },
+];
+
+function formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString();
+}
+
+function formatTime(dateStr: string | null | undefined): string {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function getUserDisplay(conversation: ConversationRead): string {
+    if (conversation.created_by) {
+        const name = [conversation.created_by.first_name, conversation.created_by.last_name].filter(Boolean).join(' ');
+        return name || conversation.created_by.email;
+    }
+    return 'Unknown';
+}
+</script>
+
+<template>
+    <div class="page-box">
+        <UiPageTitleBanner>
+            Admin
+            <template #subtitle> Manage users, organizations, and system settings </template>
+            <template #subnav>
+                <AdminSubnav />
+            </template>
+        </UiPageTitleBanner>
+
+        <div class="admin-messages">
+            <div class="page-header">
+                <h1 class="page-title">Support Messages</h1>
+                <span class="conversation-count">{{ conversationsData?.total ?? 0 }} total</span>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <UCheckbox v-model="includeClosed" label="Show closed" />
+            </div>
+
+            <!-- Conversations Table -->
+            <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                <UTable :columns="columns" :data="conversationsData?.items ?? []" :loading="pending">
+                    <template #id-cell="{ row }">
+                        <NuxtLink :to="`/admin/messages/${row.original.id}`" class="conversation-link">
+                            #{{ row.original.id }}
+                        </NuxtLink>
+                    </template>
+
+                    <template #subject-cell="{ row }">
+                        <NuxtLink :to="`/admin/messages/${row.original.id}`" class="conversation-link">
+                            {{ row.original.subject || '(No subject)' }}
+                        </NuxtLink>
+                        <p v-if="row.original.last_message" class="message-preview">
+                            {{ row.original.last_message.content?.slice(0, 50)
+                            }}{{ row.original.last_message.content?.length > 50 ? '...' : '' }}
+                        </p>
+                    </template>
+
+                    <template #created_by-cell="{ row }">
+                        <div class="user-info">
+                            <span class="user-name">{{ getUserDisplay(row.original as ConversationRead) }}</span>
+                            <span v-if="row.original.created_by" class="user-email">{{
+                                row.original.created_by.email
+                            }}</span>
+                        </div>
+                    </template>
+
+                    <template #status-cell="{ row }">
+                        <div class="status-badges">
+                            <UBadge
+                                v-if="(row.original.unread_count ?? 0) > 0"
+                                :label="`${row.original.unread_count} unread`"
+                                color="primary"
+                            />
+                            <UBadge v-if="row.original.is_closed" label="Closed" color="neutral" />
+                            <UBadge v-else label="Open" color="success" />
+                        </div>
+                    </template>
+
+                    <template #updated_at-cell="{ row }">
+                        <div class="date-cell">
+                            <span>{{ formatDate(row.original.updated_at) }}</span>
+                            <span class="time">{{ formatTime(row.original.updated_at) }}</span>
+                        </div>
+                    </template>
+
+                    <template #actions-cell="{ row }">
+                        <div class="actions">
+                            <UTooltip text="View conversation">
+                                <NuxtLink :to="`/admin/messages/${row.original.id}`">
+                                    <UButton icon="i-lucide-message-square" color="neutral" variant="ghost" size="xs" />
+                                </NuxtLink>
+                            </UTooltip>
+                            <UTooltip v-if="row.original.created_by" text="View user">
+                                <NuxtLink :to="`/admin/users/${row.original.created_by.id}`">
+                                    <UButton icon="i-lucide-user" color="neutral" variant="ghost" size="xs" />
+                                </NuxtLink>
+                            </UTooltip>
+                        </div>
+                    </template>
+                </UTable>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="pagination-footer">
+                    <div class="pagination-info">
+                        Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
+                            Math.min(page * itemsPerPage, conversationsData?.total ?? 0)
+                        }}
+                        of {{ conversationsData?.total ?? 0 }}
+                    </div>
+                    <UPagination v-model="page" :total="conversationsData?.total ?? 0" :items-per-page="itemsPerPage" />
+                </div>
+            </UCard>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+@reference "~/assets/css/main.css";
+
+.admin-messages {
+    @apply max-w-7xl mx-auto;
+}
+
+.page-header {
+    @apply flex items-baseline gap-4 mb-6;
+}
+
+.page-title {
+    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.conversation-count {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.filters {
+    @apply flex items-center gap-4 mb-4;
+}
+
+.conversation-link {
+    @apply text-primary-500 no-underline hover:underline;
+}
+
+.message-preview {
+    @apply text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs;
+}
+
+.user-info {
+    @apply flex flex-col;
+}
+
+.user-name {
+    @apply font-medium text-gray-900 dark:text-gray-100;
+}
+
+.user-email {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+.status-badges {
+    @apply flex flex-wrap gap-1;
+}
+
+.date-cell {
+    @apply flex flex-col text-sm;
+}
+
+.date-cell .time {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+.actions {
+    @apply flex gap-1;
+}
+
+.pagination-footer {
+    @apply flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700;
+}
+
+.pagination-info {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+}
+</style>
