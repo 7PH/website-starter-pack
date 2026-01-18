@@ -36,6 +36,7 @@ app/backend/src/helpers/llm.py
 app/backend/src/helpers/security_headers.py
 app/backend/src/helpers/security_headers_ext.py:template
 app/backend/src/models/__init__.py
+app/backend/src/models/conversation.py
 app/backend/src/models/event_log.py
 app/backend/src/models/organization.py
 app/backend/src/models/user.py
@@ -43,6 +44,7 @@ app/backend/src/schemas/__init__.py
 app/backend/src/schemas/admin.py
 app/backend/src/schemas/backup.py
 app/backend/src/schemas/base.py
+app/backend/src/schemas/conversation.py
 app/backend/src/schemas/db_health.py
 app/backend/src/schemas/event_log.py
 app/backend/src/schemas/organization.py
@@ -53,6 +55,7 @@ app/backend/src/schemas/llm.py
 app/backend/src/convert_models_core.py
 app/backend/src/convert-models.py:template
 app/backend/src/crud/__init__.py
+app/backend/src/crud/conversations.py
 app/backend/src/crud/event_logs.py
 app/backend/src/crud/organizations.py
 app/backend/src/crud/users.py
@@ -69,6 +72,7 @@ app/frontend/nuxt.config.ts
 app/frontend/app.config.ts
 app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
+app/frontend/layouts/fullheight.vue
 app/frontend/config/i18n.ts
 app/frontend/config/main-nav.ts
 app/frontend/config/security-headers.ts:template
