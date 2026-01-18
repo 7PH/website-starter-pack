@@ -71,6 +71,12 @@ class EventType(StrEnum):
     ORG_MEMBER_PREMIUM_CHANGED = "org.member_premium_changed"
     ORG_SUBSCRIPTION_CREATED = "org.subscription_created"
     ORG_SUBSCRIPTION_CANCELED = "org.subscription_canceled"
+    # Conversation/Support events
+    CONVERSATION_CREATED = "conversation.created"
+    CONVERSATION_MESSAGE_SENT = "conversation.message_sent"
+    CONVERSATION_ADMIN_REPLY = "conversation.admin_reply"
+    CONVERSATION_CLOSED = "conversation.closed"
+    CONVERSATION_REOPENED = "conversation.reopened"
 
 
 # Metadata for event types (labels and categories for UI)
@@ -97,4 +103,9 @@ CORE_EVENT_TYPES = {
     EventType.ORG_MEMBER_PREMIUM_CHANGED: {"label": "Member Premium Status Changed", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CREATED: {"label": "Organization Subscription Created", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CANCELED: {"label": "Organization Subscription Canceled", "category": "organization"},
+    EventType.CONVERSATION_CREATED: {"label": "Support Conversation Created", "category": "conversation"},
+    EventType.CONVERSATION_MESSAGE_SENT: {"label": "Support Message Sent", "category": "conversation"},
+    EventType.CONVERSATION_ADMIN_REPLY: {"label": "Admin Reply Sent", "category": "conversation"},
+    EventType.CONVERSATION_CLOSED: {"label": "Conversation Closed", "category": "conversation"},
+    EventType.CONVERSATION_REOPENED: {"label": "Conversation Reopened", "category": "conversation"},
 }

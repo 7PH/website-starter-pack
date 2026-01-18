@@ -13,17 +13,33 @@ import json
 from pydantic import TypeAdapter
 
 from .convert_models_core import CoreModels
+from .schemas.conversation import (
+    ConversationCreate,
+    ConversationDetail,
+    ConversationListResponse,
+    ConversationRead,
+    ConversationUserPreview,
+    MessageCreate,
+    MessageListResponse,
+    MessageRead,
+)
 
 # ============================================================
 # Project-specific models (add your custom schemas here)
 # ============================================================
-# Example:
-# from .schemas.custom import MyCustomSchema, AnotherSchema
-# ProjectModels = MyCustomSchema | AnotherSchema
-# Models = CoreModels | ProjectModels
 
-# If no project models, just use CoreModels
-Models = CoreModels
+ProjectModels = (
+    ConversationCreate
+    | ConversationRead
+    | ConversationDetail
+    | ConversationListResponse
+    | ConversationUserPreview
+    | MessageCreate
+    | MessageRead
+    | MessageListResponse
+)
+
+Models = CoreModels | ProjectModels
 
 if __name__ == "__main__":
     schema = TypeAdapter(Models).json_schema()
