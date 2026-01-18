@@ -91,6 +91,7 @@ app/frontend/composables/useAuthForms.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useTableState.ts
 app/frontend/composables/useOAuth.ts
+app/frontend/composables/useOverridable.ts
 app/frontend/middleware/auth.ts
 app/frontend/middleware/admin.ts
 app/frontend/types/modal.ts
@@ -127,6 +128,7 @@ app/frontend/config/admin-nav-ext.ts:template
 app/frontend/config/account-tabs.ts
 app/frontend/config/account-tabs-ext.ts:template
 app/frontend/config/main-nav-ext.ts:template
+app/frontend/config/component-overrides.ts:template
 app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/OrganizationsTab.vue
 app/frontend/components/account/PasswordTab.vue
