@@ -30,6 +30,8 @@ ORG_MAX_MEMBERS = int(os.environ.get("ORG_MAX_MEMBERS", "50"))
 ORG_STRIPE_PRICE_IDS = [
     p.strip() for p in os.environ.get("ORG_STRIPE_PRICE_IDS", "").split(",") if p.strip()
 ]
+ORG_SELF_SERVICE_SUBSCRIPTIONS = os.environ.get("ORG_SELF_SERVICE_SUBSCRIPTIONS", "true").lower() == "true"
+ORG_SELF_SERVICE_CREATION = os.environ.get("ORG_SELF_SERVICE_CREATION", "true").lower() == "true"
 
 # LLM Integration
 LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
