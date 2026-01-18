@@ -106,12 +106,17 @@ body {
     @apply min-h-0 flex-1 flex flex-col;
 }
 
-/* Page content container - fixed width to prevent layout shifts */
+/* Page content width constraint - used inside full-bleed containers */
+.page-content-width,
 .page-box {
     width: 100%;
     max-width: var(--page-max-width);
     margin-left: auto;
     margin-right: auto;
+}
+
+/* Page content container - fixed width with padding */
+.page-box {
     padding-left: 1rem;
     padding-right: 1rem;
 }

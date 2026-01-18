@@ -60,7 +60,7 @@ async function createConversation() {
     creating.value = true;
     try {
         const conversation = await conversationsApi.createConversation({
-            subject: newConversation.value.subject || null,
+            subject: newConversation.value.subject ?? '',
             content: newConversation.value.content,
         });
 
@@ -243,11 +243,6 @@ function truncateMessage(content: string | undefined, maxLength = 60): string {
 
 <style scoped>
 @reference "~/assets/css/main.css";
-
-.messages-page {
-    @apply max-w-3xl mx-auto;
-}
-
 .page-header {
     @apply flex items-center justify-between mb-4;
 }

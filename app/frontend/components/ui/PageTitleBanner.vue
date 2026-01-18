@@ -8,7 +8,7 @@ defineProps<{
 
 <template>
     <div class="page-title-banner" :class="{ compact, 'has-subnav': $slots.subnav }">
-        <div class="banner-content">
+        <div class="banner-content page-content-width">
             <div class="banner-left">
                 <h4 class="font-semibold text-2xl mb-3 text-slate-800 dark:text-slate-100">
                     <slot />
@@ -24,7 +24,7 @@ defineProps<{
     </div>
     <!-- Subnav is always sticky -->
     <div v-if="$slots.subnav" class="banner-subnav-sticky">
-        <div class="banner-subnav-sticky-content">
+        <div class="banner-subnav-sticky-content page-content-width">
             <slot name="subnav" />
         </div>
     </div>
@@ -70,8 +70,6 @@ defineProps<{
 
 .banner-content {
     @apply flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4;
-    @apply w-full mx-auto;
-    max-width: var(--page-max-width);
 }
 
 .banner-left {
@@ -101,8 +99,5 @@ defineProps<{
     border-bottom: 1px solid var(--border-brand);
 }
 
-.banner-subnav-sticky-content {
-    @apply w-full mx-auto;
-    max-width: var(--page-max-width);
-}
+/* Content inherits page-content-width from template class */
 </style>

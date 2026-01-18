@@ -130,6 +130,7 @@ app/frontend/config/main-nav-ext.ts:template
 app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/OrganizationsTab.vue
 app/frontend/components/account/PasswordTab.vue
+app/frontend/components/organizations/Card.vue
 app/frontend/components/organizations/CreateModal.vue
 app/frontend/components/organizations/Detail.vue
 app/frontend/components/organizations/InfoCard.vue
