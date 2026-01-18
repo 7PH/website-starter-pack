@@ -31,6 +31,13 @@ ORG_STRIPE_PRICE_IDS = [
     p.strip() for p in os.environ.get("ORG_STRIPE_PRICE_IDS", "").split(",") if p.strip()
 ]
 
+# LLM Integration
+LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
+LLM_MODEL = os.environ.get("LLM_MODEL", "claude-sonnet-4-20250514")
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_API_BASE = os.environ.get("LLM_API_BASE", "")
+
 # Event log types - core events managed by starterpack
 # Projects can extend by creating src/events.py with custom event types
 

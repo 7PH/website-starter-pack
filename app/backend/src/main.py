@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .constants import IS_PROD
 from .helpers.db import create_db_and_tables
+from .helpers.llm import init_llm
 from .helpers.logging import configure_logging, get_logger, set_request_id
 from .helpers.ratelimit import cleanup_entries
 from .helpers.security_headers import SecurityHeadersMiddleware
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     cleanup_entries()
     init_stripe()
+    init_llm()
     yield
     logger.info("Stopping app")
 
