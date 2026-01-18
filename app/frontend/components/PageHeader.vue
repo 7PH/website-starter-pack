@@ -13,8 +13,28 @@ const { isDark, toggle: toggleColorMode } = useColorModeToggle();
 const config = useRuntimeConfig();
 const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
 
-// Language switcher items for UDropdownMenu
-const localeMenuItems = computed(() => [
+// User dropdown items
+const userMenuItems = computed(() => [
+    [{ label: auth.user?.first_name, avatar: { icon: 'i-lucide-user' }, type: 'label' as const }],
+    [
+        { label: t('core.messages.title'), icon: 'i-lucide-message-square', to: '/messages' },
+        { label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' },
+        ...(auth.user?.is_admin
+            ? [{ label: 'Admin', icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
+            : []),
+    ],
+    [{ label: t('core.auth.logout'), icon: 'i-lucide-log-out', onSelect: onSelectLogout }],
+]);
+
+// Settings dropdown items
+const settingsMenuItems = computed(() => [
+    [
+        {
+            label: isDark.value ? t('core.theme.light') : t('core.theme.dark'),
+            icon: isDark.value ? 'i-lucide-sun' : 'i-lucide-moon',
+            onSelect: toggleColorMode,
+        },
+    ],
     availableLocales.value.map((l) => ({
         label: l.name,
         onSelect: () => setLocale(l.code),
@@ -35,95 +55,72 @@ function onSelectLogout() {
             class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-400 to-transparent dark:via-primary-500/50"
         />
 
-        <!-- Left: Navigation -->
-        <nav class="nav-links">
-            <NuxtLink to="/" class="nav-link">
-                <UIcon name="i-lucide-home" />
-                <span>Home</span>
-            </NuxtLink>
-            <ClientOnly>
-                <NuxtLink v-if="auth.user?.is_admin" to="/admin/users" class="nav-link">
-                    <UIcon name="i-lucide-settings" />
-                    <span>Admin</span>
+        <div class="header-content page-box">
+            <!-- Left: Navigation -->
+            <nav class="nav-links">
+                <NuxtLink to="/" class="nav-icon-link" aria-label="Home">
+                    <UIcon name="i-lucide-home" />
                 </NuxtLink>
-                <NuxtLink v-for="item in navExtensions" :key="item.to" :to="item.to" class="nav-link">
-                    <UIcon :name="item.icon" />
-                    <span>{{ item.label }}</span>
-                </NuxtLink>
-            </ClientOnly>
-        </nav>
-
-        <!-- Right: Actions -->
-        <div class="nav-actions">
-            <ClientOnly>
-                <!-- Logged out state -->
-                <template v-if="!auth.isLoggedIn">
-                    <NuxtLink to="/login" class="nav-link">
-                        {{ t('core.auth.login') }}
+                <ClientOnly>
+                    <NuxtLink v-for="item in navExtensions" :key="item.to" :to="item.to" class="nav-link">
+                        <UIcon :name="item.icon" />
+                        <span>{{ item.label }}</span>
                     </NuxtLink>
-                    <NuxtLink to="/login?mode=signup">
-                        <UButton :label="t('core.auth.register')" size="sm" />
-                    </NuxtLink>
-                </template>
+                </ClientOnly>
+            </nav>
 
-                <!-- Logged in state -->
-                <template v-else>
-                    <!-- Premium badge or Upgrade CTA (only when Stripe is enabled) -->
-                    <NuxtLink
-                        v-if="stripeEnabled && !subscriptionLoading"
-                        to="/premium"
-                        :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
-                    >
-                        <UIcon name="i-lucide-star" />
-                        <span>{{ isPremium ? t('core.billing.premium') : t('core.billing.upgrade') }}</span>
-                    </NuxtLink>
+            <!-- Right: Actions -->
+            <div class="nav-actions">
+                <ClientOnly>
+                    <!-- Logged out state -->
+                    <template v-if="!auth.isLoggedIn">
+                        <NuxtLink to="/login" class="nav-link">
+                            {{ t('core.auth.login') }}
+                        </NuxtLink>
+                        <NuxtLink to="/login?mode=signup">
+                            <UButton :label="t('core.auth.register')" size="sm" />
+                        </NuxtLink>
+                    </template>
 
-                    <!-- Messages link -->
-                    <NuxtLink to="/messages" class="nav-link">
-                        <UIcon name="i-lucide-message-square" />
-                        <span>{{ t('core.messages.title') }}</span>
-                    </NuxtLink>
+                    <!-- Logged in state -->
+                    <template v-else>
+                        <!-- Premium badge or Upgrade CTA (only when Stripe is enabled) -->
+                        <NuxtLink
+                            v-if="stripeEnabled && !subscriptionLoading"
+                            to="/premium"
+                            :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
+                        >
+                            <UIcon name="i-lucide-star" />
+                            <span>{{ isPremium ? t('core.billing.premium') : t('core.billing.upgrade') }}</span>
+                        </NuxtLink>
 
-                    <NuxtLink to="/account" class="nav-user-link">
-                        <UIcon name="i-lucide-user" />
-                        <span>{{ auth.user?.first_name }}</span>
-                    </NuxtLink>
+                        <!-- User dropdown -->
+                        <UDropdownMenu :items="userMenuItems">
+                            <UButton
+                                :label="auth.user?.first_name"
+                                icon="i-lucide-user"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                trailing-icon="i-lucide-chevron-down"
+                            />
+                        </UDropdownMenu>
 
-                    <UButton
-                        icon="i-lucide-log-out"
-                        color="neutral"
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Logout"
-                        @click="onSelectLogout"
-                    />
-                </template>
+                        <!-- Settings dropdown -->
+                        <UDropdownMenu :items="settingsMenuItems">
+                            <UButton icon="i-lucide-settings" color="neutral" variant="ghost" size="sm" />
+                        </UDropdownMenu>
+                    </template>
 
-                <!-- Theme Toggle -->
-                <UButton
-                    :icon="isDark ? 'i-lucide-sun' : 'i-lucide-moon'"
-                    color="neutral"
-                    variant="ghost"
-                    size="sm"
-                    aria-label="Toggle dark mode"
-                    @click="toggleColorMode"
-                />
-
-                <!-- Language Switcher -->
-                <UDropdownMenu :items="localeMenuItems">
-                    <UButton color="neutral" variant="ghost" size="sm">
-                        {{ locale.toUpperCase() }}
-                    </UButton>
-                </UDropdownMenu>
-
-                <!-- SSR Placeholder -->
-                <template #fallback>
-                    <div class="nav-actions invisible">
-                        <span>Login</span>
-                        <UButton label="Register" size="sm" />
-                    </div>
-                </template>
-            </ClientOnly>
+                    <!-- SSR Placeholder -->
+                    <template #fallback>
+                        <div class="nav-actions invisible">
+                            <span>Login</span>
+                            <UButton label="Register" size="sm" />
+                        </div>
+                    </template>
+                </ClientOnly>
+            </div>
         </div>
     </header>
 </template>
@@ -131,8 +128,13 @@ function onSelectLogout() {
 <style scoped>
 @reference "~/assets/css/main.css";
 .header {
-    @apply sticky top-0 z-40 flex items-center justify-between px-6;
+    @apply sticky top-0 z-40 relative;
     @apply border-b border-slate-200/50 dark:border-slate-700/50;
+    min-height: var(--page-header-height);
+}
+
+.header-content {
+    @apply flex items-center justify-between h-full;
     min-height: var(--page-header-height);
 }
 
@@ -151,15 +153,19 @@ function onSelectLogout() {
     @apply text-primary-600 dark:text-primary-400;
 }
 
-.nav-actions {
-    @apply flex items-center gap-3;
+.nav-icon-link {
+    @apply flex items-center justify-center w-9 h-9 rounded-lg;
+    @apply text-slate-600 dark:text-slate-300;
+    @apply hover:bg-slate-100 dark:hover:bg-slate-800/50;
+    @apply transition-colors duration-200 no-underline;
 }
 
-.nav-user-link {
-    @apply flex items-center gap-1.5 px-2 py-1.5 rounded-lg;
-    @apply text-sm font-medium text-slate-600 dark:text-slate-300 no-underline;
-    @apply hover:bg-slate-100 dark:hover:bg-slate-800/50;
-    @apply transition-colors duration-200;
+.nav-icon-link.router-link-active {
+    @apply text-primary-600 dark:text-primary-400;
+}
+
+.nav-actions {
+    @apply flex items-center gap-3;
 }
 
 .nav-icon-btn {

@@ -294,6 +294,10 @@
             "deleteSuccess": "Organisation supprimée",
             "deleteFailed": "Échec de la suppression de l'organisation"
         },
+        "theme": {
+            "light": "Mode clair",
+            "dark": "Mode sombre"
+        },
         "messages": {
             "title": "Messages",
             "subtitle": "Contactez le support et consultez vos conversations",

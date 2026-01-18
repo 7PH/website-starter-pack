@@ -294,6 +294,10 @@
             "deleteSuccess": "Organization deleted",
             "deleteFailed": "Failed to delete organization"
         },
+        "theme": {
+            "light": "Light mode",
+            "dark": "Dark mode"
+        },
         "messages": {
             "title": "Messages",
             "subtitle": "Contact support and view your conversations",

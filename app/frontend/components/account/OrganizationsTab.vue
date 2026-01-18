@@ -113,52 +113,15 @@ async function leaveOrganization(org: UserOrganizationInfo) {
                 </p>
             </div>
 
-            <!-- Organizations list -->
-            <div v-else class="space-y-4">
-                <template v-for="org in organizations">
-                    <!-- Admin: clickable card -->
-                    <NuxtLink
-                        v-if="org.is_admin"
-                        :key="`admin-${org.organization_id}`"
-                        :to="`/organizations/${org.organization_id}`"
-                        class="org-card-wrapper"
-                    >
-                        <UiHoverCard class="org-item">
-                            <div class="org-info">
-                                <div class="org-name">{{ org.organization_name }}</div>
-                                <UBadge :label="t('core.organizations.admin')" color="info" size="xs" />
-                            </div>
-                            <div class="org-actions" @click.stop>
-                                <UButton
-                                    :label="t('core.organizations.leave')"
-                                    color="error"
-                                    variant="ghost"
-                                    size="xs"
-                                    :loading="isLeaving === org.organization_id"
-                                    @click="leaveOrganization(org)"
-                                />
-                            </div>
-                        </UiHoverCard>
-                    </NuxtLink>
-
-                    <!-- Member: non-clickable card -->
-                    <UiHoverCard v-else :key="`member-${org.organization_id}`" class="org-item">
-                        <div class="org-info">
-                            <div class="org-name">{{ org.organization_name }}</div>
-                            <UBadge :label="t('core.organizations.member')" color="neutral" size="xs" />
-                        </div>
-                        <div class="org-actions">
-                            <UButton
-                                :label="t('core.organizations.leave')"
-                                color="error"
-                                variant="ghost"
-                                size="xs"
-                                :loading="isLeaving === org.organization_id"
-                                @click="leaveOrganization(org)"
-                            />
-                        </div>
-                    </UiHoverCard>
-                </template>
+            <!-- Organizations grid -->
+            <div v-else class="org-grid">
+                <OrganizationsCard
+                    v-for="org in organizations"
+                    :key="org.organization_id"
+                    :organization="org"
+                    :is-leaving="isLeaving === org.organization_id"
+                    @leave="leaveOrganization(org)"
+                />
             </div>
         </UCard>
 
@@ -178,23 +141,8 @@ async function leaveOrganization(org: UserOrganizationInfo) {
     @apply flex items-start justify-between gap-4;
 }
 
-.org-card-wrapper {
-    @apply block no-underline;
-}
-
-.org-item {
-    @apply flex items-center justify-between py-3 px-4;
-}
-
-.org-info {
-    @apply flex items-center gap-3;
-}
-
-.org-name {
-    @apply font-medium text-gray-900 dark:text-gray-100;
-}
-
-.org-actions {
-    @apply flex items-center gap-2;
+.org-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 </style>
