@@ -59,6 +59,18 @@ Files with the header `⚠️ STARTERPACK CORE — DO NOT MODIFY` are synced fro
 
 Project-specific code lives alongside core files (same directories, different files).
 
+### Component Overrides
+
+Sub-apps can replace core components via `config/component-overrides.ts`:
+
+```ts
+export const componentOverrides = {
+    OrganizationsCreateModal: () => import('~/components/custom/MyModal.vue'),
+};
+```
+
+Override components must match the original's props/events contract. To add new override points, use `useOverridable()` in core components.
+
 ### URL Routing
 - `/` - Frontend (Nuxt)
 - `/api/*` - Backend API (prefix stripped by Traefik)

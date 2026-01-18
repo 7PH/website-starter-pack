@@ -1,6 +1,11 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
+import OrganizationsCreateModalDefault from '~/components/organizations/CreateModal.vue';
+
 // Types from models.ts are declared globally
+
+// Overridable components - sub-apps can replace these via config/component-overrides.ts
+const OrganizationsCreateModal = useOverridable('OrganizationsCreateModal', OrganizationsCreateModalDefault);
 
 const auth = useAuth();
 const api = useApi();
