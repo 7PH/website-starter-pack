@@ -307,6 +307,7 @@ onMounted(() => {
                     v-model:form-state="form.state"
                     v-model:form-postal-code="form.postal_code"
                     v-model:form-country="form.country"
+                    v-model:form-custom-data="form.custom_data"
                     :org="org"
                     :is-admin-view="isAdminView"
                     :is-editing="isEditing"

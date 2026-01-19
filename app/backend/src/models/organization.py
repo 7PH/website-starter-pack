@@ -3,6 +3,7 @@
 """Organization SQLAlchemy models (database table definitions)."""
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from ..helpers.db import Base
@@ -29,6 +30,9 @@ class OrganizationBase(Base):
     state = Column(String(100), nullable=True)
     postal_code = Column(String(20), nullable=True)
     country = Column(String(2), nullable=True)
+
+    # Custom data (project-specific fields)
+    custom_data = Column(JSONB, default=dict, nullable=False)
 
     # Stripe
     stripe_id = Column(String(255), unique=True, nullable=True, index=True)

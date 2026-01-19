@@ -23,6 +23,7 @@ from .schemas.conversation import (
     MessageListResponse,
     MessageRead,
 )
+from .schemas.organization_ext import OrganizationCustomData
 
 # ============================================================
 # Project-specific models (add your custom schemas here)
@@ -37,6 +38,7 @@ ProjectModels = (
     | MessageCreate
     | MessageRead
     | MessageListResponse
+    | OrganizationCustomData
 )
 
 Models = CoreModels | ProjectModels

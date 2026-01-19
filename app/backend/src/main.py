@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI app instance
-app = FastAPI(debug=not IS_PROD, lifespan=lifespan)
+app = FastAPI(debug=False, lifespan=lifespan)
 
 # Register scheduled tasks
 register_core_tasks(app)

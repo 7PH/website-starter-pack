@@ -9,18 +9,18 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <div class="org-manage-page">
+    <div class="page-box">
+        <UiPageTitleBanner compact>
+            {{ t('core.organizations.title') }}
+            <template #subtitle>
+                {{ t('core.organizations.description') }}
+            </template>
+        </UiPageTitleBanner>
+
         <OrganizationsDetail
             :is-admin-view="false"
-            back-link="/account?tab=organizations"
-            :back-link-text="t('core.organizations.backToAccount')"
+            back-link="/organizations"
+            :back-link-text="t('core.organizations.backToList')"
         />
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-.org-manage-page {
-    @apply max-w-4xl mx-auto px-4 py-8;
-}
-</style>

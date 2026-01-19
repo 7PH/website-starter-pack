@@ -36,6 +36,7 @@ class OrganizationFieldsMixin(BaseModel):
     state: str | None = Field(default=None, max_length=100)
     postal_code: str | None = Field(default=None, max_length=20)
     country: str | None = Field(default=None, max_length=2)
+    custom_data: dict | None = None
 
 
 class OrganizationCreate(OrganizationFieldsMixin):
@@ -83,6 +84,7 @@ class OrganizationRead(BaseModel):
     state: str | None = None
     postal_code: str | None = None
     country: str | None = None
+    custom_data: dict = {}
     stripe_id: str | None = None
     stripe_premium: bool
     stripe_quota: int

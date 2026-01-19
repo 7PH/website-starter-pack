@@ -22,6 +22,7 @@ const formCity = defineModel<string | null>('formCity');
 const formState = defineModel<string | null>('formState');
 const formPostalCode = defineModel<string | null>('formPostalCode');
 const formCountry = defineModel<string | null>('formCountry');
+const formCustomData = defineModel<OrganizationCustomData>('formCustomData', { required: true });
 
 const emit = defineEmits<{
     startEdit: [];
@@ -59,7 +60,7 @@ const { t } = useI18n();
                     <UInput v-model="formEmail" type="email" />
                 </UFormField>
             </div>
-            <UFormField :label="t('core.organizations.description')">
+            <UFormField :label="t('core.organizations.descriptionLabel')">
                 <UTextarea v-model="formDescription" :rows="2" />
             </UFormField>
             <div class="form-row">
@@ -96,6 +97,7 @@ const { t } = useI18n();
                     />
                 </UFormField>
             </div>
+            <OrganizationsMetadataFields :custom-data="formCustomData" @update:custom-data="formCustomData = $event" />
             <UiFormActions>
                 <UButton
                     :label="t('core.organizations.cancel')"
@@ -117,7 +119,7 @@ const { t } = useI18n();
                 <span class="info-value">{{ org.email }}</span>
             </div>
             <div v-if="org.description" class="info-item">
-                <span class="info-label">{{ t('core.organizations.description') }}</span>
+                <span class="info-label">{{ t('core.organizations.descriptionLabel') }}</span>
                 <span class="info-value">{{ org.description }}</span>
             </div>
             <div v-if="org.phone" class="info-item">
@@ -152,6 +154,7 @@ const { t } = useI18n();
                 <span class="info-label">{{ t('core.organizations.deleted') }}</span>
                 <span class="info-value deleted-value">{{ formatDate(org.deleted_at) }}</span>
             </div>
+            <OrganizationsMetadataDisplay :custom-data="(org.custom_data as OrganizationCustomData) ?? {}" />
         </div>
     </UCard>
 </template>

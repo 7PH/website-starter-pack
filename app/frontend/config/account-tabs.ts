@@ -41,12 +41,4 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         component: defineAsyncComponent(() => import('~/components/account/PasswordTab.vue')),
         order: 20,
     },
-    {
-        id: 'organizations',
-        label: 'core.account.tabs.organizations',
-        icon: 'i-lucide-building-2',
-        component: defineAsyncComponent(() => import('~/components/account/OrganizationsTab.vue')),
-        order: 30,
-        condition: () => useRuntimeConfig().public.organizationsEnabled === true,
-    },
 ];
