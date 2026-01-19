@@ -13,12 +13,31 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Config
 MANIFEST="starter-pack-files.txt"
+VERSION_FILE=".starterpack-version"
 TEMP_DIR=$(mktemp -d)
 UPSTREAM_DIR="$TEMP_DIR/starterpack"
+
+# Parse command line arguments
+ANALYZE_ONLY=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --analyze)
+            ANALYZE_ONLY=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Usage: $0 [--analyze]"
+            echo "  --analyze  Show upgrade analysis without applying changes"
+            exit 1
+            ;;
+    esac
+done
 
 # Cleanup on exit
 cleanup() {
@@ -183,6 +202,133 @@ get_local_files() {
     done < "$MANIFEST"
 
     printf '%s\n' "${files[@]}" | sort -u
+}
+
+#######################################
+# Get version from file, defaulting to 0.0.0
+#######################################
+get_version() {
+    local dir="$1"
+    local version_path="$dir/$VERSION_FILE"
+    if [ -f "$version_path" ]; then
+        cat "$version_path" | tr -d '[:space:]'
+    else
+        echo "0.0.0"
+    fi
+}
+
+#######################################
+# Compare version strings (returns 0 if v1 < v2, 1 otherwise)
+#######################################
+version_lt() {
+    local v1="$1"
+    local v2="$2"
+    [ "$v1" != "$v2" ] && [ "$(printf '%s\n' "$v1" "$v2" | sort -V | head -n1)" = "$v1" ]
+}
+
+#######################################
+# Get list of upgrade note files between versions
+#######################################
+get_upgrade_notes_between() {
+    local from_version="$1"
+    local to_version="$2"
+    local upgrades_dir="$UPSTREAM_DIR/docs/upgrades"
+
+    if [ ! -d "$upgrades_dir" ]; then
+        return
+    fi
+
+    # Find all version files and filter those between from and to
+    for file in "$upgrades_dir"/v*.md; do
+        [ -f "$file" ] || continue
+        local filename=$(basename "$file")
+        # Extract version from filename (v1.0.0.md -> 1.0.0)
+        local file_version="${filename#v}"
+        file_version="${file_version%.md}"
+
+        # Include if version > from_version AND version <= to_version
+        if version_lt "$from_version" "$file_version" && ! version_lt "$to_version" "$file_version"; then
+            echo "$file"
+        fi
+    done | sort -V
+}
+
+#######################################
+# Display upgrade notes between versions
+#######################################
+show_upgrade_notes() {
+    local from_version="$1"
+    local to_version="$2"
+
+    local notes_files=$(get_upgrade_notes_between "$from_version" "$to_version")
+
+    if [ -z "$notes_files" ]; then
+        return
+    fi
+
+    echo ""
+    echo -e "${CYAN}=== UPGRADE NOTES ===${NC}"
+    echo ""
+
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        echo -e "${BLUE}--- $(basename "$file") ---${NC}"
+        cat "$file"
+        echo ""
+    done <<< "$notes_files"
+}
+
+#######################################
+# Detect and display local modifications to sync files
+# Only shows modifications that will be overwritten by upgrade
+#######################################
+detect_local_modifications() {
+    local has_modifications=false
+
+    # First pass: check if there are any modifications
+    for file in "${SYNC_MODIFIED[@]}"; do
+        if [ -f "$file" ] && ! git diff --quiet HEAD -- "$file" 2>/dev/null; then
+            has_modifications=true
+            break
+        fi
+    done
+
+    if [ "$has_modifications" = false ]; then
+        return
+    fi
+
+    echo ""
+    echo -e "${YELLOW}=== LOCAL MODIFICATIONS (will be overwritten) ===${NC}"
+    echo ""
+
+    for file in "${SYNC_MODIFIED[@]}"; do
+        if [ -f "$file" ] && ! git diff --quiet HEAD -- "$file" 2>/dev/null; then
+            echo -e "${YELLOW}--- $file ---${NC}"
+            # Show diff between last commit and working tree
+            # This shows what the user has modified locally
+            git diff HEAD -- "$file" 2>/dev/null || true
+            echo ""
+        fi
+    done
+}
+
+#######################################
+# Show upstream changes for modified files
+#######################################
+show_upstream_changes() {
+    if [ ${#SYNC_MODIFIED[@]} -eq 0 ]; then
+        return
+    fi
+
+    echo ""
+    echo -e "${CYAN}=== UPSTREAM CHANGES ===${NC}"
+    echo ""
+
+    for file in "${SYNC_MODIFIED[@]}"; do
+        echo -e "${BLUE}--- $file ---${NC}"
+        diff -u "$file" "$UPSTREAM_DIR/$file" 2>/dev/null || true
+        echo ""
+    done
 }
 
 #######################################
@@ -380,13 +526,84 @@ apply_changes() {
 }
 
 #######################################
+# Show version header
+#######################################
+show_version_header() {
+    local local_version="$1"
+    local upstream_version="$2"
+
+    echo ""
+    echo -e "${CYAN}=== STARTERPACK UPGRADE ANALYSIS ===${NC}"
+    echo ""
+    echo -e "Current version: ${YELLOW}$local_version${NC}"
+    echo -e "Target version:  ${GREEN}$upstream_version${NC}"
+}
+
+#######################################
+# Show files to be modified
+#######################################
+show_files_to_modify() {
+    local total=$((${#SYNC_ADDED[@]} + ${#SYNC_MODIFIED[@]} + ${#SYNC_REMOVED[@]} + ${#TEMPLATE_CREATED[@]} + ${#DELETE_REMOVED[@]}))
+
+    if [ $total -eq 0 ]; then
+        return
+    fi
+
+    echo ""
+    echo -e "${CYAN}=== FILES TO BE MODIFIED ===${NC}"
+    echo ""
+
+    for file in "${SYNC_ADDED[@]}"; do
+        echo -e "${GREEN}+ $file${NC} (add)"
+    done
+    for file in "${SYNC_MODIFIED[@]}"; do
+        echo -e "${YELLOW}~ $file${NC} (update)"
+    done
+    for file in "${SYNC_REMOVED[@]}"; do
+        echo -e "${RED}- $file${NC} (remove)"
+    done
+    for file in "${TEMPLATE_CREATED[@]}"; do
+        echo -e "${GREEN}+ $file${NC} (template)"
+    done
+    for file in "${DELETE_REMOVED[@]}"; do
+        echo -e "${RED}- $file${NC} (deprecated)"
+    done
+}
+
+#######################################
 # Main
 #######################################
 main() {
     check_prerequisites
     clone_upstream
+
+    # Get versions
+    LOCAL_VERSION=$(get_version ".")
+    UPSTREAM_VERSION=$(get_version "$UPSTREAM_DIR")
+
     compare_files
 
+    if [ "$ANALYZE_ONLY" = true ]; then
+        # Analyze mode: show detailed analysis for AI/human review
+        show_version_header "$LOCAL_VERSION" "$UPSTREAM_VERSION"
+
+        if [ "$LOCAL_VERSION" != "$UPSTREAM_VERSION" ]; then
+            show_upgrade_notes "$LOCAL_VERSION" "$UPSTREAM_VERSION"
+        fi
+
+        show_files_to_modify
+        detect_local_modifications
+        show_upstream_changes
+
+        if ! has_changes && [ "$LOCAL_VERSION" = "$UPSTREAM_VERSION" ]; then
+            echo ""
+            echo -e "${GREEN}Everything is up to date!${NC}"
+        fi
+
+        exit 0
+    fi
+
+    # Normal mode: apply changes with confirmation
     if ! has_changes; then
         echo ""
         echo -e "${GREEN}Everything is up to date!${NC}"

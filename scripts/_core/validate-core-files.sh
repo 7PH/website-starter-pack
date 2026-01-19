@@ -12,12 +12,13 @@ cd "$(dirname "$0")/../.."
 MANIFEST="starter-pack-files.txt"
 HEADER_PATTERN="STARTERPACK CORE"
 
-# Files that can't have comments (JSON doesn't support them)
+# Files that can't have comments or shouldn't have them
 EXCEPTIONS=(
     "package.json"
     "package-lock.json"
     "core-en.json"
     "core-fr.json"
+    ".starterpack-version"
 )
 
 # Parse manifest entry to extract path and mode

@@ -175,3 +175,11 @@ docker-compose.test.yml
 package*.json
 starter-pack-files.txt
 CLAUDE.md
+.starterpack-version
+UPGRADE.md
+
+# Upgrade documentation
+docs/upgrades/*
+
+# Claude skills
+.claude/skills/upgrade-starterpack.md
