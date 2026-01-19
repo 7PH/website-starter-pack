@@ -7,7 +7,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    create: [data: { name: string; email: string; description: string }];
+    create: [data: { name: string; email: string; description: string; custom_data: OrganizationCustomData }];
     close: [];
 }>();
 
@@ -15,6 +15,7 @@ const form = ref({
     name: '',
     email: '',
     description: '',
+    custom_data: {} as OrganizationCustomData,
 });
 
 const isOpen = computed({
@@ -32,7 +33,7 @@ function handleSubmit() {
 }
 
 function resetForm() {
-    form.value = { name: '', email: '', description: '' };
+    form.value = { name: '', email: '', description: '', custom_data: {} as OrganizationCustomData };
 }
 
 // Reset form when modal closes
@@ -68,6 +69,10 @@ defineExpose({ resetForm });
                             class="w-full"
                         />
                     </UFormField>
+                    <OrganizationsMetadataFields
+                        :custom-data="form.custom_data"
+                        @update:custom-data="form.custom_data = $event"
+                    />
                     <UiFormActions>
                         <UButton label="Cancel" color="neutral" variant="outline" @click="handleClose" />
                         <UButton

@@ -1227,6 +1227,19 @@
           "default": null,
           "title": "Country"
         },
+        "custom_data": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Custom Data"
+        },
         "name": {
           "maxLength": 255,
           "minLength": 1,
@@ -1245,6 +1258,12 @@
         "email"
       ],
       "title": "OrganizationCreate",
+      "type": "object"
+    },
+    "OrganizationCustomData": {
+      "description": "Custom fields for organizations. Add your project-specific fields here.",
+      "properties": {},
+      "title": "OrganizationCustomData",
       "type": "object"
     },
     "OrganizationListResponse": {
@@ -1582,6 +1601,12 @@
           "default": null,
           "title": "Country"
         },
+        "custom_data": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Custom Data",
+          "type": "object"
+        },
         "stripe_id": {
           "anyOf": [
             {
@@ -1811,6 +1836,19 @@
           ],
           "default": null,
           "title": "Country"
+        },
+        "custom_data": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Custom Data"
         },
         "name": {
           "anyOf": [
@@ -2411,6 +2449,9 @@
     },
     {
       "$ref": "#/$defs/MessageListResponse"
+    },
+    {
+      "$ref": "#/$defs/OrganizationCustomData"
     }
   ]
 }

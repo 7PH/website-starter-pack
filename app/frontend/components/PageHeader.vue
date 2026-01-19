@@ -18,6 +18,9 @@ const userMenuItems = computed(() => [
     [{ label: auth.user?.first_name, avatar: { icon: 'i-lucide-user' }, type: 'label' as const }],
     [
         { label: t('core.messages.title'), icon: 'i-lucide-message-square', to: '/messages' },
+        ...(config.public.organizationsEnabled
+            ? [{ label: t('core.organizations.title'), icon: 'i-lucide-building-2', to: '/organizations' }]
+            : []),
         { label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' },
         ...(auth.user?.is_admin
             ? [{ label: 'Admin', icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
@@ -35,10 +38,13 @@ const settingsMenuItems = computed(() => [
             onSelect: toggleColorMode,
         },
     ],
-    availableLocales.value.map((l) => ({
-        label: l.name,
-        onSelect: () => setLocale(l.code),
-    })),
+    [...availableLocales.value]
+        .sort((a, b) => (a.code === 'en' ? -1 : b.code === 'en' ? 1 : 0))
+        .map((l) => ({
+            label: l.name,
+            icon: l.code === locale.value ? 'i-lucide-check' : 'i-lucide-globe',
+            onSelect: () => setLocale(l.code),
+        })),
 ]);
 
 function onSelectLogout() {

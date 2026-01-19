@@ -14,6 +14,7 @@ export interface OrganizationFormState {
     state: string;
     postal_code: string;
     country: string;
+    custom_data: OrganizationCustomData;
 }
 
 /**
@@ -33,6 +34,7 @@ export function useOrganizationForm(org: Ref<OrganizationRead | null | undefined
         state: '',
         postal_code: '',
         country: '',
+        custom_data: {} as OrganizationCustomData,
     });
 
     const isEditing = ref(false);
@@ -53,6 +55,7 @@ export function useOrganizationForm(org: Ref<OrganizationRead | null | undefined
                 state: orgData.state || '',
                 postal_code: orgData.postal_code || '',
                 country: orgData.country || '',
+                custom_data: (orgData.custom_data as OrganizationCustomData) || ({} as OrganizationCustomData),
             };
         }
     }

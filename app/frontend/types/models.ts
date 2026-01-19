@@ -57,7 +57,8 @@ export type Models =
   | ConversationUserPreview
   | MessageCreate
   | MessageRead
-  | MessageListResponse;
+  | MessageListResponse
+  | OrganizationCustomData;
 export type Message = string;
 export type Id = number;
 export type Email = string;
@@ -206,6 +207,9 @@ export type City1 = string | null;
 export type State1 = string | null;
 export type PostalCode1 = string | null;
 export type Country1 = string | null;
+export type CustomData1 = {
+  [k: string]: unknown;
+} | null;
 export type Name3 = string;
 export type Email7 = string;
 export type Description2 = string | null;
@@ -217,6 +221,9 @@ export type City2 = string | null;
 export type State2 = string | null;
 export type PostalCode2 = string | null;
 export type Country2 = string | null;
+export type CustomData2 = {
+  [k: string]: unknown;
+} | null;
 export type Name4 = string | null;
 export type Email8 = string | null;
 export type Items3 = OrganizationRead[];
@@ -529,6 +536,7 @@ export interface OrganizationRead {
   state?: State;
   postal_code?: PostalCode;
   country?: Country;
+  custom_data?: CustomData;
   stripe_id?: StripeId;
   stripe_premium: StripePremium;
   stripe_quota: StripeQuota;
@@ -537,6 +545,9 @@ export interface OrganizationRead {
   member_count?: MemberCount;
   premium_member_count?: PremiumMemberCount;
   members?: Members;
+}
+export interface CustomData {
+  [k: string]: unknown;
 }
 /**
  * Schema for reading organization member info.
@@ -564,6 +575,7 @@ export interface OrganizationCreate {
   state?: State1;
   postal_code?: PostalCode1;
   country?: Country1;
+  custom_data?: CustomData1;
   name: Name3;
   email: Email7;
 }
@@ -580,6 +592,7 @@ export interface OrganizationUpdate {
   state?: State2;
   postal_code?: PostalCode2;
   country?: Country2;
+  custom_data?: CustomData2;
   name?: Name4;
   email?: Email8;
 }
@@ -754,4 +767,8 @@ export interface MessageListResponse {
   offset: Offset3;
   has_more: HasMore;
 }
+/**
+ * Custom fields for organizations. Add your project-specific fields here.
+ */
+export interface OrganizationCustomData {}
 }
