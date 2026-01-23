@@ -24,8 +24,9 @@ test('auth flow: signup, logout, login', async ({ page }) => {
     await page.goto('/account');
     await expect(page).toHaveURL('/account');
 
-    // Logout redirects to home
-    await page.getByRole('button', { name: 'Logout' }).click();
+    // Logout redirects to home - open user dropdown and click logout
+    await page.getByRole('button', { name: testFirstName }).click();
+    await page.getByRole('menuitem', { name: /log out/i }).click();
     await expect(page).toHaveURL('/');
     await expect(page.getByRole('link', { name: /log in/i })).toBeVisible();
 
