@@ -17,3 +17,17 @@ jobs:
 
       - name: Validate core files
         run: bash scripts/_core/validate-core-files.sh
+
+      - name: Validate package.json files are in sync
+        run: |
+          # Regenerate package.json files
+          sh scripts/_core/merge-package-json.sh .
+          sh scripts/_core/merge-package-json.sh app/frontend
+
+          # Check if they changed
+          if ! git diff --exit-code package.json app/frontend/package.json; then
+            echo ""
+            echo "ERROR: package.json files are out of sync with package.core.json + package.app.json"
+            echo "Run 'npm install' locally to regenerate them."
+            exit 1
+          fi

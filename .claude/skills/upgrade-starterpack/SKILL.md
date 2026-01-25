@@ -1,5 +1,6 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 ---
+name: upgrade-starterpack
 description: Upgrade the starterpack with AI assistance
 ---
 

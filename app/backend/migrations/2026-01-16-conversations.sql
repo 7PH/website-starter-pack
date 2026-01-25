@@ -1,3 +1,4 @@
+-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 -- Add messaging/conversation system
 -- Supports support tickets (user-to-admin) and future direct messages (user-to-user)
 

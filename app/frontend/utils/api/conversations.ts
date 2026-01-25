@@ -1,3 +1,5 @@
+// ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 /**
  * Conversations API service - mirrors backend/controllers/conversations.py
  * Raw API calls without UI concerns (no toasts, no store updates).

@@ -63,6 +63,33 @@ DELETE_SKIPPED=()
 declare -A FILE_MODES
 
 #######################################
+# Reset comparison arrays for re-comparison
+#######################################
+reset_comparison_arrays() {
+    SYNC_ADDED=()
+    SYNC_MODIFIED=()
+    SYNC_REMOVED=()
+    TEMPLATE_CREATED=()
+    TEMPLATE_SKIPPED=()
+    DELETE_REMOVED=()
+    DELETE_SKIPPED=()
+    FILE_MODES=()
+    declare -gA FILE_MODES
+}
+
+#######################################
+# Check if manifest file is in the list of files to sync
+#######################################
+manifest_needs_sync() {
+    for file in "${SYNC_MODIFIED[@]}" "${SYNC_ADDED[@]}"; do
+        if [ "$file" = "$MANIFEST" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+#######################################
 # Parse manifest entry to extract path and mode
 # Format: path/to/file.ts:mode or just path/to/file.ts
 # Valid modes: sync (default), template, delete
@@ -194,11 +221,15 @@ get_local_files() {
             continue
         fi
 
+        # Parse entry to strip mode suffix (same as get_upstream_files)
+        local parsed=$(parse_manifest_entry "$line")
+        local pattern="${parsed%|*}"
+
         while IFS= read -r file; do
             if [ -n "$file" ]; then
                 files+=("$file")
             fi
-        done < <(expand_pattern "$line" ".")
+        done < <(expand_pattern "$pattern" ".")
     done < "$MANIFEST"
 
     printf '%s\n' "${files[@]}" | sort -u
@@ -581,7 +612,22 @@ main() {
     LOCAL_VERSION=$(get_version ".")
     UPSTREAM_VERSION=$(get_version "$UPSTREAM_DIR")
 
+    # First pass: compare files
     compare_files
+
+    # If manifest itself changed, sync it first and re-compare
+    # This ensures new files added to the manifest are detected in a single run
+    if manifest_needs_sync; then
+        echo -e "${YELLOW}Manifest changed - syncing first to detect all file changes...${NC}"
+
+        # Sync manifest
+        mkdir -p "$(dirname "$MANIFEST")"
+        cp "$UPSTREAM_DIR/$MANIFEST" "$MANIFEST"
+
+        # Reset and re-compare with updated manifest
+        reset_comparison_arrays
+        compare_files
+    fi
 
     if [ "$ANALYZE_ONLY" = true ]; then
         # Analyze mode: show detailed analysis for AI/human review

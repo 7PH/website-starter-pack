@@ -1,3 +1,5 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
 """
 Conversations controller for support messaging system.
 Handles user conversations and admin support management.

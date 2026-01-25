@@ -16,4 +16,10 @@ print_success ".env file configured"
 
 print_info "Creating directories..."
 mkdir -p backups static
+
+print_info "Merging package.json files..."
+bash "$SCRIPT_DIR/merge-package-json.sh" .
+bash "$SCRIPT_DIR/merge-package-json.sh" app/frontend
+print_success "Package files merged"
+
 print_success "Setup complete!"

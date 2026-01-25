@@ -1,3 +1,4 @@
+-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 -- Add soft delete support for users
 -- When a user is deleted, their data is anonymized and deleted_at is set
 

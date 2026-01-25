@@ -1,3 +1,5 @@
+<!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
+
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
 

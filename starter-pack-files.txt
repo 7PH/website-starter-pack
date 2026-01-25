@@ -4,8 +4,10 @@
 app/backend/Dockerfile
 app/backend/requirements.core.txt
 app/backend/migrations/README.md
+app/backend/migrations/2026-01-06-soft-delete-users.sql
 app/backend/migrations/2026-01-09-organizations.sql
 app/backend/migrations/2026-01-14-oauth-provider.sql
+app/backend/migrations/2026-01-16-conversations.sql
 app/backend/migrations/2026-01-19-org-metadata.sql
 app/backend/ruff.toml
 app/backend/src/main.py
@@ -22,6 +24,7 @@ app/backend/src/controllers/organizations.py
 app/backend/src/controllers/stripe.py
 app/backend/src/controllers/users.py
 app/backend/src/controllers/oauth.py
+app/backend/src/controllers/conversations.py
 app/backend/src/helpers/auth.py
 app/backend/src/helpers/auth_tokens.py
 app/backend/src/helpers/db.py
@@ -70,6 +73,8 @@ app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 
 # Frontend
+app/frontend/package.core.json
+app/frontend/package.app.json:template
 app/frontend/nuxt.config.ts
 app/frontend/app.config.ts
 app/frontend/assets/css/main.css
@@ -101,6 +106,7 @@ app/frontend/utils/api/index.ts
 app/frontend/utils/api/auth.ts
 app/frontend/utils/api/stripe.ts
 app/frontend/utils/api/users.ts
+app/frontend/utils/api/conversations.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
 app/frontend/components/ui/GradientButton.vue
@@ -126,6 +132,8 @@ app/frontend/pages/confirm-email-change.vue
 app/frontend/pages/organizations/index.vue
 app/frontend/pages/organizations/[id].vue
 app/frontend/pages/oauth/callback.vue
+app/frontend/pages/messages/index.vue
+app/frontend/pages/messages/[id].vue
 app/frontend/config/admin-nav.ts
 app/frontend/config/admin-nav-ext.ts:template
 app/frontend/config/account-tabs.ts
@@ -152,6 +160,8 @@ app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/pages/admin/backups/index.vue
 app/frontend/pages/admin/db-health/index.vue
 app/frontend/pages/admin/events/index.vue
+app/frontend/pages/admin/messages/index.vue
+app/frontend/pages/admin/messages/[id].vue
 app/frontend/pages/admin/organizations/index.vue
 app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
@@ -177,7 +187,8 @@ scripts/_core/*
 .env.template
 docker-compose.core.yml
 docker-compose.test.yml
-package*.json
+package.core.json
+package.app.json:template
 starter-pack-files.txt
 CLAUDE.md
 .starterpack-version
@@ -187,4 +198,4 @@ UPGRADE.md
 docs/upgrades/*
 
 # Claude skills
-.claude/skills/upgrade-starterpack.md
+.claude/skills/upgrade-starterpack/SKILL.md

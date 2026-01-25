@@ -1,6 +1,9 @@
 #!/bin/bash
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+# Source .env if it exists
+[ -f .env ] && set -a && source .env && set +a
+
 # Get backend container using project name
 BACKEND_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-backend"
 BACKEND_CONTAINER=$(docker container list --filter "name=^${BACKEND_CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null)

@@ -1,0 +1,5 @@
+{
+    "_comment": "App-specific package.json overrides. Add your project dependencies here.",
+    "devDependencies": {
+    }
+}
