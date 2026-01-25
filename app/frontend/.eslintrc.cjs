@@ -1,3 +1,4 @@
+// ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 module.exports = {
     root: true,
     env: {

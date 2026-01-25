@@ -75,14 +75,6 @@ If you've modified core files (files with `⚠️ STARTERPACK CORE` header):
 - Component overrides (`config/component-overrides.ts`)
 - Separate project-specific files
 
-## Version History
-
-Detailed notes for each version are in `docs/upgrades/`:
-
-| Version | Date | Type | Notes |
-|---------|------|------|-------|
-| v1.0.0 | 2026-01-19 | Major | Initial versioned release |
-
 ## Troubleshooting
 
 ### "Git working directory is not clean"

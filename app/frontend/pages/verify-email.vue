@@ -1,3 +1,4 @@
+<!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
 /**
  * Email verification page.

@@ -72,6 +72,14 @@ app/backend/tests/conftest.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 
+# Frontend - Docker & Tooling
+app/frontend/Dockerfile.dev
+app/frontend/Dockerfile.prod-nginx
+app/frontend/Dockerfile.prod-node
+app/frontend/.eslintrc.cjs
+app/frontend/nginx.conf
+app/frontend/nginx.default.conf
+
 # Frontend
 app/frontend/package.core.json
 app/frontend/package.app.json:template
@@ -80,6 +88,7 @@ app/frontend/app.config.ts
 app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
 app/frontend/layouts/fullheight.vue
+app/frontend/layouts/auth.vue
 app/frontend/config/i18n.ts
 app/frontend/config/main-nav.ts
 app/frontend/config/security-headers.ts:template
@@ -126,6 +135,9 @@ app/frontend/components/LegalPage.vue
 app/frontend/components/LoadingSkeleton.vue
 app/frontend/components/PageFooter.vue
 app/frontend/components/PageHeader.vue
+app/frontend/pages/login.vue
+app/frontend/pages/verify-email.vue
+app/frontend/pages/reset-password.vue
 app/frontend/pages/premium.vue
 app/frontend/pages/account.vue
 app/frontend/pages/confirm-email-change.vue
