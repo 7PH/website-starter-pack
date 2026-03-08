@@ -32,8 +32,7 @@ function deepMerge<T extends Record<string, unknown>>(target: T, source: T): T {
 
 export default defineI18nConfig(() => ({
     legacy: false,
-    locale: 'fr',
-    fallbackLocale: 'fr',
+    fallbackLocale: 'en' as const,
     messages: {
         en: deepMerge(coreEn as Record<string, unknown>, appEn as Record<string, unknown>) as unknown as Record<
             string,

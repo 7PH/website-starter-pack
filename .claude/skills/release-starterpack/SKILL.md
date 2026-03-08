@@ -43,10 +43,11 @@ Steps to publish a new starterpack version.
 6. The new upgrade doc is auto-covered by `docs/upgrades/*` in `starter-pack-files.txt`.
    No manifest change needed unless adding a new skill or script.
 
-7. Commit:
+7. Commit and push:
    ```bash
    git add docs/upgrades/vX.Y.Z.md .starterpack-version <any other changed files>
    git commit -m "Release vX.Y.Z"
+   git push
    ```
 
 8. Ask the user to confirm before creating the GitHub release. Then:

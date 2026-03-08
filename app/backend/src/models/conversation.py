@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship
 from ..helpers.db import Base
 
 
-class ConversationType(str, enum.Enum):
+class ConversationType(enum.StrEnum):
     """Type of conversation."""
 
     SUPPORT = "support"

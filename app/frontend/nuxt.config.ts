@@ -60,6 +60,7 @@ export default defineNuxtConfig({
             umamiUrl: '', // NUXT_PUBLIC_UMAMI_URL
             umamiWebsiteId: '', // NUXT_PUBLIC_UMAMI_WEBSITE_ID
             umamiDashboardUrl: '', // NUXT_PUBLIC_UMAMI_DASHBOARD_URL - admin panel link
+            defaultLocale: '', // NUXT_PUBLIC_DEFAULT_LOCALE
         },
     },
 
@@ -86,7 +87,7 @@ export default defineNuxtConfig({
             { code: 'fr', name: 'Français', language: 'fr-FR' },
             { code: 'en', name: 'English', language: 'en-US' },
         ],
-        defaultLocale: 'fr',
+        defaultLocale: (process.env.NUXT_PUBLIC_DEFAULT_LOCALE || 'en') as 'fr' | 'en',
         strategy: 'no_prefix',
         vueI18n: '~/config/i18n.ts',
         detectBrowserLanguage: {
