@@ -61,6 +61,8 @@ DELETE_SKIPPED=()
 
 # Associative array to store file modes from manifest
 declare -A FILE_MODES
+# Global array populated by get_upstream_files (avoids subshell losing FILE_MODES)
+UPSTREAM_FILES=()
 
 #######################################
 # Reset comparison arrays for re-comparison
@@ -75,6 +77,7 @@ reset_comparison_arrays() {
     DELETE_SKIPPED=()
     FILE_MODES=()
     declare -gA FILE_MODES
+    UPSTREAM_FILES=()
 }
 
 #######################################
@@ -183,7 +186,10 @@ expand_pattern() {
 # Also populates FILE_MODES associative array
 #######################################
 get_upstream_files() {
-    local files=()
+    # Populates global UPSTREAM_FILES array and FILE_MODES.
+    # Must NOT be called in a subshell or FILE_MODES changes will be lost.
+    UPSTREAM_FILES=()
+    local -A seen=()
 
     while IFS= read -r line || [[ -n "$line" ]]; do
         # Trim whitespace and skip empty lines or comments
@@ -199,14 +205,16 @@ get_upstream_files() {
 
         # Expand pattern and add to files array with mode
         while IFS= read -r file; do
-            if [ -n "$file" ]; then
-                files+=("$file")
+            if [ -n "$file" ] && [ -z "${seen[$file]}" ]; then
+                seen["$file"]=1
+                UPSTREAM_FILES+=("$file")
                 FILE_MODES["$file"]="$mode"
             fi
         done < <(expand_pattern "$pattern" "$UPSTREAM_DIR")
     done < "$UPSTREAM_DIR/$MANIFEST"
 
-    printf '%s\n' "${files[@]}" | sort -u
+    # Sort in-place
+    IFS=$'\n' read -r -d '' -a UPSTREAM_FILES < <(printf '%s\n' "${UPSTREAM_FILES[@]}" | sort -u && printf '\0')
 }
 
 #######################################
@@ -369,12 +377,14 @@ show_upstream_changes() {
 compare_files() {
     echo -e "${BLUE}Comparing files...${NC}"
 
-    # Get file lists (also populates FILE_MODES)
-    local upstream_files=$(get_upstream_files)
-    local local_files=$(get_local_files)
+    # get_upstream_files populates UPSTREAM_FILES and FILE_MODES globals.
+    # It must be called directly (not in a subshell) so FILE_MODES is preserved.
+    get_upstream_files
+    local local_files
+    local_files=$(get_local_files)
 
     # Process each upstream file based on its mode
-    while IFS= read -r file; do
+    for file in "${UPSTREAM_FILES[@]}"; do
         [ -z "$file" ] && continue
 
         local mode="${FILE_MODES[$file]:-sync}"
@@ -405,7 +415,7 @@ compare_files() {
                 fi
                 ;;
         esac
-    done <<< "$upstream_files"
+    done
 
     # Check for files removed from manifest (sync mode only)
     # These are files that exist locally but are no longer in upstream manifest

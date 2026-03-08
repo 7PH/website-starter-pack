@@ -211,3 +211,4 @@ docs/upgrades/*
 
 # Claude skills
 .claude/skills/upgrade-starterpack/SKILL.md
+.claude/skills/release-starterpack/SKILL.md
