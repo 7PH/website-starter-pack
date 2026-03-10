@@ -5,7 +5,7 @@ http:
       rule: "Host(`static.{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: static
-      {{ if env "USE_TLS" }}
+      {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
       {{ end }}
@@ -14,7 +14,7 @@ http:
       rule: "Host(`{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: frontend
-      {{ if env "USE_TLS" }}
+      {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
       {{ end }}
@@ -25,7 +25,7 @@ http:
       service: backend
       middlewares:
         - api-strip-prefix
-      {{ if env "USE_TLS" }}
+      {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
       {{ end }}
@@ -36,7 +36,7 @@ http:
       service: adminer
       middlewares:
         - admin-auth-middleware
-      {{ if env "USE_TLS" }}
+      {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
       {{ end }}
@@ -48,7 +48,7 @@ http:
       service: umami
       middlewares:
         - admin-auth-middleware
-      {{ if env "USE_TLS" }}
+      {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
       {{ end }}
