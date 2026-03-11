@@ -25,6 +25,7 @@ from ..helpers.auth import (
     oauth2_scheme,
     verify_password,
 )
+from ..helpers.auth_app import pre_login
 from ..helpers.auth_tokens import create_email_change_token, get_email_change_url
 from ..helpers.db import get_session
 from ..helpers.email import send_email_change_email
@@ -122,8 +123,11 @@ def login_user(
     password = form_data.password
 
     user = get_user_by_email(session, email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    if not user or not verify_password(password, user.hashed_password):
+    hook = pre_login(session, user, password)
+    if hook is False or (hook is None and not verify_password(password, user.hashed_password)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     # Log the login event

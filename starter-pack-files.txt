@@ -39,6 +39,7 @@ app/backend/src/helpers/oauth.py
 app/backend/src/helpers/llm.py
 app/backend/src/helpers/security_headers.py
 app/backend/src/helpers/security_headers_ext.py:template
+app/backend/src/helpers/auth_app.py:template
 app/backend/src/models/__init__.py
 app/backend/src/models/conversation.py
 app/backend/src/models/event_log.py
