@@ -204,6 +204,7 @@ package.core.json
 package.app.json:template
 starter-pack-files.txt
 CLAUDE.md
+CLAUDE.app.md:template
 .starterpack-version
 UPGRADE.md
 

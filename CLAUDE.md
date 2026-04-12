@@ -4,6 +4,8 @@
 
 Full-stack web app template: Nuxt 3 frontend + FastAPI backend + PostgreSQL + Traefik reverse proxy.
 
+To check if you are in the starterpack or a sub-app, run `git remote get-url origin`.
+
 ## Validation (Before Claiming Done)
 
 ```bash
@@ -16,18 +18,43 @@ npm run build                               # If modifying dependencies/Dockerfi
 ## Quick Commands
 
 ```bash
-npm run dev      # Start development
-npm run stop     # Stop containers
+npm run dev      # Start development (hot reload, Traefik on :8080)
+npm run start    # Start production (Nginx, TLS-ready)
+npm run stop     # Stop all containers
+npm run restart  # Stop + dev
 npm run build    # Rebuild containers
 npm run logs     # View logs
 ```
+
+### E2E Testing
+
+```bash
+npm run test:e2e:start   # Spin up isolated test env on port 13001
+npm run test:e2e         # Run Playwright tests
+npm run test:e2e:stop    # Tear down test env
+```
+
+### Checking If Running
+
+```bash
+docker compose ps                                # List running containers
+curl http://localhost/api/v1/healthcheck          # Backend health (dev)
+curl http://localhost:13001/api/v1/healthcheck    # Backend health (e2e)
+```
+
+Traefik dashboard: `http://localhost:8080` (dev only).
 
 ## Stack
 
 - **Frontend**: Nuxt 3, Pinia, @nuxt/ui, @nuxtjs/i18n
 - **Backend**: FastAPI, SQLAlchemy, Pydantic
-- **Database**: PostgreSQL 15
+- **Database**: PostgreSQL 15 (`npm run db-connect` for psql access)
 - **Proxy**: Traefik (handles TLS, routing)
+- **Env vars**: See `.env.template` for all available config
+
+### Feature Flags
+
+Toggle features via env vars: `STRIPE_ENABLED`, `ORGANIZATIONS_ENABLED`, `OAUTH_ENABLED`, `LLM_ENABLED`.
 
 ## Key Concepts
 
@@ -53,6 +80,15 @@ Manual SQL in `app/backend/migrations/`. Use `IF NOT EXISTS`. Define indexes in 
 - Frontend: `app/frontend/tests/` (vitest)
 - E2E: `app/frontend/e2e/` (Playwright)
 
+## i18n
+
+ALL user-facing text must be translated. Never hardcode user-visible strings.
+
+- **Admin pages** (`/admin/*`): English-only, no translations needed
+- **User-facing pages**: Use `const { t } = useI18n()` then `t('key')`
+- **Locale files**: `locales/core-{en,fr}.json` (starterpack-managed) + `locales/{en,fr}.json` (app-specific, deep merged)
+- **Locale switching**: `useAppLocale()` composable
+
 ## Styling
 
 - **@nuxt/ui components**: Use as-is (dark mode automatic)
@@ -64,16 +100,10 @@ Manual SQL in `app/backend/migrations/`. Use `IF NOT EXISTS`. Define indexes in 
 
 Types auto-generated from Pydantic schemas. Run `./scripts/_core/convert-models.sh` after schema changes.
 
-## i18n
-
-- **Admin pages** (`/admin/*`): English-only, no translations needed
-- **User-facing pages**: Use `t('key')`, add keys to `locales/core-en.json` and `locales/core-fr.json`
-
 ## Upgrades
 
-1. Analyze: `bash scripts/_core/core-update.sh --analyze`
-2. Execute: `bash scripts/_core/core-update.sh`
-3. Re-apply local modifications if needed
-4. Validate: `npm run lint:frontend && npm run typecheck:frontend`
+Use `/upgrade-starterpack`. See `docs/upgrades/` for version-specific notes.
 
-See `docs/upgrades/` for version-specific notes.
+## App-Specific Instructions
+
+@CLAUDE.app.md
