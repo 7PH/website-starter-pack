@@ -186,6 +186,7 @@ app/frontend/playwright.config.ts
 app/frontend/e2e/smoke.spec.ts
 app/frontend/vitest.config.ts
 app/frontend/tests/example.test.ts
+app/frontend/tests/i18n-alignment.test.ts
 
 # Traefik
 services/traefik/*.core.yml
