@@ -69,9 +69,10 @@ def run_backup() -> BackupInfo:
     db_host = os.environ.get("APP_DB_HOST", "db")
 
     # Run pg_dump and compress with gzip
-    cmd = f'PGPASSWORD="{db_password}" pg_dump -h {db_host} -U {db_user} {db_name} | gzip > {filepath}'
+    cmd = f"pg_dump -h {db_host} -U {db_user} {db_name} | gzip > {filepath}"
+    env = {**os.environ, "PGPASSWORD": db_password or ""}
 
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         # Clean up partial file if exists
         filepath.unlink(missing_ok=True)
