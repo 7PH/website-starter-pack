@@ -24,8 +24,11 @@ export default defineNuxtConfig({
     routeRules: {
         // Security headers for all routes (customize in config/security-headers.ts)
         '/**': { headers: securityHeaders },
-        // Disable SSR for admin pages (auth is client-side, no SEO needed)
+        // Disable SSR for auth/admin pages (auth is client-side, no SEO needed)
         '/admin/**': { ssr: false },
+        '/login': { ssr: false },
+        '/verify-email': { ssr: false },
+        '/reset-password': { ssr: false },
     },
 
     app: {

@@ -10,11 +10,10 @@ const testLastName = 'User';
 test('auth flow: signup, logout, login', async ({ page }) => {
     // Signup
     await page.goto('/login?mode=signup');
-    await page.waitForLoadState('networkidle');
     await page.getByPlaceholder('First name').fill(testFirstName);
     await page.getByPlaceholder('Last name').fill(testLastName);
     await page.getByPlaceholder('Email').fill(testEmail);
-    await page.locator('input[autocomplete="new-password"]').first().fill(testPassword);
+    await page.getByPlaceholder('Password', { exact: true }).fill(testPassword);
     await page.getByPlaceholder('Confirm password').fill(testPassword);
     await page.getByRole('button', { name: /create account/i }).click();
     await page.waitForURL('/');
@@ -35,9 +34,8 @@ test('auth flow: signup, logout, login', async ({ page }) => {
     await expect(page).toHaveURL(/\/login\?redirect=/);
 
     // Login with redirect back to account
-    await page.waitForLoadState('networkidle');
     await page.getByPlaceholder('Email').fill(testEmail);
-    await page.locator('input[autocomplete="current-password"]').fill(testPassword);
+    await page.getByPlaceholder('Password', { exact: true }).fill(testPassword);
     await page.getByRole('button', { name: /^log in$/i }).click();
     await expect(page).toHaveURL('/account');
     await expect(page.locator('header').getByText(testFirstName)).toBeVisible();
