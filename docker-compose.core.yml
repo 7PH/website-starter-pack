@@ -24,7 +24,6 @@ x-traefik-common: &traefik-common
 x-frontend-common: &frontend-common
     volumes:
         - ./app/frontend/app.vue:/app/app.vue:ro
-        - ./app/frontend/_core:/app/_core:ro
         - ./app/frontend/assets:/app/assets:ro
         - ./app/frontend/components:/app/components:ro
         - ./app/frontend/composables:/app/composables:ro
