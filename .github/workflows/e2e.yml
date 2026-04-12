@@ -34,7 +34,7 @@ jobs:
         run: npm run test:e2e:start
 
       - name: Wait for services
-        run: sleep 30
+        run: bash scripts/_core/wait-for-services.sh --url http://localhost:13001/api/v1/healthcheck --timeout 120
 
       - name: Run E2E tests
         run: npm run test:e2e

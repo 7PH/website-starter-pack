@@ -183,7 +183,7 @@ app/frontend/plugins/auth.client.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 app/frontend/playwright.config.ts
-app/frontend/e2e/auth.spec.ts
+app/frontend/e2e/smoke.spec.ts
 app/frontend/vitest.config.ts
 app/frontend/tests/example.test.ts
 
