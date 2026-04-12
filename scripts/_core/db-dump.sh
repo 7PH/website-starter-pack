@@ -10,7 +10,7 @@ BACKUP_DIR="./backups"
 mkdir -p "$BACKUP_DIR"
 
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
-DUMP_FILE="$BACKUP_DIR/db_backup_$DATE.sql"
+DUMP_FILE="$BACKUP_DIR/db_backup_${DATE}_manual.sql"
 
 # Use project name to find the exact db container (not umami-db)
 DB_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-db"

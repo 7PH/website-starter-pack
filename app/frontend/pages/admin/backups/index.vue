@@ -11,15 +11,19 @@ const toast = useToast();
 
 const creating = ref(false);
 const deleting = ref<string | null>(null);
+const restoring = ref<string | null>(null);
 const showDeleteModal = ref(false);
 const backupToDelete = ref<string | null>(null);
+const restoreStep = ref<0 | 1 | 2>(0); // 0=closed, 1=warning, 2=type-to-confirm
+const backupToRestore = ref<string | null>(null);
+const restoreConfirmInput = ref('');
 
 // Table columns
 const columns = [
-    { accessorKey: 'filename', header: 'Filename' },
+    { accessorKey: 'comment', header: 'Type' },
     { accessorKey: 'size', header: 'Size' },
     { accessorKey: 'created_at', header: 'Created' },
-    { accessorKey: 'actions', header: 'Actions' },
+    { accessorKey: 'actions', header: '' },
 ];
 
 const {
@@ -123,6 +127,53 @@ async function deleteBackup() {
         backupToDelete.value = null;
     }
 }
+
+function confirmRestore(filename: string) {
+    backupToRestore.value = filename;
+    restoreConfirmInput.value = '';
+    restoreStep.value = 1;
+}
+
+function proceedToStep2() {
+    restoreStep.value = 2;
+    restoreConfirmInput.value = '';
+}
+
+function cancelRestore() {
+    restoreStep.value = 0;
+    backupToRestore.value = null;
+    restoreConfirmInput.value = '';
+}
+
+const restoreConfirmMatch = computed(() => restoreConfirmInput.value === backupToRestore.value);
+
+async function executeRestore() {
+    if (!backupToRestore.value || !restoreConfirmMatch.value) return;
+
+    restoring.value = backupToRestore.value;
+    try {
+        const safetyBackup = await api.post<BackupInfo>(`/admin/backups/${backupToRestore.value}/restore`, {
+            confirm_filename: backupToRestore.value,
+        });
+        toast.add({
+            title: 'Database restored',
+            description: `Safety backup created: ${safetyBackup.filename}`,
+            color: 'success',
+            duration: 8000,
+        });
+        refresh();
+    } catch {
+        toast.add({
+            title: 'Restore failed',
+            description: 'Failed to restore database from backup',
+            color: 'error',
+            duration: 5000,
+        });
+    } finally {
+        restoring.value = null;
+        cancelRestore();
+    }
+}
 </script>
 
 <template>
@@ -144,6 +195,16 @@ async function deleteBackup() {
             <!-- Backups Table -->
             <UCard>
                 <UTable :columns="columns" :data="backupsData?.items ?? []" :loading="pending">
+                    <template #comment-cell="{ row }">
+                        <div class="type-cell">
+                            <span v-if="row.original.comment">{{ row.original.comment }}</span>
+                            <span v-else class="type-cell--empty">&mdash;</span>
+                            <UTooltip :text="row.original.filename">
+                                <UIcon name="i-lucide-info" class="type-cell-info" />
+                            </UTooltip>
+                        </div>
+                    </template>
+
                     <template #size-cell="{ row }">
                         {{ formatSize(row.original.size) }}
                     </template>
@@ -154,6 +215,16 @@ async function deleteBackup() {
 
                     <template #actions-cell="{ row }">
                         <div class="actions">
+                            <UTooltip text="Restore">
+                                <UButton
+                                    icon="i-lucide-database"
+                                    color="warning"
+                                    variant="ghost"
+                                    size="xs"
+                                    :loading="restoring === row.original.filename"
+                                    @click="confirmRestore(row.original.filename)"
+                                />
+                            </UTooltip>
                             <UTooltip text="Download">
                                 <UButton
                                     icon="i-lucide-download"
@@ -209,6 +280,79 @@ async function deleteBackup() {
                     </UCard>
                 </template>
             </UModal>
+
+            <!-- Restore Step 1: Warning -->
+            <UModal
+                :open="restoreStep === 1"
+                @update:open="
+                    (v: boolean) => {
+                        if (!v) cancelRestore();
+                    }
+                "
+            >
+                <template #content>
+                    <UCard>
+                        <template #header>
+                            <h3 class="modal-title modal-title--danger">Restore Database</h3>
+                        </template>
+                        <div class="restore-warning">
+                            <p class="restore-warning-text">
+                                This will <strong>drop all existing tables</strong> and replace the database with the
+                                contents of this backup. This action is destructive and cannot be undone.
+                            </p>
+                            <p class="filename-text">{{ backupToRestore }}</p>
+                            <p class="restore-safety-note">
+                                A safety backup of the current database will be created automatically before restoring.
+                            </p>
+                        </div>
+                        <template #footer>
+                            <div class="modal-actions">
+                                <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
+                                <UButton label="Continue" color="error" @click="proceedToStep2" />
+                            </div>
+                        </template>
+                    </UCard>
+                </template>
+            </UModal>
+
+            <!-- Restore Step 2: Type to confirm -->
+            <UModal
+                :open="restoreStep === 2"
+                @update:open="
+                    (v: boolean) => {
+                        if (!v) cancelRestore();
+                    }
+                "
+            >
+                <template #content>
+                    <UCard>
+                        <template #header>
+                            <h3 class="modal-title modal-title--danger">Confirm Restore</h3>
+                        </template>
+                        <div class="restore-confirm">
+                            <p>Type the backup filename to confirm:</p>
+                            <p class="filename-text">{{ backupToRestore }}</p>
+                            <UInput
+                                v-model="restoreConfirmInput"
+                                placeholder="Type filename here"
+                                class="restore-confirm-input"
+                            />
+                        </div>
+                        <template #footer>
+                            <div class="modal-actions">
+                                <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
+                                <UButton
+                                    label="Restore"
+                                    color="error"
+                                    :disabled="!restoreConfirmMatch"
+                                    :loading="!!restoring"
+                                    @click="executeRestore"
+                                />
+                            </div>
+                        </template>
+                    </UCard>
+                </template>
+            </UModal>
         </div>
     </div>
 </template>
@@ -253,5 +397,37 @@ async function deleteBackup() {
 
 .modal-actions {
     @apply flex justify-end gap-2;
+}
+
+.modal-title--danger {
+    @apply text-red-600 dark:text-red-400;
+}
+
+.restore-warning-text {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+.restore-safety-note {
+    @apply mt-3 text-sm text-gray-500 dark:text-gray-400 italic;
+}
+
+.restore-confirm {
+    @apply space-y-3;
+}
+
+.restore-confirm-input {
+    @apply mt-2;
+}
+
+.type-cell {
+    @apply flex items-center gap-1.5 text-sm;
+}
+
+.type-cell--empty {
+    @apply text-gray-400 dark:text-gray-600;
+}
+
+.type-cell-info {
+    @apply text-gray-400 dark:text-gray-500 size-3.5 shrink-0 cursor-help;
 }
 </style>

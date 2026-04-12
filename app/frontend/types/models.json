@@ -230,6 +230,18 @@
           "format": "date-time",
           "title": "Created At",
           "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "BackupComment"
         }
       },
       "required": [

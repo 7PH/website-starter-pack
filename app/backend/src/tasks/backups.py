@@ -9,6 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from ..controllers.backups import run_backup
 from ..helpers.logging import get_logger
+from ..schemas.backup import BackupTag
 
 logger = get_logger(__name__)
 
@@ -19,7 +20,7 @@ def scheduled_backup():
     """Run scheduled database backup."""
     try:
         logger.info("Starting scheduled backup")
-        backup = run_backup()
+        backup = run_backup(tag=BackupTag.automatic)
         logger.info(f"Scheduled backup completed: {backup.filename}")
     except Exception as e:
         logger.error(f"Scheduled backup failed: {e}")

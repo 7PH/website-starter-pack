@@ -136,6 +136,7 @@ export type Offset1 = number;
 export type Filename = string;
 export type Size = number;
 export type CreatedAt3 = string;
+export type BackupComment = string | null;
 export type Items2 = BackupInfo[];
 export type Total2 = number;
 export type Url = string;
@@ -450,6 +451,7 @@ export interface BackupInfo {
   filename: Filename;
   size: Size;
   created_at: CreatedAt3;
+  comment?: BackupComment;
 }
 /**
  * Response for backup list endpoint.
