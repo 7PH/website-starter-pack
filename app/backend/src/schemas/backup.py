@@ -3,12 +3,12 @@
 """Pydantic schemas for database backup operations."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class BackupTag(str, Enum):
+class BackupTag(StrEnum):
     """Encodes the reason a backup was created. Values are lowercase, used in filenames."""
 
     automatic = "automatic"
