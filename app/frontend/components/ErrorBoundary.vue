@@ -10,9 +10,11 @@ interface Props {
     showRetry?: boolean;
 }
 
+const { t } = useI18n();
+
 const props = withDefaults(defineProps<Props>(), {
     error: null,
-    title: 'Something went wrong',
+    title: undefined,
     showRetry: true,
 });
 
@@ -20,10 +22,12 @@ const emit = defineEmits<{
     retry: [];
 }>();
 
+const displayTitle = computed(() => props.title ?? t('core.errors.somethingWentWrong'));
+
 const errorMessage = computed(() => {
     if (!props.error) return '';
     if (typeof props.error === 'string') return props.error;
-    return props.error.message || 'An unexpected error occurred';
+    return props.error.message || t('core.errors.unexpectedError');
 });
 
 function handleRetry() {
@@ -37,13 +41,18 @@ function handleRetry() {
             <UIcon name="i-lucide-alert-triangle" class="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
-            {{ title }}
+            {{ displayTitle }}
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-4">
             {{ errorMessage }}
         </p>
         <div class="flex gap-2">
-            <UButton v-if="showRetry" label="Try again" icon="i-lucide-refresh-cw" @click="handleRetry" />
+            <UButton
+                v-if="showRetry"
+                :label="t('core.errors.tryAgain')"
+                icon="i-lucide-refresh-cw"
+                @click="handleRetry"
+            />
             <slot name="actions" />
         </div>
     </div>

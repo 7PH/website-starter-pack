@@ -4,6 +4,7 @@
 const auth = useAuth();
 const api = useApi();
 const toast = useToast();
+const { t } = useI18n();
 
 const isLoading = ref(false);
 
@@ -21,8 +22,8 @@ async function stopImpersonation() {
         });
 
         toast.add({
-            title: 'Impersonation ended',
-            description: 'You are now back to your admin account',
+            title: t('core.admin.impersonation.ended'),
+            description: t('core.admin.impersonation.backToAdmin'),
             color: 'success',
             duration: 3000,
         });
@@ -31,8 +32,8 @@ async function stopImpersonation() {
         await navigateTo('/admin/users');
     } catch (error) {
         toast.add({
-            title: 'Error',
-            description: 'Failed to stop impersonation',
+            title: t('core.errors.generic'),
+            description: t('core.admin.impersonation.errorStopping'),
             color: 'error',
             duration: 3000,
         });
@@ -47,10 +48,10 @@ async function stopImpersonation() {
         <div class="banner-content">
             <UIcon name="i-lucide-user" class="banner-icon" />
             <span class="banner-text">
-                Viewing as <strong>{{ auth.user?.email }}</strong>
+                {{ t('core.admin.impersonation.viewingAs') }} <strong>{{ auth.user?.email }}</strong>
             </span>
             <UButton
-                label="Exit Impersonation"
+                :label="t('core.admin.impersonation.exit')"
                 icon="i-lucide-log-out"
                 size="sm"
                 color="neutral"

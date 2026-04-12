@@ -35,7 +35,18 @@
             "brandingTagline": "Connectez-vous pour accéder à votre compte.",
             "forgotPasswordMessage": "Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
             "sendResetLink": "Envoyer le lien",
-            "backToLogin": "Retour à la connexion"
+            "backToLogin": "Retour à la connexion",
+            "invalidResetLink": "Lien de réinitialisation invalide",
+            "invalidResetLinkDescription": "Ce lien de réinitialisation est invalide ou a expiré.",
+            "verifyingEmail": "Vérification de votre email...",
+            "emailVerifiedTitle": "Email vérifié !",
+            "emailVerifiedDescription": "Votre email a été vérifié avec succès. Redirection...",
+            "verificationFailed": "Échec de la vérification",
+            "noVerificationToken": "Aucun jeton de vérification trouvé",
+            "invalidVerificationLink": "Lien de vérification invalide ou expiré",
+            "hidePassword": "Masquer le mot de passe",
+            "showPassword": "Afficher le mot de passe",
+            "passwordResetTitle": "Réinitialisation du mot de passe"
         },
         "oauth": {
             "continueWithGoogle": "Continuer avec Google",
@@ -78,7 +89,8 @@
             "all": "Tous",
             "none": "Aucun",
             "optional": "Optionnel",
-            "required": "Requis"
+            "required": "Requis",
+            "goToHome": "Retour à l'accueil"
         },
         "unsavedChanges": {
             "title": "Modifications non enregistrées",
@@ -94,7 +106,10 @@
             "notFound": "Ressource non trouvée",
             "validation": "Veuillez vérifier votre saisie",
             "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
-            "timeout": "La requête a expiré"
+            "timeout": "La requête a expiré",
+            "somethingWentWrong": "Une erreur est survenue",
+            "unexpectedError": "Une erreur inattendue s'est produite",
+            "tryAgain": "Réessayer"
         },
         "validation": {
             "required": "Ce champ est requis",
@@ -295,11 +310,42 @@
             "deleteTitle": "Supprimer l'organisation",
             "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {name} ? Cette action est irréversible.",
             "deleteSuccess": "Organisation supprimée",
-            "deleteFailed": "Échec de la suppression de l'organisation"
+            "deleteFailed": "Échec de la suppression de l'organisation",
+            "createTitle": "Créer une organisation",
+            "orgNamePlaceholder": "Nom de l'organisation",
+            "optionalDescription": "Description optionnelle..."
         },
         "theme": {
             "light": "Mode clair",
             "dark": "Mode sombre"
+        },
+        "admin": {
+            "title": "Admin",
+            "impersonation": {
+                "viewingAs": "Connecté en tant que",
+                "exit": "Quitter l'usurpation",
+                "ended": "Usurpation terminée",
+                "backToAdmin": "Vous êtes de retour sur votre compte administrateur",
+                "errorStopping": "Échec de l'arrêt de l'usurpation"
+            }
+        },
+        "home": {
+            "title": "Website Starter Pack",
+            "subtitle": "Template d'application web full-stack avec Nuxt 3, FastAPI, PostgreSQL et Traefik.",
+            "getStarted": "Commencer",
+            "apiConnected": "Connecté",
+            "apiOffline": "Hors ligne",
+            "apiChecking": "Vérification...",
+            "features": {
+                "auth": "Authentification",
+                "authDescription": "Authentification intégrée avec email/mot de passe et connexions sociales",
+                "payments": "Paiements",
+                "paymentsDescription": "Intégration Stripe pour les abonnements et la facturation",
+                "organizations": "Organisations",
+                "organizationsDescription": "Support multi-tenant avec gestion d'équipes",
+                "i18n": "i18n Prêt",
+                "i18nDescription": "Internationalisation avec anglais et français inclus"
+            }
         },
         "messages": {
             "title": "Messages",

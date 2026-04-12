@@ -13,12 +13,15 @@ export interface UnsavedChangesOptions {
     cancelText?: string;
 }
 
-const defaultOptions: UnsavedChangesOptions = {
-    title: 'Unsaved changes',
-    message: 'You have unsaved changes. Are you sure you want to leave this page?',
-    confirmText: 'Leave',
-    cancelText: 'Stay',
-};
+function getDefaultOptions(): UnsavedChangesOptions {
+    const { t } = useI18n();
+    return {
+        title: t('core.unsavedChanges.title'),
+        message: t('core.unsavedChanges.message'),
+        confirmText: t('core.unsavedChanges.leave'),
+        cancelText: t('core.unsavedChanges.stay'),
+    };
+}
 
 /**
  * Composable that warns users when they try to leave a page with unsaved changes.
@@ -49,7 +52,7 @@ export function useUnsavedChangesWarning(
     const modal = useModalStore();
     const router = useRouter();
 
-    const mergedOptions = { ...defaultOptions, ...options };
+    const mergedOptions = { ...getDefaultOptions(), ...options };
 
     // Helper to check if there are unsaved changes
     const checkUnsaved = (): boolean => {
@@ -125,7 +128,7 @@ export function useUnsavedChangesWarningManual(
     useUnsavedChangesWarning(hasUnsavedChanges, options);
 
     const modal = useModalStore();
-    const mergedOptions = { ...defaultOptions, ...options };
+    const mergedOptions = { ...getDefaultOptions(), ...options };
 
     const checkUnsaved = (): boolean => {
         return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;

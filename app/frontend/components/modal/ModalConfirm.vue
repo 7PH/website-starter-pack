@@ -26,16 +26,18 @@ const isOpen = computed({
     },
 });
 
+const { t } = useI18n();
+
 const options = computed((): ConfirmModalOptions => {
     if (import.meta.server) return {} as ConfirmModalOptions;
     return (modal.getOptions?.(MODAL_NAME) ?? {}) as ConfirmModalOptions;
 });
 
 // Default values
-const title = computed(() => options.value.title ?? 'Confirm');
-const message = computed(() => options.value.message ?? 'Are you sure you want to continue?');
-const confirmText = computed(() => options.value.confirmText ?? 'Confirm');
-const cancelText = computed(() => options.value.cancelText ?? 'Cancel');
+const title = computed(() => options.value.title ?? t('core.common.confirm'));
+const message = computed(() => options.value.message ?? '');
+const confirmText = computed(() => options.value.confirmText ?? t('core.common.confirm'));
+const cancelText = computed(() => options.value.cancelText ?? t('core.common.cancel'));
 const confirmColor = computed(() => {
     const color = options.value.confirmColor ?? 'primary';
     // Nuxt UI uses 'error' directly

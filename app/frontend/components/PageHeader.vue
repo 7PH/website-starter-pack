@@ -23,7 +23,7 @@ const userMenuItems = computed(() => [
             : []),
         { label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' },
         ...(auth.user?.is_admin
-            ? [{ label: 'Admin', icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
+            ? [{ label: t('core.admin.title'), icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
             : []),
     ],
     [{ label: t('core.auth.logout'), icon: 'i-lucide-log-out', onSelect: onSelectLogout }],
@@ -121,8 +121,8 @@ function onSelectLogout() {
                     <!-- SSR Placeholder -->
                     <template #fallback>
                         <div class="nav-actions invisible">
-                            <span>Login</span>
-                            <UButton label="Register" size="sm" />
+                            <span>{{ t('core.auth.login') }}</span>
+                            <UButton :label="t('core.auth.register')" size="sm" />
                         </div>
                     </template>
                 </ClientOnly>

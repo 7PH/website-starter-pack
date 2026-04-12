@@ -21,24 +21,28 @@ const techStack = [
     { name: 'Tailwind', icon: 'i-lucide-palette', color: 'accent' },
 ];
 
-const features = [
+const features = computed(() => [
     {
         icon: 'i-lucide-shield-check',
-        title: 'Authentication',
-        description: 'Built-in auth with email/password and social logins',
+        title: t('core.home.features.auth'),
+        description: t('core.home.features.authDescription'),
     },
     {
         icon: 'i-lucide-credit-card',
-        title: 'Payments',
-        description: 'Stripe integration for subscriptions and billing',
+        title: t('core.home.features.payments'),
+        description: t('core.home.features.paymentsDescription'),
     },
-    { icon: 'i-lucide-users', title: 'Organizations', description: 'Multi-tenant support with team management' },
+    {
+        icon: 'i-lucide-users',
+        title: t('core.home.features.organizations'),
+        description: t('core.home.features.organizationsDescription'),
+    },
     {
         icon: 'i-lucide-globe',
-        title: 'i18n Ready',
-        description: 'Internationalization with English and French included',
+        title: t('core.home.features.i18n'),
+        description: t('core.home.features.i18nDescription'),
     },
-];
+]);
 </script>
 
 <template>
@@ -49,12 +53,12 @@ const features = [
 
         <div class="hero-content">
             <UiAnimateFadeUp>
-                <h1 class="hero-title text-gradient-brand">Website Starter Pack</h1>
+                <h1 class="hero-title text-gradient-brand">{{ t('core.home.title') }}</h1>
             </UiAnimateFadeUp>
 
             <UiAnimateFadeUp :delay="100">
                 <p class="hero-subtitle">
-                    Full-stack web application template with Nuxt 3, FastAPI, PostgreSQL, and Traefik.
+                    {{ t('core.home.subtitle') }}
                 </p>
             </UiAnimateFadeUp>
 
@@ -73,7 +77,7 @@ const features = [
                 <div class="cta-section">
                     <UiGradientButton size="lg" @click="modal.open('auth', { initialMode: 'signup' })">
                         <UIcon name="i-lucide-arrow-right" class="mr-2" />
-                        Get Started
+                        {{ t('core.home.getStarted') }}
                     </UiGradientButton>
                 </div>
             </UiAnimateFadeUp>
@@ -91,7 +95,13 @@ const features = [
                     />
                     <span class="status-text">
                         API
-                        {{ apiStatus === 'online' ? 'Connected' : apiStatus === 'offline' ? 'Offline' : 'Checking...' }}
+                        {{
+                            apiStatus === 'online'
+                                ? t('core.home.apiConnected')
+                                : apiStatus === 'offline'
+                                  ? t('core.home.apiOffline')
+                                  : t('core.home.apiChecking')
+                        }}
                     </span>
                 </div>
             </UiAnimateFadeUp>

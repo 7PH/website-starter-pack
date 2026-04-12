@@ -19,7 +19,7 @@ onMounted(async () => {
 
     if (!token) {
         status.value = 'error';
-        errorMessage.value = 'No verification token found';
+        errorMessage.value = t('core.auth.noVerificationToken');
         return;
     }
 
@@ -33,7 +33,7 @@ onMounted(async () => {
         }, 3000);
     } else {
         status.value = 'error';
-        errorMessage.value = 'Invalid or expired verification link';
+        errorMessage.value = t('core.auth.invalidVerificationLink');
     }
 });
 </script>
@@ -44,26 +44,26 @@ onMounted(async () => {
             <!-- Loading -->
             <div v-if="status === 'loading'" class="py-8">
                 <UIcon name="i-lucide-loader-2" class="text-5xl text-primary-500 animate-spin" />
-                <p class="mt-4 text-gray-600 dark:text-gray-400">Verifying your email...</p>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">{{ t('core.auth.verifyingEmail') }}</p>
             </div>
 
             <!-- Success -->
             <div v-else-if="status === 'success'" class="py-8">
                 <UIcon name="i-lucide-check-circle" class="text-5xl text-green-500" />
-                <h2 class="mt-4 text-xl font-semibold">Email Verified!</h2>
+                <h2 class="mt-4 text-xl font-semibold">{{ t('core.auth.emailVerifiedTitle') }}</h2>
                 <p class="mt-2 text-gray-600 dark:text-gray-400">
-                    Your email has been successfully verified. Redirecting...
+                    {{ t('core.auth.emailVerifiedDescription') }}
                 </p>
             </div>
 
             <!-- Error -->
             <div v-else class="py-8">
                 <UIcon name="i-lucide-x-circle" class="text-5xl text-red-500" />
-                <h2 class="mt-4 text-xl font-semibold">Verification Failed</h2>
+                <h2 class="mt-4 text-xl font-semibold">{{ t('core.auth.verificationFailed') }}</h2>
                 <p class="mt-2 text-gray-600 dark:text-gray-400">
                     {{ errorMessage }}
                 </p>
-                <UButton class="mt-4" label="Go to Home" @click="router.push('/')" />
+                <UButton class="mt-4" :label="t('core.common.goToHome')" @click="router.push('/')" />
             </div>
         </UCard>
     </div>

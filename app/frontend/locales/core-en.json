@@ -35,7 +35,18 @@
             "brandingTagline": "Sign in to access your account.",
             "forgotPasswordMessage": "Enter your email address and we'll send you a link to reset your password.",
             "sendResetLink": "Send reset link",
-            "backToLogin": "Back to login"
+            "backToLogin": "Back to login",
+            "invalidResetLink": "Invalid Reset Link",
+            "invalidResetLinkDescription": "This password reset link is invalid or has expired.",
+            "verifyingEmail": "Verifying your email...",
+            "emailVerifiedTitle": "Email Verified!",
+            "emailVerifiedDescription": "Your email has been successfully verified. Redirecting...",
+            "verificationFailed": "Verification Failed",
+            "noVerificationToken": "No verification token found",
+            "invalidVerificationLink": "Invalid or expired verification link",
+            "hidePassword": "Hide password",
+            "showPassword": "Show password",
+            "passwordResetTitle": "Password Reset"
         },
         "oauth": {
             "continueWithGoogle": "Continue with Google",
@@ -78,7 +89,8 @@
             "all": "All",
             "none": "None",
             "optional": "Optional",
-            "required": "Required"
+            "required": "Required",
+            "goToHome": "Go to Home"
         },
         "unsavedChanges": {
             "title": "Unsaved changes",
@@ -94,7 +106,10 @@
             "notFound": "Resource not found",
             "validation": "Please check your input",
             "serverError": "Server error. Please try again later.",
-            "timeout": "Request timed out"
+            "timeout": "Request timed out",
+            "somethingWentWrong": "Something went wrong",
+            "unexpectedError": "An unexpected error occurred",
+            "tryAgain": "Try again"
         },
         "validation": {
             "required": "This field is required",
@@ -295,11 +310,42 @@
             "deleteTitle": "Delete Organization",
             "deleteConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",
             "deleteSuccess": "Organization deleted",
-            "deleteFailed": "Failed to delete organization"
+            "deleteFailed": "Failed to delete organization",
+            "createTitle": "Create Organization",
+            "orgNamePlaceholder": "Organization name",
+            "optionalDescription": "Optional description..."
         },
         "theme": {
             "light": "Light mode",
             "dark": "Dark mode"
+        },
+        "admin": {
+            "title": "Admin",
+            "impersonation": {
+                "viewingAs": "Viewing as",
+                "exit": "Exit Impersonation",
+                "ended": "Impersonation ended",
+                "backToAdmin": "You are now back to your admin account",
+                "errorStopping": "Failed to stop impersonation"
+            }
+        },
+        "home": {
+            "title": "Website Starter Pack",
+            "subtitle": "Full-stack web application template with Nuxt 3, FastAPI, PostgreSQL, and Traefik.",
+            "getStarted": "Get Started",
+            "apiConnected": "Connected",
+            "apiOffline": "Offline",
+            "apiChecking": "Checking...",
+            "features": {
+                "auth": "Authentication",
+                "authDescription": "Built-in auth with email/password and social logins",
+                "payments": "Payments",
+                "paymentsDescription": "Stripe integration for subscriptions and billing",
+                "organizations": "Organizations",
+                "organizationsDescription": "Multi-tenant support with team management",
+                "i18n": "i18n Ready",
+                "i18nDescription": "Internationalization with English and French included"
+            }
         },
         "messages": {
             "title": "Messages",

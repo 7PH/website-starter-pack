@@ -7,6 +7,7 @@
 
 const modal = useModalStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const status = ref<'loading' | 'ready' | 'no-token'>('loading');
 
@@ -40,15 +41,15 @@ onMounted(async () => {
         <UCard v-if="status === 'no-token'" class="max-w-md w-full text-center">
             <div class="py-8">
                 <UIcon name="i-lucide-x-circle" class="text-5xl text-red-500" />
-                <h2 class="mt-4 text-xl font-semibold">Invalid Reset Link</h2>
-                <p class="mt-2 text-gray-600 dark:text-gray-400">This password reset link is invalid or has expired.</p>
-                <UButton class="mt-4" label="Go to Home" @click="router.push('/')" />
+                <h2 class="mt-4 text-xl font-semibold">{{ t('core.auth.invalidResetLink') }}</h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">{{ t('core.auth.invalidResetLinkDescription') }}</p>
+                <UButton class="mt-4" :label="t('core.common.goToHome')" @click="router.push('/')" />
             </div>
         </UCard>
 
         <!-- Modal will render when token is present -->
         <div v-else class="text-center">
-            <p class="text-gray-600 dark:text-gray-400">Loading...</p>
+            <p class="text-gray-600 dark:text-gray-400">{{ t('core.common.loading') }}</p>
         </div>
     </div>
 </template>

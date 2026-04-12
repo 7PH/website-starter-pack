@@ -227,7 +227,7 @@ async function handleResetPassword() {
 
     const token = options.value.resetToken;
     if (!token) {
-        errors.value.general = 'Missing reset token';
+        errors.value.general = t('core.auth.invalidResetLink');
         return;
     }
 
@@ -310,7 +310,9 @@ function close() {
                                 variant="link"
                                 size="sm"
                                 :icon="showLoginPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                :aria-label="showLoginPassword ? 'Hide password' : 'Show password'"
+                                :aria-label="
+                                    showLoginPassword ? t('core.auth.hidePassword') : t('core.auth.showPassword')
+                                "
                                 @click="showLoginPassword = !showLoginPassword"
                             />
                         </template>
@@ -447,8 +449,8 @@ function close() {
             >
                 <UAlert
                     color="info"
-                    title="Password Reset"
-                    description="Enter your email address and we'll send you a link to reset your password."
+                    :title="t('core.auth.passwordResetTitle')"
+                    :description="t('core.auth.forgotPasswordMessage')"
                 />
 
                 <UFormField :label="t('core.auth.email')" :error="errors.email">
@@ -462,13 +464,13 @@ function close() {
                     />
                 </UFormField>
 
-                <UButton type="submit" label="Send Reset Link" :loading="isLoading" block />
+                <UButton type="submit" :label="t('core.auth.sendResetLink')" :loading="isLoading" block />
 
                 <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
 
                 <p class="text-center">
                     <UButton
-                        :label="`Back to ${t('core.auth.login')}`"
+                        :label="t('core.auth.backToLogin')"
                         variant="link"
                         color="neutral"
                         @click="switchMode('login')"
