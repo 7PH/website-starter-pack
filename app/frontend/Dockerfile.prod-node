@@ -1,5 +1,5 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
-FROM node:20-alpine3.20 as build-stage
+FROM node:20-alpine3.20 AS build-stage
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-FROM node:20-alpine3.20 as running-stage
+FROM node:20-alpine3.20 AS running-stage
 
 ENV NODE_ENV=production
 ENV PORT=3000

@@ -1,5 +1,5 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
-FROM node:20-alpine3.20 as build-stage
+FROM node:20-alpine3.20 AS build-stage
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-FROM nginx:1.26-alpine3.20-perl as running-stage
+FROM nginx:1.26-alpine3.20-perl AS running-stage
 
 WORKDIR /usr/share/nginx/html
 
