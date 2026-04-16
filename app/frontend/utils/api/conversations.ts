@@ -78,11 +78,13 @@ export async function sendMessage(conversationId: number, data: MessageCreate): 
  */
 export async function adminGetConversations(params?: {
     includeClosed?: boolean;
+    subtype?: string;
     limit?: number;
     offset?: number;
 }): Promise<ConversationListResponse> {
     const query = new URLSearchParams();
     if (params?.includeClosed) query.set('include_closed', 'true');
+    if (params?.subtype) query.set('subtype', params.subtype);
     if (params?.limit) query.set('limit', params.limit.toString());
     if (params?.offset) query.set('offset', params.offset.toString());
 

@@ -42,6 +42,7 @@ class ConversationCreate(BaseModel):
 
     subject: str = Field(min_length=1, max_length=255)
     content: str = Field(min_length=1, max_length=10000)  # Initial message
+    subtype: str | None = Field(None, max_length=100)
 
 
 class ConversationUpdate(BaseModel):
@@ -55,6 +56,7 @@ class ConversationRead(BaseModel):
 
     id: int
     type: str
+    subtype: str | None = None
     subject: str | None = None
     created_by_id: int | None = None
     created_by: ConversationUserPreview | None = None

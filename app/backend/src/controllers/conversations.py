@@ -104,6 +104,7 @@ def _conversation_to_read(
     return ConversationRead(
         id=conversation.id,
         type=conversation.type,
+        subtype=conversation.subtype,
         subject=conversation.subject,
         created_by_id=conversation.created_by_id,
         created_by=created_by,
@@ -134,6 +135,7 @@ def _conversation_to_detail(
     return ConversationDetail(
         id=conversation.id,
         type=conversation.type,
+        subtype=conversation.subtype,
         subject=conversation.subject,
         created_by_id=conversation.created_by_id,
         created_by=created_by,
@@ -173,6 +175,7 @@ def create_new_conversation(
         user_id=user.id,
         subject=data.subject,
         initial_content=data.content,
+        subtype=data.subtype,
     )
 
     log_event(
@@ -349,6 +352,7 @@ def admin_list_conversations(
     session: Session = Depends(get_session),
     _admin: UserRead = Depends(get_current_admin),
     include_closed: bool = Query(False),
+    subtype: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -356,6 +360,7 @@ def admin_list_conversations(
     conversations, total = get_all_support_conversations(
         session=session,
         include_closed=include_closed,
+        subtype=subtype,
         limit=limit,
         offset=offset,
     )

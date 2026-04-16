@@ -16,11 +16,13 @@ def create_conversation(
     subject: str | None,
     initial_content: str,
     conversation_type: str = ConversationType.SUPPORT.value,
+    subtype: str | None = None,
 ) -> ConversationBase:
     """Create a new conversation with an initial message."""
     conversation = ConversationBase(
         type=conversation_type,
         subject=subject,
+        subtype=subtype,
         created_by_id=user_id,
     )
     session.add(conversation)
@@ -77,12 +79,16 @@ def get_all_support_conversations(
     include_closed: bool = False,
     limit: int = 50,
     offset: int = 0,
+    subtype: str | None = None,
 ) -> tuple[list[ConversationBase], int]:
     """Get all support conversations (for admin)."""
     query = session.query(ConversationBase).filter(ConversationBase.type == ConversationType.SUPPORT.value)
 
     if not include_closed:
         query = query.filter(ConversationBase.is_closed == False)  # noqa: E712
+
+    if subtype is not None:
+        query = query.filter(ConversationBase.subtype == subtype)
 
     total = query.count()
     conversations = query.order_by(ConversationBase.updated_at.desc()).offset(offset).limit(limit).all()

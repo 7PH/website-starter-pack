@@ -5,6 +5,7 @@ import * as conversationsApi from '~/utils/api/conversations';
 
 definePageMeta({
     middleware: ['admin'],
+    layout: 'fullheight',
 });
 
 const route = useRoute();
@@ -166,7 +167,7 @@ function getUserDisplay(conv: ConversationDetail): string {
 </script>
 
 <template>
-    <div class="page-box">
+    <div class="page-box admin-conversation-page">
         <UiPageTitleBanner>
             Admin
             <template #subtitle> Manage users, organizations, and system settings </template>
@@ -238,7 +239,7 @@ function getUserDisplay(conv: ConversationDetail): string {
                 </div>
 
                 <!-- Messages -->
-                <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                <UCard :ui="{ body: 'p-0 sm:p-0 flex-1 min-h-0 flex flex-col' }" class="flex-1 min-h-0 flex flex-col">
                     <div ref="messagesContainer" class="messages-container">
                         <div
                             v-for="message in conversation.messages"
@@ -306,8 +307,12 @@ function getUserDisplay(conv: ConversationDetail): string {
 <style scoped>
 @reference "~/assets/css/main.css";
 
+.admin-conversation-page {
+    @apply flex flex-col flex-1 min-h-0;
+}
+
 .admin-conversation {
-    @apply max-w-4xl mx-auto;
+    @apply w-full flex flex-col flex-1 min-h-0;
 }
 
 .back-link {
@@ -348,7 +353,7 @@ function getUserDisplay(conv: ConversationDetail): string {
 }
 
 .messages-container {
-    @apply p-4 min-h-[400px] max-h-[600px] overflow-y-auto space-y-4;
+    @apply p-4 flex-1 min-h-0 overflow-y-auto space-y-4;
 }
 
 .message {
