@@ -2,6 +2,8 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import { CORE_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes';
+import { PROJECT_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes-ext';
 
 definePageMeta({
     middleware: ['admin'],
@@ -9,13 +11,16 @@ definePageMeta({
 
 // Filters
 const includeClosed = ref(false);
+const allSubtypes = [...CORE_CONVERSATION_SUBTYPES, ...PROJECT_CONVERSATION_SUBTYPES];
+const subtypeFilter = ref('all');
+const subtypeOptions = [{ value: 'all', label: 'All' }, ...allSubtypes];
 
 // Pagination
 const page = ref(1);
 const itemsPerPage = 50;
 
 // Reset page when filters change
-watch([includeClosed], () => {
+watch([includeClosed, subtypeFilter], () => {
     page.value = 1;
 });
 
@@ -28,10 +33,11 @@ const {
     () =>
         conversationsApi.adminGetConversations({
             includeClosed: includeClosed.value,
+            subtype: subtypeFilter.value !== 'all' ? subtypeFilter.value : undefined,
             limit: itemsPerPage,
             offset: (page.value - 1) * itemsPerPage,
         }),
-    { watch: [includeClosed, page], server: false },
+    { watch: [includeClosed, subtypeFilter, page], server: false },
 );
 
 const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / itemsPerPage));
@@ -83,6 +89,11 @@ function getUserDisplay(conversation: ConversationRead): string {
 
             <!-- Filters -->
             <div class="filters">
+                <div v-if="allSubtypes.length" class="filter-item">
+                    <label class="filter-label">Subtype</label>
+                    <USelect v-model="subtypeFilter" :items="subtypeOptions" value-key="value" class="w-48" />
+                </div>
+                <div class="flex-1" />
                 <UCheckbox v-model="includeClosed" label="Show closed" />
             </div>
 
@@ -184,7 +195,15 @@ function getUserDisplay(conversation: ConversationRead): string {
 }
 
 .filters {
-    @apply flex items-center gap-4 mb-4;
+    @apply flex items-end gap-4 mb-4;
+}
+
+.filter-item {
+    @apply flex flex-col gap-1;
+}
+
+.filter-label {
+    @apply text-xs font-medium text-gray-500 dark:text-gray-400;
 }
 
 .conversation-link {

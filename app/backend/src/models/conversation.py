@@ -27,6 +27,7 @@ class ConversationBase(Base):
     # Conversation metadata
     type = Column(String(50), nullable=False, default=ConversationType.SUPPORT.value, index=True)
     subject = Column(String(255), nullable=True)
+    subtype = Column(String(100), nullable=True, index=True)
 
     # For support: the user who initiated the conversation
     created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
