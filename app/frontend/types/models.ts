@@ -259,8 +259,10 @@ export type Code = string;
 export type State4 = string;
 export type Subject = string;
 export type Content = string;
+export type Subtype = string | null;
 export type Id5 = number;
 export type Type1 = string;
+export type Subtype1 = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
 export type Id6 = number;
@@ -280,6 +282,7 @@ export type IsAdminResponse = boolean;
 export type CreatedAt6 = string | null;
 export type Id8 = number;
 export type Type2 = string;
+export type Subtype2 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
@@ -689,6 +692,7 @@ export interface OAuthCallbackRequest {
 export interface ConversationCreate {
   subject: Subject;
   content: Content;
+  subtype?: Subtype;
 }
 /**
  * Schema for reading a conversation.
@@ -696,6 +700,7 @@ export interface ConversationCreate {
 export interface ConversationRead {
   id: Id5;
   type: Type1;
+  subtype?: Subtype1;
   subject?: Subject1;
   created_by_id?: CreatedById;
   created_by?: ConversationUserPreview | null;
@@ -733,6 +738,7 @@ export interface MessageRead {
 export interface ConversationDetail {
   id: Id8;
   type: Type2;
+  subtype?: Subtype2;
   subject?: Subject2;
   created_by_id?: CreatedById1;
   created_by?: ConversationUserPreview | null;

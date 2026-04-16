@@ -302,6 +302,19 @@
           "minLength": 1,
           "title": "Content",
           "type": "string"
+        },
+        "subtype": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtype"
         }
       },
       "required": [
@@ -321,6 +334,18 @@
         "type": {
           "title": "Type",
           "type": "string"
+        },
+        "subtype": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtype"
         },
         "subject": {
           "anyOf": [
@@ -475,6 +500,18 @@
         "type": {
           "title": "Type",
           "type": "string"
+        },
+        "subtype": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subtype"
         },
         "subject": {
           "anyOf": [
