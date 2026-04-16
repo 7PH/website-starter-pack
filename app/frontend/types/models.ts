@@ -100,6 +100,7 @@ export type IsPremium1 = boolean;
 export type EmailConfirmed = boolean;
 export type CreatedAt1 = string | null;
 export type DeletedAt = string | null;
+export type Organizations1 = UserOrganizationInfo[];
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
 export type Email4 = string | null;
@@ -378,6 +379,7 @@ export interface AdminUserRead {
   email_confirmed: EmailConfirmed;
   created_at: CreatedAt1;
   deleted_at?: DeletedAt;
+  organizations?: Organizations1;
 }
 /**
  * Schema for admin updating a user.

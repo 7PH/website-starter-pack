@@ -311,6 +311,12 @@
             "deleteConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",
             "deleteSuccess": "Organization deleted",
             "deleteFailed": "Failed to delete organization",
+            "contactAdmins": "Contact Org Admins",
+            "contactSubject": "Subject",
+            "contactMessage": "Message",
+            "contactSend": "Send",
+            "contactSuccess": "Message sent to organization admins",
+            "contactFailed": "Failed to send message",
             "createTitle": "Create Organization",
             "orgNamePlaceholder": "Organization name",
             "optionalDescription": "Optional description..."

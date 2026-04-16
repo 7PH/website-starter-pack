@@ -6,6 +6,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+# Field length constants (shared across schemas)
+SUBJECT_MAX_LENGTH = 255
+MESSAGE_MAX_LENGTH = 10000
+SUBTYPE_MAX_LENGTH = 100
+
 
 class ConversationUserPreview(BaseModel):
     """User preview for conversation context, includes email for admin visibility."""
@@ -19,7 +24,7 @@ class ConversationUserPreview(BaseModel):
 class MessageCreate(BaseModel):
     """Schema for creating a new message."""
 
-    content: str = Field(min_length=1, max_length=10000)
+    content: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
 
 
 class MessageRead(BaseModel):
@@ -40,9 +45,9 @@ class MessageRead(BaseModel):
 class ConversationCreate(BaseModel):
     """Schema for creating a new support conversation."""
 
-    subject: str = Field(min_length=1, max_length=255)
-    content: str = Field(min_length=1, max_length=10000)  # Initial message
-    subtype: str | None = Field(None, max_length=100)
+    subject: str = Field(min_length=1, max_length=SUBJECT_MAX_LENGTH)
+    content: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
+    subtype: str | None = Field(None, max_length=SUBTYPE_MAX_LENGTH)
 
 
 class ConversationUpdate(BaseModel):
@@ -94,3 +99,12 @@ class MessageListResponse(BaseModel):
     limit: int
     offset: int
     has_more: bool
+
+
+class AdminConversationCreate(BaseModel):
+    """Schema for admin creating a conversation with specific users."""
+
+    subject: str = Field(min_length=1, max_length=SUBJECT_MAX_LENGTH)
+    content: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
+    subtype: str | None = Field(None, max_length=SUBTYPE_MAX_LENGTH)
+    participant_user_ids: list[int] = Field(min_length=1)

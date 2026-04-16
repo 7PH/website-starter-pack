@@ -119,6 +119,14 @@
           ],
           "default": null,
           "title": "Deleted At"
+        },
+        "organizations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/UserOrganizationInfo"
+          },
+          "title": "Organizations",
+          "type": "array"
         }
       },
       "required": [
