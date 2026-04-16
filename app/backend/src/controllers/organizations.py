@@ -60,6 +60,7 @@ from ..schemas.organization import (
     OrganizationSubscriptionStatus,
     OrganizationUpdate,
 )
+from ..schemas.organization_ext import OrganizationCustomData
 from ..schemas.stripe import BillingPortalResponse
 from ..schemas.user import UserRead
 
@@ -177,6 +178,7 @@ def _build_org_read(
         stripe_premium=org.stripe_premium,
         stripe_quota=org.stripe_quota,
         created_at=org.created_at,
+        custom_data=org.custom_data or {},
         deleted_at=org.deleted_at,
         member_count=member_count,
         premium_member_count=premium_count,
@@ -269,6 +271,11 @@ def create_new_organization(
             detail="An organization with this email already exists",
         )
 
+    # Validate custom_data against project schema
+    custom_data = {}
+    if org_data.custom_data:
+        custom_data = OrganizationCustomData(**org_data.custom_data).model_dump(exclude_none=True)
+
     # Create the organization
     org = OrganizationBase(
         name=org_data.name,
@@ -282,6 +289,7 @@ def create_new_organization(
         state=org_data.state,
         postal_code=org_data.postal_code,
         country=org_data.country,
+        custom_data=custom_data,
     )
     org = create_organization(session, org)
 
@@ -371,6 +379,10 @@ def update_org(
         value = getattr(org_data, field, None)
         if value is not None:
             setattr(org, field, value)
+
+    if org_data.custom_data is not None:
+        merged = {**(org.custom_data or {}), **org_data.custom_data}
+        org.custom_data = OrganizationCustomData(**merged).model_dump(exclude_none=True)
 
     update_organization(session, org)
 

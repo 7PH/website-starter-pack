@@ -24,7 +24,5 @@ function update<K extends keyof OrganizationCustomData>(key: K, value: Organizat
 </script>
 
 <template>
-    <div>
-        <!-- Add your custom form fields here -->
-    </div>
+    <div />
 </template>
