@@ -101,9 +101,10 @@ def create_admin_conversation(
     # Add admin as participant (already read)
     add_participant(session, conversation.id, admin_user_id, last_read_at=datetime.now(UTC))
 
-    # Add target users as participants (unread)
+    # Add target users as participants (unread), skipping admin (already added above)
     for user_id in participant_user_ids:
-        add_participant(session, conversation.id, user_id)
+        if user_id != admin_user_id:
+            add_participant(session, conversation.id, user_id)
 
     session.commit()
     session.refresh(conversation)
