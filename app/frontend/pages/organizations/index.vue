@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import OrganizationsCreateModalDefault from '~/components/organizations/CreateModal.vue';
+import OrganizationsPageActionsDefault from '~/components/organizations/PageActions.vue';
 
 definePageMeta({
     middleware: ['auth'],
@@ -9,6 +10,7 @@ definePageMeta({
 
 // Overridable components - sub-apps can replace these via config/component-overrides.ts
 const OrganizationsCreateModal = useOverridable('OrganizationsCreateModal', OrganizationsCreateModalDefault);
+const OrganizationsPageActions = useOverridable('OrganizationsPageActions', OrganizationsPageActionsDefault);
 
 const auth = useAuth();
 const api = useApi();
@@ -99,14 +101,7 @@ async function leaveOrganization(org: UserOrganizationInfo) {
         </UiPageTitleBanner>
 
         <div class="organizations-content">
-            <div class="content-header">
-                <UButton
-                    v-if="canCreateOrg"
-                    :label="t('core.organizations.createOrganization')"
-                    icon="i-lucide-plus"
-                    @click="showCreateModal = true"
-                />
-            </div>
+            <OrganizationsPageActions :can-create-org="canCreateOrg" @create="showCreateModal = true" />
 
             <!-- Loading state -->
             <div v-if="pending" class="loading-state">
@@ -155,10 +150,6 @@ async function leaveOrganization(org: UserOrganizationInfo) {
 
 .organizations-content {
     @apply max-w-5xl mx-auto;
-}
-
-.content-header {
-    @apply flex justify-end mb-6;
 }
 
 .loading-state {

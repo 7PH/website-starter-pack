@@ -11,7 +11,9 @@ export type AsyncComponentLoader = () => Promise<{ default: Component }>;
  *
  * Keys must match the override key used in core components:
  * - 'OrganizationsCreateModal' - Custom organization creation modal
+ * - 'OrganizationsPageActions' - Custom actions header on organizations list page
  * - 'OrganizationsSubscriptionModal' - Custom billing/subscription UI
+ * - 'MessagesPageActions' - Custom actions header on messages list page
  * - 'ModalAuth' - Custom authentication flow
  *
  * Values must be async import functions for proper code splitting:

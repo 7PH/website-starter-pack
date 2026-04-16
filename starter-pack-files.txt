@@ -166,7 +166,9 @@ app/frontend/components/organizations/InfoCard.vue
 app/frontend/components/organizations/MembersCard.vue
 app/frontend/components/organizations/MetadataFields.vue:template
 app/frontend/components/organizations/MetadataDisplay.vue:template
+app/frontend/components/organizations/PageActions.vue
 app/frontend/components/organizations/SubscriptionModal.vue
+app/frontend/components/messages/PageActions.vue
 app/frontend/composables/organizations/useOrganizationForm.ts
 app/frontend/composables/organizations/useOrganizationMembers.ts
 app/frontend/composables/organizations/useOrganizationStatus.ts

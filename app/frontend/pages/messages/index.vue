@@ -2,11 +2,15 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import MessagesPageActionsDefault from '~/components/messages/PageActions.vue';
 
 definePageMeta({
     middleware: 'auth',
     auth: true,
 });
+
+// Overridable components - sub-apps can replace these via config/component-overrides.ts
+const MessagesPageActions = useOverridable('MessagesPageActions', MessagesPageActionsDefault);
 
 const { t } = useI18n();
 const toast = useToast();
@@ -116,21 +120,11 @@ function truncateMessage(content: string | undefined, maxLength = 60): string {
 
         <div class="messages-page">
             <!-- Header with actions -->
-            <div class="page-header">
-                <div class="header-left">
-                    <span class="conversation-count"
-                        >{{ conversationsData?.total ?? 0 }} {{ t('core.messages.conversations') }}</span
-                    >
-                </div>
-                <div class="header-right">
-                    <UCheckbox v-model="includeClosed" :label="t('core.messages.showClosed')" />
-                    <UButton
-                        icon="i-lucide-plus"
-                        :label="t('core.messages.newConversation')"
-                        @click="showNewConversation = true"
-                    />
-                </div>
-            </div>
+            <MessagesPageActions
+                v-model:include-closed="includeClosed"
+                :total-count="conversationsData?.total ?? 0"
+                @new-conversation="showNewConversation = true"
+            />
 
             <!-- Conversations List -->
             <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -245,22 +239,6 @@ function truncateMessage(content: string | undefined, maxLength = 60): string {
 
 <style scoped>
 @reference "~/assets/css/main.css";
-.page-header {
-    @apply flex items-center justify-between mb-4;
-}
-
-.header-left {
-    @apply flex items-center gap-4;
-}
-
-.conversation-count {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.header-right {
-    @apply flex items-center gap-4;
-}
-
 .loading-state {
     @apply p-4 space-y-2;
 }
