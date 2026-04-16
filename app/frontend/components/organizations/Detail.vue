@@ -5,6 +5,7 @@ import { formatDate } from '~/utils/formatters';
 import { useOrganizationMembers, useOrganizationQuota } from '~/composables/organizations/useOrganizationMembers';
 import { useOrganizationSubscription } from '~/composables/organizations/useOrganizationSubscription';
 import { useOrganizationForm } from '~/composables/organizations/useOrganizationForm';
+import { adminCreateConversation } from '~/utils/api/conversations';
 
 export interface OrganizationDetailProps {
     /** Whether this is admin view (shows extra controls and links) */
@@ -146,6 +147,36 @@ async function deleteOrganization() {
     }
 }
 
+// Contact org admins (admin view only)
+const showContactModal = ref(false);
+const contactSubject = ref('');
+const contactContent = ref('');
+const isSendingContact = ref(false);
+
+async function contactOrgAdmins() {
+    if (!org.value) return;
+    const adminIds = (org.value.members ?? []).filter((m) => m.is_admin).map((m) => m.user_id);
+    if (!adminIds.length) return;
+
+    isSendingContact.value = true;
+    try {
+        const conversation = await adminCreateConversation({
+            subject: contactSubject.value,
+            content: contactContent.value,
+            participant_user_ids: adminIds,
+        });
+        showSuccess(t('core.organizations.contactSuccess'));
+        showContactModal.value = false;
+        contactSubject.value = '';
+        contactContent.value = '';
+        router.push(`/admin/messages/${conversation.id}`);
+    } catch (error: unknown) {
+        showError(error, 'core.organizations.contactFailed');
+    } finally {
+        isSendingContact.value = false;
+    }
+}
+
 // Check for subscription success/cancel query params
 onMounted(() => {
     if (route.query.subscription === 'success') {
@@ -255,6 +286,14 @@ onMounted(() => {
                     </template>
                     <UButton
                         v-if="isAdminView"
+                        :label="t('core.organizations.contactAdmins')"
+                        icon="i-lucide-message-square-plus"
+                        color="neutral"
+                        variant="outline"
+                        @click="showContactModal = true"
+                    />
+                    <UButton
+                        v-if="isAdminView"
                         :label="t('core.common.delete')"
                         icon="i-lucide-trash-2"
                         color="error"
@@ -333,6 +372,46 @@ onMounted(() => {
                 />
             </div>
         </template>
+
+        <!-- Contact Org Admins Modal -->
+        <UModal v-model:open="showContactModal">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <UiModalHeader
+                            :title="t('core.organizations.contactAdmins')"
+                            @close="showContactModal = false"
+                        />
+                    </template>
+
+                    <div class="flex flex-col gap-4">
+                        <UFormField :label="t('core.organizations.contactSubject')">
+                            <UInput v-model="contactSubject" class="w-full" />
+                        </UFormField>
+                        <UFormField :label="t('core.organizations.contactMessage')" required>
+                            <UTextarea v-model="contactContent" :rows="5" class="w-full" />
+                        </UFormField>
+                    </div>
+
+                    <template #footer>
+                        <UiFormActions>
+                            <UButton
+                                color="neutral"
+                                variant="outline"
+                                :label="t('core.common.cancel')"
+                                @click="showContactModal = false"
+                            />
+                            <UButton
+                                :label="t('core.organizations.contactSend')"
+                                :loading="isSendingContact"
+                                :disabled="!contactSubject.trim() || !contactContent.trim()"
+                                @click="contactOrgAdmins"
+                            />
+                        </UiFormActions>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
 
         <!-- Subscribe Modal -->
         <OrganizationsSubscriptionModal

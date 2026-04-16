@@ -41,6 +41,13 @@ const form = ref({
 const isEditing = ref(false);
 const isSaving = ref(false);
 
+// Tabs
+const activeTab = ref('info');
+const tabItems = [
+    { value: 'info', label: 'Info & Organizations', icon: 'i-lucide-user' },
+    { value: 'events', label: 'Events', icon: 'i-lucide-history' },
+];
+
 // Event log table columns
 const eventColumns = [
     { accessorKey: 'action', header: 'Action' },
@@ -241,7 +248,10 @@ async function deleteUser() {
                     class="mb-6"
                 />
 
-                <div class="content-grid">
+                <UTabs v-model="activeTab" :items="tabItems" class="mb-6" />
+
+                <!-- Tab: Info & Organizations -->
+                <div v-if="activeTab === 'info'" class="content-grid">
                     <!-- User Info Card -->
                     <UCard class="info-card">
                         <template #header>
@@ -306,7 +316,34 @@ async function deleteUser() {
                         </div>
                     </UCard>
 
-                    <!-- Event Log Card -->
+                    <!-- Organizations Card -->
+                    <UCard>
+                        <template #header>
+                            <span class="font-semibold">Organizations</span>
+                        </template>
+
+                        <div v-if="user.organizations?.length" class="org-list">
+                            <div v-for="org in user.organizations" :key="org.organization_id" class="org-item">
+                                <NuxtLink :to="`/admin/organizations/${org.organization_id}`" class="org-link">
+                                    {{ org.organization_name }}
+                                </NuxtLink>
+                                <div class="org-badges">
+                                    <UBadge v-if="org.is_admin" label="Admin" color="info" size="xs" />
+                                    <UBadge
+                                        v-if="org.has_premium_seat"
+                                        label="Premium Seat"
+                                        color="warning"
+                                        size="xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <p v-else class="text-muted">Not a member of any organization.</p>
+                    </UCard>
+                </div>
+
+                <!-- Tab: Events -->
+                <div v-if="activeTab === 'events'">
                     <UCard class="events-card">
                         <template #header>
                             <span class="font-semibold">Event Log</span>
@@ -439,5 +476,21 @@ async function deleteUser() {
 
 .text-muted {
     @apply text-gray-500 dark:text-gray-400;
+}
+
+.org-list {
+    @apply flex flex-col divide-y divide-gray-200 dark:divide-gray-700;
+}
+
+.org-item {
+    @apply flex items-center justify-between py-3;
+}
+
+.org-link {
+    @apply text-primary-500 hover:underline;
+}
+
+.org-badges {
+    @apply flex gap-2;
 }
 </style>

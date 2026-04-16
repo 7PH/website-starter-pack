@@ -14,6 +14,7 @@ from ..constants import EventType
 from ..crud.conversations import (
     add_message,
     close_conversation,
+    create_admin_conversation,
     create_conversation,
     get_all_support_conversations,
     get_conversation_by_id,
@@ -26,11 +27,13 @@ from ..crud.conversations import (
     user_can_access_conversation,
 )
 from ..crud.event_logs import log_event
+from ..crud.users import get_user_by_id
 from ..helpers.auth import get_current_admin, get_current_user
 from ..helpers.db import get_session
 from ..helpers.ratelimit import ensure_rate_limit
 from ..models.conversation import ConversationBase, MessageBase
 from ..schemas.conversation import (
+    AdminConversationCreate,
     ConversationCreate,
     ConversationDetail,
     ConversationListResponse,
@@ -344,6 +347,42 @@ def send_message(
 # ============================================================================
 # Admin Endpoints
 # ============================================================================
+
+
+@admin_router.post("", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
+def admin_create_conversation(
+    *,
+    session: Session = Depends(get_session),
+    admin: UserRead = Depends(get_current_admin),
+    data: AdminConversationCreate,
+):
+    """Create a conversation with specific users as participants (admin only)."""
+    # Validate all participant users exist
+    for user_id in data.participant_user_ids:
+        user = get_user_by_id(session, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User {user_id} not found",
+            )
+
+    conversation = create_admin_conversation(
+        session=session,
+        admin_user_id=admin.id,
+        subject=data.subject,
+        initial_content=data.content,
+        participant_user_ids=data.participant_user_ids,
+        subtype=data.subtype,
+    )
+
+    log_event(
+        session=session,
+        user_id=admin.id,
+        action=EventType.CONVERSATION_CREATED,
+        details={"conversation_id": conversation.id, "participant_user_ids": data.participant_user_ids},
+    )
+
+    return _conversation_to_read(conversation)
 
 
 @admin_router.get("", response_model=ConversationListResponse)

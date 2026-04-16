@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import get_events, get_user_events, log_event
+from ..crud.organizations import get_user_organizations
 from ..crud.users import get_user_by_id, soft_delete_user, update_user
 from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id
 from ..helpers.db import get_session
@@ -124,7 +125,18 @@ def get_user_detail(
     user = get_user_by_id(session, user_id, include_deleted=True)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return AdminUserRead.model_validate(user)
+    user_data = AdminUserRead.model_validate(user)
+    memberships = get_user_organizations(session, user_id)
+    user_data.organizations = [
+        {
+            "organization_id": m.organization_id,
+            "organization_name": m.organization.name,
+            "is_admin": m.is_admin,
+            "has_premium_seat": m.has_premium_seat,
+        }
+        for m in memberships
+    ]
+    return user_data
 
 
 @router.put("/users/{user_id}", response_model=AdminUserRead)

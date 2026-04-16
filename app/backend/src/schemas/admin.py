@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from .event_log import EventLogRead
+from .organization import UserOrganizationInfo
 from .user import UserRead, UserToken
 
 
@@ -32,6 +33,7 @@ class AdminUserRead(BaseModel):
     email_confirmed: bool
     created_at: datetime | None
     deleted_at: datetime | None = None
+    organizations: list[UserOrganizationInfo] = []
 
     class Config:
         from_attributes = True

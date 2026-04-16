@@ -74,6 +74,18 @@ export async function sendMessage(conversationId: number, data: MessageCreate): 
 // ============================================================================
 
 /**
+ * Create a conversation with specific users as participants (admin only).
+ */
+export async function adminCreateConversation(data: {
+    subject: string;
+    content: string;
+    subtype?: string;
+    participant_user_ids: number[];
+}): Promise<ConversationRead> {
+    return useApi().post<ConversationRead>('/admin/conversations', data);
+}
+
+/**
  * List all support conversations (admin only).
  */
 export async function adminGetConversations(params?: {

@@ -311,6 +311,12 @@
             "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {name} ? Cette action est irréversible.",
             "deleteSuccess": "Organisation supprimée",
             "deleteFailed": "Échec de la suppression de l'organisation",
+            "contactAdmins": "Contacter les admins",
+            "contactSubject": "Sujet",
+            "contactMessage": "Message",
+            "contactSend": "Envoyer",
+            "contactSuccess": "Message envoyé aux administrateurs de l'organisation",
+            "contactFailed": "Échec de l'envoi du message",
             "createTitle": "Créer une organisation",
             "orgNamePlaceholder": "Nom de l'organisation",
             "optionalDescription": "Description optionnelle..."

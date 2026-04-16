@@ -10,6 +10,35 @@ from sqlalchemy.orm import Session
 from ..models.conversation import ConversationBase, ConversationParticipantBase, ConversationType, MessageBase
 
 
+def add_participant(
+    session: Session,
+    conversation_id: int,
+    user_id: int,
+    last_read_at: datetime | None = None,
+) -> ConversationParticipantBase:
+    """Add a user as a participant to a conversation, or update if already exists."""
+    participant = (
+        session.query(ConversationParticipantBase)
+        .filter(
+            ConversationParticipantBase.conversation_id == conversation_id,
+            ConversationParticipantBase.user_id == user_id,
+        )
+        .first()
+    )
+    if participant:
+        if last_read_at is not None:
+            participant.last_read_at = last_read_at
+        return participant
+
+    participant = ConversationParticipantBase(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        last_read_at=last_read_at,
+    )
+    session.add(participant)
+    return participant
+
+
 def create_conversation(
     session: Session,
     user_id: int,
@@ -28,7 +57,6 @@ def create_conversation(
     session.add(conversation)
     session.flush()
 
-    # Add the initial message
     message = MessageBase(
         conversation_id=conversation.id,
         sender_id=user_id,
@@ -37,13 +65,45 @@ def create_conversation(
     )
     session.add(message)
 
-    # Add the user as a participant
-    participant = ConversationParticipantBase(
-        conversation_id=conversation.id,
-        user_id=user_id,
-        last_read_at=datetime.now(UTC),
+    add_participant(session, conversation.id, user_id, last_read_at=datetime.now(UTC))
+
+    session.commit()
+    session.refresh(conversation)
+    return conversation
+
+
+def create_admin_conversation(
+    session: Session,
+    admin_user_id: int,
+    subject: str | None,
+    initial_content: str,
+    participant_user_ids: list[int],
+    subtype: str | None = None,
+) -> ConversationBase:
+    """Create a conversation initiated by an admin with specific users as participants."""
+    conversation = ConversationBase(
+        type=ConversationType.SUPPORT.value,
+        subject=subject,
+        subtype=subtype,
+        created_by_id=admin_user_id,
     )
-    session.add(participant)
+    session.add(conversation)
+    session.flush()
+
+    message = MessageBase(
+        conversation_id=conversation.id,
+        sender_id=admin_user_id,
+        content=initial_content,
+        is_admin_response=True,
+    )
+    session.add(message)
+
+    # Add admin as participant (already read)
+    add_participant(session, conversation.id, admin_user_id, last_read_at=datetime.now(UTC))
+
+    # Add target users as participants (unread)
+    for user_id in participant_user_ids:
+        add_participant(session, conversation.id, user_id)
 
     session.commit()
     session.refresh(conversation)
@@ -62,8 +122,15 @@ def get_user_conversations(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[ConversationBase], int]:
-    """Get conversations for a user."""
-    query = session.query(ConversationBase).filter(ConversationBase.created_by_id == user_id)
+    """Get conversations where the user is the creator or a participant."""
+    participant_conv_ids = (
+        session.query(ConversationParticipantBase.conversation_id)
+        .filter(ConversationParticipantBase.user_id == user_id)
+        .subquery()
+    )
+    query = session.query(ConversationBase).filter(
+        (ConversationBase.created_by_id == user_id) | (ConversationBase.id.in_(participant_conv_ids))
+    )
 
     if not include_closed:
         query = query.filter(ConversationBase.is_closed == False)  # noqa: E712
@@ -160,26 +227,7 @@ def get_last_message(session: Session, conversation_id: int) -> MessageBase | No
 
 def mark_as_read(session: Session, conversation_id: int, user_id: int) -> None:
     """Mark a conversation as read for a user."""
-    participant = (
-        session.query(ConversationParticipantBase)
-        .filter(
-            ConversationParticipantBase.conversation_id == conversation_id,
-            ConversationParticipantBase.user_id == user_id,
-        )
-        .first()
-    )
-
-    if participant:
-        participant.last_read_at = datetime.now(UTC)
-    else:
-        # Create participant record if it doesn't exist
-        participant = ConversationParticipantBase(
-            conversation_id=conversation_id,
-            user_id=user_id,
-            last_read_at=datetime.now(UTC),
-        )
-        session.add(participant)
-
+    add_participant(session, conversation_id, user_id, last_read_at=datetime.now(UTC))
     session.commit()
 
 
@@ -242,16 +290,14 @@ def reopen_conversation(session: Session, conversation_id: int) -> ConversationB
 
 
 def user_can_access_conversation(session: Session, conversation_id: int, user_id: int) -> bool:
-    """Check if a user can access a conversation."""
+    """Check if a user can access a conversation (as creator or participant)."""
     conversation = get_conversation_by_id(session, conversation_id)
     if not conversation:
         return False
 
-    # For support conversations, only the creator can access
-    if conversation.type == ConversationType.SUPPORT.value:
-        return conversation.created_by_id == user_id
+    if conversation.created_by_id == user_id:
+        return True
 
-    # For direct messages, check if user is a participant
     participant = (
         session.query(ConversationParticipantBase)
         .filter(
