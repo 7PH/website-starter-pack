@@ -747,8 +747,9 @@ def create_org_checkout(
     public_url = PUBLIC_URL or _validate_redirect_url(origin) or ""
     if not public_url:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid origin for redirect")
-    success_url = f"{public_url}/admin/organizations/{org_id}?subscription=success"
-    cancel_url = f"{public_url}/admin/organizations/{org_id}?subscription=canceled"
+    org_path = f"/admin/organizations/{org_id}" if user.is_admin else f"/organizations/{org_id}"
+    success_url = f"{public_url}{org_path}?subscription=success"
+    cancel_url = f"{public_url}{org_path}?subscription=canceled"
 
     url = stripe_helper.create_checkout_session(
         stripe_customer_id=org.stripe_id,
