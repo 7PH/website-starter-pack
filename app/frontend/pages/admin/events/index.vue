@@ -22,6 +22,8 @@ const actionCategories = [
     { label: 'All Events', value: 'all' },
     { label: 'User Events', value: 'user.' },
     { label: 'Admin Events', value: 'admin.' },
+    { label: 'Organization Events', value: 'org.' },
+    { label: 'Conversation Events', value: 'conversation.' },
 ];
 
 // Table columns
