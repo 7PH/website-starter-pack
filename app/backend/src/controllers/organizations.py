@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from ..constants import (
+    ORG_INVITATION_EXPIRY_DAYS,
+    ORG_INVITATIONS_ENABLED,
     ORG_MAX_MEMBERS,
     ORG_MAX_PER_USER,
     ORG_SELF_SERVICE_CREATION,
@@ -20,6 +22,7 @@ from ..constants import (
     STRIPE_ENABLED,
     EventType,
 )
+from ..crud import organization_invitations as invitations_crud
 from ..crud.event_logs import log_event
 from ..crud.organizations import (
     add_organization_member,
@@ -44,12 +47,16 @@ from ..crud.users import get_user_by_email, get_user_by_id, update_user_premium_
 from ..helpers import stripe as stripe_helper
 from ..helpers.auth import get_current_admin, get_current_user
 from ..helpers.db import get_session
-from ..models.organization import OrganizationBase, UserOrganizationBase
+from ..helpers.email import send_organization_invitation_email
+from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
 from ..models.user import UserBase
 from ..schemas.organization import (
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
+    OrganizationInvitationCreate,
+    OrganizationInvitationListResponse,
+    OrganizationInvitationRead,
     OrganizationListResponse,
     OrganizationMemberAdd,
     OrganizationMemberListResponse,
@@ -338,8 +345,8 @@ def get_organization(
     user: UserRead = Depends(get_current_user),
     org_id: int,
 ):
-    """Get organization details. Accessible by system admin or org admin."""
-    org = _check_org_access(session, org_id, user, require_admin=True)
+    """Get organization details. Accessible by any member of the org (or system admin)."""
+    org = _check_org_access(session, org_id, user, require_admin=False)
     return _org_to_read(session, org)
 
 
@@ -450,7 +457,17 @@ def add_member(
     org_id: int,
     member_data: OrganizationMemberAdd,
 ):
-    """Add a member by email. Org admin only."""
+    """Add a member by email. Org admin only.
+
+    When `ORG_INVITATIONS_ENABLED` is on, this endpoint is disabled and clients
+    must use the invitation flow (`POST /organizations/{id}/invitations`).
+    """
+    if ORG_INVITATIONS_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Direct-add is disabled. Use the invitation endpoint instead.",
+        )
+
     org = _check_org_access(session, org_id, user, require_admin=True)
 
     # Find user by email - use same message whether user exists or not (security)
@@ -853,3 +870,141 @@ def get_org_subscription(
         logger.info(f"Synced org {org.id} subscription: premium={org.stripe_premium}, quota={org.stripe_quota}")
 
     return OrganizationSubscriptionStatus(**stripe_status)
+
+
+# ============================================================================
+# Email Invitations (when ORG_INVITATIONS_ENABLED)
+# ============================================================================
+
+
+def _invitation_to_read(invitation: OrganizationInvitationBase) -> OrganizationInvitationRead:
+    inviter = invitation.invited_by
+    inviter_name = None
+    if inviter:
+        inviter_name = f"{inviter.first_name} {inviter.last_name}".strip() or inviter.email
+    return OrganizationInvitationRead(
+        id=invitation.id,
+        organization_id=invitation.organization_id,
+        organization_name=invitation.organization.name if invitation.organization else None,
+        email=invitation.email,
+        is_admin_invite=invitation.is_admin_invite,
+        invited_by_user_id=invitation.invited_by_user_id,
+        invited_by_name=inviter_name,
+        expires_at=invitation.expires_at,
+        created_at=invitation.created_at,
+    )
+
+
+@router.post(
+    "/{org_id}/invitations",
+    response_model=OrganizationInvitationRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_invitation(
+    *,
+    session: Session = Depends(get_session),
+    request: Request,
+    user: UserRead = Depends(get_current_user),
+    org_id: int,
+    invitation_data: OrganizationInvitationCreate,
+):
+    """Invite a new member by email. Org owner only."""
+    if not ORG_INVITATIONS_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitations are disabled")
+
+    org = _check_org_access(session, org_id, user, require_admin=True)
+    if org.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization is deleted")
+
+    existing_user = get_user_by_email(session, invitation_data.email)
+    if existing_user and get_user_org_membership(session, existing_user.id, org.id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is already a member of this organization",
+        )
+
+    if invitations_crud.get_pending_invitation(session, org.id, invitation_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An invitation is already pending for this email",
+        )
+
+    org_member_count = count_organization_members(session, org.id)
+    if org_member_count >= ORG_MAX_MEMBERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Organization has reached the maximum of {ORG_MAX_MEMBERS} member(s)",
+        )
+
+    invitation = invitations_crud.create_invitation(
+        session,
+        organization_id=org.id,
+        email=invitation_data.email,
+        is_admin_invite=invitation_data.is_admin,
+        invited_by_user_id=user.id,
+        expiry_days=ORG_INVITATION_EXPIRY_DAYS,
+    )
+
+    invitation_link = f"{PUBLIC_URL.rstrip('/')}/invitations/{invitation.token}" if PUBLIC_URL else f"/invitations/{invitation.token}"
+    inviter_name = f"{user.first_name} {user.last_name}".strip() or user.email
+    send_organization_invitation_email(
+        to_email=invitation.email,
+        organization_name=org.name,
+        inviter_name=inviter_name,
+        invitation_link=invitation_link,
+        is_admin_invite=invitation.is_admin_invite,
+    )
+
+    log_event(
+        session,
+        action=EventType.ORG_INVITATION_SENT,
+        user_id=user.id,
+        details={"org_id": org.id, "invited_email": invitation.email, "is_admin": invitation.is_admin_invite},
+        request=request,
+    )
+
+    # Reload with relationships
+    invitation = invitations_crud.get_invitation_by_token(session, invitation.token) or invitation
+    return _invitation_to_read(invitation)
+
+
+@router.get("/{org_id}/invitations", response_model=OrganizationInvitationListResponse)
+def list_org_invitations(
+    *,
+    session: Session = Depends(get_session),
+    user: UserRead = Depends(get_current_user),
+    org_id: int,
+):
+    """List pending invitations for an organization. Org owner only."""
+    if not ORG_INVITATIONS_ENABLED:
+        return OrganizationInvitationListResponse(items=[])
+    _check_org_access(session, org_id, user, require_admin=True)
+    pending = invitations_crud.list_org_pending_invitations(session, org_id)
+    return OrganizationInvitationListResponse(items=[_invitation_to_read(inv) for inv in pending])
+
+
+@router.delete("/{org_id}/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_invitation(
+    *,
+    session: Session = Depends(get_session),
+    request: Request,
+    user: UserRead = Depends(get_current_user),
+    org_id: int,
+    invitation_id: int,
+):
+    """Cancel a pending invitation. Org owner only."""
+    if not ORG_INVITATIONS_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitations are disabled")
+    _check_org_access(session, org_id, user, require_admin=True)
+    invitation = invitations_crud.get_invitation_by_id(session, invitation_id)
+    if not invitation or invitation.organization_id != org_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+
+    log_event(
+        session,
+        action=EventType.ORG_INVITATION_CANCELED,
+        user_id=user.id,
+        details={"org_id": org_id, "invited_email": invitation.email},
+        request=request,
+    )
+    invitations_crud.delete_invitation(session, invitation)

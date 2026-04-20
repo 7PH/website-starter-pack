@@ -83,13 +83,7 @@ function clearFilters() {
 
 <template>
     <div class="page-box">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <div class="admin-events">
             <h1 class="page-title">Event Logs</h1>

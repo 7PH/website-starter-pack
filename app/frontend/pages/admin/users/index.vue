@@ -146,13 +146,7 @@ async function deleteUser(user: AdminUserRead) {
 
 <template>
     <div class="page-box">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <div class="admin-users">
             <div class="page-header">

@@ -1323,6 +1323,133 @@
       "title": "OrganizationCustomData",
       "type": "object"
     },
+    "OrganizationInvitationCreate": {
+      "description": "Schema for creating an invitation.",
+      "properties": {
+        "email": {
+          "format": "email",
+          "maxLength": 255,
+          "title": "Email",
+          "type": "string"
+        },
+        "is_admin": {
+          "default": false,
+          "title": "Is Admin",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "title": "OrganizationInvitationCreate",
+      "type": "object"
+    },
+    "OrganizationInvitationListResponse": {
+      "description": "Response schema for a list of invitations.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/OrganizationInvitationRead"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "OrganizationInvitationListResponse",
+      "type": "object"
+    },
+    "OrganizationInvitationRead": {
+      "description": "Schema for reading an invitation.\n\n`token` is included when the invitation belongs to the current user\n(`/invitations/pending`) so they can Accept/Decline directly. For owner-\nfacing lists (per-org), `token` is omitted.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "organization_id": {
+          "title": "Organization Id",
+          "type": "integer"
+        },
+        "organization_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organization Name"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "is_admin_invite": {
+          "title": "Is Admin Invite",
+          "type": "boolean"
+        },
+        "invited_by_user_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invited By User Id"
+        },
+        "invited_by_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invited By Name"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Token"
+        }
+      },
+      "required": [
+        "id",
+        "organization_id",
+        "email",
+        "is_admin_invite",
+        "expires_at",
+        "created_at"
+      ],
+      "title": "OrganizationInvitationRead",
+      "type": "object"
+    },
     "OrganizationListResponse": {
       "description": "Paginated response for organization list.",
       "properties": {
@@ -1938,6 +2065,48 @@
       "title": "OrganizationUpdate",
       "type": "object"
     },
+    "PendingInvitationPreview": {
+      "description": "Schema for the Accept/Decline preview page (accessible by token).",
+      "properties": {
+        "organization_name": {
+          "title": "Organization Name",
+          "type": "string"
+        },
+        "is_admin_invite": {
+          "title": "Is Admin Invite",
+          "type": "boolean"
+        },
+        "invited_by_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invited By Name"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_name",
+        "is_admin_invite",
+        "email",
+        "expires_at"
+      ],
+      "title": "PendingInvitationPreview",
+      "type": "object"
+    },
     "Recommendation": {
       "description": "An actionable recommendation for database optimization.",
       "properties": {
@@ -2470,6 +2639,18 @@
     },
     {
       "$ref": "#/$defs/OrganizationSubscriptionStatus"
+    },
+    {
+      "$ref": "#/$defs/OrganizationInvitationCreate"
+    },
+    {
+      "$ref": "#/$defs/OrganizationInvitationRead"
+    },
+    {
+      "$ref": "#/$defs/OrganizationInvitationListResponse"
+    },
+    {
+      "$ref": "#/$defs/PendingInvitationPreview"
     },
     {
       "$ref": "#/$defs/UserOrganizationInfo"

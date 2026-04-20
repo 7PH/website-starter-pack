@@ -1,17 +1,20 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 import type { Ref } from 'vue';
+import { createInvitation } from '~/utils/api/invitations';
 
 export interface MemberManagementCallbacks {
-    /** Called after successfully demoting self - use to redirect */
     onSelfDemoted?: () => void;
-    /** Called after any member change to refresh auth state */
     onAuthRefreshNeeded?: () => void;
+    onInvitationSent?: () => void;
 }
 
 /**
  * Composable for managing organization members.
- * Handles adding, removing, and updating member roles and premium status.
+ * Handles invitations, removals, and role/premium changes.
+ *
+ * When `ORG_INVITATIONS_ENABLED` is true, `inviteMember` sends an email
+ * invitation. Otherwise it directly adds the user.
  */
 export function useOrganizationMembers(
     orgId: Ref<number>,
@@ -20,47 +23,50 @@ export function useOrganizationMembers(
 ) {
     const api = useApi();
     const modal = useModalStore();
+    const config = useRuntimeConfig();
     const { t } = useI18n();
     const { showSuccess, showError } = useToastHelpers();
 
-    // Add member modal state
     const showAddMemberModal = ref(false);
-    const addMemberEmail = ref('');
-    const addMemberAsAdmin = ref(false);
     const isAddingMember = ref(false);
 
+    const invitationsEnabled = computed(() => String(config.public.orgInvitationsEnabled) === 'true');
+
     /**
-     * Add a new member to the organization.
+     * Either send an invitation email or directly add the user to the org.
      */
-    async function addMember() {
+    async function inviteMember(email: string, isAdmin: boolean) {
         isAddingMember.value = true;
         try {
-            await api.post(`/organizations/${orgId.value}/members`, {
-                email: addMemberEmail.value,
-                is_admin: addMemberAsAdmin.value,
-            });
-            showSuccess(
-                t('core.organizations.addMemberSuccess'),
-                t('core.organizations.addMemberSuccessDescription', { email: addMemberEmail.value }),
-            );
+            if (invitationsEnabled.value) {
+                await createInvitation(orgId.value, { email, is_admin: isAdmin });
+                showSuccess(
+                    t('core.organizations.invitationSent'),
+                    t('core.organizations.invitationSentDescription', { email }),
+                );
+                callbacks?.onInvitationSent?.();
+            } else {
+                await api.post(`/organizations/${orgId.value}/members`, { email, is_admin: isAdmin });
+                showSuccess(
+                    t('core.organizations.addMemberSuccess'),
+                    t('core.organizations.addMemberSuccessDescription', { email }),
+                );
+                refreshOrg();
+            }
             showAddMemberModal.value = false;
-            addMemberEmail.value = '';
-            addMemberAsAdmin.value = false;
-            refreshOrg();
         } catch (error: unknown) {
-            showError(error, 'core.organizations.addMemberFailed');
+            showError(
+                error,
+                invitationsEnabled.value
+                    ? 'core.organizations.invitationSendFailed'
+                    : 'core.organizations.addMemberFailed',
+            );
         } finally {
             isAddingMember.value = false;
         }
     }
 
-    /**
-     * Toggle a member's admin status.
-     * @param member The member to update
-     * @param currentUserId Optional current user ID to check for self-demotion
-     */
     async function toggleMemberAdmin(member: OrganizationMemberRead, currentUserId?: number) {
-        // Check for self-demotion
         const isDemotingSelf = member.is_admin && currentUserId !== undefined && member.user_id === currentUserId;
         if (isDemotingSelf) {
             const confirmed = await modal.open('confirm', {
@@ -78,7 +84,6 @@ export function useOrganizationMembers(
             });
             showSuccess(t('core.organizations.memberUpdated'));
 
-            // Handle self-demotion redirect
             if (isDemotingSelf && callbacks?.onSelfDemoted) {
                 callbacks.onSelfDemoted();
                 return;
@@ -91,9 +96,6 @@ export function useOrganizationMembers(
         }
     }
 
-    /**
-     * Toggle a member's premium seat status.
-     */
     async function toggleMemberPremium(member: OrganizationMemberRead) {
         try {
             await api.patch(`/organizations/${orgId.value}/members/${member.user_id}`, {
@@ -106,9 +108,6 @@ export function useOrganizationMembers(
         }
     }
 
-    /**
-     * Remove a member from the organization.
-     */
     async function removeMember(member: OrganizationMemberRead) {
         const memberName = `${member.first_name} ${member.last_name}`.trim() || member.email;
         const confirmed = await modal.open('confirm', {
@@ -117,7 +116,6 @@ export function useOrganizationMembers(
             confirmText: t('core.common.delete'),
             confirmColor: 'error',
         });
-
         if (!confirmed) return;
 
         try {
@@ -132,28 +130,18 @@ export function useOrganizationMembers(
         }
     }
 
-    /**
-     * Reset the add member form state.
-     */
-    function resetAddMemberForm() {
-        addMemberEmail.value = '';
-        addMemberAsAdmin.value = false;
-    }
-
     return {
-        // Add member modal state
         showAddMemberModal,
-        addMemberEmail,
-        addMemberAsAdmin,
         isAddingMember,
-        // Functions
-        addMember,
+        invitationsEnabled,
+        inviteMember,
         toggleMemberAdmin,
         toggleMemberPremium,
         removeMember,
-        resetAddMemberForm,
     };
 }
+
+export type QuotaState = 'none' | 'ok' | 'warn' | 'exceeded';
 
 /**
  * Computed helpers for organization quota status.
@@ -169,8 +157,20 @@ export function useOrganizationQuota(org: Ref<OrganizationRead | null | undefine
         return (org.value.premium_member_count ?? 0) < org.value.stripe_quota;
     });
 
+    const quotaState = computed<QuotaState>(() => {
+        if (!org.value || !org.value.stripe_premium) return 'none';
+        const used = org.value.premium_member_count ?? 0;
+        const total = org.value.stripe_quota || 0;
+        if (total <= 0) return 'none';
+        if (used > total) return 'exceeded';
+        const ratio = used / total;
+        if (ratio >= 0.8) return 'warn';
+        return 'ok';
+    });
+
     return {
         isOverQuota,
         canAddPremium,
+        quotaState,
     };
 }

@@ -32,6 +32,8 @@ ORG_STRIPE_PRICE_IDS = [
 ]
 ORG_SELF_SERVICE_SUBSCRIPTIONS = os.environ.get("ORG_SELF_SERVICE_SUBSCRIPTIONS", "true").lower() == "true"
 ORG_SELF_SERVICE_CREATION = os.environ.get("ORG_SELF_SERVICE_CREATION", "true").lower() == "true"
+ORG_INVITATIONS_ENABLED = os.environ.get("ORG_INVITATIONS_ENABLED", "false").lower() == "true"
+ORG_INVITATION_EXPIRY_DAYS = int(os.environ.get("ORG_INVITATION_EXPIRY_DAYS", "7"))
 
 # LLM Integration
 LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
@@ -73,6 +75,10 @@ class EventType(StrEnum):
     ORG_MEMBER_PREMIUM_CHANGED = "org.member_premium_changed"
     ORG_SUBSCRIPTION_CREATED = "org.subscription_created"
     ORG_SUBSCRIPTION_CANCELED = "org.subscription_canceled"
+    ORG_INVITATION_SENT = "org.invitation_sent"
+    ORG_INVITATION_CANCELED = "org.invitation_canceled"
+    ORG_INVITATION_ACCEPTED = "org.invitation_accepted"
+    ORG_INVITATION_DECLINED = "org.invitation_declined"
     # Conversation/Support events
     CONVERSATION_CREATED = "conversation.created"
     CONVERSATION_MESSAGE_SENT = "conversation.message_sent"
@@ -105,6 +111,10 @@ CORE_EVENT_TYPES = {
     EventType.ORG_MEMBER_PREMIUM_CHANGED: {"label": "Member Premium Status Changed", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CREATED: {"label": "Organization Subscription Created", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CANCELED: {"label": "Organization Subscription Canceled", "category": "organization"},
+    EventType.ORG_INVITATION_SENT: {"label": "Invitation Sent", "category": "organization"},
+    EventType.ORG_INVITATION_CANCELED: {"label": "Invitation Canceled", "category": "organization"},
+    EventType.ORG_INVITATION_ACCEPTED: {"label": "Invitation Accepted", "category": "organization"},
+    EventType.ORG_INVITATION_DECLINED: {"label": "Invitation Declined", "category": "organization"},
     EventType.CONVERSATION_CREATED: {"label": "Support Conversation Created", "category": "conversation"},
     EventType.CONVERSATION_MESSAGE_SENT: {"label": "Support Message Sent", "category": "conversation"},
     EventType.CONVERSATION_ADMIN_REPLY: {"label": "Admin Reply Sent", "category": "conversation"},

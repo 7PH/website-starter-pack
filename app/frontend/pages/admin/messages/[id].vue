@@ -168,13 +168,7 @@ function getUserDisplay(conv: ConversationDetail): string {
 
 <template>
     <div class="page-box admin-conversation-page">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <div class="admin-conversation">
             <!-- Back link -->

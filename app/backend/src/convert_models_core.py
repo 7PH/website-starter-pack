@@ -49,6 +49,9 @@ from .schemas.organization import (
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
+    OrganizationInvitationCreate,
+    OrganizationInvitationListResponse,
+    OrganizationInvitationRead,
     OrganizationListResponse,
     OrganizationMemberAdd,
     OrganizationMemberListResponse,
@@ -58,6 +61,7 @@ from .schemas.organization import (
     OrganizationRead,
     OrganizationSubscriptionStatus,
     OrganizationUpdate,
+    PendingInvitationPreview,
     UserOrganizationInfo,
 )
 from .schemas.stripe import (
@@ -113,6 +117,10 @@ CoreModels = (
     | OrganizationCheckoutRequest
     | OrganizationCheckoutResponse
     | OrganizationSubscriptionStatus
+    | OrganizationInvitationCreate
+    | OrganizationInvitationRead
+    | OrganizationInvitationListResponse
+    | PendingInvitationPreview
     | UserOrganizationInfo
     # OAuth models
     | OAuthStatusResponse

@@ -245,6 +245,46 @@ Get started: {PUBLIC_URL}
     )
 
 
+def send_organization_invitation_email(
+    to_email: str,
+    organization_name: str,
+    inviter_name: str | None,
+    invitation_link: str,
+    is_admin_invite: bool,
+) -> bool:
+    """Send an organization invitation email to a prospective member."""
+    context = {
+        "organization_name": organization_name,
+        "inviter_name": inviter_name,
+        "invitation_link": invitation_link,
+        "is_admin_invite": is_admin_invite,
+    }
+
+    html_body = _render_template("organization_invitation.html", **context)
+    text_body = _render_template("organization_invitation.txt", **context)
+
+    if text_body is None:
+        role = "Owner" if is_admin_invite else "Member"
+        who = f"{inviter_name} has" if inviter_name else "You have been"
+        text_body = f"""Hello,
+
+{who} invited you to join {organization_name} as a {role}.
+
+Accept or decline the invitation here:
+{invitation_link}
+
+If you weren't expecting this, you can ignore this email.
+"""
+
+    return send_email(
+        to_email=to_email,
+        subject=f"You've been invited to join {organization_name}",
+        body=text_body,
+        html_body=html_body,
+        raise_on_error=False,
+    )
+
+
 def send_email_change_email(
     to_email: str,
     username: str,
