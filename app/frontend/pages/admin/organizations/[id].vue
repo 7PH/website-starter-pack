@@ -10,13 +10,7 @@ const { t } = useI18n();
 
 <template>
     <div class="page-box">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <OrganizationsDetail
             :is-admin-view="true"

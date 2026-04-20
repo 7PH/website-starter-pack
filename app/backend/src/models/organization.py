@@ -76,3 +76,32 @@ class UserOrganizationBase(Base):
     # Relationships
     organization = relationship("OrganizationBase", back_populates="members")
     user = relationship("UserBase", backref="organization_memberships")
+
+
+class OrganizationInvitationBase(Base):
+    """SQLAlchemy model for pending organization invitations."""
+
+    __tablename__ = "organization_invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(
+        Integer,
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    email = Column(String(255), nullable=False, index=True)
+    is_admin_invite = Column(Boolean, default=False, nullable=False)
+    token = Column(String(64), nullable=False, unique=True, index=True)
+    invited_by_user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    declined_at = Column(DateTime(timezone=True), nullable=True)
+
+    organization = relationship("OrganizationBase")
+    invited_by = relationship("UserBase", foreign_keys=[invited_by_user_id])

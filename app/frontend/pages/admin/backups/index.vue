@@ -178,13 +178,7 @@ async function executeRestore() {
 
 <template>
     <div class="page-box">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <div class="admin-backups">
             <div class="page-header">

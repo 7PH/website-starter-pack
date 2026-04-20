@@ -19,7 +19,13 @@ const userMenuItems = computed(() => [
     [
         { label: t('core.messages.title'), icon: 'i-lucide-message-square', to: '/messages' },
         ...(config.public.organizationsEnabled
-            ? [{ label: t('core.organizations.title'), icon: 'i-lucide-building-2', to: '/organizations' }]
+            ? [
+                  {
+                      label: t('core.organizations.title'),
+                      icon: 'i-lucide-building-2',
+                      to: '/account?tab=organizations',
+                  },
+              ]
             : []),
         { label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' },
         ...(auth.user?.is_admin
@@ -93,7 +99,7 @@ function onSelectLogout() {
                         <!-- Premium badge or Upgrade CTA (only when Stripe is enabled) -->
                         <NuxtLink
                             v-if="stripeEnabled && !subscriptionLoading"
-                            to="/premium"
+                            to="/account?tab=billing"
                             :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                         >
                             <UIcon name="i-lucide-star" />

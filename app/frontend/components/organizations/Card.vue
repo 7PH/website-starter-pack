@@ -22,22 +22,23 @@ function handleLeave(event: Event) {
 </script>
 
 <template>
-    <NuxtLink v-if="isAdmin" :to="orgLink" class="block">
+    <NuxtLink :to="orgLink" class="block">
         <UiHoverCard class="org-card group cursor-pointer">
-            <!-- Header: colored band with building icon + role badge -->
-            <div class="card-header header-admin">
+            <div class="card-header" :class="isAdmin ? 'header-admin' : 'header-member'">
                 <UIcon name="i-lucide-building-2" class="text-lg opacity-70" />
-                <UBadge :label="t('core.organizations.admin')" color="info" size="xs" />
+                <UBadge
+                    :label="isAdmin ? t('core.organizations.admin') : t('core.organizations.member')"
+                    :color="isAdmin ? 'info' : 'neutral'"
+                    size="xs"
+                />
             </div>
 
-            <!-- Content: org name -->
             <div class="card-content">
                 <h3 class="card-title group-hover:text-primary-500">
                     {{ organization.organization_name }}
                 </h3>
             </div>
 
-            <!-- Footer: action buttons -->
             <div class="card-footer">
                 <UButton
                     :label="t('core.organizations.leave')"
@@ -50,31 +51,6 @@ function handleLeave(event: Event) {
             </div>
         </UiHoverCard>
     </NuxtLink>
-
-    <UiHoverCard v-else class="org-card">
-        <!-- Header: colored band with building icon + role badge -->
-        <div class="card-header header-member">
-            <UIcon name="i-lucide-building-2" class="text-lg opacity-70" />
-            <UBadge :label="t('core.organizations.member')" color="neutral" size="xs" />
-        </div>
-
-        <!-- Content: org name -->
-        <div class="card-content">
-            <h3 class="card-title">{{ organization.organization_name }}</h3>
-        </div>
-
-        <!-- Footer: action buttons -->
-        <div class="card-footer">
-            <UButton
-                :label="t('core.organizations.leave')"
-                color="error"
-                variant="ghost"
-                size="xs"
-                :loading="isLeaving"
-                @click="handleLeave"
-            />
-        </div>
-    </UiHoverCard>
 </template>
 
 <style scoped>

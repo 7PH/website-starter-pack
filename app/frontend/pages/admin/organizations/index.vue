@@ -144,13 +144,7 @@ async function deleteOrganization(org: OrganizationRead) {
 
 <template>
     <div class="page-box">
-        <UiPageTitleBanner>
-            Admin
-            <template #subtitle> Manage users, organizations, and system settings </template>
-            <template #subnav>
-                <AdminSubnav />
-            </template>
-        </UiPageTitleBanner>
+        <AdminPageBanner />
 
         <div class="admin-orgs">
             <div class="page-header">

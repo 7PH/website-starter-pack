@@ -46,6 +46,10 @@ export type Models =
   | OrganizationCheckoutRequest
   | OrganizationCheckoutResponse
   | OrganizationSubscriptionStatus
+  | OrganizationInvitationCreate
+  | OrganizationInvitationRead
+  | OrganizationInvitationListResponse
+  | PendingInvitationPreview
   | UserOrganizationInfo
   | OAuthStatusResponse
   | OAuthUrlResponse
@@ -252,6 +256,24 @@ export type StripePremium1 = boolean;
 export type StripeQuota1 = number;
 export type CancelAtPeriodEnd1 = boolean;
 export type ExpiresAt2 = string | null;
+export type Email10 = string;
+export type IsAdmin7 = boolean;
+export type Id5 = number;
+export type OrganizationId1 = number;
+export type OrganizationName1 = string | null;
+export type Email11 = string;
+export type IsAdminInvite = boolean;
+export type InvitedByUserId = number | null;
+export type InvitedByName = string | null;
+export type ExpiresAt3 = string;
+export type CreatedAt5 = string;
+export type Token = string | null;
+export type Items5 = OrganizationInvitationRead[];
+export type OrganizationName2 = string;
+export type IsAdminInvite1 = boolean;
+export type InvitedByName1 = string | null;
+export type Email12 = string;
+export type ExpiresAt4 = string;
 export type Enabled = boolean;
 export type Providers = string[];
 export type Url2 = string;
@@ -261,43 +283,43 @@ export type State4 = string;
 export type Subject = string;
 export type Content = string;
 export type Subtype = string | null;
-export type Id5 = number;
+export type Id6 = number;
 export type Type1 = string;
 export type Subtype1 = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id6 = number;
-export type Email10 = string;
+export type Id7 = number;
+export type Email13 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt5 = string | null;
+export type CreatedAt6 = string | null;
 export type UpdatedAt = string | null;
 export type UnreadCount = number;
-export type Id7 = number;
+export type Id8 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt6 = string | null;
-export type Id8 = number;
+export type CreatedAt7 = string | null;
+export type Id9 = number;
 export type Type2 = string;
 export type Subtype2 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt7 = string | null;
+export type CreatedAt8 = string | null;
 export type UpdatedAt1 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
-export type Items5 = ConversationRead[];
+export type Items6 = ConversationRead[];
 export type Total5 = number;
 export type Limit2 = number;
 export type Offset2 = number;
 export type Content2 = string;
-export type Items6 = MessageRead[];
+export type Items7 = MessageRead[];
 export type Total6 = number;
 export type Limit3 = number;
 export type Offset3 = number;
@@ -668,6 +690,48 @@ export interface OrganizationSubscriptionStatus {
   expires_at?: ExpiresAt2;
 }
 /**
+ * Schema for creating an invitation.
+ */
+export interface OrganizationInvitationCreate {
+  email: Email10;
+  is_admin?: IsAdmin7;
+}
+/**
+ * Schema for reading an invitation.
+ *
+ * `token` is included when the invitation belongs to the current user
+ * (`/invitations/pending`) so they can Accept/Decline directly. For owner-
+ * facing lists (per-org), `token` is omitted.
+ */
+export interface OrganizationInvitationRead {
+  id: Id5;
+  organization_id: OrganizationId1;
+  organization_name?: OrganizationName1;
+  email: Email11;
+  is_admin_invite: IsAdminInvite;
+  invited_by_user_id?: InvitedByUserId;
+  invited_by_name?: InvitedByName;
+  expires_at: ExpiresAt3;
+  created_at: CreatedAt5;
+  token?: Token;
+}
+/**
+ * Response schema for a list of invitations.
+ */
+export interface OrganizationInvitationListResponse {
+  items: Items5;
+}
+/**
+ * Schema for the Accept/Decline preview page (accessible by token).
+ */
+export interface PendingInvitationPreview {
+  organization_name: OrganizationName2;
+  is_admin_invite: IsAdminInvite1;
+  invited_by_name?: InvitedByName1;
+  email: Email12;
+  expires_at: ExpiresAt4;
+}
+/**
  * Response indicating OAuth availability.
  */
 export interface OAuthStatusResponse {
@@ -700,7 +764,7 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id5;
+  id: Id6;
   type: Type1;
   subtype?: Subtype1;
   subject?: Subject1;
@@ -708,7 +772,7 @@ export interface ConversationRead {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt5;
+  created_at?: CreatedAt6;
   updated_at?: UpdatedAt;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -717,8 +781,8 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id6;
-  email: Email10;
+  id: Id7;
+  email: Email13;
   first_name: FirstName7;
   last_name: LastName7;
 }
@@ -726,19 +790,19 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id7;
+  id: Id8;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt6;
+  created_at?: CreatedAt7;
 }
 /**
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id8;
+  id: Id9;
   type: Type2;
   subtype?: Subtype2;
   subject?: Subject2;
@@ -746,7 +810,7 @@ export interface ConversationDetail {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt7;
+  created_at?: CreatedAt8;
   updated_at?: UpdatedAt1;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
@@ -756,7 +820,7 @@ export interface ConversationDetail {
  * Paginated response for conversation list.
  */
 export interface ConversationListResponse {
-  items: Items5;
+  items: Items6;
   total: Total5;
   limit: Limit2;
   offset: Offset2;
@@ -771,7 +835,7 @@ export interface MessageCreate {
  * Paginated response for messages in a conversation.
  */
 export interface MessageListResponse {
-  items: Items6;
+  items: Items7;
   total: Total6;
   limit: Limit3;
   offset: Offset3;

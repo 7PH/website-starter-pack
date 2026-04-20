@@ -19,8 +19,8 @@ const { t } = useI18n();
 
         <OrganizationsDetail
             :is-admin-view="false"
-            back-link="/organizations"
-            :back-link-text="t('core.organizations.backToList')"
+            back-link="/account?tab=organizations"
+            :back-link-text="t('core.organizations.backToAccount')"
         />
     </div>
 </template>
