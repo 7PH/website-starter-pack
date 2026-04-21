@@ -1,6 +1,14 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY
 """Tests for admin-managed organization billing: sign flipping and cycle math."""
 
+import os
+
+# Importing src.tasks.billing pulls in helpers.db, which reads APP_DB_* at module
+# load. CI runs pytest without those env vars, so seed dummies before any import.
+os.environ.setdefault("APP_DB_USER", "test")
+os.environ.setdefault("APP_DB_PASSWORD", "test")
+os.environ.setdefault("APP_DB_NAME", "test")
+
 from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
