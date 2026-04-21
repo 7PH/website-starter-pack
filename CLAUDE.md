@@ -70,7 +70,7 @@ Sub-apps can replace core components via `config/component-overrides.ts`. Overri
 `/` → Frontend, `/api/*` → Backend (prefix stripped), Subdomains: `static.*`, `adminer.*`, `analytics.*`
 
 ### Migrations
-Manual SQL in `app/backend/migrations/`. Use `IF NOT EXISTS`. Define indexes in both models and migrations.
+Manual SQL in `app/backend/migrations/`. Name new migrations `YYYY-MM-DD-vNEXT-description.sql` — the release skill rewrites `vNEXT` to the target version at release time. Use `IF NOT EXISTS`. Define indexes in both models and migrations.
 
 ## Testing
 

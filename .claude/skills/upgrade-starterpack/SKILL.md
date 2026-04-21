@@ -6,7 +6,9 @@ description: Upgrade the starterpack with AI assistance
 
 # Upgrade Starterpack
 
-Run the starterpack upgrade with AI-assisted conflict resolution.
+Run the starterpack upgrade with AI-assisted conflict resolution. The upgrade
+targets the latest released starterpack version (highest `vX.Y.Z` tag), not
+master, so in-flight upstream work never lands on a sub-app.
 
 ## Steps
 
@@ -16,7 +18,7 @@ Run the starterpack upgrade with AI-assisted conflict resolution.
    ```
 
 2. Review the output for:
-   - Version change (current → target)
+   - Version change (current → latest released version)
    - Breaking changes in upgrade notes
    - Local modifications that will be overwritten
    - Required migrations
