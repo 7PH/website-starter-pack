@@ -5,6 +5,7 @@ Organizations controller for org management, member management, and subscription
 """
 
 import logging
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -51,6 +52,10 @@ from ..helpers.email import send_organization_invitation_email
 from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
 from ..models.user import UserBase
 from ..schemas.organization import (
+    OrganizationAdminBillingRead,
+    OrganizationAssignPlanRequest,
+    OrganizationBalanceAdjustRequest,
+    OrganizationBalanceTransactionRead,
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
@@ -184,6 +189,7 @@ def _build_org_read(
         stripe_id=org.stripe_id,
         stripe_premium=org.stripe_premium,
         stripe_quota=org.stripe_quota,
+        stripe_dashboard_url=stripe_helper.get_dashboard_customer_url(org.stripe_id) if org.stripe_id else None,
         created_at=org.created_at,
         custom_data=org.custom_data or {},
         deleted_at=org.deleted_at,
@@ -1008,3 +1014,198 @@ def cancel_invitation(
         request=request,
     )
     invitations_crud.delete_invitation(session, invitation)
+
+
+# ============================================================================
+# Admin-Managed Billing (bank-transfer orgs)
+#
+# Runs alongside the self-serve checkout flow above. System admins can:
+#   - see a running balance ledger (Stripe customer.balance, admin-signed)
+#   - record a payment received or a manual debit
+#   - assign/unassign a plan without ever creating a Stripe subscription
+#     (orgs must not see Stripe-generated invoices).
+# ============================================================================
+
+
+def _ensure_org_stripe_customer(session: Session, org: OrganizationBase) -> None:
+    """Create a Stripe customer for the org if it doesn't have one yet."""
+    if org.stripe_id:
+        return
+    org.stripe_id = stripe_helper.sync_org_customer(
+        org_id=org.id,
+        email=org.email,
+        name=org.name,
+    )
+    update_organization(session, org)
+
+
+def _build_admin_billing_read(org: OrganizationBase) -> OrganizationAdminBillingRead:
+    """Assemble the admin billing view from Stripe + org row."""
+    plan: OrganizationPlan | None = None
+    if org.billing_price_id:
+        price = stripe_helper.get_price_details(org.billing_price_id)
+        if price:
+            plan = OrganizationPlan(**price)
+
+    if org.stripe_id:
+        balance = stripe_helper.get_org_balance(org.stripe_id)
+        txs = [
+            OrganizationBalanceTransactionRead(**tx)
+            for tx in stripe_helper.list_org_balance_transactions(org.stripe_id, limit=50)
+        ]
+    else:
+        balance = {"balance_cents": 0, "currency": plan.currency if plan else "eur"}
+        txs = []
+
+    return OrganizationAdminBillingRead(
+        balance_cents=balance["balance_cents"],
+        currency=balance["currency"],
+        plan=plan,
+        cycle_started_at=org.billing_cycle_started_at,
+        cycle_end=org.billing_cycle_end,
+        transactions=txs,
+    )
+
+
+@router.get("/{org_id}/admin-billing", response_model=OrganizationAdminBillingRead)
+def get_admin_billing(
+    *,
+    session: Session = Depends(get_session),
+    _admin: UserRead = Depends(get_current_admin),
+    org_id: int,
+):
+    """Get admin billing view for an org (system admin only)."""
+    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+    org = get_organization_by_id(session, org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return _build_admin_billing_read(org)
+
+
+@router.post("/{org_id}/admin-billing/adjust", response_model=OrganizationAdminBillingRead)
+def adjust_admin_billing(
+    *,
+    session: Session = Depends(get_session),
+    request: Request,
+    admin: UserRead = Depends(get_current_admin),
+    org_id: int,
+    adjustment: OrganizationBalanceAdjustRequest,
+):
+    """Record a balance change (positive = credit org, negative = charge org)."""
+    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+    org = get_organization_by_id(session, org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    _ensure_org_stripe_customer(session, org)
+
+    stripe_helper.adjust_org_balance(
+        stripe_customer_id=org.stripe_id,
+        amount_cents=adjustment.amount_cents,
+        description=adjustment.description,
+    )
+
+    log_event(
+        session,
+        action=EventType.ORG_BALANCE_ADJUSTED,
+        user_id=admin.id,
+        details={
+            "org_id": org.id,
+            "amount_cents": adjustment.amount_cents,
+            "description": adjustment.description,
+        },
+        request=request,
+    )
+
+    return _build_admin_billing_read(org)
+
+
+@router.post("/{org_id}/admin-billing/plan", response_model=OrganizationAdminBillingRead)
+def assign_admin_plan(
+    *,
+    session: Session = Depends(get_session),
+    request: Request,
+    admin: UserRead = Depends(get_current_admin),
+    org_id: int,
+    assignment: OrganizationAssignPlanRequest,
+):
+    """Assign a plan to an org without creating a Stripe subscription."""
+    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+    if assignment.price_id not in ORG_STRIPE_PRICE_IDS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price ID")
+
+    org = get_organization_by_id(session, org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    price = stripe_helper.get_price_details(assignment.price_id)
+    if not price:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to fetch plan details")
+
+    _ensure_org_stripe_customer(session, org)
+
+    now = datetime.now(UTC)
+    org.billing_price_id = assignment.price_id
+    org.billing_cycle_started_at = now
+    org.billing_cycle_end = stripe_helper.compute_next_cycle_end(price["interval"], now)
+    org.stripe_premium = True
+    org.stripe_quota = price["seats"]
+    update_organization(session, org)
+
+    log_event(
+        session,
+        action=EventType.ORG_SUBSCRIPTION_CREATED,
+        user_id=admin.id,
+        details={"org_id": org.id, "price_id": assignment.price_id, "admin_assigned": True},
+        request=request,
+    )
+
+    return _build_admin_billing_read(org)
+
+
+@router.delete("/{org_id}/admin-billing/plan", response_model=OrganizationAdminBillingRead)
+def unassign_admin_plan(
+    *,
+    session: Session = Depends(get_session),
+    request: Request,
+    admin: UserRead = Depends(get_current_admin),
+    org_id: int,
+):
+    """Unassign the admin-managed plan. Revokes premium for all members."""
+    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+    org = get_organization_by_id(session, org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    was_assigned = org.billing_price_id is not None
+
+    org.billing_price_id = None
+    org.billing_cycle_started_at = None
+    org.billing_cycle_end = None
+    org.stripe_premium = False
+    org.stripe_quota = 0
+    update_organization(session, org)
+
+    affected_user_ids = reset_org_members_premium(session, org.id)
+    for uid in affected_user_ids:
+        update_user_premium_cache(session, uid)
+
+    if was_assigned:
+        log_event(
+            session,
+            action=EventType.ORG_SUBSCRIPTION_CANCELED,
+            user_id=admin.id,
+            details={"org_id": org.id, "admin_assigned": True},
+            request=request,
+        )
+
+    return _build_admin_billing_read(org)

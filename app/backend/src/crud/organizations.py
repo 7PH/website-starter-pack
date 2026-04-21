@@ -270,6 +270,20 @@ def count_organization_members(session: Session, org_id: int) -> int:
     )
 
 
+def get_orgs_due_for_cycle_debit(session: Session, now: datetime) -> list[OrganizationBase]:
+    """Return non-deleted orgs with an assigned plan whose cycle has ended."""
+    return list(
+        session.execute(
+            select(OrganizationBase).where(
+                OrganizationBase.deleted_at.is_(None),
+                OrganizationBase.billing_price_id.is_not(None),
+                OrganizationBase.billing_cycle_end.is_not(None),
+                OrganizationBase.billing_cycle_end <= now,
+            )
+        ).scalars().all()
+    )
+
+
 def reset_org_members_premium(session: Session, org_id: int) -> list[int]:
     """Reset premium seats for all members of an organization.
 

@@ -51,6 +51,10 @@ export type Models =
   | OrganizationInvitationListResponse
   | PendingInvitationPreview
   | UserOrganizationInfo
+  | OrganizationAdminBillingRead
+  | OrganizationBalanceTransactionRead
+  | OrganizationBalanceAdjustRequest
+  | OrganizationAssignPlanRequest
   | OAuthStatusResponse
   | OAuthUrlResponse
   | OAuthCallbackRequest
@@ -193,6 +197,7 @@ export type Country = string | null;
 export type StripeId = string | null;
 export type StripePremium = boolean;
 export type StripeQuota = number;
+export type StripeDashboardUrl = string | null;
 export type CreatedAt4 = string | null;
 export type DeletedAt1 = string | null;
 export type MemberCount = number;
@@ -276,6 +281,23 @@ export type IsAdminInvite1 = boolean;
 export type InvitedByName1 = string | null;
 export type Email12 = string;
 export type ExpiresAt4 = string;
+export type BalanceCents = number;
+export type Currency1 = string;
+export type CycleStartedAt = string | null;
+export type CycleEnd = string | null;
+export type Id6 = string;
+export type Type1 = string;
+export type AmountCents = number;
+export type Currency2 = string;
+export type Description3 = string | null;
+export type CreatedAt6 = string;
+export type Transactions = OrganizationBalanceTransactionRead[];
+/**
+ * Positive = credit org, negative = charge org
+ */
+export type AmountCents1 = number;
+export type Description4 = string;
+export type PriceId2 = string;
 export type Enabled = boolean;
 export type Providers = string[];
 export type Url2 = string;
@@ -285,34 +307,34 @@ export type State4 = string;
 export type Subject = string;
 export type Content = string;
 export type Subtype = string | null;
-export type Id6 = number;
-export type Type1 = string;
+export type Id7 = number;
+export type Type2 = string;
 export type Subtype1 = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id7 = number;
+export type Id8 = number;
 export type Email13 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt6 = string | null;
+export type CreatedAt7 = string | null;
 export type UpdatedAt = string | null;
 export type UnreadCount = number;
-export type Id8 = number;
+export type Id9 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt7 = string | null;
-export type Id9 = number;
-export type Type2 = string;
+export type CreatedAt8 = string | null;
+export type Id10 = number;
+export type Type3 = string;
 export type Subtype2 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt8 = string | null;
+export type CreatedAt9 = string | null;
 export type UpdatedAt1 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
@@ -585,6 +607,7 @@ export interface OrganizationRead {
   stripe_id?: StripeId;
   stripe_premium: StripePremium;
   stripe_quota: StripeQuota;
+  stripe_dashboard_url?: StripeDashboardUrl;
   created_at?: CreatedAt4;
   deleted_at?: DeletedAt1;
   member_count?: MemberCount;
@@ -748,6 +771,41 @@ export interface PendingInvitationPreview {
   expires_at: ExpiresAt4;
 }
 /**
+ * Full admin billing view for an org: balance + plan + transactions.
+ */
+export interface OrganizationAdminBillingRead {
+  balance_cents: BalanceCents;
+  currency: Currency1;
+  plan?: OrganizationPlan | null;
+  cycle_started_at?: CycleStartedAt;
+  cycle_end?: CycleEnd;
+  transactions?: Transactions;
+}
+/**
+ * A single customer-balance transaction (admin sign convention: +credit / -debit).
+ */
+export interface OrganizationBalanceTransactionRead {
+  id: Id6;
+  type: Type1;
+  amount_cents: AmountCents;
+  currency: Currency2;
+  description?: Description3;
+  created_at: CreatedAt6;
+}
+/**
+ * Admin records a balance change. amount_cents is signed: +credit, -debit.
+ */
+export interface OrganizationBalanceAdjustRequest {
+  amount_cents: AmountCents1;
+  description: Description4;
+}
+/**
+ * Admin assigns a plan to an org (no Stripe subscription is created).
+ */
+export interface OrganizationAssignPlanRequest {
+  price_id: PriceId2;
+}
+/**
  * Response indicating OAuth availability.
  */
 export interface OAuthStatusResponse {
@@ -780,15 +838,15 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id6;
-  type: Type1;
+  id: Id7;
+  type: Type2;
   subtype?: Subtype1;
   subject?: Subject1;
   created_by_id?: CreatedById;
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt6;
+  created_at?: CreatedAt7;
   updated_at?: UpdatedAt;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -797,7 +855,7 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id7;
+  id: Id8;
   email: Email13;
   first_name: FirstName7;
   last_name: LastName7;
@@ -806,27 +864,27 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id8;
+  id: Id9;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt7;
+  created_at?: CreatedAt8;
 }
 /**
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id9;
-  type: Type2;
+  id: Id10;
+  type: Type3;
   subtype?: Subtype2;
   subject?: Subject2;
   created_by_id?: CreatedById1;
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt8;
+  created_at?: CreatedAt9;
   updated_at?: UpdatedAt1;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;

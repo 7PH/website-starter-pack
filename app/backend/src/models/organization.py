@@ -39,6 +39,12 @@ class OrganizationBase(Base):
     stripe_premium = Column(Boolean, default=False)
     stripe_quota = Column(Integer, default=0)
 
+    # Admin-managed billing (bank-transfer orgs): plan is assigned locally,
+    # running balance lives in Stripe customer.balance.
+    billing_price_id = Column(String(255), nullable=True)
+    billing_cycle_started_at = Column(DateTime(timezone=True), nullable=True)
+    billing_cycle_end = Column(DateTime(timezone=True), nullable=True)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None, index=True)

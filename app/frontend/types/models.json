@@ -1151,6 +1151,154 @@
       "title": "OAuthUrlResponse",
       "type": "object"
     },
+    "OrganizationAdminBillingRead": {
+      "description": "Full admin billing view for an org: balance + plan + transactions.",
+      "properties": {
+        "balance_cents": {
+          "title": "Balance Cents",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OrganizationPlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cycle_started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cycle Started At"
+        },
+        "cycle_end": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cycle End"
+        },
+        "transactions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/OrganizationBalanceTransactionRead"
+          },
+          "title": "Transactions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "balance_cents",
+        "currency"
+      ],
+      "title": "OrganizationAdminBillingRead",
+      "type": "object"
+    },
+    "OrganizationAssignPlanRequest": {
+      "description": "Admin assigns a plan to an org (no Stripe subscription is created).",
+      "properties": {
+        "price_id": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Price Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "price_id"
+      ],
+      "title": "OrganizationAssignPlanRequest",
+      "type": "object"
+    },
+    "OrganizationBalanceAdjustRequest": {
+      "description": "Admin records a balance change. amount_cents is signed: +credit, -debit.",
+      "properties": {
+        "amount_cents": {
+          "description": "Positive = credit org, negative = charge org",
+          "title": "Amount Cents",
+          "type": "integer"
+        },
+        "description": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount_cents",
+        "description"
+      ],
+      "title": "OrganizationBalanceAdjustRequest",
+      "type": "object"
+    },
+    "OrganizationBalanceTransactionRead": {
+      "description": "A single customer-balance transaction (admin sign convention: +credit / -debit).",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "amount_cents": {
+          "title": "Amount Cents",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "amount_cents",
+        "currency",
+        "created_at"
+      ],
+      "title": "OrganizationBalanceTransactionRead",
+      "type": "object"
+    },
     "OrganizationCheckoutRequest": {
       "description": "Schema for creating a checkout session.",
       "properties": {
@@ -1824,6 +1972,18 @@
         "stripe_quota": {
           "title": "Stripe Quota",
           "type": "integer"
+        },
+        "stripe_dashboard_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stripe Dashboard Url"
         },
         "created_at": {
           "anyOf": [
@@ -2708,6 +2868,18 @@
     },
     {
       "$ref": "#/$defs/UserOrganizationInfo"
+    },
+    {
+      "$ref": "#/$defs/OrganizationAdminBillingRead"
+    },
+    {
+      "$ref": "#/$defs/OrganizationBalanceTransactionRead"
+    },
+    {
+      "$ref": "#/$defs/OrganizationBalanceAdjustRequest"
+    },
+    {
+      "$ref": "#/$defs/OrganizationAssignPlanRequest"
     },
     {
       "$ref": "#/$defs/OAuthStatusResponse"

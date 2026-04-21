@@ -11,6 +11,7 @@ app/backend/migrations/2026-01-16-conversations.sql
 app/backend/migrations/2026-01-19-org-metadata.sql
 app/backend/migrations/2026-04-16-conversation-subtype.sql
 app/backend/migrations/2026-04-20-org-invitations.sql
+app/backend/migrations/2026-04-21-organization-billing.sql
 app/backend/migrations/2026-04-21-user-metadata.sql
 app/backend/ruff.toml
 app/backend/src/main.py
@@ -76,6 +77,7 @@ app/backend/src/templates/*
 app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
+app/backend/tests/test_admin_billing.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 
@@ -167,6 +169,7 @@ app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/BillingTab.vue
 app/frontend/components/account/OrganizationsTab.vue
 app/frontend/components/account/PasswordTab.vue
+app/frontend/components/organizations/AdminBillingTab.vue
 app/frontend/components/organizations/BillingTab.vue
 app/frontend/components/organizations/Card.vue
 app/frontend/components/organizations/CreateModal.vue
