@@ -75,6 +75,8 @@ class EventType(StrEnum):
     ORG_MEMBER_PREMIUM_CHANGED = "org.member_premium_changed"
     ORG_SUBSCRIPTION_CREATED = "org.subscription_created"
     ORG_SUBSCRIPTION_CANCELED = "org.subscription_canceled"
+    ORG_BALANCE_ADJUSTED = "org.balance_adjusted"
+    ORG_BALANCE_CYCLE_DEBITED = "org.balance_cycle_debited"
     ORG_INVITATION_SENT = "org.invitation_sent"
     ORG_INVITATION_CANCELED = "org.invitation_canceled"
     ORG_INVITATION_ACCEPTED = "org.invitation_accepted"
@@ -111,6 +113,8 @@ CORE_EVENT_TYPES = {
     EventType.ORG_MEMBER_PREMIUM_CHANGED: {"label": "Member Premium Status Changed", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CREATED: {"label": "Organization Subscription Created", "category": "organization"},
     EventType.ORG_SUBSCRIPTION_CANCELED: {"label": "Organization Subscription Canceled", "category": "organization"},
+    EventType.ORG_BALANCE_ADJUSTED: {"label": "Organization Balance Adjusted", "category": "organization"},
+    EventType.ORG_BALANCE_CYCLE_DEBITED: {"label": "Organization Cycle Debited", "category": "organization"},
     EventType.ORG_INVITATION_SENT: {"label": "Invitation Sent", "category": "organization"},
     EventType.ORG_INVITATION_CANCELED: {"label": "Invitation Canceled", "category": "organization"},
     EventType.ORG_INVITATION_ACCEPTED: {"label": "Invitation Accepted", "category": "organization"},

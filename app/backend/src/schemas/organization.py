@@ -88,6 +88,7 @@ class OrganizationRead(BaseModel):
     stripe_id: str | None = None
     stripe_premium: bool
     stripe_quota: int
+    stripe_dashboard_url: str | None = None
     created_at: datetime | None = None
     deleted_at: datetime | None = None
     member_count: int = 0
@@ -166,6 +167,44 @@ class OrganizationSubscriptionStatus(BaseModel):
     stripe_quota: int
     cancel_at_period_end: bool = False
     expires_at: str | None = None
+
+
+# Admin-managed billing schemas
+
+
+class OrganizationBalanceTransactionRead(BaseModel):
+    """A single customer-balance transaction (admin sign convention: +credit / -debit)."""
+
+    id: str
+    type: str
+    amount_cents: int
+    currency: str
+    description: str | None = None
+    created_at: str
+
+
+class OrganizationAdminBillingRead(BaseModel):
+    """Full admin billing view for an org: balance + plan + transactions."""
+
+    balance_cents: int
+    currency: str
+    plan: OrganizationPlan | None = None
+    cycle_started_at: datetime | None = None
+    cycle_end: datetime | None = None
+    transactions: list[OrganizationBalanceTransactionRead] = []
+
+
+class OrganizationBalanceAdjustRequest(BaseModel):
+    """Admin records a balance change. amount_cents is signed: +credit, -debit."""
+
+    amount_cents: int = Field(..., description="Positive = credit org, negative = charge org")
+    description: str = Field(..., min_length=1, max_length=255)
+
+
+class OrganizationAssignPlanRequest(BaseModel):
+    """Admin assigns a plan to an org (no Stripe subscription is created)."""
+
+    price_id: str = Field(..., min_length=1, max_length=255)
 
 
 # Invitation schemas

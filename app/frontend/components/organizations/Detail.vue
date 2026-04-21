@@ -110,6 +110,13 @@ const availableTabs = computed(() => {
                 icon: 'i-lucide-credit-card',
             });
         }
+        if (props.isAdminView && config.public.stripeEnabled) {
+            tabs.push({
+                value: 'admin-billing',
+                label: t('core.organizations.tabs.adminBilling'),
+                icon: 'i-lucide-landmark',
+            });
+        }
         tabs.push({ value: 'settings', label: t('core.organizations.tabs.settings'), icon: 'i-lucide-settings' });
     }
     return tabs;
@@ -278,6 +285,15 @@ onMounted(() => {
                 </div>
                 <div v-if="isAdminView && !org.deleted_at" class="header-actions">
                     <UButton
+                        v-if="org.stripe_dashboard_url"
+                        :to="org.stripe_dashboard_url"
+                        target="_blank"
+                        :label="t('core.organizations.openInStripe')"
+                        icon="i-lucide-external-link"
+                        color="neutral"
+                        variant="outline"
+                    />
+                    <UButton
                         :label="t('core.organizations.contactAdmins')"
                         icon="i-lucide-message-square-plus"
                         color="neutral"
@@ -332,6 +348,11 @@ onMounted(() => {
                 :is-admin-view="isAdminView"
                 @open-subscribe-modal="openSubscribeModal"
                 @open-billing-portal="openBillingPortal"
+            />
+
+            <OrganizationsAdminBillingTab
+                v-else-if="activeTab === 'admin-billing' && isAdminView && isOwner"
+                :org-id="orgId"
             />
 
             <div v-else-if="activeTab === 'settings' && isOwner" class="settings-tab">

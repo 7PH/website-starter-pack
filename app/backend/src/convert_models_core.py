@@ -46,6 +46,10 @@ from .schemas.oauth import (
     OAuthUrlResponse,
 )
 from .schemas.organization import (
+    OrganizationAdminBillingRead,
+    OrganizationAssignPlanRequest,
+    OrganizationBalanceAdjustRequest,
+    OrganizationBalanceTransactionRead,
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
@@ -122,6 +126,10 @@ CoreModels = (
     | OrganizationInvitationListResponse
     | PendingInvitationPreview
     | UserOrganizationInfo
+    | OrganizationAdminBillingRead
+    | OrganizationBalanceTransactionRead
+    | OrganizationBalanceAdjustRequest
+    | OrganizationAssignPlanRequest
     # OAuth models
     | OAuthStatusResponse
     | OAuthUrlResponse

@@ -8,7 +8,7 @@ Provides functions for customer management, billing portal, and webhook handling
 import logging
 import os
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import stripe
 from fastapi import HTTPException
@@ -488,3 +488,113 @@ def get_org_subscription_status(stripe_customer_id: str) -> dict:
     except stripe.error.StripeError as e:
         logger.error(f"Stripe org subscription check error: {e}")
         return _DEFAULT_ORG_SUB_STATUS.copy()
+
+
+# ---------------------------------------------------------------------------
+# Customer balance (admin-managed billing ledger)
+#
+# Stripe's customer.balance convention: negative = customer has credit,
+# positive = customer owes. That's counterintuitive for admin UI, so every
+# helper below flips the sign at the boundary. In Python-land: positive =
+# credit (they've paid us), negative = owed (they're behind). See
+# https://docs.stripe.com/invoicing/customer/balance.
+# ---------------------------------------------------------------------------
+
+
+def get_org_balance(stripe_customer_id: str) -> dict:
+    """Return the org's running balance + currency (admin sign convention)."""
+    if not STRIPE_ENABLED or not stripe_customer_id:
+        return {"balance_cents": 0, "currency": "eur"}
+
+    try:
+        customer = stripe.Customer.retrieve(stripe_customer_id)
+        return {
+            "balance_cents": -int(customer.get("balance", 0) or 0),
+            "currency": customer.get("currency") or "eur",
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe balance fetch error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch balance") from e
+
+
+def adjust_org_balance(
+    stripe_customer_id: str,
+    amount_cents: int,
+    description: str,
+    currency: str | None = None,
+) -> dict:
+    """Record a balance change. Positive = credit them, negative = charge them."""
+    if not STRIPE_ENABLED or not stripe_customer_id:
+        raise HTTPException(status_code=500, detail="Payment provider not configured")
+
+    if amount_cents == 0:
+        raise HTTPException(status_code=400, detail="Amount cannot be zero")
+
+    try:
+        resolved_currency = currency
+        if not resolved_currency:
+            customer = stripe.Customer.retrieve(stripe_customer_id)
+            resolved_currency = customer.get("currency") or "eur"
+
+        tx = stripe.Customer.create_balance_transaction(
+            stripe_customer_id,
+            amount=-amount_cents,
+            currency=resolved_currency,
+            description=description,
+        )
+        return {
+            "id": tx.id,
+            "amount_cents": -int(tx.amount),
+            "currency": tx.currency,
+            "description": tx.description,
+            "created_at": datetime.fromtimestamp(tx.created).isoformat(),
+            "type": tx.type,
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe balance adjustment error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to adjust balance") from e
+
+
+def list_org_balance_transactions(stripe_customer_id: str, limit: int = 50) -> list[dict]:
+    """Return recent balance transactions, newest first, with flipped sign."""
+    if not STRIPE_ENABLED or not stripe_customer_id:
+        return []
+
+    try:
+        txs = stripe.Customer.list_balance_transactions(stripe_customer_id, limit=limit)
+        return [
+            {
+                "id": tx.id,
+                "amount_cents": -int(tx.amount),
+                "currency": tx.currency,
+                "description": tx.description,
+                "created_at": datetime.fromtimestamp(tx.created).isoformat(),
+                "type": tx.type,
+            }
+            for tx in txs.data
+        ]
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe balance transaction list error: {e}")
+        return []
+
+
+def get_dashboard_customer_url(stripe_customer_id: str) -> str | None:
+    """Return the Stripe dashboard URL for a customer, or None if Stripe isn't configured."""
+    if not stripe_customer_id or not STRIPE_API_KEY:
+        return None
+    prefix = "test/" if STRIPE_API_KEY.startswith("sk_test_") else ""
+    return f"https://dashboard.stripe.com/{prefix}customers/{stripe_customer_id}"
+
+
+def compute_next_cycle_end(interval: str, from_ts: datetime, interval_count: int = 1) -> datetime:
+    """Advance a billing cycle boundary by one interval."""
+    count = max(1, int(interval_count or 1))
+    if interval == "day":
+        return from_ts + timedelta(days=count)
+    if interval == "week":
+        return from_ts + timedelta(weeks=count)
+    if interval == "year":
+        return from_ts.replace(year=from_ts.year + count)
+    # Default: month. Approximate one month as 30 days — keeps things deterministic
+    # and avoids the pitfalls of end-of-month arithmetic (e.g. Jan 31 + 1 month).
+    return from_ts + timedelta(days=30 * count)
