@@ -16,11 +16,29 @@ SQLAlchemy's `Base.metadata.create_all()` handles initial table creation. Use mi
 
 ## Naming Convention
 
+New migrations during dev use the `vNEXT` placeholder:
+
 ```
-YYYY-MM-DD-description.sql
+YYYY-MM-DD-vNEXT-description.sql
 ```
 
-Example: `2025-12-28-add-users-email-index.sql`
+Example: `2026-04-21-vNEXT-add-users-email-index.sql`
+
+At release time, the `release-starterpack` skill rewrites `vNEXT` to the target
+version, producing the final name:
+
+```
+YYYY-MM-DD-vX.Y.Z-description.sql
+```
+
+Example: `2026-04-21-v2.0.0-add-users-email-index.sql`
+
+### Baseline
+
+`2026-04-21-v1.4.0-baseline.sql` is the consolidation of every v1.0.0 → v1.4.0
+migration. Fresh installs run it once. Existing sub-apps that have already
+applied the individual pre-v2.0.0 migrations can treat it as a no-op — it uses
+`IF NOT EXISTS` guards throughout.
 
 ## How to Run
 

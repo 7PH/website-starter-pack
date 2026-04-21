@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             echo -e "${RED}Unknown option: $1${NC}"
             echo "Usage: $0 [--analyze | --list-divergences]"
             echo "  --analyze           Show upgrade analysis without applying changes"
-            echo "  --list-divergences  List core files that diverge from upstream master (audit only)"
+            echo "  --list-divergences  List core files that diverge from the starterpack release recorded in .starterpack-version (audit only)"
             exit 1
             ;;
     esac
@@ -150,12 +150,35 @@ check_prerequisites() {
 }
 
 #######################################
-# Clone starterpack to temp folder
+# Clone starterpack at a specific ref (branch or tag)
 #######################################
 clone_upstream() {
-    echo -e "${BLUE}Cloning starterpack repository...${NC}"
-    git clone --depth 1 --branch master "$STARTER_PACK_GIT_REPOSITORY" "$UPSTREAM_DIR" 2>/dev/null
+    local ref="$1"
+    echo -e "${BLUE}Cloning starterpack repository at ${ref}...${NC}"
+    git clone --depth 1 --branch "$ref" "$STARTER_PACK_GIT_REPOSITORY" "$UPSTREAM_DIR" 2>/dev/null
     echo -e "${GREEN}Done.${NC}"
+}
+
+#######################################
+# Get the highest vX.Y.Z tag from the remote (no clone required).
+# Prints the tag name (e.g. "v1.4.0") or nothing if no release tags exist.
+#######################################
+get_latest_release_tag() {
+    git ls-remote --tags --refs "$STARTER_PACK_GIT_REPOSITORY" 'v*' 2>/dev/null \
+        | awk '{print $2}' \
+        | sed 's|refs/tags/||' \
+        | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+        | sort -V \
+        | tail -n 1
+}
+
+#######################################
+# Check whether a specific ref (branch or tag) exists on the remote.
+#######################################
+remote_ref_exists() {
+    local ref="$1"
+    git ls-remote --exit-code --refs "$STARTER_PACK_GIT_REPOSITORY" \
+        "refs/tags/$ref" "refs/heads/$ref" >/dev/null 2>&1
 }
 
 #######################################
@@ -618,12 +641,13 @@ show_files_to_modify() {
 }
 
 #######################################
-# List core files diverging from upstream master
+# List core files diverging from the recorded starterpack release.
 # - Template-mode: customized locally, but upstream template may have evolved
 # - Sync-mode: unexpected drift (should be fixed by re-running upgrade)
 # Exits 0 if no divergence, 1 if any found.
 #######################################
 show_divergences() {
+    local ref="$1"
     local template_diverged=()
     local file
 
@@ -639,12 +663,12 @@ show_divergences() {
 
     if [ $sync_count -eq 0 ] && [ $template_count -eq 0 ]; then
         echo ""
-        echo -e "${GREEN}No divergences. All core files match upstream master.${NC}"
+        echo -e "${GREEN}No divergences. All core files match upstream ${ref}.${NC}"
         return 0
     fi
 
     echo ""
-    echo -e "${CYAN}=== DIVERGENCES FROM UPSTREAM MASTER ===${NC}"
+    echo -e "${CYAN}=== DIVERGENCES FROM UPSTREAM ${ref} ===${NC}"
 
     if [ $template_count -gt 0 ]; then
         echo ""
@@ -685,14 +709,51 @@ show_divergences() {
 }
 
 #######################################
+# Resolve which upstream ref to fetch.
+# - --list-divergences: the tag matching the locally recorded version.
+# - otherwise: the highest vX.Y.Z tag on the remote (latest release).
+# Errors out (rather than falling back to master) so behaviour is explicit.
+#######################################
+resolve_target_ref() {
+    local local_version="$1"
+    local target_ref
+
+    if [ "$LIST_DIVERGENCES" = true ]; then
+        if [ "$local_version" = "0.0.0" ]; then
+            echo -e "${RED}Error: no starterpack version recorded in $VERSION_FILE.${NC}" >&2
+            echo "Run an upgrade first (bash scripts/_core/core-update.sh) to establish a baseline." >&2
+            exit 1
+        fi
+        target_ref="v${local_version}"
+        if ! remote_ref_exists "$target_ref"; then
+            echo -e "${RED}Error: remote tag ${target_ref} not found on ${STARTER_PACK_GIT_REPOSITORY}.${NC}" >&2
+            echo "The locally recorded version may predate the current tagging scheme, or the tag was removed upstream." >&2
+            exit 1
+        fi
+    else
+        target_ref=$(get_latest_release_tag)
+        if [ -z "$target_ref" ]; then
+            echo -e "${RED}Error: no release tags (vX.Y.Z) found on ${STARTER_PACK_GIT_REPOSITORY}.${NC}" >&2
+            echo "Upgrades now target tagged releases; ensure the upstream has at least one vX.Y.Z tag." >&2
+            exit 1
+        fi
+    fi
+
+    echo "$target_ref"
+}
+
+#######################################
 # Main
 #######################################
 main() {
     check_prerequisites
-    clone_upstream
 
-    # Get versions
+    # Get local version before cloning so we can pick the right ref.
     LOCAL_VERSION=$(get_version ".")
+
+    TARGET_REF=$(resolve_target_ref "$LOCAL_VERSION")
+    clone_upstream "$TARGET_REF"
+
     UPSTREAM_VERSION=$(get_version "$UPSTREAM_DIR")
 
     # First pass: compare files
@@ -701,7 +762,7 @@ main() {
     # List-divergences mode: pure audit, don't mutate local state.
     # Use the local manifest as-is (skip the manifest re-sync below).
     if [ "$LIST_DIVERGENCES" = true ]; then
-        show_divergences
+        show_divergences "$TARGET_REF"
         exit $?
     fi
 
@@ -710,6 +771,11 @@ main() {
     if manifest_needs_sync; then
         echo -e "${YELLOW}Manifest changed - syncing first to detect all file changes...${NC}"
 
+        # Preserve the first-pass removals before wiping. Pass 1 sees files
+        # dropped from the manifest in this release (e.g. consolidations); pass
+        # 2 uses the already-resync'd local manifest and wouldn't see them.
+        local -a preresync_removed=("${SYNC_REMOVED[@]}")
+
         # Sync manifest
         mkdir -p "$(dirname "$MANIFEST")"
         cp "$UPSTREAM_DIR/$MANIFEST" "$MANIFEST"
@@ -717,6 +783,20 @@ main() {
         # Reset and re-compare with updated manifest
         reset_comparison_arrays
         compare_files
+
+        # Merge preserved removals back in, skipping anything the new manifest
+        # now covers in another mode or that pass 2 already flagged.
+        local f existing covered
+        for f in "${preresync_removed[@]}"; do
+            covered=false
+            [ -n "${FILE_MODES[$f]}" ] && covered=true
+            if [ "$covered" = false ]; then
+                for existing in "${SYNC_REMOVED[@]}"; do
+                    [ "$existing" = "$f" ] && { covered=true; break; }
+                done
+            fi
+            [ "$covered" = false ] && SYNC_REMOVED+=("$f")
+        done
     fi
 
     if [ "$ANALYZE_ONLY" = true ]; then
