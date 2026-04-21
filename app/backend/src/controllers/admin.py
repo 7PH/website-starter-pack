@@ -27,6 +27,7 @@ from ..schemas.admin import (
 )
 from ..schemas.event_log import EventLogFilter, EventLogListResponse
 from ..schemas.user import UserRead
+from ..schemas.user_ext import UserCustomData
 
 router = APIRouter(prefix="/admin")
 
@@ -175,6 +176,14 @@ def update_user_by_admin(
     if user_update.is_premium is not None:
         changes["is_premium"] = {"from": user.is_premium, "to": user_update.is_premium}
         user.is_premium = user_update.is_premium
+
+    if user_update.custom_data is not None:
+        incoming = user_update.custom_data.model_dump(exclude_none=True)
+        merged = {**(user.custom_data or {}), **incoming}
+        new_custom_data = UserCustomData(**merged).model_dump(exclude_none=True)
+        if new_custom_data != (user.custom_data or {}):
+            changes["custom_data"] = {"from": user.custom_data or {}, "to": new_custom_data}
+            user.custom_data = new_custom_data
 
     update_user(session, user)
 

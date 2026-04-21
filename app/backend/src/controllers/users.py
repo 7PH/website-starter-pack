@@ -41,6 +41,7 @@ from ..schemas.user import (
     UserRead,
     UserTokenUpdate,
 )
+from ..schemas.user_ext import UserCustomData
 
 router = APIRouter()
 
@@ -71,11 +72,16 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
     if is_email_taken(session, user_create.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
+    custom_data: dict = {}
+    if user_create.custom_data is not None:
+        custom_data = user_create.custom_data.model_dump(exclude_none=True)
+
     user = UserBase(
         email=user_create.email,
         hashed_password=hash_password(user_create.password),
         first_name=user_create.first_name,
         last_name=user_create.last_name,
+        custom_data=custom_data,
     )
     create_user(session, user)
 
@@ -159,6 +165,7 @@ def _build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
         is_admin=user.is_admin,
         is_premium=user.is_premium,
         has_personal_subscription=user.has_personal_subscription,
+        custom_data=UserCustomData(**(user.custom_data or {})),
         organizations=organizations,
     )
 
@@ -258,6 +265,11 @@ def update_me(
 
     if user_change_info.last_name is not None:
         user.last_name = user_change_info.last_name
+
+    if user_change_info.custom_data is not None:
+        incoming = user_change_info.custom_data.model_dump(exclude_none=True)
+        merged = {**(user.custom_data or {}), **incoming}
+        user.custom_data = UserCustomData(**merged).model_dump(exclude_none=True)
 
     update_user(session, user)
 

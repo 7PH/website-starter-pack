@@ -120,6 +120,9 @@
           "default": null,
           "title": "Deleted At"
         },
+        "custom_data": {
+          "$ref": "#/$defs/UserCustomData"
+        },
         "organizations": {
           "default": [],
           "items": {
@@ -204,6 +207,17 @@
           ],
           "default": null,
           "title": "Is Premium"
+        },
+        "custom_data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserCustomData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "AdminUserUpdate",
@@ -2281,6 +2295,17 @@
           "minLength": 1,
           "title": "Last Name",
           "type": "string"
+        },
+        "custom_data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserCustomData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2335,6 +2360,17 @@
           "minLength": 1,
           "title": "Last Name",
           "type": "string"
+        },
+        "custom_data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserCustomData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2344,6 +2380,12 @@
         "last_name"
       ],
       "title": "UserCreate",
+      "type": "object"
+    },
+    "UserCustomData": {
+      "description": "Full custom-data shape. Add your fields here (with defaults).",
+      "properties": {},
+      "title": "UserCustomData",
       "type": "object"
     },
     "UserOrganizationInfo": {
@@ -2388,6 +2430,12 @@
       "title": "UserPasswordResetRequest",
       "type": "object"
     },
+    "UserPreviewCustomData": {
+      "description": "Preview-safe subset. Add only fields that are safe to show publicly.",
+      "properties": {},
+      "title": "UserPreviewCustomData",
+      "type": "object"
+    },
     "UserPreviewRead": {
       "properties": {
         "id": {
@@ -2401,6 +2449,9 @@
         "last_name": {
           "title": "Last Name",
           "type": "string"
+        },
+        "custom_data": {
+          "$ref": "#/$defs/UserPreviewCustomData"
         }
       },
       "required": [
@@ -2441,6 +2492,9 @@
           "default": false,
           "title": "Has Personal Subscription",
           "type": "boolean"
+        },
+        "custom_data": {
+          "$ref": "#/$defs/UserCustomData"
         },
         "organizations": {
           "default": [],
@@ -2690,6 +2744,12 @@
     },
     {
       "$ref": "#/$defs/OrganizationCustomData"
+    },
+    {
+      "$ref": "#/$defs/UserCustomData"
+    },
+    {
+      "$ref": "#/$defs/UserPreviewCustomData"
     }
   ]
 }

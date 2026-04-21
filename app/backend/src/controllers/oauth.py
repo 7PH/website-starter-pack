@@ -32,6 +32,7 @@ from ..schemas.oauth import (
 )
 from ..schemas.organization import UserOrganizationInfo
 from ..schemas.user import UserRead, UserTokenUpdate
+from ..schemas.user_ext import UserCustomData
 
 router = APIRouter(prefix="/oauth")
 
@@ -197,5 +198,6 @@ def _build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
         is_admin=user.is_admin,
         is_premium=user.is_premium,
         has_personal_subscription=user.has_personal_subscription,
+        custom_data=UserCustomData(**(user.custom_data or {})),
         organizations=organizations,
     )

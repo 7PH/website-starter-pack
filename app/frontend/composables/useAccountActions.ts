@@ -36,13 +36,20 @@ export function useAccountActions() {
     /**
      * Register a new user.
      */
-    async function signup(email: string, password: string, firstName: string, lastName: string): Promise<boolean> {
+    async function signup(
+        email: string,
+        password: string,
+        firstName: string,
+        lastName: string,
+        customData?: UserCustomData,
+    ): Promise<boolean> {
         try {
             const response = await usersApi.signup({
                 email,
                 password,
                 first_name: firstName,
                 last_name: lastName,
+                custom_data: customData,
             });
             auth.saveUserToken(response);
             showSuccess(t('core.auth.registerSuccess'));
@@ -143,13 +150,14 @@ export function useAccountActions() {
     // ============================================
 
     /**
-     * Update user profile (first name, last name).
+     * Update user profile (first name, last name, optional custom_data).
      */
-    async function updateProfile(firstName: string, lastName: string): Promise<boolean> {
+    async function updateProfile(firstName: string, lastName: string, customData?: UserCustomData): Promise<boolean> {
         try {
             const updatedUser = await usersApi.updateProfile({
                 first_name: firstName,
                 last_name: lastName,
+                custom_data: customData,
             });
             auth.updateUser(updatedUser);
             showSuccess(t('core.account.profileSaved'));

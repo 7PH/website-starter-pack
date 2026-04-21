@@ -7,6 +7,7 @@ import datetime
 from pydantic import BaseModel, Field, field_validator
 
 from .organization import UserOrganizationInfo
+from .user_ext import UserCustomData, UserPreviewCustomData
 
 
 class UserRead(BaseModel):
@@ -17,6 +18,7 @@ class UserRead(BaseModel):
     is_admin: bool
     is_premium: bool
     has_personal_subscription: bool = False
+    custom_data: UserCustomData = Field(default_factory=UserCustomData)
     organizations: list[UserOrganizationInfo] = []
 
     class Config:
@@ -27,6 +29,10 @@ class UserPreviewRead(BaseModel):
     id: int
     first_name: str
     last_name: str
+    custom_data: UserPreviewCustomData = Field(default_factory=UserPreviewCustomData)
+
+    class Config:
+        from_attributes = True
 
     # Replace last name with its first letter for privacy
     @field_validator("last_name")
@@ -42,6 +48,7 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
+    custom_data: UserCustomData | None = None
 
     @field_validator("last_name")
     @classmethod
@@ -52,6 +59,7 @@ class UserCreate(BaseModel):
 class UserChangeInfo(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
+    custom_data: UserCustomData | None = None
 
 
 class UserChangePassword(BaseModel):

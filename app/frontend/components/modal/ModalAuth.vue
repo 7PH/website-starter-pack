@@ -69,7 +69,10 @@ const signupForm = reactive({
     confirmPassword: '',
     firstName: '',
     lastName: '',
+    customData: {} as UserCustomData,
 });
+
+const signupMetadataRef = ref<{ validate: () => boolean } | null>(null);
 
 const forgotPasswordForm = reactive({
     email: '',
@@ -155,6 +158,8 @@ function validateSignup(): boolean {
     if (signupForm.password !== signupForm.confirmPassword) {
         errors.value.confirmPassword = t('core.auth.passwordMismatch');
     }
+    const metadataValid = signupMetadataRef.value?.validate() ?? true;
+    if (!metadataValid) return false;
     return Object.keys(errors.value).length === 0;
 }
 
@@ -202,6 +207,7 @@ async function handleSignup() {
         signupForm.password,
         signupForm.firstName,
         signupForm.lastName,
+        signupForm.customData,
     );
     isLoading.value = false;
 
@@ -424,6 +430,13 @@ function close() {
                         </template>
                     </UInput>
                 </UFormField>
+
+                <UsersSignupMetadataFields
+                    ref="signupMetadataRef"
+                    :custom-data="signupForm.customData"
+                    @update:custom-data="signupForm.customData = $event"
+                    @validate="(metaErrors) => Object.assign(errors, metaErrors)"
+                />
 
                 <UButton type="submit" :label="t('core.auth.createAccount')" :loading="isLoading" block />
 
