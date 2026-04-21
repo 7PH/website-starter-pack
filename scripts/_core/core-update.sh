@@ -24,16 +24,22 @@ UPSTREAM_DIR="$TEMP_DIR/starterpack"
 
 # Parse command line arguments
 ANALYZE_ONLY=false
+LIST_DIVERGENCES=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --analyze)
             ANALYZE_ONLY=true
             shift
             ;;
+        --list-divergences)
+            LIST_DIVERGENCES=true
+            shift
+            ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            echo "Usage: $0 [--analyze]"
-            echo "  --analyze  Show upgrade analysis without applying changes"
+            echo "Usage: $0 [--analyze | --list-divergences]"
+            echo "  --analyze           Show upgrade analysis without applying changes"
+            echo "  --list-divergences  List core files that diverge from upstream master (audit only)"
             exit 1
             ;;
     esac
@@ -123,8 +129,8 @@ parse_manifest_entry() {
 # Check prerequisites
 #######################################
 check_prerequisites() {
-    # Check git is clean
-    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    # Check git is clean (skipped for read-only audits)
+    if [ "$LIST_DIVERGENCES" != true ] && [ -n "$(git status --porcelain 2>/dev/null)" ]; then
         echo -e "${RED}Error: Git working directory is not clean.${NC}"
         echo "Please commit or stash your changes before running this script."
         exit 1
@@ -612,6 +618,73 @@ show_files_to_modify() {
 }
 
 #######################################
+# List core files diverging from upstream master
+# - Template-mode: customized locally, but upstream template may have evolved
+# - Sync-mode: unexpected drift (should be fixed by re-running upgrade)
+# Exits 0 if no divergence, 1 if any found.
+#######################################
+show_divergences() {
+    local template_diverged=()
+    local file
+
+    # Diff each existing template file against upstream
+    for file in "${TEMPLATE_SKIPPED[@]}"; do
+        if ! diff -q "$file" "$UPSTREAM_DIR/$file" >/dev/null 2>&1; then
+            template_diverged+=("$file")
+        fi
+    done
+
+    local sync_count=${#SYNC_MODIFIED[@]}
+    local template_count=${#template_diverged[@]}
+
+    if [ $sync_count -eq 0 ] && [ $template_count -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}No divergences. All core files match upstream master.${NC}"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${CYAN}=== DIVERGENCES FROM UPSTREAM MASTER ===${NC}"
+
+    if [ $template_count -gt 0 ]; then
+        echo ""
+        echo -e "${YELLOW}Template files diverged from upstream (review for upstream updates):${NC}"
+        for file in "${template_diverged[@]}"; do
+            echo ""
+            echo -e "${YELLOW}==> $file (template)${NC}"
+            diff --color=always -u "$UPSTREAM_DIR/$file" "$file" 2>/dev/null || true
+        done
+    fi
+
+    if [ $sync_count -gt 0 ]; then
+        echo ""
+        echo -e "${RED}Sync files drifted unexpectedly (re-run upgrade to fix):${NC}"
+        for file in "${SYNC_MODIFIED[@]}"; do
+            echo ""
+            echo -e "${RED}==> $file (sync — unexpected drift)${NC}"
+            diff --color=always -u "$UPSTREAM_DIR/$file" "$file" 2>/dev/null || true
+        done
+    fi
+
+    echo ""
+    echo -e "${BLUE}─── Divergence summary ───${NC}"
+    if [ $template_count -gt 0 ]; then
+        echo -e "${YELLOW}$template_count template file(s) diverged from upstream (review for upstream updates):${NC}"
+        for file in "${template_diverged[@]}"; do
+            echo -e "    ${YELLOW}~ $file${NC}"
+        done
+    fi
+    if [ $sync_count -gt 0 ]; then
+        echo -e "${RED}$sync_count sync file(s) drifted unexpectedly (re-run upgrade to fix):${NC}"
+        for file in "${SYNC_MODIFIED[@]}"; do
+            echo -e "    ${RED}~ $file${NC}"
+        done
+    fi
+
+    return 1
+}
+
+#######################################
 # Main
 #######################################
 main() {
@@ -624,6 +697,13 @@ main() {
 
     # First pass: compare files
     compare_files
+
+    # List-divergences mode: pure audit, don't mutate local state.
+    # Use the local manifest as-is (skip the manifest re-sync below).
+    if [ "$LIST_DIVERGENCES" = true ]; then
+        show_divergences
+        exit $?
+    fi
 
     # If manifest itself changed, sync it first and re-compare
     # This ensures new files added to the manifest are detected in a single run
