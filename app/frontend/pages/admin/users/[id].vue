@@ -36,6 +36,7 @@ const form = ref({
     email: '',
     is_admin: false,
     is_premium: false,
+    custom_data: {} as UserCustomData,
 });
 
 const isEditing = ref(false);
@@ -66,6 +67,7 @@ watch(
                 email: newUser.email,
                 is_admin: newUser.is_admin,
                 is_premium: newUser.is_premium,
+                custom_data: (newUser.custom_data ?? {}) as UserCustomData,
             };
         }
     },
@@ -116,6 +118,7 @@ function cancelEdit() {
             email: user.value.email,
             is_admin: user.value.is_admin,
             is_premium: user.value.is_premium,
+            custom_data: (user.value.custom_data ?? {}) as UserCustomData,
         };
     }
     isEditing.value = false;
@@ -280,6 +283,10 @@ async function deleteUser() {
                                 <UCheckbox v-model="form.is_admin" label="Admin" />
                                 <UCheckbox v-model="form.is_premium" label="Premium" />
                             </div>
+                            <UsersMetadataFields
+                                :custom-data="form.custom_data"
+                                @update:custom-data="form.custom_data = $event"
+                            />
                             <div class="form-actions">
                                 <UButton label="Cancel" color="neutral" variant="outline" @click="cancelEdit" />
                                 <UButton type="submit" label="Save Changes" :loading="isSaving" />
@@ -307,6 +314,7 @@ async function deleteUser() {
                                 <span class="info-label">Deleted</span>
                                 <span class="info-value deleted-value">{{ formatDate(user.deleted_at) }}</span>
                             </div>
+                            <UsersMetadataDisplay :custom-data="(user.custom_data ?? {}) as UserCustomData" />
                         </div>
                     </UCard>
 

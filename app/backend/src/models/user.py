@@ -3,6 +3,7 @@
 """User SQLAlchemy model (database table definition)."""
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
+from sqlalchemy.dialects.postgresql import JSONB
 
 from ..helpers.db import Base
 
@@ -24,6 +25,9 @@ class UserBase(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
     oauth_provider = Column(String, nullable=True)  # OAuthProvider value
     oauth_id = Column(String, nullable=True)  # Provider's unique user ID
+
+    # Custom data (project-specific fields; validated against UserCustomData)
+    custom_data = Column(JSONB, default=dict, nullable=False)
 
     # This table is used for polymorphic inheritance
     __mapper_args__ = {"polymorphic_identity": "userbase"}

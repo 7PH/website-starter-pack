@@ -11,6 +11,7 @@ app/backend/migrations/2026-01-16-conversations.sql
 app/backend/migrations/2026-01-19-org-metadata.sql
 app/backend/migrations/2026-04-16-conversation-subtype.sql
 app/backend/migrations/2026-04-20-org-invitations.sql
+app/backend/migrations/2026-04-21-user-metadata.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -61,6 +62,7 @@ app/backend/src/schemas/user.py
 app/backend/src/schemas/oauth.py
 app/backend/src/schemas/llm.py
 app/backend/src/schemas/organization_ext.py:template
+app/backend/src/schemas/user_ext.py:template
 app/backend/src/convert_models_core.py
 app/backend/src/convert-models.py:template
 app/backend/src/crud/__init__.py
@@ -175,6 +177,9 @@ app/frontend/components/organizations/List.vue
 app/frontend/components/organizations/MembersCard.vue
 app/frontend/components/organizations/MetadataFields.vue:template
 app/frontend/components/organizations/MetadataDisplay.vue:template
+app/frontend/components/users/MetadataFields.vue:template
+app/frontend/components/users/MetadataDisplay.vue:template
+app/frontend/components/users/SignupMetadataFields.vue:template
 app/frontend/components/organizations/OverviewTab.vue
 app/frontend/components/organizations/PageActions.vue
 app/frontend/components/organizations/SubscriptionModal.vue

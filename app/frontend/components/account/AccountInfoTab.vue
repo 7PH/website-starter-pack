@@ -19,6 +19,7 @@ const showEmailPassword = ref(false);
 const profileForm = reactive({
     firstName: auth.user?.first_name || '',
     lastName: auth.user?.last_name || '',
+    customData: (auth.user?.custom_data ?? {}) as UserCustomData,
 });
 
 // Email form
@@ -35,6 +36,7 @@ watch(
         if (user) {
             profileForm.firstName = user.first_name;
             profileForm.lastName = user.last_name;
+            profileForm.customData = (user.custom_data ?? {}) as UserCustomData;
         }
     },
     { immediate: true },
@@ -68,7 +70,11 @@ async function handleProfileSave() {
     if (!validateProfile()) return;
 
     isProfileLoading.value = true;
-    await accountActions.updateProfile(profileForm.firstName.trim(), profileForm.lastName.trim());
+    await accountActions.updateProfile(
+        profileForm.firstName.trim(),
+        profileForm.lastName.trim(),
+        profileForm.customData,
+    );
     isProfileLoading.value = false;
 }
 
@@ -127,6 +133,11 @@ function cancelEmailChange() {
                         />
                     </UFormField>
                 </div>
+
+                <UsersMetadataFields
+                    :custom-data="profileForm.customData"
+                    @update:custom-data="profileForm.customData = $event"
+                />
 
                 <div class="flex justify-end">
                     <UButton type="submit" :label="t('core.account.save')" :loading="isProfileLoading" />

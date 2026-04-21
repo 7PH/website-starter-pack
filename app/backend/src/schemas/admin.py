@@ -4,11 +4,12 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .event_log import EventLogRead
 from .organization import UserOrganizationInfo
 from .user import UserRead, UserToken
+from .user_ext import UserCustomData
 
 
 class AdminUserUpdate(BaseModel):
@@ -19,6 +20,7 @@ class AdminUserUpdate(BaseModel):
     email: str | None = None
     is_admin: bool | None = None
     is_premium: bool | None = None
+    custom_data: UserCustomData | None = None
 
 
 class AdminUserRead(BaseModel):
@@ -33,6 +35,7 @@ class AdminUserRead(BaseModel):
     email_confirmed: bool
     created_at: datetime | None
     deleted_at: datetime | None = None
+    custom_data: UserCustomData = Field(default_factory=UserCustomData)
     organizations: list[UserOrganizationInfo] = []
 
     class Config:

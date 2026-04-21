@@ -62,7 +62,9 @@ export type Models =
   | MessageCreate
   | MessageRead
   | MessageListResponse
-  | OrganizationCustomData;
+  | OrganizationCustomData
+  | UserCustomData
+  | UserPreviewCustomData;
 export type Message = string;
 export type Id = number;
 export type Email = string;
@@ -339,8 +341,13 @@ export interface UserRead {
   is_admin: IsAdmin;
   is_premium: IsPremium;
   has_personal_subscription?: HasPersonalSubscription;
+  custom_data?: UserCustomData;
   organizations?: Organizations;
 }
+/**
+ * Full custom-data shape. Add your fields here (with defaults).
+ */
+export interface UserCustomData {}
 /**
  * Organization info for a user's memberships.
  */
@@ -354,12 +361,18 @@ export interface UserPreviewRead {
   id: Id1;
   first_name: FirstName1;
   last_name: LastName1;
+  custom_data?: UserPreviewCustomData;
 }
+/**
+ * Preview-safe subset. Add only fields that are safe to show publicly.
+ */
+export interface UserPreviewCustomData {}
 export interface UserCreate {
   email: Email1;
   password: Password;
   first_name: FirstName2;
   last_name: LastName2;
+  custom_data?: UserCustomData | null;
 }
 export interface UserChangeEmail {
   new_email: NewEmail;
@@ -368,6 +381,7 @@ export interface UserChangeEmail {
 export interface UserChangeInfo {
   first_name: FirstName3;
   last_name: LastName3;
+  custom_data?: UserCustomData | null;
 }
 export interface UserChangePassword {
   old_password: OldPassword;
@@ -401,6 +415,7 @@ export interface AdminUserRead {
   email_confirmed: EmailConfirmed;
   created_at: CreatedAt1;
   deleted_at?: DeletedAt;
+  custom_data?: UserCustomData;
   organizations?: Organizations1;
 }
 /**
@@ -412,6 +427,7 @@ export interface AdminUserUpdate {
   email?: Email4;
   is_admin?: IsAdmin3;
   is_premium?: IsPremium2;
+  custom_data?: UserCustomData | null;
 }
 /**
  * Paginated response for user list.
