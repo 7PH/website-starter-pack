@@ -46,8 +46,7 @@ def is_rate_limited(
     # actions[action][key] = [x for x in actions[action][key] if x > time.time() - 60 * duration_minutes] # Not done for performance reasons -> see below
     while (
         len(entries[duration_minutes][action][key]) > 0
-        and entries[duration_minutes][action][key][0]
-        < time.time() - 60 * duration_minutes
+        and entries[duration_minutes][action][key][0] < time.time() - 60 * duration_minutes
     ):
         entries[duration_minutes][action][key].pop(0)
 
@@ -61,9 +60,7 @@ def is_rate_limited(
     return False
 
 
-def ensure_rate_limit(
-    action: str, quota: float, key: str, duration_minutes: int = 1
-) -> None:
+def ensure_rate_limit(action: str, quota: float, key: str, duration_minutes: int = 1) -> None:
     """
     Ensure that the rate limit is not exceeded for a given action and key.
     If the rate limit is not reached, will consume 1 quota.

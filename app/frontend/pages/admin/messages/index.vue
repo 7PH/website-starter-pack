@@ -2,7 +2,7 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
-import { CORE_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes';
+import { CORE_CONVERSATION_SUBTYPES, type ConversationSubtypeValue } from '~/config/conversation-subtypes';
 import { PROJECT_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes-ext';
 
 definePageMeta({
@@ -12,8 +12,8 @@ definePageMeta({
 // Filters
 const includeClosed = ref(false);
 const allSubtypes = [...CORE_CONVERSATION_SUBTYPES, ...PROJECT_CONVERSATION_SUBTYPES];
-const subtypeFilter = ref('all');
-const subtypeOptions = [{ value: 'all', label: 'All' }, ...allSubtypes];
+const subtypeFilter = ref<'all' | ConversationSubtypeValue>('all');
+const subtypeOptions = [{ value: 'all' as const, label: 'All' }, ...allSubtypes];
 
 // Pagination
 const page = ref(1);
@@ -24,11 +24,7 @@ watch([includeClosed, subtypeFilter], () => {
     page.value = 1;
 });
 
-const {
-    data: conversationsData,
-    pending,
-    refresh,
-} = await useAsyncData<ConversationListResponse>(
+const { data: conversationsData, pending } = await useAsyncData<ConversationListResponse>(
     'admin-conversations',
     () =>
         conversationsApi.adminGetConversations({

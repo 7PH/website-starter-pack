@@ -306,10 +306,15 @@ export type Code = string;
 export type State4 = string;
 export type Subject = string;
 export type Content = string;
-export type Subtype = string | null;
+/**
+ * User-initiable conversation subtypes that ship with the starterpack.
+ *
+ * Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
+ */
+export type CoreConversationSubtype = "bug_report" | "feature_request";
 export type Id7 = number;
 export type Type2 = string;
-export type Subtype1 = string | null;
+export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
 export type Id8 = number;
@@ -329,7 +334,7 @@ export type IsAdminResponse = boolean;
 export type CreatedAt8 = string | null;
 export type Id10 = number;
 export type Type3 = string;
-export type Subtype2 = string | null;
+export type Subtype1 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
@@ -832,7 +837,7 @@ export interface OAuthCallbackRequest {
 export interface ConversationCreate {
   subject: Subject;
   content: Content;
-  subtype?: Subtype;
+  subtype?: CoreConversationSubtype | null;
 }
 /**
  * Schema for reading a conversation.
@@ -840,7 +845,7 @@ export interface ConversationCreate {
 export interface ConversationRead {
   id: Id7;
   type: Type2;
-  subtype?: Subtype1;
+  subtype?: Subtype;
   subject?: Subject1;
   created_by_id?: CreatedById;
   created_by?: ConversationUserPreview | null;
@@ -878,7 +883,7 @@ export interface MessageRead {
 export interface ConversationDetail {
   id: Id10;
   type: Type3;
-  subtype?: Subtype2;
+  subtype?: Subtype1;
   subject?: Subject2;
   created_by_id?: CreatedById1;
   created_by?: ConversationUserPreview | null;

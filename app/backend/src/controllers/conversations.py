@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
-from ..constants import EventType
+from ..constants import CoreConversationSubtype, EventType
 from ..crud.conversations import (
     add_message,
     close_conversation,
@@ -28,7 +28,9 @@ from ..crud.conversations import (
 )
 from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_id
+from ..helpers.account import assert_min_account_age
 from ..helpers.auth import get_current_admin, get_current_user
+from ..helpers.bug_report import strip_url_query_in_body
 from ..helpers.db import get_session
 from ..helpers.ratelimit import ensure_rate_limit
 from ..models.conversation import ConversationBase, MessageBase
@@ -52,8 +54,11 @@ router = APIRouter(prefix="/conversations")
 admin_router = APIRouter(prefix="/admin/conversations")
 
 # Rate limits
-CONVERSATION_CREATE_RATE_LIMIT = 5  # Max new conversations per hour
-CONVERSATION_CREATE_RATE_LIMIT_DURATION = 60  # 1 hour
+CONVERSATION_CREATE_HOURLY_QUOTA = 5  # Max new conversations per (user, subtype) per hour
+CONVERSATION_CREATE_HOURLY_DURATION = 60  # 1 hour
+CONVERSATION_CREATE_DAILY_QUOTA = 20  # Max new conversations per (user, subtype) per day
+CONVERSATION_CREATE_DAILY_DURATION = 60 * 24  # 24 hours
+MIN_ACCOUNT_AGE_MINUTES = 10  # Reject conversations from accounts younger than this
 MESSAGE_SEND_RATE_LIMIT = 30  # Max messages per minute
 MESSAGE_SEND_RATE_LIMIT_DURATION = 1  # 1 minute
 
@@ -165,13 +170,28 @@ def create_new_conversation(
     data: ConversationCreate,
 ):
     """Create a new support conversation."""
-    # Rate limit: max conversations per hour per user
+    assert_min_account_age(session, user.id, min_minutes=MIN_ACCOUNT_AGE_MINUTES)
+
+    # Independent rate-limit counters per subtype so a bug-report burst doesn't
+    # lock out legitimate support use (and vice versa).
+    rate_limit_action = f"conversation-create:{data.subtype or 'default'}"
     ensure_rate_limit(
-        action="conversation-create",
-        quota=CONVERSATION_CREATE_RATE_LIMIT,
+        action=rate_limit_action,
+        quota=CONVERSATION_CREATE_HOURLY_QUOTA,
         key=str(user.id),
-        duration_minutes=CONVERSATION_CREATE_RATE_LIMIT_DURATION,
+        duration_minutes=CONVERSATION_CREATE_HOURLY_DURATION,
     )
+    ensure_rate_limit(
+        action=rate_limit_action,
+        quota=CONVERSATION_CREATE_DAILY_QUOTA,
+        key=str(user.id),
+        duration_minutes=CONVERSATION_CREATE_DAILY_DURATION,
+    )
+
+    if data.subtype == CoreConversationSubtype.BUG_REPORT:
+        # Defense in depth: strip query strings/fragments the client may have
+        # missed. Tokens in those are the whole point of doing it here too.
+        data.content = strip_url_query_in_body(data.content)
 
     conversation = create_conversation(
         session=session,
@@ -185,7 +205,11 @@ def create_new_conversation(
         session,
         action=EventType.CONVERSATION_CREATED,
         user_id=user.id,
-        details={"conversation_id": conversation.id, "subject": data.subject},
+        details={
+            "conversation_id": conversation.id,
+            "subject": data.subject,
+            "subtype": data.subtype,
+        },
         request=request,
     )
 

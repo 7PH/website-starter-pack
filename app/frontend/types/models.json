@@ -328,15 +328,13 @@
         "subtype": {
           "anyOf": [
             {
-              "maxLength": 100,
-              "type": "string"
+              "$ref": "#/$defs/UserInitiableSubtype"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Subtype"
+          "default": null
         }
       },
       "required": [
@@ -2547,6 +2545,15 @@
       "properties": {},
       "title": "UserCustomData",
       "type": "object"
+    },
+    "UserInitiableSubtype": {
+      "description": "User-initiable conversation subtypes that ship with the starterpack.\n\nSub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.",
+      "enum": [
+        "bug_report",
+        "feature_request"
+      ],
+      "title": "CoreConversationSubtype",
+      "type": "string"
     },
     "UserOrganizationInfo": {
       "description": "Organization info for a user's memberships.",

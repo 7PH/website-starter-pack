@@ -6,10 +6,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from ..constants_ext import UserInitiableSubtype
+
 # Field length constants (shared across schemas)
 SUBJECT_MAX_LENGTH = 255
 MESSAGE_MAX_LENGTH = 10000
-SUBTYPE_MAX_LENGTH = 100
 
 
 class ConversationUserPreview(BaseModel):
@@ -47,7 +48,7 @@ class ConversationCreate(BaseModel):
 
     subject: str = Field(min_length=1, max_length=SUBJECT_MAX_LENGTH)
     content: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
-    subtype: str | None = Field(None, max_length=SUBTYPE_MAX_LENGTH)
+    subtype: UserInitiableSubtype | None = None
 
 
 class ConversationUpdate(BaseModel):
@@ -106,5 +107,5 @@ class AdminConversationCreate(BaseModel):
 
     subject: str = Field(min_length=1, max_length=SUBJECT_MAX_LENGTH)
     content: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
-    subtype: str | None = Field(None, max_length=SUBTYPE_MAX_LENGTH)
+    subtype: UserInitiableSubtype | None = None
     participant_user_ids: list[int] = Field(min_length=1)
