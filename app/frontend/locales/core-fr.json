@@ -186,7 +186,8 @@
                 "account": "Compte",
                 "password": "Mot de passe",
                 "organizations": "Organisations",
-                "billing": "Facturation"
+                "billing": "Facturation",
+                "privacy": "Confidentialité"
             },
             "profile": {
                 "title": "Profil",
@@ -216,6 +217,33 @@
                 "confirm": "Confirmer le nouveau mot de passe",
                 "change": "Changer le mot de passe",
                 "changeSuccess": "Mot de passe changé avec succès"
+            },
+            "privacy": {
+                "deleteSection": {
+                    "title": "Supprimer le compte",
+                    "description": "Supprime définitivement votre compte et anonymise vos données personnelles. Cette action est irréversible.",
+                    "button": "Supprimer mon compte"
+                },
+                "requestModal": {
+                    "title": "Supprimer votre compte",
+                    "body": "Nous vous enverrons un lien de confirmation par email. Le lien expire dans 1 heure. Votre compte n'est pas supprimé tant que vous n'avez pas cliqué dessus.",
+                    "confirm": "Envoyer l'email de confirmation",
+                    "sentTitle": "Vérifiez votre email",
+                    "sentBody": "Nous avons envoyé un lien de confirmation. Il expire dans 1 heure.",
+                    "failedTitle": "Impossible d'envoyer l'email de confirmation",
+                    "failedBody": "Réessayez plus tard. Si le problème persiste, contactez le support — ils peuvent supprimer votre compte manuellement."
+                },
+                "confirmPage": {
+                    "title": "Confirmer la suppression du compte",
+                    "warning": "Vous êtes sur le point de supprimer définitivement le compte associé à {email}. Cette action est irréversible.",
+                    "passwordLabel": "Entrez votre mot de passe pour confirmer",
+                    "deleteButton": "Supprimer mon compte",
+                    "wrongPassword": "Mot de passe incorrect",
+                    "success": "Votre compte a été supprimé",
+                    "failed": "Impossible de supprimer votre compte. Réessayez.",
+                    "invalidTitle": "Lien invalide ou expiré",
+                    "invalidBody": "Ce lien de suppression est invalide ou a expiré. Demandez-en un nouveau depuis la page de votre compte."
+                }
             }
         },
         "organizations": {

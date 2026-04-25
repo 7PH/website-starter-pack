@@ -1,0 +1,11 @@
+Hello {{ username }}!
+
+We received a request to delete your {{ app_name }} account.
+
+Click the link below to confirm. This action cannot be undone.
+
+{{ confirmation_link }}
+
+This link will expire in 1 hour.
+
+If you didn't request this, you can safely ignore this email. Your account will stay active.

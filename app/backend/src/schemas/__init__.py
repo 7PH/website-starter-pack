@@ -45,6 +45,8 @@ from .stripe import (
     WebhookResponse,
 )
 from .user import (
+    AccountDeletionConfirm,
+    AccountDeletionInfo,
     AuthMessageResponse,
     EmailChangeConfirm,
     EmailVerificationConfirm,
@@ -100,6 +102,8 @@ __all__ = [
     "SubscriptionStatus",
     "WebhookResponse",
     # User schemas
+    "AccountDeletionConfirm",
+    "AccountDeletionInfo",
     "AuthMessageResponse",
     "EmailChangeConfirm",
     "EmailVerificationConfirm",

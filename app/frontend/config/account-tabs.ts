@@ -63,4 +63,11 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
             return String(config.public.stripeEnabled) === 'true';
         },
     },
+    {
+        id: 'privacy',
+        label: 'core.account.tabs.privacy',
+        icon: 'i-lucide-shield',
+        component: defineAsyncComponent(() => import('~/components/account/PrivacyTab.vue')),
+        order: 50,
+    },
 ];

@@ -16,6 +16,7 @@ from ..constants import JWT_ALGORITHM, JWT_SECRET_KEY, PUBLIC_URL
 EMAIL_VERIFICATION_EXPIRE_DAYS = 10
 PASSWORD_RESET_EXPIRE_DAYS = 7
 EMAIL_CHANGE_EXPIRE_DAYS = 2
+ACCOUNT_DELETION_EXPIRE_MINUTES = 60
 
 
 def create_email_verification_token(user_id: int, email: str) -> str:
@@ -68,9 +69,27 @@ def create_email_change_token(user_id: int, current_email: str, new_email: str) 
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
+def create_account_deletion_token(user_id: int, current_email: str | None) -> str:
+    """
+    Create a JWT token for account deletion confirmation.
+
+    Token contains: type, user_id, email_at_request, exp.
+    The email is captured at request time so the token invalidates if the
+    user changes their email between requesting and confirming.
+    """
+    exp = datetime.now(UTC) + timedelta(minutes=ACCOUNT_DELETION_EXPIRE_MINUTES)
+    payload = {
+        "type": "delete-account",
+        "user_id": user_id,
+        "email_at_request": current_email,
+        "exp": int(exp.timestamp()),
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
 def decode_typed_token(
     token: str,
-    expected_type: Literal["verify-email", "reset-password", "change-email"],
+    expected_type: Literal["verify-email", "reset-password", "change-email", "delete-account"],
 ) -> dict | None:
     """
     Decode and validate a typed JWT token.
@@ -112,3 +131,11 @@ def get_email_change_url(token: str) -> str:
     """
     base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
     return f"{base_url}/confirm-email-change#{token}"
+
+
+def get_account_deletion_url(token: str) -> str:
+    """
+    Generate the account deletion confirmation URL with fragment-based token.
+    """
+    base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
+    return f"{base_url}/delete-account#{token}"

@@ -18,6 +18,8 @@ export type Models =
   | UserToken
   | UserTokenUpdate
   | UserPasswordResetRequest
+  | AccountDeletionInfo
+  | AccountDeletionConfirm
   | AdminUserRead
   | AdminUserUpdate
   | AdminUserListResponse
@@ -101,6 +103,10 @@ export type RealAdminId = number | null;
 export type AccessToken = string;
 export type TokenType = string;
 export type Email2 = string;
+export type RequiresPassword = boolean;
+export type EmailMasked = string;
+export type Token = string;
+export type Password2 = string | null;
 export type Id2 = number;
 export type Email3 = string;
 export type FirstName4 = string;
@@ -274,7 +280,7 @@ export type InvitedByUserId = number | null;
 export type InvitedByName = string | null;
 export type ExpiresAt3 = string;
 export type CreatedAt5 = string;
-export type Token = string | null;
+export type Token1 = string | null;
 export type Items5 = OrganizationInvitationRead[];
 export type OrganizationName2 = string;
 export type IsAdminInvite1 = boolean;
@@ -428,6 +434,20 @@ export interface UserTokenUpdate {
 }
 export interface UserPasswordResetRequest {
   email: Email2;
+}
+/**
+ * Info returned to render the account-deletion confirmation page.
+ */
+export interface AccountDeletionInfo {
+  requires_password: RequiresPassword;
+  email_masked: EmailMasked;
+}
+/**
+ * Confirm account deletion with JWT token and optional password.
+ */
+export interface AccountDeletionConfirm {
+  token: Token;
+  password?: Password2;
 }
 /**
  * Extended user info for admin view.
@@ -757,7 +777,7 @@ export interface OrganizationInvitationRead {
   invited_by_name?: InvitedByName;
   expires_at: ExpiresAt3;
   created_at: CreatedAt5;
-  token?: Token;
+  token?: Token1;
 }
 /**
  * Response schema for a list of invitations.

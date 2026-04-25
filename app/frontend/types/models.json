@@ -1,5 +1,50 @@
 {
   "$defs": {
+    "AccountDeletionConfirm": {
+      "description": "Confirm account deletion with JWT token and optional password.",
+      "properties": {
+        "token": {
+          "title": "Token",
+          "type": "string"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password"
+        }
+      },
+      "required": [
+        "token"
+      ],
+      "title": "AccountDeletionConfirm",
+      "type": "object"
+    },
+    "AccountDeletionInfo": {
+      "description": "Info returned to render the account-deletion confirmation page.",
+      "properties": {
+        "requires_password": {
+          "title": "Requires Password",
+          "type": "boolean"
+        },
+        "email_masked": {
+          "title": "Email Masked",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requires_password",
+        "email_masked"
+      ],
+      "title": "AccountDeletionInfo",
+      "type": "object"
+    },
     "AdminDashboardStats": {
       "description": "Dashboard statistics.",
       "properties": {
@@ -2776,6 +2821,12 @@
     },
     {
       "$ref": "#/$defs/UserPasswordResetRequest"
+    },
+    {
+      "$ref": "#/$defs/AccountDeletionInfo"
+    },
+    {
+      "$ref": "#/$defs/AccountDeletionConfirm"
     },
     {
       "$ref": "#/$defs/AdminUserRead"

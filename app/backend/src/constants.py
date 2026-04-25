@@ -57,6 +57,8 @@ class EventType(StrEnum):
     # User events
     USER_PROFILE_UPDATE = "user.profile_update"
     USER_PASSWORD_CHANGE = "user.password_change"
+    USER_DELETE_REQUEST = "user.delete_request"
+    USER_DELETE_COMPLETE = "user.delete_complete"
     # Admin events
     ADMIN_IMPERSONATE_START = "admin.impersonate_start"
     ADMIN_IMPERSONATE_STOP = "admin.impersonate_stop"
@@ -97,6 +99,8 @@ CORE_EVENT_TYPES = {
     EventType.USER_EMAIL_VERIFY: {"label": "Email Verified", "category": "auth"},
     EventType.USER_PROFILE_UPDATE: {"label": "Profile Updated", "category": "user"},
     EventType.USER_PASSWORD_CHANGE: {"label": "Password Changed", "category": "user"},
+    EventType.USER_DELETE_REQUEST: {"label": "Account Deletion Requested", "category": "user"},
+    EventType.USER_DELETE_COMPLETE: {"label": "Account Deletion Completed", "category": "user"},
     EventType.ADMIN_IMPERSONATE_START: {"label": "Impersonation Started", "category": "admin"},
     EventType.ADMIN_IMPERSONATE_STOP: {"label": "Impersonation Stopped", "category": "admin"},
     EventType.ADMIN_USER_UPDATE: {"label": "User Updated by Admin", "category": "admin"},

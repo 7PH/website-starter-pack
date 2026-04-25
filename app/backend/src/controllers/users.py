@@ -1,5 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+import logging
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -26,9 +27,14 @@ from ..helpers.auth import (
     verify_password,
 )
 from ..helpers.auth_app import pre_login
-from ..helpers.auth_tokens import create_email_change_token, get_email_change_url
+from ..helpers.auth_tokens import (
+    create_account_deletion_token,
+    create_email_change_token,
+    get_account_deletion_url,
+    get_email_change_url,
+)
 from ..helpers.db import get_session
-from ..helpers.email import send_email_change_email
+from ..helpers.email import send_account_deletion_email, send_email_change_email
 from ..helpers.ratelimit import ensure_rate_limit
 from ..models.user import UserBase
 from ..schemas.user import (
@@ -44,6 +50,7 @@ from ..schemas.user import (
 from ..schemas.user_ext import UserCustomData
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 RESET_PASSWORD_BASE_URL = f"{PUBLIC_URL}/reset-password"
 
@@ -54,6 +61,8 @@ REGISTER_RATE_LIMIT_PER_IP = 5  # max attempts per IP
 REGISTER_RATE_LIMIT_MINUTES = 15
 EMAIL_CHANGE_COOLDOWN_MINUTES = 5
 EMAIL_CHANGE_DAILY_LIMIT = 5
+ACCOUNT_DELETION_COOLDOWN_MINUTES = 5
+ACCOUNT_DELETION_DAILY_LIMIT = 5
 TOKEN_REFRESH_COOLDOWN_SECONDS = 300  # 5 minutes
 
 
@@ -400,3 +409,71 @@ def request_email_change(
     )
 
     return AuthMessageResponse(message="Confirmation email sent to your new address")
+
+
+@router.post(
+    "/users/me/account-deletions",
+    response_model=AuthMessageResponse,
+    status_code=status.HTTP_200_OK,
+)
+def request_account_deletion(
+    *,
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: UserRead = Depends(get_current_user),
+):
+    """
+    Request deletion of the current user's account.
+    Sends a confirmation email with a link that expires in 1 hour.
+    """
+    user = get_user_by_id(session, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if not user.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot send deletion email: no email address on file",
+        )
+
+    ensure_rate_limit(
+        action="account-deletion-request",
+        quota=1,
+        key=str(user.id),
+        duration_minutes=ACCOUNT_DELETION_COOLDOWN_MINUTES,
+    )
+    ensure_rate_limit(
+        action="account-deletion-request-daily",
+        quota=ACCOUNT_DELETION_DAILY_LIMIT,
+        key=str(user.id),
+        duration_minutes=60 * 24,
+    )
+
+    token = create_account_deletion_token(user.id, user.email)
+    confirmation_url = get_account_deletion_url(token)
+
+    # Surface email-send failures: if the user can't get the link, they must be
+    # told to contact support instead of seeing a misleading "check your email".
+    try:
+        send_account_deletion_email(
+            to_email=user.email,
+            username=user.first_name or user.email,
+            confirmation_link=confirmation_url,
+        )
+    except Exception as exc:
+        # In dev (no Mailgun) every send fails — log the URL so the dev can
+        # complete the flow manually. In prod this also gives an admin a way
+        # to honor the deletion if the email service is briefly down.
+        logger.warning(
+            "Account deletion email send failed for user_id=%s. Confirmation URL: %s",
+            user.id,
+            confirmation_url,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="email_send_failed",
+        ) from exc
+
+    log_event(session, action=EventType.USER_DELETE_REQUEST, user_id=user.id, request=request)
+
+    return AuthMessageResponse(message="Confirmation email sent")

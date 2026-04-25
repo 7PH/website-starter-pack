@@ -285,6 +285,42 @@ If you weren't expecting this, you can ignore this email.
     )
 
 
+def send_account_deletion_email(
+    to_email: str,
+    username: str,
+    confirmation_link: str,
+) -> bool:
+    """
+    Send an account deletion confirmation email.
+
+    Args:
+        to_email: Recipient email address (the user's current email)
+        username: User's display name
+        confirmation_link: Account deletion confirmation URL
+
+    Returns:
+        True if email was sent successfully
+    """
+    context = {
+        "username": username,
+        "confirmation_link": confirmation_link,
+    }
+
+    html_body = _render_template("account_deletion.html", **context)
+    text_body = _render_template("account_deletion.txt", **context)
+
+    if text_body is None:
+        # Templates ship with the starterpack — if missing, the install is broken.
+        raise RuntimeError("account_deletion email template is missing")
+
+    return send_email(
+        to_email=to_email,
+        subject="Confirm Account Deletion",
+        body=text_body,
+        html_body=html_body,
+    )
+
+
 def send_email_change_email(
     to_email: str,
     username: str,

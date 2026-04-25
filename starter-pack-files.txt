@@ -23,6 +23,7 @@ app/backend/src/controllers/stripe.py
 app/backend/src/controllers/users.py
 app/backend/src/controllers/oauth.py
 app/backend/src/controllers/conversations.py
+app/backend/src/helpers/account_deletion.py
 app/backend/src/helpers/auth.py
 app/backend/src/helpers/auth_tokens.py
 app/backend/src/helpers/db.py
@@ -150,6 +151,7 @@ app/frontend/pages/reset-password.vue
 app/frontend/pages/premium.vue
 app/frontend/pages/account.vue
 app/frontend/pages/confirm-email-change.vue
+app/frontend/pages/delete-account.vue
 app/frontend/pages/organizations/index.vue
 app/frontend/pages/organizations/[id].vue
 app/frontend/pages/invitations/[token].vue
@@ -168,6 +170,7 @@ app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/BillingTab.vue
 app/frontend/components/account/OrganizationsTab.vue
 app/frontend/components/account/PasswordTab.vue
+app/frontend/components/account/PrivacyTab.vue
 app/frontend/components/organizations/AdminBillingTab.vue
 app/frontend/components/organizations/BillingTab.vue
 app/frontend/components/organizations/Card.vue

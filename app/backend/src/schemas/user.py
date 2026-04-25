@@ -113,3 +113,17 @@ class AuthMessageResponse(BaseModel):
     """Standard response for auth operations."""
 
     message: str
+
+
+class AccountDeletionInfo(BaseModel):
+    """Info returned to render the account-deletion confirmation page."""
+
+    requires_password: bool
+    email_masked: str
+
+
+class AccountDeletionConfirm(BaseModel):
+    """Confirm account deletion with JWT token and optional password."""
+
+    token: str
+    password: str | None = None
