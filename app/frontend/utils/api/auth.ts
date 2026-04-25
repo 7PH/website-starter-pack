@@ -40,3 +40,19 @@ export async function resetPassword(token: string, password: string): Promise<Au
 export async function confirmEmailChange(token: string): Promise<AuthMessageResponse> {
     return useApi().post<AuthMessageResponse>('/email-changes/confirm', { token });
 }
+
+/**
+ * Inspect an account-deletion token to render the confirm page.
+ * Returns whether a password is required and the masked email of the target.
+ */
+export async function getAccountDeletionInfo(token: string): Promise<AccountDeletionInfo> {
+    return useApi().get<AccountDeletionInfo>('/account-deletions/info', { token });
+}
+
+/**
+ * Confirm account deletion using token from the deletion email.
+ * Password is required for password-auth users; OAuth-only users pass null.
+ */
+export async function confirmAccountDeletion(token: string, password: string | null): Promise<void> {
+    return useApi().post<void>('/account-deletions/confirm', { token, password });
+}

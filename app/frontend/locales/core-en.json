@@ -186,7 +186,8 @@
                 "account": "Account",
                 "password": "Password",
                 "organizations": "Organizations",
-                "billing": "Billing"
+                "billing": "Billing",
+                "privacy": "Privacy"
             },
             "profile": {
                 "title": "Profile",
@@ -216,6 +217,33 @@
                 "confirm": "Confirm new password",
                 "change": "Change password",
                 "changeSuccess": "Password changed successfully"
+            },
+            "privacy": {
+                "deleteSection": {
+                    "title": "Delete account",
+                    "description": "Permanently delete your account and anonymize your personal data. This cannot be undone.",
+                    "button": "Delete my account"
+                },
+                "requestModal": {
+                    "title": "Delete your account",
+                    "body": "We will email you a confirmation link. The link expires in 1 hour. Your account is not deleted until you click the link.",
+                    "confirm": "Send confirmation email",
+                    "sentTitle": "Check your email",
+                    "sentBody": "We sent a confirmation link to your email. The link expires in 1 hour.",
+                    "failedTitle": "Couldn't send the confirmation email",
+                    "failedBody": "Try again later. If this keeps happening, contact support — they can delete your account manually."
+                },
+                "confirmPage": {
+                    "title": "Confirm account deletion",
+                    "warning": "You are about to permanently delete the account associated with {email}. This cannot be undone.",
+                    "passwordLabel": "Enter your password to confirm",
+                    "deleteButton": "Delete my account",
+                    "wrongPassword": "Incorrect password",
+                    "success": "Your account has been deleted",
+                    "failed": "Could not delete your account. Please try again.",
+                    "invalidTitle": "Invalid or expired link",
+                    "invalidBody": "This deletion link is invalid or has expired. Request a new one from your account page."
+                }
             }
         },
         "organizations": {

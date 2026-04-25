@@ -7,6 +7,8 @@ Projects should import this and combine with their own models in convert-models.
 """
 
 from .schemas import (
+    AccountDeletionConfirm,
+    AccountDeletionInfo,
     AuthMessageResponse,
     UserChangeEmail,
     UserChangeInfo,
@@ -87,6 +89,8 @@ CoreModels = (
     | UserToken
     | UserTokenUpdate
     | UserPasswordResetRequest
+    | AccountDeletionInfo
+    | AccountDeletionConfirm
     # Admin models
     | AdminUserRead
     | AdminUserUpdate

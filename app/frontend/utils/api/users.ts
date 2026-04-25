@@ -72,3 +72,10 @@ export async function changePassword(data: UserChangePassword): Promise<UserRead
 export async function requestEmailChange(data: UserChangeEmail): Promise<AuthMessageResponse> {
     return useApi().post<AuthMessageResponse>('/users/me/email-changes', data);
 }
+
+/**
+ * Request account deletion. Sends a confirmation email with a 1h-TTL link.
+ */
+export async function requestAccountDeletion(): Promise<AuthMessageResponse> {
+    return useApi().post<AuthMessageResponse>('/users/me/account-deletions', {});
+}

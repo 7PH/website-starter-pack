@@ -12,9 +12,10 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import log_event
-from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, update_user
+from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, soft_delete_user, update_user
 from ..helpers import stripe as stripe_helper
-from ..helpers.auth import get_current_user, hash_password
+from ..helpers.account_deletion import mask_email, resolve_deletion_token
+from ..helpers.auth import get_current_user, hash_password, verify_password
 from ..helpers.auth_tokens import (
     create_email_verification_token,
     create_password_reset_token,
@@ -26,6 +27,8 @@ from ..helpers.db import get_session
 from ..helpers.email import send_email_verification_email, send_password_reset_email
 from ..helpers.ratelimit import ensure_rate_limit
 from ..schemas.user import (
+    AccountDeletionConfirm,
+    AccountDeletionInfo,
     AuthMessageResponse,
     EmailChangeConfirm,
     EmailVerificationConfirm,
@@ -290,3 +293,49 @@ def confirm_email_change(
     )
 
     return AuthMessageResponse(message="Email changed successfully")
+
+
+@router.get(
+    "/account-deletions/info",
+    response_model=AccountDeletionInfo,
+    status_code=status.HTTP_200_OK,
+)
+def account_deletion_info(
+    *,
+    session: Session = Depends(get_session),
+    token: str,
+):
+    """Decode the deletion token and return enough info to render the confirm page."""
+    user, _ = resolve_deletion_token(session, token)
+    return AccountDeletionInfo(
+        requires_password=user.oauth_provider is None,
+        email_masked=mask_email(user.email or ""),
+    )
+
+
+@router.post(
+    "/account-deletions/confirm",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def confirm_account_deletion(
+    *,
+    request: Request,
+    session: Session = Depends(get_session),
+    body: AccountDeletionConfirm,
+):
+    """
+    Confirm account deletion. Token authorizes the request; password-auth users
+    must also re-enter their password. OAuth-only users skip the password step.
+    """
+    user, _ = resolve_deletion_token(session, body.token)
+
+    # Password user: require and verify password. OAuth-only users skip this step.
+    if user.oauth_provider is None and (
+        not body.password or not verify_password(body.password, user.hashed_password or "")
+    ):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+
+    # Log before anonymization so the original user_id is captured
+    log_event(session, action=EventType.USER_DELETE_COMPLETE, user_id=user.id, request=request)
+
+    soft_delete_user(session, user)
