@@ -450,6 +450,8 @@
             "unknown": "Inconnu",
             "noMessagesYet": "Pas encore de messages",
             "typeMessage": "Tapez votre message...",
+            "write": "Écrire",
+            "preview": "Aperçu",
             "sendFailed": "Échec de l'envoi du message",
             "conversationClosed": "Cette conversation est fermée",
             "conversationClosedNotice": "Cette conversation est fermée. Contactez le support pour la rouvrir."

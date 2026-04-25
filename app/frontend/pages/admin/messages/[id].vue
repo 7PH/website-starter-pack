@@ -29,6 +29,7 @@ const {
 // New message
 const newMessage = ref('');
 const sending = ref(false);
+const composeMode = ref<'write' | 'preview'>('write');
 
 async function sendMessage() {
     if (!newMessage.value.trim()) return;
@@ -260,7 +261,7 @@ function getUserDisplay(conv: ConversationDetail): string {
                                         >{{ formatDate(message.created_at) }} {{ formatTime(message.created_at) }}</span
                                     >
                                 </div>
-                                <div class="message-content">{{ message.content }}</div>
+                                <MessageContent :content="message.content" />
                             </div>
                         </div>
 
@@ -269,7 +270,23 @@ function getUserDisplay(conv: ConversationDetail): string {
 
                     <!-- Message Input -->
                     <div v-if="!conversation.is_closed" class="message-input-area">
+                        <div class="compose-toolbar">
+                            <UButton
+                                size="xs"
+                                :variant="composeMode === 'write' ? 'soft' : 'ghost'"
+                                label="Write"
+                                @click="composeMode = 'write'"
+                            />
+                            <UButton
+                                size="xs"
+                                :variant="composeMode === 'preview' ? 'soft' : 'ghost'"
+                                label="Preview"
+                                :disabled="!newMessage.trim()"
+                                @click="composeMode = 'preview'"
+                            />
+                        </div>
                         <UTextarea
+                            v-show="composeMode === 'write'"
                             v-model="newMessage"
                             placeholder="Type your reply... (Ctrl+Enter to send)"
                             :rows="3"
@@ -277,6 +294,9 @@ function getUserDisplay(conv: ConversationDetail): string {
                             @keydown.ctrl.enter="sendMessage"
                             @keydown.meta.enter="sendMessage"
                         />
+                        <div v-show="composeMode === 'preview'" class="message-preview">
+                            <MessageContent :content="newMessage" />
+                        </div>
                         <div class="input-actions">
                             <UButton
                                 icon="i-lucide-send"
@@ -383,10 +403,6 @@ function getUserDisplay(conv: ConversationDetail): string {
     @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
-.message-content {
-    @apply text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words;
-}
-
 .no-messages {
     @apply text-center text-gray-500 dark:text-gray-400 py-8;
 }
@@ -395,8 +411,16 @@ function getUserDisplay(conv: ConversationDetail): string {
     @apply p-4 border-t border-gray-200 dark:border-gray-700 space-y-3;
 }
 
+.compose-toolbar {
+    @apply flex gap-1;
+}
+
 .message-input {
     @apply w-full;
+}
+
+.message-preview {
+    @apply w-full min-h-[5rem] rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3;
 }
 
 .input-actions {

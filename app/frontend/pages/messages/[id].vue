@@ -30,6 +30,7 @@ const {
 // New message
 const newMessage = ref('');
 const sending = ref(false);
+const composeMode = ref<'write' | 'preview'>('write');
 
 async function sendMessage() {
     if (!newMessage.value.trim()) return;
@@ -162,7 +163,7 @@ function getSenderName(message: MessageRead): string {
                                 <span class="message-sender">{{ getSenderName(message) }}</span>
                                 <span class="message-time">{{ formatTime(message.created_at) }}</span>
                             </div>
-                            <div class="message-content">{{ message.content }}</div>
+                            <MessageContent :content="message.content" />
                         </div>
                     </div>
 
@@ -174,8 +175,24 @@ function getSenderName(message: MessageRead): string {
 
             <!-- Message Input -->
             <div v-if="!conversation.is_closed" class="message-input-area">
+                <div class="compose-toolbar">
+                    <UButton
+                        size="xs"
+                        :variant="composeMode === 'write' ? 'soft' : 'ghost'"
+                        :label="t('core.messages.write')"
+                        @click="composeMode = 'write'"
+                    />
+                    <UButton
+                        size="xs"
+                        :variant="composeMode === 'preview' ? 'soft' : 'ghost'"
+                        :label="t('core.messages.preview')"
+                        :disabled="!newMessage.trim()"
+                        @click="composeMode = 'preview'"
+                    />
+                </div>
                 <div class="input-inner">
                     <UTextarea
+                        v-show="composeMode === 'write'"
                         v-model="newMessage"
                         :placeholder="t('core.messages.typeMessage')"
                         :rows="2"
@@ -183,6 +200,9 @@ function getSenderName(message: MessageRead): string {
                         @keydown.ctrl.enter="sendMessage"
                         @keydown.meta.enter="sendMessage"
                     />
+                    <div v-show="composeMode === 'preview'" class="message-preview">
+                        <MessageContent :content="newMessage" />
+                    </div>
                     <UButton
                         icon="i-lucide-send"
                         :label="t('core.messages.send')"
@@ -279,10 +299,6 @@ function getSenderName(message: MessageRead): string {
     @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
-.message-content {
-    @apply text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words;
-}
-
 .no-messages {
     @apply text-center text-gray-500 dark:text-gray-400 py-8;
 }
@@ -291,12 +307,20 @@ function getSenderName(message: MessageRead): string {
     @apply py-4 border-t border-gray-200 dark:border-gray-700;
 }
 
+.compose-toolbar {
+    @apply flex gap-1 mb-2;
+}
+
 .input-inner {
     @apply flex gap-2;
 }
 
 .message-input {
     @apply flex-1;
+}
+
+.message-preview {
+    @apply flex-1 min-h-[4rem] rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3;
 }
 
 .closed-notice {
