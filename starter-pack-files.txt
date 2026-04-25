@@ -9,6 +9,7 @@ app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
 app/backend/src/constants.py
+app/backend/src/constants_ext.py:template
 app/backend/src/router.py
 app/backend/src/controllers/__init__.py
 app/backend/src/controllers/admin.py
@@ -28,6 +29,8 @@ app/backend/src/helpers/db.py
 app/backend/src/helpers/email.py
 app/backend/src/helpers/exception.py
 app/backend/src/helpers/logging.py
+app/backend/src/helpers/account.py
+app/backend/src/helpers/bug_report.py
 app/backend/src/helpers/ratelimit.py
 app/backend/src/helpers/stripe.py
 app/backend/src/helpers/file_upload.py
@@ -70,6 +73,7 @@ app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
 app/backend/tests/test_admin_billing.py
+app/backend/tests/test_bug_report.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 
@@ -118,6 +122,7 @@ app/frontend/utils/api/stripe.ts
 app/frontend/utils/api/users.ts
 app/frontend/utils/api/conversations.ts
 app/frontend/utils/api/invitations.ts
+app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
 app/frontend/components/ui/GradientButton.vue
@@ -178,6 +183,8 @@ app/frontend/components/users/SignupMetadataFields.vue:template
 app/frontend/components/organizations/OverviewTab.vue
 app/frontend/components/organizations/PageActions.vue
 app/frontend/components/organizations/SubscriptionModal.vue
+app/frontend/components/common/BugReportButton.vue
+app/frontend/components/messages/ConversationComposerModal.vue
 app/frontend/components/messages/PageActions.vue
 app/frontend/composables/organizations/useOrganizationForm.ts
 app/frontend/composables/organizations/useOrganizationInvitations.ts

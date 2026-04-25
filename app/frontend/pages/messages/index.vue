@@ -13,8 +13,6 @@ definePageMeta({
 const MessagesPageActions = useOverridable('MessagesPageActions', MessagesPageActionsDefault);
 
 const { t } = useI18n();
-const toast = useToast();
-const router = useRouter();
 
 // Filters
 const includeClosed = ref(false);
@@ -28,11 +26,7 @@ watch([includeClosed], () => {
     page.value = 1;
 });
 
-const {
-    data: conversationsData,
-    pending,
-    refresh,
-} = await useAsyncData<ConversationListResponse>(
+const { data: conversationsData, pending } = await useAsyncData<ConversationListResponse>(
     'user-conversations',
     () =>
         conversationsApi.getConversations({
@@ -45,52 +39,7 @@ const {
 
 const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / itemsPerPage));
 
-// New conversation modal
 const showNewConversation = ref(false);
-const newConversation = ref({
-    subject: '',
-    content: '',
-});
-const creating = ref(false);
-
-async function createConversation() {
-    if (!newConversation.value.content.trim()) {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.messageRequired'),
-            color: 'error',
-        });
-        return;
-    }
-
-    creating.value = true;
-    try {
-        const conversation = await conversationsApi.createConversation({
-            subject: newConversation.value.subject ?? '',
-            content: newConversation.value.content,
-        });
-
-        toast.add({
-            title: t('core.messages.success'),
-            description: t('core.messages.conversationCreated'),
-            color: 'success',
-        });
-
-        showNewConversation.value = false;
-        newConversation.value = { subject: '', content: '' };
-
-        // Navigate to the new conversation
-        router.push(`/messages/${conversation.id}`);
-    } catch {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.createFailed'),
-            color: 'error',
-        });
-    } finally {
-        creating.value = false;
-    }
-}
 
 function formatDate(dateStr: string | null | undefined): string {
     if (!dateStr) return '-';
@@ -190,50 +139,7 @@ function truncateMessage(content: string | undefined, maxLength = 60): string {
             </UCard>
         </div>
 
-        <!-- New Conversation Modal -->
-        <UModal v-model:open="showNewConversation">
-            <template #content>
-                <UCard>
-                    <template #header>
-                        <UiModalHeader
-                            :title="t('core.messages.newConversation')"
-                            @close="showNewConversation = false"
-                        />
-                    </template>
-
-                    <div class="modal-form">
-                        <UFormField :label="t('core.messages.subjectLabel')">
-                            <UInput
-                                v-model="newConversation.subject"
-                                :placeholder="t('core.messages.subjectPlaceholder')"
-                                class="w-full"
-                            />
-                        </UFormField>
-
-                        <UFormField :label="t('core.messages.messageLabel')" required>
-                            <UTextarea
-                                v-model="newConversation.content"
-                                :placeholder="t('core.messages.messagePlaceholder')"
-                                :rows="5"
-                                class="w-full"
-                            />
-                        </UFormField>
-                    </div>
-
-                    <template #footer>
-                        <UiFormActions>
-                            <UButton
-                                color="neutral"
-                                variant="outline"
-                                :label="t('core.common.cancel')"
-                                @click="showNewConversation = false"
-                            />
-                            <UButton :label="t('core.messages.send')" :loading="creating" @click="createConversation" />
-                        </UiFormActions>
-                    </template>
-                </UCard>
-            </template>
-        </UModal>
+        <MessagesConversationComposerModal v-model:open="showNewConversation" />
     </div>
 </template>
 
@@ -297,9 +203,5 @@ function truncateMessage(content: string | undefined, maxLength = 60): string {
 
 .pagination-info {
     @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.modal-form {
-    @apply space-y-4;
 }
 </style>

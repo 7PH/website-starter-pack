@@ -27,9 +27,7 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 ORGANIZATIONS_ENABLED = os.environ.get("ORGANIZATIONS_ENABLED", "false").lower() == "true"
 ORG_MAX_PER_USER = int(os.environ.get("ORG_MAX_PER_USER", "1"))
 ORG_MAX_MEMBERS = int(os.environ.get("ORG_MAX_MEMBERS", "50"))
-ORG_STRIPE_PRICE_IDS = [
-    p.strip() for p in os.environ.get("ORG_STRIPE_PRICE_IDS", "").split(",") if p.strip()
-]
+ORG_STRIPE_PRICE_IDS = [p.strip() for p in os.environ.get("ORG_STRIPE_PRICE_IDS", "").split(",") if p.strip()]
 ORG_SELF_SERVICE_SUBSCRIPTIONS = os.environ.get("ORG_SELF_SERVICE_SUBSCRIPTIONS", "true").lower() == "true"
 ORG_SELF_SERVICE_CREATION = os.environ.get("ORG_SELF_SERVICE_CREATION", "true").lower() == "true"
 ORG_INVITATIONS_ENABLED = os.environ.get("ORG_INVITATIONS_ENABLED", "false").lower() == "true"
@@ -125,3 +123,13 @@ CORE_EVENT_TYPES = {
     EventType.CONVERSATION_CLOSED: {"label": "Conversation Closed", "category": "conversation"},
     EventType.CONVERSATION_REOPENED: {"label": "Conversation Reopened", "category": "conversation"},
 }
+
+
+class CoreConversationSubtype(StrEnum):
+    """User-initiable conversation subtypes that ship with the starterpack.
+
+    Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
+    """
+
+    BUG_REPORT = "bug_report"
+    FEATURE_REQUEST = "feature_request"

@@ -79,7 +79,7 @@ export async function sendMessage(conversationId: number, data: MessageCreate): 
 export async function adminCreateConversation(data: {
     subject: string;
     content: string;
-    subtype?: string;
+    subtype?: ConversationCreate['subtype'];
     participant_user_ids: number[];
 }): Promise<ConversationRead> {
     return useApi().post<ConversationRead>('/admin/conversations', data);
@@ -90,7 +90,7 @@ export async function adminCreateConversation(data: {
  */
 export async function adminGetConversations(params?: {
     includeClosed?: boolean;
-    subtype?: string;
+    subtype?: ConversationCreate['subtype'];
     limit?: number;
     offset?: number;
 }): Promise<ConversationListResponse> {

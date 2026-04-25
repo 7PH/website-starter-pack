@@ -453,6 +453,22 @@
             "sendFailed": "Échec de l'envoi du message",
             "conversationClosed": "Cette conversation est fermée",
             "conversationClosedNotice": "Cette conversation est fermée. Contactez le support pour la rouvrir."
+        },
+        "bug_report": {
+            "trigger_label": "Signaler un bug",
+            "modal": {
+                "title": "Signaler un bug",
+                "placeholder": "Que s'est-il passé ? Qu'attendiez-vous ?",
+                "subject_prefix": "Bug — ",
+                "context_label": "Contexte capturé automatiquement",
+                "url_label": "URL",
+                "useragent_label": "Navigateur",
+                "viewport_label": "Taille d'écran"
+            },
+            "errors": {
+                "too_new_account": "Votre compte est tout nouveau. Réessayez dans quelques minutes.",
+                "rate_limited": "Vous avez atteint la limite de signalements. Réessayez plus tard."
+            }
         }
     }
 }

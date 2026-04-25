@@ -118,6 +118,9 @@ function onSelectLogout() {
                             />
                         </UDropdownMenu>
 
+                        <!-- Bug report -->
+                        <CommonBugReportButton />
+
                         <!-- Settings dropdown -->
                         <UDropdownMenu :items="settingsMenuItems">
                             <UButton icon="i-lucide-settings" color="neutral" variant="ghost" size="sm" />
