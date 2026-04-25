@@ -450,6 +450,8 @@
             "unknown": "Unknown",
             "noMessagesYet": "No messages yet",
             "typeMessage": "Type your message...",
+            "write": "Write",
+            "preview": "Preview",
             "sendFailed": "Failed to send message",
             "conversationClosed": "This conversation is closed",
             "conversationClosedNotice": "This conversation is closed. Contact support to reopen it."

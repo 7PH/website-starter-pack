@@ -125,6 +125,7 @@ app/frontend/utils/api/invitations.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
+app/frontend/utils/markdown.ts
 app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
 app/frontend/components/ui/ModalHeader.vue
@@ -140,6 +141,7 @@ app/frontend/components/EmptyState.vue
 app/frontend/components/ErrorBoundary.vue
 app/frontend/components/LegalPage.vue
 app/frontend/components/LoadingSkeleton.vue
+app/frontend/components/MessageContent.vue
 app/frontend/components/PageFooter.vue
 app/frontend/components/PageHeader.vue
 app/frontend/pages/login.vue
@@ -211,6 +213,7 @@ app/frontend/e2e/smoke.spec.ts
 app/frontend/vitest.config.ts
 app/frontend/tests/example.test.ts
 app/frontend/tests/i18n-alignment.test.ts
+app/frontend/tests/markdown.test.ts
 
 # Traefik
 services/traefik/*.core.yml
