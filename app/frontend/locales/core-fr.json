@@ -433,8 +433,11 @@
         },
         "home": {
             "title": "Website Starter Pack",
-            "subtitle": "Template d'application web full-stack avec Nuxt 3, FastAPI, PostgreSQL et Traefik.",
+            "headline": "Lancez des apps full-stack en un après-midi.",
+            "subtitle": "Auth, facturation, organisations et i18n — branchés d'avance.",
+            "eyebrow": "Template full-stack prêt pour la prod",
             "getStarted": "Commencer",
+            "signIn": "Se connecter",
             "apiConnected": "Connecté",
             "apiOffline": "Hors ligne",
             "apiChecking": "Vérification...",
