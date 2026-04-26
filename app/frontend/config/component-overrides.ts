@@ -15,6 +15,10 @@ export type AsyncComponentLoader = () => Promise<{ default: Component }>;
  * - 'OrganizationsSubscriptionModal' - Custom billing/subscription UI
  * - 'MessagesPageActions' - Custom actions header on messages list page
  * - 'ModalAuth' - Custom authentication flow
+ * - 'Breadcrumb' - Custom breadcrumb visual.
+ *     IMPORTANT: your replacement MUST call `useBreadcrumb(items)` first thing
+ *     in setup so BreadcrumbList JSON-LD stays emitted. Skipping it silently
+ *     drops the page's structured data — Googlebot won't see the breadcrumb.
  *
  * Values must be async import functions for proper code splitting:
  *   () => import('~/components/custom/MyComponent.vue')

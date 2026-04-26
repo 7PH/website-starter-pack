@@ -1,17 +1,20 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-defineProps<{
+const props = defineProps<{
     title: string;
     lastUpdated?: string;
 }>();
 
 const { t } = useI18n();
+
+const breadcrumbItems = computed(() => [{ label: t('core.common.home'), to: '/' }, { label: props.title }]);
 </script>
 
 <template>
     <div class="legal-page">
         <div class="legal-container">
+            <CommonBreadcrumb :items="breadcrumbItems" class="mb-4" />
             <header class="legal-header">
                 <h1 class="legal-title">{{ title }}</h1>
                 <p v-if="lastUpdated" class="legal-updated">{{ t('core.legal.lastUpdated') }}: {{ lastUpdated }}</p>

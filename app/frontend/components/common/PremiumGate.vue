@@ -66,29 +66,13 @@ const modal = useModalStore();
 const generatedId = useId();
 const resolvedGatedId = computed(() => props.gatedId ?? `premium-gate-${generatedId}`);
 
-const jsonLd = computed(() => {
-    const payload = {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
+if (!props.noSchema) {
+    useSchemaArticle({
         isAccessibleForFree: false,
         hasPart: {
-            '@type': 'WebPageElement',
-            isAccessibleForFree: false,
             cssSelector: `#${resolvedGatedId.value}`,
+            isAccessibleForFree: false,
         },
-    };
-    // Escape </ so user-supplied strings can't break out of the script tag.
-    return JSON.stringify(payload).replaceAll('</', '<\\/');
-});
-
-if (!props.noSchema) {
-    useHead({
-        script: [
-            {
-                type: 'application/ld+json',
-                innerHTML: jsonLd,
-            },
-        ],
     });
 }
 
