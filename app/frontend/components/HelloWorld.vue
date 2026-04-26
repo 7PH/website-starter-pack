@@ -39,6 +39,13 @@ const features = computed(() => [
         description: t('core.home.features.organizationsDescription'),
     },
     {
+        key: 'premium',
+        area: 'premium',
+        icon: 'i-lucide-lock',
+        title: t('core.home.features.premium'),
+        description: t('core.home.features.premiumDescription'),
+    },
+    {
         key: 'i18n',
         area: 'i18n',
         icon: 'i-lucide-globe',
@@ -213,6 +220,25 @@ function signIn() {
                             <span class="member-name">Bob</span>
                             <span class="role">Member</span>
                         </div>
+                    </div>
+
+                    <div v-else-if="feature.area === 'premium'" class="peek peek-premium">
+                        <div class="premium-demo-headline">
+                            <span class="premium-demo-title">Advanced topic: closures</span>
+                            <CommonPremiumBadge size="sm" />
+                        </div>
+                        <CommonPremiumGate no-schema cta-to="/premium" class="premium-demo-gate">
+                            <template #teaser>
+                                <p class="premium-demo-teaser">
+                                    A closure is a function bundled with its surrounding state. The intro is free —
+                                </p>
+                            </template>
+                            <template #gated>
+                                <p>
+                                    Hidden chapter content goes here. Indexed by Googlebot, hidden from non-subscribers.
+                                </p>
+                            </template>
+                        </CommonPremiumGate>
                     </div>
 
                     <div v-else-if="feature.area === 'i18n'" class="peek peek-i18n">
@@ -430,16 +456,18 @@ function signIn() {
         'auth'
         'billing'
         'orgs'
+        'premium'
         'i18n';
 }
 
 @media (min-width: 1024px) {
     .bento {
         grid-template-columns: 1.15fr 1fr;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto auto auto auto;
         grid-template-areas:
             'auth    billing'
             'auth    orgs'
+            'premium premium'
             'i18n    i18n';
     }
 }
@@ -452,6 +480,9 @@ function signIn() {
 }
 .cell-orgs {
     grid-area: orgs;
+}
+.cell-premium {
+    grid-area: premium;
 }
 .cell-i18n {
     grid-area: i18n;
@@ -581,6 +612,32 @@ function signIn() {
 .role-owner {
     @apply text-violet-700 dark:text-violet-300;
     background: rgba(var(--theme-brand-rgb), 0.12);
+}
+
+/* ─── Premium peek ──────────────────────── */
+.peek-premium {
+    @apply mt-auto p-4 rounded-lg;
+    @apply bg-slate-50 dark:bg-slate-950/60;
+    @apply border border-slate-200/80 dark:border-slate-800/80;
+}
+.premium-demo-headline {
+    @apply flex items-center gap-2 mb-3;
+}
+.premium-demo-title {
+    @apply text-sm font-semibold text-slate-800 dark:text-slate-200;
+}
+.premium-demo-teaser {
+    @apply text-xs text-slate-600 dark:text-slate-400 m-0;
+}
+/* Tighten the gate CTA card for the bento context. */
+.premium-demo-gate :deep(.premium-gate > div:last-child > div) {
+    @apply mt-3 p-3;
+}
+.premium-demo-gate :deep(.premium-gate h3) {
+    @apply text-sm mb-0.5;
+}
+.premium-demo-gate :deep(.premium-gate p) {
+    @apply text-xs mb-2;
 }
 
 /* ─── i18n peek ─────────────────────────── */

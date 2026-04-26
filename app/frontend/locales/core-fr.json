@@ -449,7 +449,9 @@
                 "organizations": "Organisations",
                 "organizationsDescription": "Support multi-tenant avec gestion d'équipes",
                 "i18n": "i18n Prêt",
-                "i18nDescription": "Internationalisation avec anglais et français inclus"
+                "i18nDescription": "Internationalisation avec anglais et français inclus",
+                "premium": "Verrou premium",
+                "premiumDescription": "Paywall clé en main : SSR pour le SEO, masqué côté client aux non-abonnés"
             }
         },
         "messages": {
@@ -501,6 +503,14 @@
             "errors": {
                 "too_new_account": "Votre compte est tout nouveau. Réessayez dans quelques minutes.",
                 "rate_limited": "Vous avez atteint la limite de signalements. Réessayez plus tard."
+            }
+        },
+        "premium": {
+            "gate": {
+                "headline": "Contenu premium",
+                "body": "Abonnez-vous pour débloquer la suite de cette page.",
+                "cta": "Débloquer avec Premium",
+                "badgeTooltip": "Contenu premium. Abonnez-vous pour le débloquer."
             }
         }
     }
