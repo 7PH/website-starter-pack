@@ -1,0 +1,62 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+# Per-PR preview override. Layers on top of docker-compose.core.yml when
+# COMPOSE_FILE=docker-compose.core.yml:docker-compose.preview.yml is set.
+#
+# Differences from prod:
+#   - traefik-prod has no host port binding (host-Traefik forwards via preview-net)
+#   - traefik-prod is on preview-net + has discovery labels for host-Traefik
+#   - db uses a Compose-managed named volume (wiped by `down -v`)
+#   - backend-prod uses named volumes for writeable paths (no host accumulation)
+#   - adminer / umami / umami-db are profile-disabled (no admin UIs in previews)
+
+services:
+    traefik-prod:
+        ports: !override []
+        networks: !override
+            - web
+            - preview-net
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=preview-net"
+            - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${PUBLIC_WEBSITE_HOST}`) || Host(`static-${PUBLIC_WEBSITE_HOST}`)"
+            - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+            - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+            - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+            - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    db:
+        volumes: !override
+            - db_data:/var/lib/postgresql/data
+            - ./services/db/initdb.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+
+    backend-prod:
+        # The backend Dockerfile doesn't COPY src/ — it relies on the bind-mount
+        # from docker-compose.core.yml. Keep that mount; swap only the writeable
+        # bind-mounts (./backups, ./static) for named volumes so pr-N/backups and
+        # pr-N/static don't accumulate on the runner across pushes (actions/checkout
+        # doesn't clean by default; we also pass clean: true as belt-and-braces).
+        volumes: !override
+            - ./app/backend/src:/app/src
+            - backend_static:/app/static
+            - backend_backups:/app/backups
+
+    adminer:
+        profiles: !override
+            - disabled
+
+    umami:
+        profiles: !override
+            - disabled
+
+    umami-db:
+        profiles: !override
+            - disabled
+
+volumes:
+    db_data:
+    backend_static:
+    backend_backups:
+
+networks:
+    preview-net:
+        external: true
