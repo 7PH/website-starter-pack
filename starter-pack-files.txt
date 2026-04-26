@@ -199,6 +199,7 @@ app/frontend/components/common/PremiumGate.vue
 app/frontend/components/common/PremiumBadge.vue
 app/frontend/components/common/Breadcrumb.vue
 app/frontend/components/common/BreadcrumbDefault.vue
+app/frontend/components/common/YouTubeFacade.vue
 app/frontend/components/messages/ConversationComposerModal.vue
 app/frontend/components/messages/PageActions.vue
 app/frontend/composables/organizations/useOrganizationForm.ts
