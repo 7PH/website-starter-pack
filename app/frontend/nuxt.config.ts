@@ -2,6 +2,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite';
 import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
+import sitemapExt from './config/sitemap-ext';
+
+const PUBLIC_URL = process.env.PUBLIC_URL || '';
 
 // Default security headers (merged with project overrides)
 const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
@@ -53,6 +56,7 @@ export default defineNuxtConfig({
         public: {
             appName: 'My App', // NUXT_PUBLIC_APP_NAME
             apiBase: '/api/v1', // NUXT_PUBLIC_API_BASE - relative path, same origin
+            baseUrl: PUBLIC_URL, // Reuses existing PUBLIC_URL — used for sitemap, canonical, schema.org absolute URLs
             stripeEnabled: false, // NUXT_PUBLIC_STRIPE_ENABLED - enable billing features
             organizationsEnabled: false, // NUXT_PUBLIC_ORGANIZATIONS_ENABLED - enable org features
             orgSelfServiceSubscriptions: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_SUBSCRIPTIONS - allow org admins to subscribe
@@ -68,7 +72,28 @@ export default defineNuxtConfig({
         },
     },
 
-    modules: ['@pinia/nuxt', '@nuxt/ui', '@nuxtjs/i18n', '@vueuse/nuxt'],
+    modules: ['@pinia/nuxt', '@nuxt/ui', '@nuxtjs/i18n', '@vueuse/nuxt', '@nuxtjs/sitemap'],
+
+    site: {
+        url: PUBLIC_URL,
+        name: process.env.NUXT_PUBLIC_APP_NAME || 'My App',
+    },
+
+    sitemap: {
+        // Disable auto-discovery; ship explicit URLs so private pages don't leak.
+        // Sub-apps add their own public URLs via config/sitemap-ext.ts.
+        excludeAppSources: true,
+        urls: async () => {
+            const defaults = [
+                { loc: '/' },
+                { loc: '/legal/privacy' },
+                { loc: '/legal/terms' },
+                { loc: '/legal/cookies' },
+            ];
+            const extra = await sitemapExt();
+            return [...defaults, ...extra];
+        },
+    },
 
     colorMode: {
         preference: 'system',
@@ -87,6 +112,11 @@ export default defineNuxtConfig({
     },
 
     i18n: {
+        // baseUrl + per-locale `language` enable hreflang emission. Currently a no-op
+        // because strategy='no_prefix' means both locales share the same URL. To
+        // ship translated content with proper hreflang, switch strategy to
+        // 'prefix_except_default' (or similar) so each locale has a distinct URL.
+        baseUrl: PUBLIC_URL,
         locales: [
             { code: 'fr', name: 'Français', language: 'fr-FR' },
             { code: 'en', name: 'English', language: 'en-US' },

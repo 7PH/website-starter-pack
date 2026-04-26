@@ -104,6 +104,9 @@ app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useStripe.ts
 app/frontend/composables/usePremiumStatus.ts
+app/frontend/composables/schema.ts
+app/frontend/composables/useBreadcrumb.ts
+app/frontend/composables/useCanonical.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
@@ -167,6 +170,8 @@ app/frontend/config/main-nav-ext.ts:template
 app/frontend/config/conversation-subtypes.ts
 app/frontend/config/conversation-subtypes-ext.ts:template
 app/frontend/config/component-overrides.ts:template
+app/frontend/config/sitemap-ext.ts:template
+app/frontend/config/robots-ext.ts:template
 app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/BillingTab.vue
 app/frontend/components/account/OrganizationsTab.vue
@@ -192,6 +197,8 @@ app/frontend/components/organizations/SubscriptionModal.vue
 app/frontend/components/common/BugReportButton.vue
 app/frontend/components/common/PremiumGate.vue
 app/frontend/components/common/PremiumBadge.vue
+app/frontend/components/common/Breadcrumb.vue
+app/frontend/components/common/BreadcrumbDefault.vue
 app/frontend/components/messages/ConversationComposerModal.vue
 app/frontend/components/messages/PageActions.vue
 app/frontend/composables/organizations/useOrganizationForm.ts
@@ -212,15 +219,19 @@ app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
 app/frontend/pages/admin/users/[id].vue
 app/frontend/plugins/auth.client.ts
+app/frontend/server/routes/robots.txt.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 app/frontend/playwright.config.ts
 app/frontend/e2e/smoke.spec.ts
+app/frontend/e2e/seo.spec.ts
 app/frontend/vitest.config.ts
 app/frontend/tests/example.test.ts
 app/frontend/tests/i18n-alignment.test.ts
 app/frontend/tests/markdown.test.ts
-app/frontend/tests/PremiumGate.test.ts
+app/frontend/tests/schema.test.ts
+app/frontend/tests/useCanonical.test.ts
+app/frontend/tests/useBreadcrumb.test.ts
 
 # Traefik
 services/traefik/*.core.yml
