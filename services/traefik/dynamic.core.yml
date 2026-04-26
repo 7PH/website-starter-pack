@@ -2,7 +2,9 @@
 http:
   routers:
     static:
-      rule: "Host(`static.{{env "PUBLIC_WEBSITE_HOST"}}`)"
+      # `static-<host>` alias is for previews: per-PR previews live under a
+      # single-level wildcard cert which can't cover `static.<two.level.host>`.
+      rule: "Host(`static.{{env "PUBLIC_WEBSITE_HOST"}}`) || Host(`static-{{env "PUBLIC_WEBSITE_HOST"}}`)"
       entryPoints: default
       service: static
       {{ if eq (env "USE_TLS") "true" }}

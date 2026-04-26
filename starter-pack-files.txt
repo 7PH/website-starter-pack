@@ -230,6 +230,7 @@ scripts/_core/*
 # Root project files
 .env.template
 docker-compose.core.yml
+docker-compose.preview.yml
 docker-compose.test.yml
 package.core.json
 package.app.json:template

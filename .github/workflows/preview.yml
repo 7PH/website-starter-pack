@@ -1,0 +1,113 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+#
+# Per-PR preview environments. Requires:
+#   - vars.PREVIEW_BASE_DOMAIN set on the repo (else this workflow no-ops).
+#   - A host-Traefik VPS reachable by `*.<PREVIEW_BASE_DOMAIN>` and a
+#     self-hosted runner labeled `preview-host` registered on it.
+#     See https://github.com/7PH/website-starter-pack-pr-provisioning.
+
+name: PR preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Compose project name. If the repo name isn't a valid Compose project name
+# (lowercase + alphanumeric + dashes only), set vars.PREVIEW_APP_SLUG to override.
+env:
+  PROJECT: ${{ vars.PREVIEW_APP_SLUG || github.event.repository.name }}-pr-${{ github.event.pull_request.number }}
+  HOST: ${{ vars.PREVIEW_APP_SLUG || github.event.repository.name }}-pr-${{ github.event.pull_request.number }}.${{ vars.PREVIEW_BASE_DOMAIN }}
+
+jobs:
+  up:
+    if: |
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      vars.PREVIEW_BASE_DOMAIN != ''
+    runs-on: [self-hosted, preview-host]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: pr-${{ github.event.pull_request.number }}
+          clean: true
+
+      - name: Prepare .env
+        working-directory: pr-${{ github.event.pull_request.number }}
+        # Reuse .env.ci as the canonical "isolated app config" base
+        # (same file used by `npm run test:e2e:start`). Append per-PR
+        # overrides + the two preview-specific corners that .env.ci
+        # doesn't cover (BASIC_AUTH must be non-empty for the prod
+        # Traefik dynamic file to load; COMPOSE_FILE points at the
+        # preview override layer).
+        run: |
+          cp .env.ci .env
+          cat >> .env <<EOF
+          COMPOSE_FILE=docker-compose.core.yml:docker-compose.preview.yml
+          BASIC_AUTH='preview:\$apr1\$dummysalt\$dummyhashvaluehere'
+          COMPOSE_PROJECT_NAME=$PROJECT
+          PUBLIC_WEBSITE_HOST=$HOST
+          PUBLIC_URL=https://$HOST
+          EOF
+
+      - name: Start preview stack
+        working-directory: pr-${{ github.event.pull_request.number }}
+        # Wipe any prior stack from a previous push on this PR so each push
+        # starts fresh — matters for destructive schema migrations, stale
+        # test data, and removed migration files. No-op on the first push.
+        run: |
+          docker compose -p "$PROJECT" down -v --remove-orphans 2>/dev/null || true
+          docker compose --profile prod up -d --build
+
+      - name: Wait for preview to be healthy
+        # Per-stack Traefik routes by Host header; we hit it by container name
+        # over preview-net (the host shell can't resolve container names) and
+        # spoof the public hostname so the right router matches.
+        run: |
+          for i in {1..60}; do
+            if docker run --rm --network preview-net curlimages/curl:latest \
+                -sf --max-time 5 -H "Host: $HOST" \
+                "http://${PROJECT}-traefik/api/v1/healthcheck" >/dev/null 2>&1; then
+              echo "Healthy after ~$((i*2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Timed out — recent logs follow:"
+          docker logs --tail 50 "${PROJECT}-backend" 2>&1 || true
+          docker logs --tail 30 "${PROJECT}-traefik" 2>&1 || true
+          exit 1
+
+      - name: Comment preview URL on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        # Post once per PR — re-runs on the same PR shouldn't spam comments.
+        run: |
+          existing=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json comments \
+            --jq '.comments[] | select(.author.login == "github-actions[bot]") | select(.body | startswith("Preview ready:")) | .body' \
+            | head -n1 || true)
+          if [ -z "$existing" ]; then
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body "Preview ready: https://$HOST/"
+          fi
+
+  down:
+    if: |
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      vars.PREVIEW_BASE_DOMAIN != ''
+    runs-on: [self-hosted, preview-host]
+    steps:
+      - name: Tear down preview stack
+        # `docker compose -p X down` operates on Docker's recorded project
+        # state — no compose files / cwd / profiles needed. Idempotent: no-op
+        # with a warning if the project is already gone.
+        run: docker compose -p "$PROJECT" down -v --remove-orphans
