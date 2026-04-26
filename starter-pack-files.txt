@@ -103,6 +103,7 @@ app/frontend/stores/useModal.ts
 app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useStripe.ts
+app/frontend/composables/usePremiumStatus.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
@@ -189,6 +190,8 @@ app/frontend/components/organizations/OverviewTab.vue
 app/frontend/components/organizations/PageActions.vue
 app/frontend/components/organizations/SubscriptionModal.vue
 app/frontend/components/common/BugReportButton.vue
+app/frontend/components/common/PremiumGate.vue
+app/frontend/components/common/PremiumBadge.vue
 app/frontend/components/messages/ConversationComposerModal.vue
 app/frontend/components/messages/PageActions.vue
 app/frontend/composables/organizations/useOrganizationForm.ts
@@ -217,6 +220,7 @@ app/frontend/vitest.config.ts
 app/frontend/tests/example.test.ts
 app/frontend/tests/i18n-alignment.test.ts
 app/frontend/tests/markdown.test.ts
+app/frontend/tests/PremiumGate.test.ts
 
 # Traefik
 services/traefik/*.core.yml

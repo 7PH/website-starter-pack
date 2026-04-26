@@ -96,6 +96,19 @@ ALL user-facing text must be translated. Never hardcode user-visible strings.
 - **Colors**: `primary-*` for brand, `gray-*` for neutrals, semantic colors for states
 - **CSS**: Keep `main.css` minimal. Use `<style scoped>`. Create Vue components for shared patterns.
 
+## Premium gating
+
+Frontend `<PremiumGate>` (with `#teaser` / `#gated` slots) is UX, not security. Real entitlement is server-side: every premium write endpoint must depend on `require_premium`. Apps own this helper — pattern mirrors `get_current_admin` in `app/backend/src/helpers/auth.py`:
+
+```python
+async def require_premium(user: UserRead = Depends(get_current_user)) -> UserRead:
+    if not user.is_premium:
+        raise HTTPException(status_code=402, detail="Premium required")
+    return user
+```
+
+Use `usePremiumStatus()` for entitlement reads outside markup; use `<PremiumBadge>` to mark premium content visually.
+
 ## Type Generation
 
 Types auto-generated from Pydantic schemas. Run `./scripts/_core/convert-models.sh` after schema changes.
