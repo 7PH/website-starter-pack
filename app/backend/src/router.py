@@ -2,13 +2,20 @@
 
 from fastapi import APIRouter
 
-from .constants import MANAGED_ACCOUNTS_ENABLED, ORG_INVITATIONS_ENABLED, ORGANIZATIONS_ENABLED, STRIPE_ENABLED
+from .constants import (
+    INTERNAL_API_KEY,
+    MANAGED_ACCOUNTS_ENABLED,
+    ORG_INVITATIONS_ENABLED,
+    ORGANIZATIONS_ENABLED,
+    STRIPE_ENABLED,
+)
 from .controllers import (
     admin,
     auth,
     backups,
     db_health,
     healthcheck,
+    internal,
     invitations,
     managed_account_groups,
     organizations,
@@ -37,6 +44,8 @@ router_v1.include_router(backups.router, tags=["Backups"])
 router_v1.include_router(db_health.router, tags=["Database Health"])
 if MANAGED_ACCOUNTS_ENABLED:
     router_v1.include_router(managed_account_groups.router, tags=["Managed Accounts"])
+if INTERNAL_API_KEY:
+    router_v1.include_router(internal.router, tags=["Internal"])
 router_v1.include_router(app_router)
 
 # Main router combines all versions

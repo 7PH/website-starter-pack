@@ -21,6 +21,7 @@
     "db-import": "bash scripts/_core/db-import.sh",
     "db-connect": "set -a && . ./.env && set +a && bash scripts/_core/db-connect.sh",
     "db-migrate": "set -a && . ./.env && set +a && bash scripts/_core/db-migrate.sh",
+    "dev-mint-token": "set -a && . ./.env && set +a && bash scripts/_core/dev-mint-token.sh",
     "lint:frontend": "cd app/frontend && npm run lint",
     "lint:frontend:fix": "cd app/frontend && npm run lint:fix",
     "format:frontend": "cd app/frontend && npm run format",

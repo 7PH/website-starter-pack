@@ -18,6 +18,7 @@ app/backend/src/controllers/auth.py
 app/backend/src/controllers/backups.py
 app/backend/src/controllers/db_health.py
 app/backend/src/controllers/healthcheck.py
+app/backend/src/controllers/internal.py
 app/backend/src/controllers/invitations.py
 app/backend/src/controllers/organizations.py
 app/backend/src/controllers/stripe.py

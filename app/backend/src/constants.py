@@ -16,6 +16,9 @@ JWT_SECRET_KEY = os.environ.get("TOKEN_HASH_SECRET")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 2
 
+# Internal API key. When set, exposes POST /v1/internal/mint-token, which accepts an email + the key and returns a fresh access token
+INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
+
 # Minimum length requirement for user passwords
 PASSWORD_MIN_LENGTH = 8
 

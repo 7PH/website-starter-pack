@@ -9,3 +9,5 @@ node_modules
 
 /backups
 /static
+
+.playwright-mcp
