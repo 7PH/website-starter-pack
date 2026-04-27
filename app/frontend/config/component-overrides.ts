@@ -10,6 +10,9 @@ export type AsyncComponentLoader = () => Promise<{ default: Component }>;
  * Override core components with custom implementations.
  *
  * Keys must match the override key used in core components:
+ * - 'PageHeader' - Custom site header. Must mirror PageHeader's contract
+ *     (no public props/events; consumes useAuth/useStripe/useAppLocale/etc.).
+ * - 'PageFooter' - Custom site footer. No props/events.
  * - 'OrganizationsCreateModal' - Custom organization creation modal
  * - 'OrganizationsPageActions' - Custom actions header on organizations list page
  * - 'OrganizationsSubscriptionModal' - Custom billing/subscription UI
