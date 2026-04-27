@@ -80,6 +80,16 @@ Manual SQL in `app/backend/migrations/`. Name new migrations `YYYY-MM-DD-vNEXT-d
 - Frontend: `app/frontend/tests/` (vitest)
 - E2E: `app/frontend/e2e/` (Playwright)
 
+## Visual validation (Claude UI checks)
+
+For frontend changes, don't claim done until you've actually looked at the result. The repo ships a Playwright MCP server (see `.mcp.json`) that exposes browser tools to Claude.
+
+- **Dev URL**: read from `.env` — `PUBLIC_URL`, or `http://${PUBLIC_WEBSITE_HOST}:${PUBLIC_PORT}` if not set. Don't hardcode the port.
+- **Workflow**: start `npm run dev`, then use `browser_navigate` → `browser_snapshot` (cheap, structured) to find elements → `browser_take_screenshot` only when you need to *see* layout.
+- **Margins/spacing**: prefer `browser_evaluate` running `getComputedStyle(el)` or `el.getBoundingClientRect()` over eyeballing pixels.
+- **Auth-gated pages**: run `npm run dev-mint-token` (no args → first admin user) or `npm run dev-mint-token -- <email>` for a specific user. The script calls `POST /api/v1/internal/mint-token` (gated by `INTERNAL_API_KEY` in `.env`; route is unregistered when the key is empty) and prints a JS snippet — `() => { localStorage.setItem('user-token', '...'); return 'ok'; }` — that you paste straight into `browser_evaluate`. Then navigate to the protected route. The token sits in `localStorage` and persists across tool calls in one Claude Code session. Add `--jwt` for a bare access token (curl) or `--json` for the raw payload.
+- **First-time setup** (one shot, prompts sudo): `npx playwright install --with-deps chromium`.
+
 ## i18n
 
 ALL user-facing text must be translated. Never hardcode user-visible strings.
