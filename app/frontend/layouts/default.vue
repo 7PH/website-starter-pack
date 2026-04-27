@@ -4,22 +4,25 @@
 import ImpersonationBanner from '~/components/admin/ImpersonationBanner.vue';
 import ModalAuth from '~/components/modal/ModalAuth.vue';
 import ModalConfirm from '~/components/modal/ModalConfirm.vue';
-import PageFooter from '~/components/PageFooter.vue';
-import PageHeader from '~/components/PageHeader.vue';
+import PageFooterDefault from '~/components/PageFooter.vue';
+import PageHeaderDefault from '~/components/PageHeader.vue';
 
 const route = useRoute();
 const showFooter = computed(() => !route.meta.hideFooter);
+
+const PageHeader = useOverridable('PageHeader', PageHeaderDefault);
+const PageFooter = useOverridable('PageFooter', PageFooterDefault);
 </script>
 
 <template>
     <UiPageWrapper>
         <UApp class="flex flex-col flex-1 min-h-0">
             <ImpersonationBanner />
-            <PageHeader />
+            <component :is="PageHeader" />
             <main class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
                 <NuxtPage />
             </main>
-            <PageFooter v-if="showFooter" />
+            <component :is="PageFooter" v-if="showFooter" />
 
             <!-- Global modals -->
             <ModalConfirm />
