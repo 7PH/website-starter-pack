@@ -1,17 +1,21 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 from ..constants import (
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,
     JWT_SECRET_KEY,
 )
+from ..models.managed_account_group import ManagedAccountGroupBase
+from ..models.user import UserBase
 from ..schemas.user import UserRead, UserTokenUpdate
 from .exception import InvalidTokenException
 
@@ -46,17 +50,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
     """
     Get the current user from the JWT token.
 
-    Decodes the JWT, retrieves the user by email, and returns the user.
-    If the user is not found or the token is invalid, raises an exception.
+    Reads claims from the token; does not hit the DB. The id is read from the
+    top-level `id` claim (sub now holds str(id) for OAuth2 conformance — email
+    may be None for access-code users).
     """
     token_decoded = decode_access_token(token)
+    data = token_decoded.get("data", {})
     return UserRead(
         id=token_decoded["id"],
-        email=token_decoded["sub"],
-        first_name=token_decoded["data"].get("first_name"),
-        last_name=token_decoded["data"].get("last_name"),
-        is_admin=token_decoded["data"].get("is_admin"),
-        is_premium=token_decoded["data"].get("is_premium"),
+        email=data.get("email"),
+        first_name=data.get("first_name"),
+        last_name=data.get("last_name"),
+        display_name=data.get("display_name"),
+        is_admin=data.get("is_admin") or False,
+        is_premium=data.get("is_premium") or False,
+        auth_method=data.get("auth_method", "password"),
+        managed_account_group_id=data.get("managed_account_group_id"),
     )
 
 
@@ -71,6 +80,83 @@ async def get_current_admin(current_user: UserRead = Depends(get_current_user)) 
     return current_user
 
 
+async def get_current_nonmanaged_user(user: UserRead = Depends(get_current_user)) -> UserRead:
+    """403 when the caller is a managed account (auth_method='access_code').
+
+    Wire onto routes that mutate billing, org membership, or self-identity —
+    things a code-only kid identity has no business doing. Compose with
+    ``get_current_user`` (this dependency is a strict superset).
+    """
+    if user.auth_method == "access_code":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This action isn't available to managed accounts.",
+        )
+    return user
+
+
+def is_premium_effective(session: Session, user: UserBase) -> bool:
+    """Return the premium status to use for entitlement decisions.
+
+    For managed accounts (``auth_method='access_code'``), inherits from the
+    group's owner — kids don't subscribe themselves, but they get whatever
+    their manager paid for. For everyone else, uses the user's own flag.
+
+    Apps shipping a server-side ``require_premium`` dependency should call
+    this against a fresh DB row, not the JWT claim, so the entitlement check
+    survives mid-session changes (e.g. owner cancels Stripe).
+    """
+    # Hot path: non-managed users use their own flag, no DB lookup.
+    if user.auth_method != "access_code" or user.managed_account_group_id is None:
+        return bool(user.is_premium)
+    group = session.get(ManagedAccountGroupBase, user.managed_account_group_id)
+    if group is None:
+        return False
+    owner = session.get(UserBase, group.owner_id)
+    return bool(owner and owner.is_premium and owner.deleted_at is None)
+
+
+def build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
+    """Build a UserRead with org memberships and effective premium.
+
+    Computes ``is_premium`` via :func:`is_premium_effective` so managed
+    accounts inherit from their group owner. Used by every endpoint that
+    mints a fresh token.
+    """
+    from ..constants import ORGANIZATIONS_ENABLED
+    from ..crud.organizations import get_user_organizations
+    from ..schemas.organization import UserOrganizationInfo
+    from ..schemas.user_ext import UserCustomData
+
+    organizations: list[UserOrganizationInfo] = []
+    if ORGANIZATIONS_ENABLED:
+        memberships = get_user_organizations(session, user.id)
+        organizations = [
+            UserOrganizationInfo(
+                organization_id=m.organization_id,
+                organization_name=m.organization.name if m.organization else "Unknown",
+                is_admin=m.is_admin,
+                has_premium_seat=m.has_premium_seat,
+            )
+            for m in memberships
+            if m.organization and not m.organization.deleted_at
+        ]
+    return UserRead(
+        id=user.id,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        display_name=user.display_name,
+        is_admin=user.is_admin,
+        is_premium=is_premium_effective(session, user),
+        has_personal_subscription=user.has_personal_subscription,
+        auth_method=user.auth_method,
+        managed_account_group_id=user.managed_account_group_id,
+        custom_data=UserCustomData(**(user.custom_data or {})),
+        organizations=organizations,
+    )
+
+
 async def get_real_admin_id(token: str = Depends(oauth2_scheme)) -> int | None:
     """
     Get the real admin ID from an impersonation token.
@@ -81,37 +167,52 @@ async def get_real_admin_id(token: str = Depends(oauth2_scheme)) -> int | None:
     return token_decoded["data"].get("real_admin_id")
 
 
+async def get_parent_user_id(token: str = Depends(oauth2_scheme)) -> int | None:
+    """Owner-as-managed-account "open as" claim. Mirrors get_real_admin_id but
+    for non-admin owners opening one of their managed accounts.
+    """
+    token_decoded = decode_access_token(token)
+    return token_decoded["data"].get("parent_user_id")
+
+
 def create_access_token(
     user: UserRead,
     impersonating_as: UserRead | None = None,
+    open_as_managed_account: UserRead | None = None,
 ) -> UserTokenUpdate:
     """
     Create a new JWT access token for the given user.
 
-    Generates a JWT with the user's ID, email, and expiration time, and additional custom data.
+    `sub` carries str(user.id) so that email-less users (auth_method='access_code')
+    still produce a valid OAuth2 token. The user's email (if any) lives in data.email.
 
     Args:
-        user: The user to create the token for (the admin when impersonating)
-        impersonating_as: If set, the token will contain impersonation info for this user
+        user: The user to create the token for (the owner when open_as / the admin when impersonating)
+        impersonating_as: If set, admin-impersonation token for this user
+        open_as_managed_account: If set, owner-initiated "open as" token for this managed account
     """
     exp = datetime.now(UTC) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    # When impersonating, the token represents the target user but tracks the admin
-    effective_user = impersonating_as if impersonating_as else user
+    # When impersonating or open-as, the token represents the target user.
+    effective_user = impersonating_as or open_as_managed_account or user
 
-    # Top-level claims and additional data
     encoded_data = {
-        "id": effective_user.id,  # Top-level claim for user ID
-        "sub": effective_user.email,  # OAuth2 subject (typically email or UUID)
-        "exp": int(exp.timestamp()),  # Expiration timestamp
-        "data": {  # Encapsulated custom claims
+        "id": effective_user.id,
+        "sub": str(effective_user.id),
+        "exp": int(exp.timestamp()),
+        "data": {
             "email": effective_user.email,
             "first_name": effective_user.first_name,
             "last_name": effective_user.last_name,
+            "display_name": effective_user.display_name,
             "is_admin": effective_user.is_admin,
             "is_premium": effective_user.is_premium,
-            # Impersonation: if set, this token is for an impersonated user
+            "auth_method": effective_user.auth_method,
+            "managed_account_group_id": effective_user.managed_account_group_id,
+            # Admin impersonation marker (admin opening any user).
             "real_admin_id": user.id if impersonating_as else None,
+            # Owner "open as" marker (group owner opening one of their managed accounts).
+            "parent_user_id": user.id if open_as_managed_account else None,
         },
     }
 
@@ -140,3 +241,62 @@ def decode_access_token(token: str) -> dict:
         raise InvalidTokenException("Token has expired") from None
     except jwt.InvalidTokenError:
         raise InvalidTokenException("Invalid token") from None
+
+
+# ---------------------------------------------------------------------------
+# Sign-in-by-code: pluggable validator registry
+#
+# Apps that want POST /auth/code register a validator at startup (typically
+# from main_ext.py). The starterpack ships a default that resolves codes
+# against the access_codes table:
+#
+#     from .helpers.auth import register_code_validator
+#     from .helpers.access_codes import default_access_code_validator
+#     register_code_validator(default_access_code_validator)
+#
+# The signature is (managed_account_id, code, request). Scoping by id means
+# an attacker who guesses a code still has to know which account it belongs
+# to, and rate-limit buckets can be keyed per-account instead of global.
+# ---------------------------------------------------------------------------
+
+CodeValidator = Callable[[int, str, Request], UserBase | None]
+_code_validator: CodeValidator | None = None
+
+
+def register_code_validator(fn: CodeValidator) -> None:
+    """Register the function that resolves an access code to a User row.
+
+    Raises if a validator is already registered — silent override would let a
+    misordered import accidentally swap the auth path without anyone noticing.
+    """
+    global _code_validator
+    if _code_validator is not None:
+        raise RuntimeError("A code validator is already registered")
+    _code_validator = fn
+
+
+def get_code_validator() -> CodeValidator | None:
+    """Return the registered validator, or None if sign-in-by-code isn't enabled."""
+    return _code_validator
+
+
+def _reset_code_validator_for_tests() -> None:
+    """Test-only helper. Do not call from production code."""
+    global _code_validator
+    _code_validator = None
+
+
+def issue_jwt_for_user(session: Session, user: UserBase) -> UserTokenUpdate:
+    """Build a UserRead from a DB row and mint an access token.
+
+    Used by the access-code endpoint; mirrors what login_user does for password
+    auth, minus the org membership lookup (access-code users typically aren't
+    org members; apps that need this can call create_access_token directly).
+
+    Resolves the user's *effective* premium status (managed accounts inherit
+    from their group's owner) before minting, so the JWT carries the value
+    the frontend should render and the value server-side checks should match.
+    """
+    user_read = UserRead.model_validate(user)
+    user_read.is_premium = is_premium_effective(session, user)
+    return create_access_token(user_read)

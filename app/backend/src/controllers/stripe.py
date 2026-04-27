@@ -19,7 +19,7 @@ from ..crud.users import (
     update_user_premium_cache,
 )
 from ..helpers import stripe as stripe_helper
-from ..helpers.auth import get_current_user
+from ..helpers.auth import get_current_nonmanaged_user
 from ..helpers.db import SessionLocal, get_session
 from ..schemas.stripe import BillingPortalResponse, SubscriptionStatus, WebhookResponse
 
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/stripe", tags=["Stripe"])
 @router.get("/portal", response_model=BillingPortalResponse)
 def get_billing_portal(
     return_url: str = Query(..., description="URL to return to after portal session"),
-    user=Depends(get_current_user),
+    user=Depends(get_current_nonmanaged_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -68,7 +68,7 @@ def get_billing_portal(
 
 @router.get("/subscription", response_model=SubscriptionStatus)
 def get_subscription_status(
-    user=Depends(get_current_user),
+    user=Depends(get_current_nonmanaged_user),
     session: Session = Depends(get_session),
 ):
     """

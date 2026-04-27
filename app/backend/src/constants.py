@@ -33,6 +33,13 @@ ORG_SELF_SERVICE_CREATION = os.environ.get("ORG_SELF_SERVICE_CREATION", "true").
 ORG_INVITATIONS_ENABLED = os.environ.get("ORG_INVITATIONS_ENABLED", "false").lower() == "true"
 ORG_INVITATION_EXPIRY_DAYS = int(os.environ.get("ORG_INVITATION_EXPIRY_DAYS", "7"))
 
+# Managed account groups (one owner manages many email-less accounts that
+# sign in by code). Off by default; sub-apps that need it opt in via the env.
+MANAGED_ACCOUNTS_ENABLED = os.environ.get("MANAGED_ACCOUNTS_ENABLED", "false").lower() == "true"
+MANAGED_ACCOUNT_GROUP_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNT_GROUP_MAX_PER_USER", "20"))
+# Total managed accounts an owner can have across all their groups combined.
+MANAGED_ACCOUNTS_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNTS_MAX_PER_USER", "1000"))
+
 # LLM Integration
 LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
@@ -49,6 +56,8 @@ class EventType(StrEnum):
 
     # Auth events
     USER_LOGIN = "user.login"
+    USER_LOGIN_CODE = "user.login_code"
+    USER_LOGIN_CODE_FAIL = "user.login_code_fail"
     USER_LOGOUT = "user.logout"
     USER_REGISTER = "user.register"
     USER_PASSWORD_RESET_REQUEST = "user.password_reset_request"
@@ -64,6 +73,16 @@ class EventType(StrEnum):
     ADMIN_IMPERSONATE_STOP = "admin.impersonate_stop"
     ADMIN_USER_UPDATE = "admin.user_update"
     ADMIN_USER_DELETE = "admin.user_delete"
+    # Managed account group events (owner-initiated; admin = the group owner)
+    MANAGED_GROUP_CREATED = "managed_group.created"
+    MANAGED_GROUP_UPDATED = "managed_group.updated"
+    MANAGED_GROUP_DELETED = "managed_group.deleted"
+    MANAGED_GROUP_TOKEN_ROTATED = "managed_group.token_rotated"
+    MANAGED_ACCOUNT_CREATED = "managed_account.created"
+    MANAGED_ACCOUNT_UPDATED = "managed_account.updated"
+    MANAGED_ACCOUNT_DELETED = "managed_account.deleted"
+    MANAGED_ACCOUNT_CODE_REISSUED = "managed_account.code_reissued"
+    MANAGED_ACCOUNT_OPEN_AS = "managed_account.open_as"
     # Organization events
     ORG_CREATED = "org.created"
     ORG_UPDATED = "org.updated"
@@ -92,6 +111,8 @@ class EventType(StrEnum):
 # Metadata for event types (labels and categories for UI)
 CORE_EVENT_TYPES = {
     EventType.USER_LOGIN: {"label": "User Login", "category": "auth"},
+    EventType.USER_LOGIN_CODE: {"label": "User Login (access code)", "category": "auth"},
+    EventType.USER_LOGIN_CODE_FAIL: {"label": "Access Code Login Failed", "category": "auth"},
     EventType.USER_LOGOUT: {"label": "User Logout", "category": "auth"},
     EventType.USER_REGISTER: {"label": "User Register", "category": "auth"},
     EventType.USER_PASSWORD_RESET_REQUEST: {"label": "Password Reset Request", "category": "auth"},
@@ -105,6 +126,15 @@ CORE_EVENT_TYPES = {
     EventType.ADMIN_IMPERSONATE_STOP: {"label": "Impersonation Stopped", "category": "admin"},
     EventType.ADMIN_USER_UPDATE: {"label": "User Updated by Admin", "category": "admin"},
     EventType.ADMIN_USER_DELETE: {"label": "User Deleted by Admin", "category": "admin"},
+    EventType.MANAGED_GROUP_CREATED: {"label": "Managed Group Created", "category": "managed_account"},
+    EventType.MANAGED_GROUP_UPDATED: {"label": "Managed Group Updated", "category": "managed_account"},
+    EventType.MANAGED_GROUP_DELETED: {"label": "Managed Group Deleted", "category": "managed_account"},
+    EventType.MANAGED_GROUP_TOKEN_ROTATED: {"label": "Managed Group Token Rotated", "category": "managed_account"},
+    EventType.MANAGED_ACCOUNT_CREATED: {"label": "Managed Account Created", "category": "managed_account"},
+    EventType.MANAGED_ACCOUNT_UPDATED: {"label": "Managed Account Updated", "category": "managed_account"},
+    EventType.MANAGED_ACCOUNT_DELETED: {"label": "Managed Account Deleted", "category": "managed_account"},
+    EventType.MANAGED_ACCOUNT_CODE_REISSUED: {"label": "Managed Account Code Reissued", "category": "managed_account"},
+    EventType.MANAGED_ACCOUNT_OPEN_AS: {"label": "Open As Managed Account", "category": "managed_account"},
     EventType.ORG_CREATED: {"label": "Organization Created", "category": "organization"},
     EventType.ORG_UPDATED: {"label": "Organization Updated", "category": "organization"},
     EventType.ORG_DELETED: {"label": "Organization Deleted", "category": "organization"},

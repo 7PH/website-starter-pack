@@ -4,7 +4,7 @@
 import * as conversationsApi from '~/utils/api/conversations';
 
 definePageMeta({
-    middleware: 'auth',
+    middleware: ['auth', 'nonmanaged-only'],
     auth: true,
     layout: 'fullheight',
 });

@@ -7,7 +7,7 @@ Admin controller for user management, impersonation, and event logs.
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ..constants import EventType
@@ -92,11 +92,16 @@ def list_users(
 
     if search:
         search_pattern = f"%{search}%"
-        query = query.filter(
-            (UserBase.email.ilike(search_pattern))
-            | (UserBase.first_name.ilike(search_pattern))
-            | (UserBase.last_name.ilike(search_pattern))
-        )
+        clauses = [
+            UserBase.email.ilike(search_pattern),
+            UserBase.first_name.ilike(search_pattern),
+            UserBase.last_name.ilike(search_pattern),
+        ]
+        # Numeric search → also match by id, so admins can find email-less
+        # users (access-code, deleted) by their ID directly.
+        if search.isdigit():
+            clauses.append(UserBase.id == int(search))
+        query = query.filter(or_(*clauses))
 
     if is_admin is not None:
         query = query.filter(UserBase.is_admin == is_admin)
@@ -163,6 +168,10 @@ def update_user_by_admin(
     if user_update.last_name is not None:
         changes["last_name"] = {"from": user.last_name, "to": user_update.last_name}
         user.last_name = user_update.last_name
+
+    if user_update.display_name is not None:
+        changes["display_name"] = {"from": user.display_name, "to": user_update.display_name}
+        user.display_name = user_update.display_name
 
     if user_update.email is not None and user.email != user_update.email:
         changes["email"] = {"from": user.email, "to": user_update.email}

@@ -10,6 +10,7 @@ const router = useRouter();
 const api = useApi();
 const toast = useToast();
 const modal = useModalStore();
+const userDisplay = useUserDisplay();
 
 const userId = computed(() => Number(route.params.id));
 
@@ -33,6 +34,7 @@ const { data: eventsData, pending: eventsPending } = await useAsyncData<EventLog
 const form = ref({
     first_name: '',
     last_name: '',
+    display_name: '',
     email: '',
     is_admin: false,
     is_premium: false,
@@ -62,11 +64,12 @@ watch(
     (newUser) => {
         if (newUser) {
             form.value = {
-                first_name: newUser.first_name,
-                last_name: newUser.last_name,
-                email: newUser.email,
-                is_admin: newUser.is_admin,
-                is_premium: newUser.is_premium,
+                first_name: newUser.first_name ?? '',
+                last_name: newUser.last_name ?? '',
+                display_name: newUser.display_name ?? '',
+                email: newUser.email ?? '',
+                is_admin: newUser.is_admin ?? false,
+                is_premium: newUser.is_premium ?? false,
                 custom_data: (newUser.custom_data ?? {}) as UserCustomData,
             };
         }
@@ -113,11 +116,12 @@ async function saveChanges() {
 function cancelEdit() {
     if (user.value) {
         form.value = {
-            first_name: user.value.first_name,
-            last_name: user.value.last_name,
-            email: user.value.email,
-            is_admin: user.value.is_admin,
-            is_premium: user.value.is_premium,
+            first_name: user.value.first_name ?? '',
+            last_name: user.value.last_name ?? '',
+            display_name: user.value.display_name ?? '',
+            email: user.value.email ?? '',
+            is_admin: user.value.is_admin ?? false,
+            is_premium: user.value.is_premium ?? false,
             custom_data: (user.value.custom_data ?? {}) as UserCustomData,
         };
     }
@@ -140,7 +144,7 @@ async function impersonateUser() {
 
         toast.add({
             title: 'Impersonation started',
-            description: `Now viewing as ${user.value.email}`,
+            description: `Now viewing as ${userDisplay.label(user.value)}`,
             color: 'success',
             duration: 3000,
         });
@@ -159,9 +163,10 @@ async function impersonateUser() {
 async function deleteUser() {
     if (!user.value) return;
 
+    const label = userDisplay.label(user.value);
     const confirmed = await modal.open('confirm', {
         title: 'Delete User',
-        message: `Are you sure you want to delete ${user.value.email}? This action cannot be undone.`,
+        message: `Are you sure you want to delete ${label}? This action cannot be undone.`,
         confirmText: 'Delete',
         confirmColor: 'error',
     });
@@ -206,14 +211,21 @@ async function deleteUser() {
                 <!-- Header -->
                 <div class="page-header">
                     <div class="header-info">
-                        <h1 class="page-title">{{ user.first_name }} {{ user.last_name }}</h1>
-                        <span class="user-email">{{ user.email }}</span>
+                        <h1 class="page-title">{{ userDisplay.label(user) }}</h1>
+                        <span class="user-email">{{ user.email ?? '—' }}</span>
                         <div class="badges">
                             <UBadge v-if="user.deleted_at" label="Deleted" color="error" />
                             <UBadge v-if="user.is_admin" label="Admin" color="info" />
                             <UBadge v-if="user.is_premium" label="Premium" color="warning" />
-                            <UBadge v-if="user.email_confirmed" label="Verified" color="success" />
-                            <UBadge v-else-if="!user.deleted_at" label="Unverified" color="neutral" />
+                            <UBadge v-if="user.auth_method === 'oauth'" label="OAuth" color="info" variant="soft" />
+                            <UBadge
+                                v-if="user.auth_method === 'access_code'"
+                                label="Code"
+                                color="warning"
+                                variant="soft"
+                            />
+                            <UBadge v-if="user.email && user.email_confirmed" label="Verified" color="success" />
+                            <UBadge v-else-if="user.email && !user.deleted_at" label="Unverified" color="neutral" />
                         </div>
                     </div>
                     <div v-if="!user.deleted_at" class="header-actions">
@@ -276,6 +288,12 @@ async function deleteUser() {
                                     <UInput v-model="form.last_name" />
                                 </UFormField>
                             </div>
+                            <UFormField
+                                label="Display Name"
+                                hint="Overrides first/last for the visible label. Required for users with no first/last (access-code, kiosk, ...)."
+                            >
+                                <UInput v-model="form.display_name" />
+                            </UFormField>
                             <UFormField label="Email">
                                 <UInput v-model="form.email" type="email" />
                             </UFormField>
@@ -299,12 +317,26 @@ async function deleteUser() {
                                 <span class="info-value">#{{ user.id }}</span>
                             </div>
                             <div class="info-item">
+                                <span class="info-label">Auth method</span>
+                                <span class="info-value">{{ user.auth_method ?? 'password' }}</span>
+                            </div>
+                            <div class="info-item">
                                 <span class="info-label">Email</span>
-                                <span class="info-value">{{ user.email }}</span>
+                                <span class="info-value">{{ user.email ?? '—' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Display Name</span>
+                                <span class="info-value">{{ user.display_name ?? '—' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Name</span>
-                                <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
+                                <span class="info-value">
+                                    {{
+                                        user.first_name || user.last_name
+                                            ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()
+                                            : '—'
+                                    }}
+                                </span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Created</span>

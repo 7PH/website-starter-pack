@@ -7,9 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, ORGANIZATIONS_ENABLED, PUBLIC_URL, EventType
+from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
 from ..crud.event_logs import log_event
-from ..crud.organizations import get_user_organizations
 from ..crud.users import (
     create_user,
     get_user_by_email,
@@ -19,8 +18,10 @@ from ..crud.users import (
 )
 from ..helpers import stripe as stripe_helper
 from ..helpers.auth import (
+    build_user_read_with_orgs,
     create_access_token,
     decode_access_token,
+    get_current_nonmanaged_user,
     get_current_user,
     hash_password,
     oauth2_scheme,
@@ -43,7 +44,6 @@ from ..schemas.user import (
     UserChangeInfo,
     UserChangePassword,
     UserCreate,
-    UserOrganizationInfo,
     UserRead,
     UserTokenUpdate,
 )
@@ -148,35 +148,7 @@ def login_user(
     # Log the login event
     log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
 
-    return create_access_token(_build_user_read_with_orgs(session, user))
-
-
-def _build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
-    """Build a UserRead object with organization memberships (if feature enabled)."""
-    organizations: list[UserOrganizationInfo] = []
-    if ORGANIZATIONS_ENABLED:
-        memberships = get_user_organizations(session, user.id)
-        organizations = [
-            UserOrganizationInfo(
-                organization_id=m.organization_id,
-                organization_name=m.organization.name if m.organization else "Unknown",
-                is_admin=m.is_admin,
-                has_premium_seat=m.has_premium_seat,
-            )
-            for m in memberships
-            if m.organization and not m.organization.deleted_at
-        ]
-    return UserRead(
-        id=user.id,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_admin=user.is_admin,
-        is_premium=user.is_premium,
-        has_personal_subscription=user.has_personal_subscription,
-        custom_data=UserCustomData(**(user.custom_data or {})),
-        organizations=organizations,
-    )
+    return create_access_token(build_user_read_with_orgs(session, user))
 
 
 @router.get("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -188,7 +160,7 @@ def get_me(*, session: Session = Depends(get_session), current_user: UserRead = 
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return _build_user_read_with_orgs(session, user)
+    return build_user_read_with_orgs(session, user)
 
 
 @router.put("/users/me/token", response_model=UserTokenUpdate, status_code=status.HTTP_200_OK)
@@ -216,7 +188,7 @@ def refresh_token(
             detail="Account no longer exists",
         )
 
-    user_read = _build_user_read_with_orgs(session, user)
+    user_read = build_user_read_with_orgs(session, user)
 
     if now - token_created < TOKEN_REFRESH_COOLDOWN_SECONDS:
         # Return current token info without generating new one, but with fresh user data
@@ -250,7 +222,7 @@ def get_user(
     user = get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return _build_user_read_with_orgs(session, user)
+    return build_user_read_with_orgs(session, user)
 
 
 @router.patch("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -259,7 +231,8 @@ def update_me(
     request: Request,
     session: Session = Depends(get_session),
     user_change_info: UserChangeInfo,
-    current_user: UserRead = Depends(get_current_user),
+    # Block managed accounts: their owner manages naming via /me/managed-accounts/:id.
+    current_user: UserRead = Depends(get_current_nonmanaged_user),
 ):
     """
     Update the profile (name) of the currently authenticated user.
@@ -307,7 +280,8 @@ def update_my_password(
     request: Request,
     session: Session = Depends(get_session),
     user_change_pwd: UserChangePassword,
-    current_user: UserRead = Depends(get_current_user),
+    # Managed accounts have no password to change.
+    current_user: UserRead = Depends(get_current_nonmanaged_user),
 ):
     """
     Update the password of the currently authenticated user.
@@ -344,7 +318,8 @@ def request_email_change(
     request: Request,
     session: Session = Depends(get_session),
     body: UserChangeEmail,
-    current_user: UserRead = Depends(get_current_user),
+    # Managed accounts have no email; nothing to change.
+    current_user: UserRead = Depends(get_current_nonmanaged_user),
 ):
     """
     Request to change the email address of the currently authenticated user.
@@ -420,7 +395,8 @@ def request_account_deletion(
     *,
     request: Request,
     session: Session = Depends(get_session),
-    current_user: UserRead = Depends(get_current_user),
+    # Only the group owner can delete a managed account (via /me/managed-accounts/:id).
+    current_user: UserRead = Depends(get_current_nonmanaged_user),
 ):
     """
     Request deletion of the current user's account.

@@ -117,28 +117,84 @@
           "type": "integer"
         },
         "email": {
-          "title": "Email",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
         },
         "first_name": {
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
         },
         "is_admin": {
+          "default": false,
           "title": "Is Admin",
           "type": "boolean"
         },
         "is_premium": {
+          "default": false,
           "title": "Is Premium",
           "type": "boolean"
         },
         "email_confirmed": {
+          "default": false,
           "title": "Email Confirmed",
           "type": "boolean"
+        },
+        "auth_method": {
+          "default": "password",
+          "title": "Auth Method",
+          "type": "string"
+        },
+        "managed_account_group_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Managed Account Group Id"
         },
         "created_at": {
           "anyOf": [
@@ -175,16 +231,22 @@
           },
           "title": "Organizations",
           "type": "array"
+        },
+        "display_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Label"
         }
       },
       "required": [
         "id",
-        "email",
-        "first_name",
-        "last_name",
-        "is_admin",
-        "is_premium",
-        "email_confirmed",
         "created_at"
       ],
       "title": "AdminUserRead",
@@ -216,6 +278,18 @@
           ],
           "default": null,
           "title": "Last Name"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
         },
         "email": {
           "anyOf": [
@@ -2655,21 +2729,64 @@
           "type": "integer"
         },
         "first_name": {
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "title": "Last Name",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
+        },
+        "auth_method": {
+          "default": "password",
+          "title": "Auth Method",
           "type": "string"
         },
         "custom_data": {
           "$ref": "#/$defs/UserPreviewCustomData"
+        },
+        "display_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Label"
         }
       },
       "required": [
-        "id",
-        "first_name",
-        "last_name"
+        "id"
       ],
       "title": "UserPreviewRead",
       "type": "object"
@@ -2681,16 +2798,52 @@
           "type": "integer"
         },
         "email": {
-          "title": "Email",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
         },
         "first_name": {
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
         },
         "is_admin": {
           "title": "Is Admin",
@@ -2705,6 +2858,23 @@
           "title": "Has Personal Subscription",
           "type": "boolean"
         },
+        "auth_method": {
+          "default": "password",
+          "title": "Auth Method",
+          "type": "string"
+        },
+        "managed_account_group_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Managed Account Group Id"
+        },
         "custom_data": {
           "$ref": "#/$defs/UserCustomData"
         },
@@ -2715,13 +2885,22 @@
           },
           "title": "Organizations",
           "type": "array"
+        },
+        "display_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Label"
         }
       },
       "required": [
         "id",
-        "email",
-        "first_name",
-        "last_name",
         "is_admin",
         "is_premium"
       ],

@@ -90,13 +90,19 @@ def update_user_premium_cache(session: Session, user_id: int) -> None:
 def soft_delete_user(session: Session, user: UserBase) -> None:
     """Soft delete a user and anonymize their personal data.
 
-    This sets deleted_at and anonymizes PII (email, name, password)
-    while preserving the record for audit trail purposes.
+    Sets deleted_at, switches auth_method to the 'deleted' sentinel, and clears
+    every PII column. The record is preserved for audit trail / FK integrity.
+    The 'deleted' branch of users_auth_integrity has no column requirements,
+    so nulling everything is accepted by the CHECK constraint.
     """
     user.deleted_at = datetime.now(UTC)
-    user.email = f"deleted_{user.id}_{int(user.deleted_at.timestamp())}@deleted.local"
-    user.first_name = "Deleted"
-    user.last_name = "User"
-    user.hashed_password = ""  # Invalidate password
+    user.auth_method = "deleted"
+    user.email = None
+    user.first_name = None
+    user.last_name = None
+    user.display_name = None
+    user.hashed_password = None
+    user.oauth_provider = None
+    user.oauth_id = None
     user.email_confirmed = False
     session.commit()

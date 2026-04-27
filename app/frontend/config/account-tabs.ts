@@ -33,6 +33,8 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         icon: 'i-lucide-user',
         component: defineAsyncComponent(() => import('~/components/account/AccountInfoTab.vue')),
         order: 10,
+        // Managed accounts can't edit their own name/email (owner manages those).
+        condition: () => useAuth().user?.auth_method !== 'access_code',
     },
     {
         id: 'password',
@@ -40,6 +42,8 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         icon: 'i-lucide-lock',
         component: defineAsyncComponent(() => import('~/components/account/PasswordTab.vue')),
         order: 20,
+        // Managed accounts have no password.
+        condition: () => useAuth().user?.auth_method !== 'access_code',
     },
     {
         id: 'organizations',
@@ -49,7 +53,8 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         order: 30,
         condition: () => {
             const config = useRuntimeConfig();
-            return String(config.public.organizationsEnabled) === 'true';
+            const auth = useAuth();
+            return String(config.public.organizationsEnabled) === 'true' && auth.user?.auth_method !== 'access_code';
         },
     },
     {
@@ -60,7 +65,8 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         order: 40,
         condition: () => {
             const config = useRuntimeConfig();
-            return String(config.public.stripeEnabled) === 'true';
+            const auth = useAuth();
+            return String(config.public.stripeEnabled) === 'true' && auth.user?.auth_method !== 'access_code';
         },
     },
     {
@@ -69,5 +75,8 @@ export const CORE_ACCOUNT_TABS: AccountTabItem[] = [
         icon: 'i-lucide-shield',
         component: defineAsyncComponent(() => import('~/components/account/PrivacyTab.vue')),
         order: 50,
+        // Privacy tab hosts the self-delete flow, which the backend blocks for
+        // managed accounts. Hide it so the kid never sees a button that 403s.
+        condition: () => useAuth().user?.auth_method !== 'access_code',
     },
 ];

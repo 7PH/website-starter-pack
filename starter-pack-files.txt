@@ -5,6 +5,7 @@ app/backend/Dockerfile
 app/backend/requirements.core.txt
 app/backend/migrations/README.md
 app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
+app/backend/migrations/2026-04-26-vNEXT-managed-accounts.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -23,6 +24,7 @@ app/backend/src/controllers/stripe.py
 app/backend/src/controllers/users.py
 app/backend/src/controllers/oauth.py
 app/backend/src/controllers/conversations.py
+app/backend/src/controllers/managed_account_groups.py
 app/backend/src/helpers/account_deletion.py
 app/backend/src/helpers/auth.py
 app/backend/src/helpers/auth_tokens.py
@@ -41,9 +43,14 @@ app/backend/src/helpers/llm.py
 app/backend/src/helpers/security_headers.py
 app/backend/src/helpers/security_headers_ext.py:template
 app/backend/src/helpers/auth_app.py:template
+app/backend/src/helpers/user_display.py
+app/backend/src/helpers/access_codes.py
+app/backend/src/helpers/policies.py
 app/backend/src/models/__init__.py
+app/backend/src/models/access_code.py
 app/backend/src/models/conversation.py
 app/backend/src/models/event_log.py
+app/backend/src/models/managed_account_group.py
 app/backend/src/models/organization.py
 app/backend/src/models/user.py
 app/backend/src/schemas/__init__.py
@@ -53,6 +60,7 @@ app/backend/src/schemas/base.py
 app/backend/src/schemas/conversation.py
 app/backend/src/schemas/db_health.py
 app/backend/src/schemas/event_log.py
+app/backend/src/schemas/managed_account.py
 app/backend/src/schemas/organization.py
 app/backend/src/schemas/stripe.py
 app/backend/src/schemas/user.py
@@ -63,8 +71,10 @@ app/backend/src/schemas/user_ext.py:template
 app/backend/src/convert_models_core.py
 app/backend/src/convert-models.py:template
 app/backend/src/crud/__init__.py
+app/backend/src/crud/access_codes.py
 app/backend/src/crud/conversations.py
 app/backend/src/crud/event_logs.py
+app/backend/src/crud/managed_account_groups.py
 app/backend/src/crud/organization_invitations.py
 app/backend/src/crud/organizations.py
 app/backend/src/crud/users.py
@@ -74,9 +84,13 @@ app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
 app/backend/tests/test_admin_billing.py
+app/backend/tests/test_auth_code.py
 app/backend/tests/test_bug_report.py
+app/backend/tests/test_managed_account_groups.py
+app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
+app/backend/tests/test_user_display.py
 
 # Frontend - Docker & Tooling
 app/frontend/Dockerfile.dev
@@ -117,9 +131,15 @@ app/frontend/composables/useAuthForms.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useTableState.ts
 app/frontend/composables/useOAuth.ts
+app/frontend/composables/useAccessCode.ts
+app/frontend/composables/useManagedAccountGroup.ts
+app/frontend/composables/usePickerLink.ts
+app/frontend/composables/useUserDisplay.ts
 app/frontend/composables/useOverridable.ts
 app/frontend/middleware/auth.ts
 app/frontend/middleware/admin.ts
+app/frontend/middleware/managed-accounts-enabled.ts
+app/frontend/middleware/nonmanaged-only.ts
 app/frontend/types/modal.ts
 app/frontend/utils/api/index.ts
 app/frontend/utils/api/auth.ts
@@ -162,6 +182,9 @@ app/frontend/pages/invitations/[token].vue
 app/frontend/pages/oauth/callback.vue
 app/frontend/pages/messages/index.vue
 app/frontend/pages/messages/[id].vue
+app/frontend/pages/managed-account-groups/index.vue
+app/frontend/pages/managed-account-groups/[id].vue
+app/frontend/pages/c/[token].vue
 app/frontend/config/admin-nav.ts
 app/frontend/config/admin-nav-ext.ts:template
 app/frontend/config/account-tabs.ts
@@ -210,6 +233,7 @@ app/frontend/composables/organizations/useOrganizationSubscription.ts
 app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
+app/frontend/components/managed-accounts/BulkImportModal.vue
 app/frontend/pages/admin/backups/index.vue
 app/frontend/pages/admin/db-health/index.vue
 app/frontend/pages/admin/events/index.vue

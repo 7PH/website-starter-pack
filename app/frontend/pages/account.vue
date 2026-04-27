@@ -4,7 +4,7 @@ import { CORE_ACCOUNT_TABS, type AccountTabItem } from '~/config/account-tabs';
 import { PROJECT_ACCOUNT_TABS } from '~/config/account-tabs-ext';
 
 definePageMeta({
-    middleware: 'auth',
+    middleware: ['auth', 'nonmanaged-only'],
     auth: true,
 });
 

@@ -16,7 +16,7 @@ from ..crud.organizations import (
     count_user_organizations,
     get_user_org_membership,
 )
-from ..helpers.auth import get_current_user
+from ..helpers.auth import get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
 from ..schemas.organization import (
     OrganizationInvitationListResponse,
@@ -99,7 +99,7 @@ def accept_invitation(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     token: str,
 ):
     """Accept an invitation. Current user's email must match."""
@@ -150,7 +150,7 @@ def decline_invitation(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     token: str,
 ):
     """Decline an invitation. Current user's email must match."""

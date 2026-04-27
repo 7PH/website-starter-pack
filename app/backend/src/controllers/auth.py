@@ -5,6 +5,7 @@ Authentication controller for email verification and password reset.
 Extends the core users controller with additional auth features.
 """
 
+import hashlib
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -15,7 +16,13 @@ from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, soft_delete_user, update_user
 from ..helpers import stripe as stripe_helper
 from ..helpers.account_deletion import mask_email, resolve_deletion_token
-from ..helpers.auth import get_current_user, hash_password, verify_password
+from ..helpers.auth import (
+    get_code_validator,
+    get_current_user,
+    hash_password,
+    issue_jwt_for_user,
+    verify_password,
+)
 from ..helpers.auth_tokens import (
     create_email_verification_token,
     create_password_reset_token,
@@ -33,8 +40,10 @@ from ..schemas.user import (
     EmailChangeConfirm,
     EmailVerificationConfirm,
     PasswordResetConfirmJWT,
+    SignInWithCodeRequest,
     UserPasswordResetRequest,
     UserRead,
+    UserTokenUpdate,
 )
 
 router = APIRouter()
@@ -44,6 +53,10 @@ EMAIL_VERIFICATION_COOLDOWN_MINUTES = 5
 EMAIL_VERIFICATION_DAILY_LIMIT = 10
 PASSWORD_RESET_COOLDOWN_MINUTES = 5
 PASSWORD_RESET_IP_DAILY_LIMIT = 20
+AUTH_CODE_RATE_LIMIT_PER_IP_MIN = 10
+AUTH_CODE_RATE_LIMIT_PER_IP_DAY = 100
+AUTH_CODE_FAILURE_COOLDOWN_MINUTES = 15
+AUTH_CODE_FAILURE_THRESHOLD = 5
 
 
 @router.post(
@@ -181,8 +194,10 @@ def request_password_reset(
 
     user = get_user_by_email(session, email)
 
-    # Always return success to prevent email enumeration
-    if user:
+    # Always return success to prevent email enumeration. We also silently
+    # skip non-password users here (oauth, access_code, deleted) — they have
+    # no password to reset, but we don't want to leak that fact.
+    if user and user.auth_method == "password":
         token = create_password_reset_token(user.id)
         reset_url = get_password_reset_url(token)
 
@@ -223,6 +238,11 @@ def reset_password(
     user = get_user_by_id(session, payload["user_id"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Reject non-password accounts: even a leaked reset token shouldn't be able
+    # to graft a password onto an oauth/access_code/deleted user.
+    if user.auth_method != "password":
+        raise HTTPException(status_code=400, detail="Password reset is not available for this account")
 
     # Validate password length
     if len(body.password) < 8:
@@ -307,8 +327,13 @@ def account_deletion_info(
 ):
     """Decode the deletion token and return enough info to render the confirm page."""
     user, _ = resolve_deletion_token(session, token)
+    if user.auth_method == "access_code":
+        # Managed accounts can't self-delete; their group owner removes them.
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not available for managed accounts")
     return AccountDeletionInfo(
-        requires_password=user.oauth_provider is None,
+        # Only password users have a password to re-enter; oauth users
+        # authenticate by token alone.
+        requires_password=user.auth_method == "password",
         email_masked=mask_email(user.email or ""),
     )
 
@@ -329,8 +354,14 @@ def confirm_account_deletion(
     """
     user, _ = resolve_deletion_token(session, body.token)
 
-    # Password user: require and verify password. OAuth-only users skip this step.
-    if user.oauth_provider is None and (
+    if user.auth_method == "access_code":
+        # Belt-and-suspenders: managed accounts can't reach this token in the
+        # first place because /users/me/account-deletions blocks them upstream.
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not available for managed accounts")
+
+    # Password users must re-enter their password. OAuth users authenticate
+    # by token alone.
+    if user.auth_method == "password" and (
         not body.password or not verify_password(body.password, user.hashed_password or "")
     ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
@@ -339,3 +370,71 @@ def confirm_account_deletion(
     log_event(session, action=EventType.USER_DELETE_COMPLETE, user_id=user.id, request=request)
 
     soft_delete_user(session, user)
+
+
+@router.post(
+    "/auth/code",
+    response_model=UserTokenUpdate,
+    status_code=status.HTTP_200_OK,
+)
+def sign_in_with_code(
+    *,
+    request: Request,
+    session: Session = Depends(get_session),
+    body: SignInWithCodeRequest,
+):
+    """Exchange an access code for a JWT.
+
+    The code lives in the JSON body (not the URL path) so it stays out of
+    Traefik access logs, browser history and Referer headers. Apps register
+    a validator via `register_code_validator(...)` from main_ext.py; without
+    a validator this endpoint returns 404 (it's effectively not configured).
+    """
+    validator = get_code_validator()
+    if validator is None:
+        # Fail closed: behave as if the route doesn't exist for apps that
+        # didn't opt in. Avoids the misconfiguration of "endpoint up but
+        # no validator wired" silently accepting things.
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Per-IP rate limit: minute and day windows. Single-replica today, so the
+    # in-process limiter is fine; revisit when scaling out.
+    ensure_rate_limit(
+        action="auth-code",
+        quota=AUTH_CODE_RATE_LIMIT_PER_IP_MIN,
+        key=client_ip,
+        duration_minutes=1,
+    )
+    ensure_rate_limit(
+        action="auth-code-daily",
+        quota=AUTH_CODE_RATE_LIMIT_PER_IP_DAY,
+        key=client_ip,
+        duration_minutes=60 * 24,
+    )
+
+    user = validator(body.managed_account_id, body.code, request)
+    if user is None:
+        # Bucket failure cooldowns per (IP, account_id) instead of IP alone so
+        # one user typo'ing on a school NAT doesn't lock out the rest, and so
+        # an attacker can't fan out across many accounts from a single IP.
+        bucket_key = f"{client_ip}:{body.managed_account_id}"
+        ensure_rate_limit(
+            action="auth-code-fail",
+            quota=AUTH_CODE_FAILURE_THRESHOLD,
+            key=bucket_key,
+            duration_minutes=AUTH_CODE_FAILURE_COOLDOWN_MINUTES,
+        )
+        # Log a hash of the code, never the code itself.
+        code_hash = hashlib.sha256(body.code.encode("utf-8")).hexdigest()[:12]
+        log_event(
+            session,
+            action=EventType.USER_LOGIN_CODE_FAIL,
+            request=request,
+            details={"managed_account_id": body.managed_account_id, "code_hash": code_hash},
+        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
+
+    log_event(session, action=EventType.USER_LOGIN_CODE, user_id=user.id, request=request)
+    return issue_jwt_for_user(session, user)

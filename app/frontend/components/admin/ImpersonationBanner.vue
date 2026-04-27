@@ -5,8 +5,11 @@ const auth = useAuth();
 const api = useApi();
 const toast = useToast();
 const { t } = useI18n();
+const userDisplay = useUserDisplay();
 
 const isLoading = ref(false);
+
+const isAnyHandover = computed(() => auth.isImpersonating || auth.isOpenAsManagedAccount);
 
 async function stopImpersonation() {
     isLoading.value = true;
@@ -28,7 +31,6 @@ async function stopImpersonation() {
             duration: 3000,
         });
 
-        // Navigate back to admin
         await navigateTo('/admin/users');
     } catch (error) {
         toast.add({
@@ -41,23 +43,45 @@ async function stopImpersonation() {
         isLoading.value = false;
     }
 }
+
+async function stopOpenAs() {
+    isLoading.value = true;
+    try {
+        auth.stopOpenAs();
+        toast.add({
+            title: t('core.managed_accounts.openAsEnded'),
+            color: 'success',
+            duration: 3000,
+        });
+        await navigateTo('/managed-account-groups');
+    } finally {
+        isLoading.value = false;
+    }
+}
 </script>
 
 <template>
-    <div v-if="auth.isImpersonating" class="impersonation-banner">
-        <div class="banner-content">
-            <UIcon name="i-lucide-user" class="banner-icon" />
-            <span class="banner-text">
-                {{ t('core.admin.impersonation.viewingAs') }} <strong>{{ auth.user?.email }}</strong>
+    <div v-if="isAnyHandover" class="impersonation-banner">
+        <div class="flex items-center justify-center gap-3 max-w-7xl mx-auto">
+            <UIcon name="i-lucide-user" class="text-xl" />
+            <span v-if="auth.isImpersonating" class="text-sm">
+                {{ t('core.admin.impersonation.viewingAs') }} <strong>{{ userDisplay.label(auth.user) }}</strong>
+            </span>
+            <span v-else class="text-sm">
+                {{ t('core.managed_accounts.viewingAs') }} <strong>{{ userDisplay.label(auth.user) }}</strong>
             </span>
             <UButton
-                :label="t('core.admin.impersonation.exit')"
+                :label="
+                    auth.isImpersonating
+                        ? t('core.admin.impersonation.exit')
+                        : t('core.managed_accounts.backToMyAccount')
+                "
                 icon="i-lucide-log-out"
                 size="sm"
                 color="neutral"
                 variant="solid"
                 :loading="isLoading"
-                @click="stopImpersonation"
+                @click="auth.isImpersonating ? stopImpersonation() : stopOpenAs()"
             />
         </div>
     </div>
@@ -71,22 +95,5 @@ async function stopImpersonation() {
     position: sticky;
     top: 0;
     z-index: 50;
-}
-
-.banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    max-width: 80rem;
-    margin: 0 auto;
-}
-
-.banner-icon {
-    font-size: 1.25rem;
-}
-
-.banner-text {
-    font-size: 0.875rem;
 }
 </style>

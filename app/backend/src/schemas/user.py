@@ -4,32 +4,49 @@
 
 import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from ..helpers.user_display import display_for
 from .organization import UserOrganizationInfo
 from .user_ext import UserCustomData, UserPreviewCustomData
 
 
 class UserRead(BaseModel):
     id: int
-    email: str
-    first_name: str
-    last_name: str
+    # Nullable on read schemas: access-code users have no email/name; deleted
+    # users have everything cleared. Frontends fall back to display_label.
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str | None = None
     is_admin: bool
     is_premium: bool
     has_personal_subscription: bool = False
+    auth_method: str = "password"
+    # Set for managed accounts (auth_method='access_code'); None otherwise.
+    managed_account_group_id: int | None = None
     custom_data: UserCustomData = Field(default_factory=UserCustomData)
     organizations: list[UserOrganizationInfo] = []
+    # Computed below; one source of truth for "what label do we show?".
+    display_label: str | None = None
 
     class Config:
         from_attributes = True
 
+    @model_validator(mode="after")
+    def _populate_display_label(self) -> "UserRead":
+        self.display_label = display_for(self)
+        return self
+
 
 class UserPreviewRead(BaseModel):
     id: int
-    first_name: str
-    last_name: str
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str | None = None
+    auth_method: str = "password"
     custom_data: UserPreviewCustomData = Field(default_factory=UserPreviewCustomData)
+    display_label: str | None = None
 
     class Config:
         from_attributes = True
@@ -37,10 +54,15 @@ class UserPreviewRead(BaseModel):
     # Replace last name with its first letter for privacy
     @field_validator("last_name")
     @classmethod
-    def get_initials(cls, v: str) -> str:
-        if v == "":
-            return ""
+    def get_initials(cls, v: str | None) -> str | None:
+        if not v:
+            return v
         return v[0].upper() + "."
+
+    @model_validator(mode="after")
+    def _populate_display_label(self) -> "UserPreviewRead":
+        self.display_label = display_for(self)
+        return self
 
 
 class UserCreate(BaseModel):
@@ -127,3 +149,15 @@ class AccountDeletionConfirm(BaseModel):
 
     token: str
     password: str | None = None
+
+
+class SignInWithCodeRequest(BaseModel):
+    """POST /auth/code body. Both fields live in the body (not the URL) so
+    they stay out of access logs, browser history, and Referer headers.
+
+    `managed_account_id` scopes the code lookup so an attacker who guesses a
+    code still has to know which account it belongs to.
+    """
+
+    managed_account_id: int = Field(gt=0)
+    code: str = Field(min_length=1, max_length=128)

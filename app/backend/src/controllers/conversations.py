@@ -29,7 +29,7 @@ from ..crud.conversations import (
 from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_id
 from ..helpers.account import assert_min_account_age
-from ..helpers.auth import get_current_admin, get_current_user
+from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_current_user
 from ..helpers.bug_report import strip_url_query_in_body
 from ..helpers.db import get_session
 from ..helpers.ratelimit import ensure_rate_limit
@@ -166,7 +166,8 @@ def create_new_conversation(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    # Managed accounts can't open support conversations; their owner does.
+    user: UserRead = Depends(get_current_nonmanaged_user),
     data: ConversationCreate,
 ):
     """Create a new support conversation."""
@@ -317,7 +318,7 @@ def send_message(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     conversation_id: int,
     data: MessageCreate,
 ):
