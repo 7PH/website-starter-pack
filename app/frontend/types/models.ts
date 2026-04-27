@@ -73,20 +73,27 @@ export type Models =
   | UserPreviewCustomData;
 export type Message = string;
 export type Id = number;
-export type Email = string;
-export type FirstName = string;
-export type LastName = string;
+export type Email = string | null;
+export type FirstName = string | null;
+export type LastName = string | null;
+export type DisplayName = string | null;
 export type IsAdmin = boolean;
 export type IsPremium = boolean;
 export type HasPersonalSubscription = boolean;
+export type AuthMethod = string;
+export type ManagedAccountGroupId = number | null;
 export type OrganizationId = number;
 export type OrganizationName = string;
 export type IsAdmin1 = boolean;
 export type HasPremiumSeat = boolean;
 export type Organizations = UserOrganizationInfo[];
+export type DisplayLabel = string | null;
 export type Id1 = number;
-export type FirstName1 = string;
-export type LastName1 = string;
+export type FirstName1 = string | null;
+export type LastName1 = string | null;
+export type DisplayName1 = string | null;
+export type AuthMethod1 = string;
+export type DisplayLabel1 = string | null;
 export type Email1 = string;
 export type Password = string;
 export type FirstName2 = string;
@@ -108,17 +115,22 @@ export type EmailMasked = string;
 export type Token = string;
 export type Password2 = string | null;
 export type Id2 = number;
-export type Email3 = string;
-export type FirstName4 = string;
-export type LastName4 = string;
+export type Email3 = string | null;
+export type FirstName4 = string | null;
+export type LastName4 = string | null;
+export type DisplayName2 = string | null;
 export type IsAdmin2 = boolean;
 export type IsPremium1 = boolean;
 export type EmailConfirmed = boolean;
+export type AuthMethod2 = string;
+export type ManagedAccountGroupId1 = number | null;
 export type CreatedAt1 = string | null;
 export type DeletedAt = string | null;
 export type Organizations1 = UserOrganizationInfo[];
+export type DisplayLabel2 = string | null;
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
+export type DisplayName3 = string | null;
 export type Email4 = string | null;
 export type IsAdmin3 = boolean | null;
 export type IsPremium2 = boolean | null;
@@ -368,14 +380,18 @@ export interface AuthMessageResponse {
 }
 export interface UserRead {
   id: Id;
-  email: Email;
-  first_name: FirstName;
-  last_name: LastName;
+  email?: Email;
+  first_name?: FirstName;
+  last_name?: LastName;
+  display_name?: DisplayName;
   is_admin: IsAdmin;
   is_premium: IsPremium;
   has_personal_subscription?: HasPersonalSubscription;
+  auth_method?: AuthMethod;
+  managed_account_group_id?: ManagedAccountGroupId;
   custom_data?: UserCustomData;
   organizations?: Organizations;
+  display_label?: DisplayLabel;
 }
 /**
  * Full custom-data shape. Add your fields here (with defaults).
@@ -392,9 +408,12 @@ export interface UserOrganizationInfo {
 }
 export interface UserPreviewRead {
   id: Id1;
-  first_name: FirstName1;
-  last_name: LastName1;
+  first_name?: FirstName1;
+  last_name?: LastName1;
+  display_name?: DisplayName1;
+  auth_method?: AuthMethod1;
   custom_data?: UserPreviewCustomData;
+  display_label?: DisplayLabel1;
 }
 /**
  * Preview-safe subset. Add only fields that are safe to show publicly.
@@ -454,16 +473,20 @@ export interface AccountDeletionConfirm {
  */
 export interface AdminUserRead {
   id: Id2;
-  email: Email3;
-  first_name: FirstName4;
-  last_name: LastName4;
-  is_admin: IsAdmin2;
-  is_premium: IsPremium1;
-  email_confirmed: EmailConfirmed;
+  email?: Email3;
+  first_name?: FirstName4;
+  last_name?: LastName4;
+  display_name?: DisplayName2;
+  is_admin?: IsAdmin2;
+  is_premium?: IsPremium1;
+  email_confirmed?: EmailConfirmed;
+  auth_method?: AuthMethod2;
+  managed_account_group_id?: ManagedAccountGroupId1;
   created_at: CreatedAt1;
   deleted_at?: DeletedAt;
   custom_data?: UserCustomData;
   organizations?: Organizations1;
+  display_label?: DisplayLabel2;
 }
 /**
  * Schema for admin updating a user.
@@ -471,6 +494,7 @@ export interface AdminUserRead {
 export interface AdminUserUpdate {
   first_name?: FirstName5;
   last_name?: LastName5;
+  display_name?: DisplayName3;
   email?: Email4;
   is_admin?: IsAdmin3;
   is_premium?: IsPremium2;

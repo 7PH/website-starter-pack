@@ -5,7 +5,7 @@ import * as conversationsApi from '~/utils/api/conversations';
 import MessagesPageActionsDefault from '~/components/messages/PageActions.vue';
 
 definePageMeta({
-    middleware: 'auth',
+    middleware: ['auth', 'nonmanaged-only'],
     auth: true,
 });
 

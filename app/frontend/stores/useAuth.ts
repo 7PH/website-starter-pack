@@ -3,6 +3,9 @@
 import { defineStore } from 'pinia';
 
 export const STORAGE_TOKEN_KEY = 'user-token';
+// Set when an owner uses "open as" on one of their managed accounts. Holds
+// the owner's original token so we can restore it on "back to my account".
+export const STORAGE_OPEN_AS_PREVIOUS_KEY = 'user-token-before-open-as';
 
 /**
  * Authentication store for managing user sessions.
@@ -23,6 +26,16 @@ export const useAuth = defineStore('auth', {
 
         isImpersonating(): boolean {
             return this.token?.token_parsed?.real_admin_id != null;
+        },
+
+        /**
+         * True when the current token came from owner-initiated "open as" on a
+         * managed account. The original owner token is stashed in localStorage
+         * under STORAGE_OPEN_AS_PREVIOUS_KEY for `stopOpenAs()` to restore.
+         */
+        isOpenAsManagedAccount(): boolean {
+            if (import.meta.server) return false;
+            return !!localStorage.getItem(STORAGE_OPEN_AS_PREVIOUS_KEY);
         },
     },
     actions: {
@@ -59,6 +72,7 @@ export const useAuth = defineStore('auth', {
                 return;
             }
             localStorage.removeItem(STORAGE_TOKEN_KEY);
+            localStorage.removeItem(STORAGE_OPEN_AS_PREVIOUS_KEY);
             this.token = null;
         },
 
@@ -90,6 +104,34 @@ export const useAuth = defineStore('auth', {
                 return;
             }
             localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify(this.token));
+        },
+
+        /**
+         * Begin owner "open as managed account" by stashing the current owner
+         * token, then swapping in the freshly-minted managed-account token.
+         */
+        startOpenAs(newToken: UserTokenUpdate): void {
+            if (this.token && !import.meta.server) {
+                localStorage.setItem(STORAGE_OPEN_AS_PREVIOUS_KEY, JSON.stringify(this.token));
+            }
+            this.saveUserToken(newToken);
+        },
+
+        /**
+         * Restore the owner token stashed by `startOpenAs`. No-op if nothing
+         * is stashed.
+         */
+        stopOpenAs(): void {
+            if (import.meta.server) return;
+            const stashed = localStorage.getItem(STORAGE_OPEN_AS_PREVIOUS_KEY);
+            if (!stashed) return;
+            try {
+                const previous = JSON.parse(stashed) as UserTokenUpdate;
+                localStorage.removeItem(STORAGE_OPEN_AS_PREVIOUS_KEY);
+                this.saveUserToken(previous);
+            } catch {
+                localStorage.removeItem(STORAGE_OPEN_AS_PREVIOUS_KEY);
+            }
         },
 
         /**

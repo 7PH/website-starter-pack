@@ -29,4 +29,8 @@ export interface ConfirmModalOptions extends ModalOptions {
     cancelText?: string;
     /** Confirm button color (danger, primary, etc.) */
     confirmColor?: 'primary' | 'error' | 'warning' | 'success' | 'neutral';
+    /** Optional icon (e.g. 'i-lucide-triangle-alert') shown above the title. */
+    icon?: string;
+    /** Tint behind the icon. Defaults to `confirmColor`. */
+    tone?: 'primary' | 'error' | 'warning' | 'success' | 'neutral' | 'info';
 }

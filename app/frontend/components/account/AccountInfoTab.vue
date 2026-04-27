@@ -34,8 +34,8 @@ watch(
     () => auth.user,
     (user) => {
         if (user) {
-            profileForm.firstName = user.first_name;
-            profileForm.lastName = user.last_name;
+            profileForm.firstName = user.first_name ?? '';
+            profileForm.lastName = user.last_name ?? '';
             profileForm.customData = (user.custom_data ?? {}) as UserCustomData;
         }
     },

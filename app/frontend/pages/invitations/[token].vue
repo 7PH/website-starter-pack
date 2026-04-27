@@ -36,7 +36,7 @@ async function load() {
 }
 
 const emailMismatch = computed(() => {
-    if (!preview.value || !auth.user) return false;
+    if (!preview.value || !auth.user?.email) return false;
     return preview.value.email.toLowerCase() !== auth.user.email.toLowerCase();
 });
 

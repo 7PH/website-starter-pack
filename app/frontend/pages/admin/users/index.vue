@@ -80,6 +80,20 @@ function formatDate(dateStr: string | null): string {
     return new Date(dateStr).toLocaleDateString();
 }
 
+function nameLabel(user: AdminUserRead): string {
+    return user.display_label ?? `User #${user.id}`;
+}
+
+const AUTH_BADGE: Record<string, { label: string; color: 'info' | 'warning' | 'neutral' }> = {
+    oauth: { label: 'OAuth', color: 'info' },
+    access_code: { label: 'Code', color: 'warning' },
+    deleted: { label: 'Deleted', color: 'neutral' },
+};
+
+function authBadge(method: string | undefined | null) {
+    return method ? AUTH_BADGE[method] : undefined;
+}
+
 async function impersonateUser(user: AdminUserRead) {
     try {
         const response = await api.post<ImpersonationResponse>('/admin/impersonations', { user_id: user.id });
@@ -97,7 +111,7 @@ async function impersonateUser(user: AdminUserRead) {
 
         toast.add({
             title: 'Impersonation started',
-            description: `Now viewing as ${user.email}`,
+            description: `Now viewing as ${nameLabel(user)}`,
             color: 'success',
             duration: 3000,
         });
@@ -115,9 +129,10 @@ async function impersonateUser(user: AdminUserRead) {
 }
 
 async function deleteUser(user: AdminUserRead) {
+    const label = nameLabel(user);
     const confirmed = await modal.open('confirm', {
         title: 'Delete User',
-        message: `Are you sure you want to delete ${user.email}? This action cannot be undone.`,
+        message: `Are you sure you want to delete ${label}? This action cannot be undone.`,
         confirmText: 'Delete',
         confirmColor: 'error',
     });
@@ -128,7 +143,7 @@ async function deleteUser(user: AdminUserRead) {
         await api.delete(`/admin/users/${user.id}`);
         toast.add({
             title: 'User deleted',
-            description: `${user.email} has been deleted`,
+            description: `${label} has been deleted`,
             color: 'success',
             duration: 3000,
         });
@@ -158,7 +173,7 @@ async function deleteUser(user: AdminUserRead) {
             <div class="filters">
                 <UInput
                     v-model="search"
-                    placeholder="Search by email or name..."
+                    placeholder="Search by id, email or name..."
                     icon="i-lucide-search"
                     class="search-input"
                 />
@@ -181,12 +196,14 @@ async function deleteUser(user: AdminUserRead) {
                 <UTable :columns="columns" :data="usersData?.items ?? []" :loading="pending">
                     <template #email-cell="{ row }">
                         <NuxtLink :to="`/admin/users/${row.original.id}`" class="user-link">
-                            {{ row.original.email }}
+                            {{ row.original.email ?? '—' }}
                         </NuxtLink>
                     </template>
 
                     <template #name-cell="{ row }">
-                        {{ row.original.first_name }} {{ row.original.last_name }}
+                        <NuxtLink :to="`/admin/users/${row.original.id}`" class="user-link">
+                            {{ nameLabel(row.original as AdminUserRead) }}
+                        </NuxtLink>
                     </template>
 
                     <template #status-cell="{ row }">
@@ -194,6 +211,13 @@ async function deleteUser(user: AdminUserRead) {
                             <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
                             <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
                             <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
+                            <template v-if="authBadge(row.original.auth_method)">
+                                <UBadge
+                                    :label="authBadge(row.original.auth_method)!.label"
+                                    :color="authBadge(row.original.auth_method)!.color"
+                                    variant="soft"
+                                />
+                            </template>
                         </div>
                     </template>
 

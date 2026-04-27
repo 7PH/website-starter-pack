@@ -11,10 +11,9 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import log_event
-from ..crud.organizations import get_user_organizations
 from ..crud.users import create_user, get_user_by_email, update_user
 from ..helpers import stripe as stripe_helper
-from ..helpers.auth import create_access_token, hash_password
+from ..helpers.auth import build_user_read_with_orgs, create_access_token, hash_password
 from ..helpers.db import get_session
 from ..helpers.oauth import (
     generate_state,
@@ -30,9 +29,7 @@ from ..schemas.oauth import (
     OAuthStatusResponse,
     OAuthUrlResponse,
 )
-from ..schemas.organization import UserOrganizationInfo
-from ..schemas.user import UserRead, UserTokenUpdate
-from ..schemas.user_ext import UserCustomData
+from ..schemas.user import UserTokenUpdate
 
 router = APIRouter(prefix="/oauth")
 
@@ -166,38 +163,4 @@ async def handle_google_callback(
             details={"method": "oauth", "provider": "google"},
         )
 
-    # Build user read with organizations
-    user_read = _build_user_read_with_orgs(session, user)
-
-    # Create and return JWT token
-    return create_access_token(user_read)
-
-
-def _build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
-    """Build a UserRead object with organization memberships."""
-    from ..constants import ORGANIZATIONS_ENABLED
-
-    organizations: list[UserOrganizationInfo] = []
-    if ORGANIZATIONS_ENABLED:
-        memberships = get_user_organizations(session, user.id)
-        organizations = [
-            UserOrganizationInfo(
-                organization_id=m.organization_id,
-                organization_name=m.organization.name if m.organization else "Unknown",
-                is_admin=m.is_admin,
-                has_premium_seat=m.has_premium_seat,
-            )
-            for m in memberships
-            if m.organization and not m.organization.deleted_at
-        ]
-    return UserRead(
-        id=user.id,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_admin=user.is_admin,
-        is_premium=user.is_premium,
-        has_personal_subscription=user.has_personal_subscription,
-        custom_data=UserCustomData(**(user.custom_data or {})),
-        organizations=organizations,
-    )
+    return create_access_token(build_user_read_with_orgs(session, user))

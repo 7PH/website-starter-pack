@@ -46,7 +46,7 @@ from ..crud.organizations import (
 )
 from ..crud.users import get_user_by_email, get_user_by_id, update_user_premium_cache
 from ..helpers import stripe as stripe_helper
-from ..helpers.auth import get_current_admin, get_current_user
+from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
 from ..helpers.email import send_organization_invitation_email
 from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
@@ -252,7 +252,7 @@ def create_new_organization(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     org_data: OrganizationCreate,
 ):
     """Create a new organization. Creator becomes first admin.
@@ -459,7 +459,7 @@ def add_member(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     org_id: int,
     member_data: OrganizationMemberAdd,
 ):
@@ -738,7 +738,7 @@ def create_org_checkout(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     org_id: int,
     checkout_data: OrganizationCheckoutRequest,
 ):
@@ -796,7 +796,7 @@ def create_org_checkout(
 def get_org_billing_portal(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     org_id: int,
     return_url: str = Query(..., description="URL to return to after portal session"),
 ):
@@ -910,7 +910,7 @@ def create_invitation(
     *,
     session: Session = Depends(get_session),
     request: Request,
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_current_nonmanaged_user),
     org_id: int,
     invitation_data: OrganizationInvitationCreate,
 ):

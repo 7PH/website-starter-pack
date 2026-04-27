@@ -10,15 +10,33 @@ const { t } = useI18n();
 const { isPremium, loading: subscriptionLoading } = useStripe();
 const { locale, availableLocales, setLocale } = useAppLocale();
 const { isDark, toggle: toggleColorMode } = useColorModeToggle();
+const userDisplay = useUserDisplay();
 const config = useRuntimeConfig();
 const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
 
-// User dropdown items
+const displayLabel = computed(() => userDisplay.label(auth.user));
+
+// Managed accounts can't subscribe, manage orgs, or own other managed
+// accounts — hide everything that would 403 on the backend.
+const isManagedAccount = computed(() => auth.user?.auth_method === 'access_code');
+
+const showManagedAccounts = computed(
+    () => String(config.public.managedAccountsEnabled) === 'true' && !isManagedAccount.value,
+);
+
+const showOrganizationsLink = computed(
+    () => String(config.public.organizationsEnabled) === 'true' && !isManagedAccount.value,
+);
+
+// User dropdown items. Managed accounts only see logout — every other entry
+// would 403 on the backend.
 const userMenuItems = computed(() => [
-    [{ label: auth.user?.first_name, avatar: { icon: 'i-lucide-user' }, type: 'label' as const }],
+    [{ label: displayLabel.value, avatar: { icon: 'i-lucide-user' }, type: 'label' as const }],
     [
-        { label: t('core.messages.title'), icon: 'i-lucide-message-square', to: '/messages' },
-        ...(config.public.organizationsEnabled
+        ...(isManagedAccount.value
+            ? []
+            : [{ label: t('core.messages.title'), icon: 'i-lucide-message-square', to: '/messages' }]),
+        ...(showOrganizationsLink.value
             ? [
                   {
                       label: t('core.organizations.title'),
@@ -27,7 +45,18 @@ const userMenuItems = computed(() => [
                   },
               ]
             : []),
-        { label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' },
+        ...(showManagedAccounts.value
+            ? [
+                  {
+                      label: t('core.managed_accounts.menuLabel'),
+                      icon: 'i-lucide-users',
+                      to: '/managed-account-groups',
+                  },
+              ]
+            : []),
+        ...(isManagedAccount.value
+            ? []
+            : [{ label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' }]),
         ...(auth.user?.is_admin
             ? [{ label: t('core.admin.title'), icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
             : []),
@@ -96,9 +125,10 @@ function onSelectLogout() {
 
                     <!-- Logged in state -->
                     <template v-else>
-                        <!-- Premium badge or Upgrade CTA (only when Stripe is enabled) -->
+                        <!-- Premium badge or Upgrade CTA. Managed accounts can't subscribe
+                             themselves and inherit premium from their owner — hide entirely. -->
                         <NuxtLink
-                            v-if="stripeEnabled && !subscriptionLoading"
+                            v-if="stripeEnabled && !subscriptionLoading && !isManagedAccount"
                             to="/account?tab=billing"
                             :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                         >
@@ -109,7 +139,7 @@ function onSelectLogout() {
                         <!-- User dropdown -->
                         <UDropdownMenu :items="userMenuItems">
                             <UButton
-                                :label="auth.user?.first_name"
+                                :label="displayLabel"
                                 icon="i-lucide-user"
                                 color="neutral"
                                 variant="ghost"
@@ -118,8 +148,9 @@ function onSelectLogout() {
                             />
                         </UDropdownMenu>
 
-                        <!-- Bug report -->
-                        <CommonBugReportButton />
+                        <!-- Bug report. Hidden for managed accounts (the conversations
+                             POST endpoint blocks them server-side too). -->
+                        <CommonBugReportButton v-if="!isManagedAccount" />
 
                         <!-- Settings dropdown -->
                         <UDropdownMenu :items="settingsMenuItems">

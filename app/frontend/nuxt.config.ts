@@ -59,6 +59,7 @@ export default defineNuxtConfig({
             baseUrl: PUBLIC_URL, // Reuses existing PUBLIC_URL — used for sitemap, canonical, schema.org absolute URLs
             stripeEnabled: false, // NUXT_PUBLIC_STRIPE_ENABLED - enable billing features
             organizationsEnabled: false, // NUXT_PUBLIC_ORGANIZATIONS_ENABLED - enable org features
+            managedAccountsEnabled: false, // NUXT_PUBLIC_MANAGED_ACCOUNTS_ENABLED - enable managed-account groups (email-less code sign-in)
             orgSelfServiceSubscriptions: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_SUBSCRIPTIONS - allow org admins to subscribe
             orgSelfServiceCreation: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_CREATION - allow users to create orgs
             orgInvitationsEnabled: false, // NUXT_PUBLIC_ORG_INVITATIONS_ENABLED - use email invitations instead of direct-add

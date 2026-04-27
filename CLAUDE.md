@@ -94,15 +94,23 @@ ALL user-facing text must be translated. Never hardcode user-visible strings.
 - **@nuxt/ui components**: Use as-is (dark mode automatic)
 - **Custom styling**: Tailwind with `dark:` variants
 - **Colors**: `primary-*` for brand, `gray-*` for neutrals, semantic colors for states
-- **CSS**: Keep `main.css` minimal. Use `<style scoped>`. Create Vue components for shared patterns.
+- **Inline utilities first**: write Tailwind classes directly on the element. Don't reach for `<style scoped>` + `@apply` for one-off styling — it adds a name-to-rule indirection that obscures the actual CSS and breaks Tailwind IntelliSense.
+- **`<style scoped>` is for what utilities can't express**: `:hover`/`:focus`-within compounds, animations/keyframes, or a class repeated 3+ times in the same file (extracting it then beats DRY violations).
+- **Avoid `:deep()`**: it pierces component encapsulation and breaks when the child's markup changes between versions. Use the component's documented styling API instead — for Nuxt UI, that's the `:ui` prop with slot keys (`:ui="{ base: 'font-mono text-center' }"`), or class-forwarding props the component exposes. If a child component genuinely doesn't surface what you need, extract that styling concern into a wrapper component or file an issue against the library.
+- **Repeated patterns** across files: pull them into a small Vue component, not a shared CSS class. Components compose; classes don't.
+- **`main.css` stays minimal**: theme tokens, page layout primitives (`page-box`, `page-content-width`), and that's it. No utility-shorthand classes.
 
 ## Premium gating
 
-Frontend `<PremiumGate>` (with `#teaser` / `#gated` slots) is UX, not security. Real entitlement is server-side: every premium write endpoint must depend on `require_premium`. Apps own this helper — pattern mirrors `get_current_admin` in `app/backend/src/helpers/auth.py`:
+Frontend `<PremiumGate>` (with `#teaser` / `#gated` slots) is UX, not security. Real entitlement is server-side: every premium write endpoint must depend on `require_premium`. Apps own this helper — pattern mirrors `get_current_admin` in `app/backend/src/helpers/auth.py`. Resolve effective premium via `is_premium_effective(session, db_user)` so managed accounts inherit from their group owner:
 
 ```python
-async def require_premium(user: UserRead = Depends(get_current_user)) -> UserRead:
-    if not user.is_premium:
+async def require_premium(
+    session: Session = Depends(get_session),
+    user: UserRead = Depends(get_current_user),
+) -> UserRead:
+    db_user = get_user_by_id(session, user.id)
+    if not db_user or not is_premium_effective(session, db_user):
         raise HTTPException(status_code=402, detail="Premium required")
     return user
 ```
