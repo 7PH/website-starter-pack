@@ -19,6 +19,7 @@ EXCEPTIONS=(
     "core-en.json"
     "core-fr.json"
     ".starterpack-version"
+    ".mcp.json"
 )
 
 # Parse manifest entry to extract path and mode
