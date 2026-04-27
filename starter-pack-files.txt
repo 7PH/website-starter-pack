@@ -5,7 +5,7 @@ app/backend/Dockerfile
 app/backend/requirements.core.txt
 app/backend/migrations/README.md
 app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
-app/backend/migrations/2026-04-26-vNEXT-managed-accounts.sql
+app/backend/migrations/2026-04-26-v2.1.0-managed-accounts.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
