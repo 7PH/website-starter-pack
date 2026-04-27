@@ -1,23 +1,14 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-import { computed, ref, type Component, type ComputedRef } from 'vue';
+import type { Component } from 'vue';
 import { componentOverrides } from '~/config/component-overrides';
 
-// Cache for resolved async components
-const resolvedComponents = new Map<string, Component>();
-
-// Reactive trigger to force re-computation when async components resolve
-const asyncLoadTrigger = ref(0);
-
 /**
- * Returns an overridable component.
+ * Returns the override registered for `name`, or `defaultComponent` if none.
  *
- * Sub-apps can register overrides in config/component-overrides.ts to replace
- * core components with custom implementations.
- *
- * @param componentName - The override key (must match key in componentOverrides)
- * @param defaultComponent - The default component to use if no override exists
- * @returns A computed ref that resolves to the override or default component
+ * Sub-apps register overrides in `config/component-overrides.ts`. Values
+ * are plain Vue components — for lazy-loaded overrides, wrap with
+ * `defineAsyncComponent` from Vue.
  *
  * @example
  * ```ts
@@ -25,38 +16,11 @@ const asyncLoadTrigger = ref(0);
  * const Modal = useOverridable('OrganizationsCreateModal', DefaultModal);
  * ```
  *
- * In template, use directly (Vue unwraps computed refs):
+ * In template:
  * ```vue
- * <Modal v-model:open="open" @create="handleCreate" />
+ * <component :is="Modal" v-model:open="open" @create="handleCreate" />
  * ```
  */
-export function useOverridable<T extends Component>(
-    componentName: string,
-    defaultComponent: T,
-): ComputedRef<T | Component> {
-    return computed(() => {
-        // Access trigger to make computed reactive to async loads
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        asyncLoadTrigger.value;
-
-        const loader = componentOverrides[componentName];
-
-        if (!loader) {
-            return defaultComponent;
-        }
-
-        // Check if we've already resolved this async component
-        if (resolvedComponents.has(componentName)) {
-            return resolvedComponents.get(componentName) as T;
-        }
-
-        // Start async load and return default while loading
-        loader().then((mod) => {
-            resolvedComponents.set(componentName, mod.default);
-            // Trigger re-computation for all components using overrides
-            asyncLoadTrigger.value++;
-        });
-
-        return defaultComponent;
-    });
+export function useOverridable<T extends Component>(name: string, defaultComponent: T): T | Component {
+    return componentOverrides[name] ?? defaultComponent;
 }

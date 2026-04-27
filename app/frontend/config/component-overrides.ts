@@ -1,12 +1,6 @@
 import type { Component } from 'vue';
 
 /**
- * Async component loader type.
- * Returns a Promise that resolves to a module with a default export.
- */
-export type AsyncComponentLoader = () => Promise<{ default: Component }>;
-
-/**
  * Override core components with custom implementations.
  *
  * Keys must match the override key used in core components:
@@ -23,16 +17,22 @@ export type AsyncComponentLoader = () => Promise<{ default: Component }>;
  *     in setup so BreadcrumbList JSON-LD stays emitted. Skipping it silently
  *     drops the page's structured data — Googlebot won't see the breadcrumb.
  *
- * Values must be async import functions for proper code splitting:
- *   () => import('~/components/custom/MyComponent.vue')
+ * Values are Vue components imported directly. For lazy-loaded overrides,
+ * wrap with `defineAsyncComponent` from Vue.
  *
  * Override components must match the original's props/events contract.
  *
  * @example
- * export const componentOverrides: Record<string, AsyncComponentLoader> = {
- *     'OrganizationsCreateModal': () => import('~/components/custom/OrgCreateModal.vue'),
+ * ```ts
+ * import { defineAsyncComponent } from 'vue';
+ * import MyHeader from '~/components/custom/MyHeader.vue';
+ *
+ * export const componentOverrides: Record<string, Component> = {
+ *     PageHeader: MyHeader,
+ *     SomeBigModal: defineAsyncComponent(() => import('~/components/custom/Big.vue')),
  * };
+ * ```
  */
-export const componentOverrides: Record<string, AsyncComponentLoader> = {
+export const componentOverrides: Record<string, Component> = {
     // Add your component overrides here
 };
