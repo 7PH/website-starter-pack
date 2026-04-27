@@ -42,6 +42,19 @@ from .schemas.event_log import (
     EventLogListResponse,
     EventLogRead,
 )
+from .schemas.managed_account import (
+    ManagedAccountBulkCreate,
+    ManagedAccountBulkCreated,
+    ManagedAccountCreate,
+    ManagedAccountCreated,
+    ManagedAccountGroupCreate,
+    ManagedAccountGroupRead,
+    ManagedAccountGroupUpdate,
+    ManagedAccountRead,
+    ManagedAccountUpdate,
+    PublicPickerEntry,
+    PublicPickerPayload,
+)
 from .schemas.oauth import (
     OAuthCallbackRequest,
     OAuthStatusResponse,
@@ -138,4 +151,16 @@ CoreModels = (
     | OAuthStatusResponse
     | OAuthUrlResponse
     | OAuthCallbackRequest
+    # Managed account models
+    | ManagedAccountGroupCreate
+    | ManagedAccountGroupUpdate
+    | ManagedAccountGroupRead
+    | ManagedAccountCreate
+    | ManagedAccountUpdate
+    | ManagedAccountRead
+    | ManagedAccountCreated
+    | ManagedAccountBulkCreate
+    | ManagedAccountBulkCreated
+    | PublicPickerEntry
+    | PublicPickerPayload
 )

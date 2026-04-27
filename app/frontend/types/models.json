@@ -1090,6 +1090,276 @@
       "title": "IndexStats",
       "type": "object"
     },
+    "ManagedAccountBulkCreate": {
+      "description": "Bulk-create payload. Each entry is a single display_name string; the\nclient does the parsing/normalization (delimiter detection, last-name-first\nswap, etc.) before posting.",
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/$defs/ManagedAccountCreate"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Accounts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "accounts"
+      ],
+      "title": "ManagedAccountBulkCreate",
+      "type": "object"
+    },
+    "ManagedAccountBulkCreated": {
+      "description": "Response: created accounts (with codes populated) + count of duplicates\nsilently skipped (in-batch dups + ones that already existed in the group).",
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/$defs/ManagedAccountRead"
+          },
+          "title": "Accounts",
+          "type": "array"
+        },
+        "skipped": {
+          "default": 0,
+          "title": "Skipped",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "accounts"
+      ],
+      "title": "ManagedAccountBulkCreated",
+      "type": "object"
+    },
+    "ManagedAccountCreate": {
+      "properties": {
+        "display_name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "display_name"
+      ],
+      "title": "ManagedAccountCreate",
+      "type": "object"
+    },
+    "ManagedAccountCreated": {
+      "description": "Response shape for create-account: includes the freshly minted code.",
+      "properties": {
+        "account": {
+          "$ref": "#/$defs/ManagedAccountRead"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "account",
+        "code"
+      ],
+      "title": "ManagedAccountCreated",
+      "type": "object"
+    },
+    "ManagedAccountGroupCreate": {
+      "properties": {
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ManagedAccountGroupCreate",
+      "type": "object"
+    },
+    "ManagedAccountGroupRead": {
+      "description": "A group as seen by its owner.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "owner_id": {
+          "title": "Owner Id",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "share_token": {
+          "title": "Share Token",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "archived_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Archived At"
+        },
+        "member_count": {
+          "default": 0,
+          "title": "Member Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "owner_id",
+        "name",
+        "share_token",
+        "created_at",
+        "archived_at"
+      ],
+      "title": "ManagedAccountGroupRead",
+      "type": "object"
+    },
+    "ManagedAccountGroupUpdate": {
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "archived": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Archived"
+        }
+      },
+      "title": "ManagedAccountGroupUpdate",
+      "type": "object"
+    },
+    "ManagedAccountRead": {
+      "description": "A managed account as seen by its group's owner. Includes the active code.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Display Name"
+        },
+        "managed_account_group_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Managed Account Group Id"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code"
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "managed_account_group_id"
+      ],
+      "title": "ManagedAccountRead",
+      "type": "object"
+    },
+    "ManagedAccountUpdate": {
+      "properties": {
+        "display_name": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
+        },
+        "managed_account_group_id": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Managed Account Group Id"
+        }
+      },
+      "title": "ManagedAccountUpdate",
+      "type": "object"
+    },
     "MessageCreate": {
       "description": "Schema for creating a new message.",
       "properties": {
@@ -2398,6 +2668,54 @@
       "title": "PendingInvitationPreview",
       "type": "object"
     },
+    "PublicPickerEntry": {
+      "description": "One name in the public picker list.",
+      "properties": {
+        "managed_account_id": {
+          "title": "Managed Account Id",
+          "type": "integer"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Display Name"
+        }
+      },
+      "required": [
+        "managed_account_id",
+        "display_name"
+      ],
+      "title": "PublicPickerEntry",
+      "type": "object"
+    },
+    "PublicPickerPayload": {
+      "description": "Anonymous response from GET /c/:share_token. No owner data leaks here.",
+      "properties": {
+        "group_name": {
+          "title": "Group Name",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/$defs/PublicPickerEntry"
+          },
+          "title": "Members",
+          "type": "array"
+        }
+      },
+      "required": [
+        "group_name",
+        "members"
+      ],
+      "title": "PublicPickerPayload",
+      "type": "object"
+    },
     "Recommendation": {
       "description": "An actionable recommendation for database optimization.",
       "properties": {
@@ -3126,6 +3444,39 @@
     },
     {
       "$ref": "#/$defs/OAuthCallbackRequest"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountGroupCreate"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountGroupUpdate"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountGroupRead"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountCreate"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountUpdate"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountRead"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountCreated"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountBulkCreate"
+    },
+    {
+      "$ref": "#/$defs/ManagedAccountBulkCreated"
+    },
+    {
+      "$ref": "#/$defs/PublicPickerEntry"
+    },
+    {
+      "$ref": "#/$defs/PublicPickerPayload"
     },
     {
       "$ref": "#/$defs/ConversationCreate"
