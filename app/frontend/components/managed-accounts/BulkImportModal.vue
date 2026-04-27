@@ -116,9 +116,13 @@ async function submit() {
     if (!canSubmit.value) return;
     submitting.value = true;
     try {
-        const result = await composable.bulkCreateAccounts(props.groupId, {
-            accounts: preview.value.map((p) => ({ display_name: p.display_name })),
-        });
+        // canSubmit guarantees preview is non-empty; cast satisfies the
+        // generated [ManagedAccountCreate, ...ManagedAccountCreate[]] tuple.
+        const accounts = preview.value.map((p) => ({ display_name: p.display_name })) as [
+            ManagedAccountCreate,
+            ...ManagedAccountCreate[],
+        ];
+        const result = await composable.bulkCreateAccounts(props.groupId, { accounts });
         showSuccess(
             t('core.managed_accounts.import.importSuccess', {
                 n: result.accounts.length,

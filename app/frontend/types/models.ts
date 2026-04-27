@@ -60,6 +60,17 @@ export type Models =
   | OAuthStatusResponse
   | OAuthUrlResponse
   | OAuthCallbackRequest
+  | ManagedAccountGroupCreate
+  | ManagedAccountGroupUpdate
+  | ManagedAccountGroupRead
+  | ManagedAccountCreate
+  | ManagedAccountUpdate
+  | ManagedAccountRead
+  | ManagedAccountCreated
+  | ManagedAccountBulkCreate
+  | ManagedAccountBulkCreated
+  | PublicPickerEntry
+  | PublicPickerPayload
   | ConversationCreate
   | ConversationRead
   | ConversationDetail
@@ -322,6 +333,36 @@ export type Url2 = string;
 export type State3 = string;
 export type Code = string;
 export type State4 = string;
+export type Name6 = string;
+export type Name7 = string | null;
+export type Archived = boolean | null;
+export type Id7 = number;
+export type OwnerId = number;
+export type Name8 = string;
+export type ShareToken = string;
+export type CreatedAt7 = string;
+export type ArchivedAt = string | null;
+export type MemberCount1 = number;
+export type DisplayName4 = string;
+export type DisplayName5 = string | null;
+export type ManagedAccountGroupId2 = number | null;
+export type Id8 = number;
+export type DisplayName6 = string | null;
+export type ManagedAccountGroupId3 = number | null;
+export type CreatedAt8 = string | null;
+export type Code1 = string | null;
+export type Code2 = string;
+/**
+ * @minItems 1
+ * @maxItems 200
+ */
+export type Accounts = [ManagedAccountCreate, ...ManagedAccountCreate[]];
+export type Accounts1 = ManagedAccountRead[];
+export type Skipped = number;
+export type ManagedAccountId = number;
+export type DisplayName7 = string | null;
+export type GroupName = string;
+export type Members1 = PublicPickerEntry[];
 export type Subject = string;
 export type Content = string;
 /**
@@ -330,34 +371,34 @@ export type Content = string;
  * Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
  */
 export type CoreConversationSubtype = "bug_report" | "feature_request";
-export type Id7 = number;
+export type Id9 = number;
 export type Type2 = string;
 export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id8 = number;
+export type Id10 = number;
 export type Email13 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt7 = string | null;
+export type CreatedAt9 = string | null;
 export type UpdatedAt = string | null;
 export type UnreadCount = number;
-export type Id9 = number;
+export type Id11 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt8 = string | null;
-export type Id10 = number;
+export type CreatedAt10 = string | null;
+export type Id12 = number;
 export type Type3 = string;
 export type Subtype1 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt9 = string | null;
+export type CreatedAt11 = string | null;
 export type UpdatedAt1 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
@@ -875,6 +916,79 @@ export interface OAuthCallbackRequest {
   code: Code;
   state: State4;
 }
+export interface ManagedAccountGroupCreate {
+  name: Name6;
+}
+export interface ManagedAccountGroupUpdate {
+  name?: Name7;
+  archived?: Archived;
+}
+/**
+ * A group as seen by its owner.
+ */
+export interface ManagedAccountGroupRead {
+  id: Id7;
+  owner_id: OwnerId;
+  name: Name8;
+  share_token: ShareToken;
+  created_at: CreatedAt7;
+  archived_at: ArchivedAt;
+  member_count?: MemberCount1;
+}
+export interface ManagedAccountCreate {
+  display_name: DisplayName4;
+}
+export interface ManagedAccountUpdate {
+  display_name?: DisplayName5;
+  managed_account_group_id?: ManagedAccountGroupId2;
+}
+/**
+ * A managed account as seen by its group's owner. Includes the active code.
+ */
+export interface ManagedAccountRead {
+  id: Id8;
+  display_name: DisplayName6;
+  managed_account_group_id: ManagedAccountGroupId3;
+  created_at?: CreatedAt8;
+  code?: Code1;
+}
+/**
+ * Response shape for create-account: includes the freshly minted code.
+ */
+export interface ManagedAccountCreated {
+  account: ManagedAccountRead;
+  code: Code2;
+}
+/**
+ * Bulk-create payload. Each entry is a single display_name string; the
+ * client does the parsing/normalization (delimiter detection, last-name-first
+ * swap, etc.) before posting.
+ */
+export interface ManagedAccountBulkCreate {
+  accounts: Accounts;
+}
+/**
+ * Response: created accounts (with codes populated) + count of duplicates
+ * silently skipped (in-batch dups + ones that already existed in the group).
+ */
+export interface ManagedAccountBulkCreated {
+  accounts: Accounts1;
+  skipped?: Skipped;
+}
+/**
+ * One name in the public picker list.
+ */
+export interface PublicPickerEntry {
+  managed_account_id: ManagedAccountId;
+  display_name: DisplayName7;
+}
+/**
+ * Anonymous response from GET /c/:share_token. No owner data leaks here.
+ */
+export interface PublicPickerPayload {
+  group_name: GroupName;
+  members: Members1;
+}
 /**
  * Schema for creating a new support conversation.
  */
@@ -887,7 +1001,7 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id7;
+  id: Id9;
   type: Type2;
   subtype?: Subtype;
   subject?: Subject1;
@@ -895,7 +1009,7 @@ export interface ConversationRead {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt7;
+  created_at?: CreatedAt9;
   updated_at?: UpdatedAt;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -904,7 +1018,7 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id8;
+  id: Id10;
   email: Email13;
   first_name: FirstName7;
   last_name: LastName7;
@@ -913,19 +1027,19 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id9;
+  id: Id11;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt8;
+  created_at?: CreatedAt10;
 }
 /**
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id10;
+  id: Id12;
   type: Type3;
   subtype?: Subtype1;
   subject?: Subject2;
@@ -933,7 +1047,7 @@ export interface ConversationDetail {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt9;
+  created_at?: CreatedAt11;
   updated_at?: UpdatedAt1;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
