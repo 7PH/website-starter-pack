@@ -11,3 +11,4 @@ node_modules
 /static
 
 .playwright-mcp
+.claude/scheduled_tasks.lock
