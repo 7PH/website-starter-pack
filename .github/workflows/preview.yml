@@ -43,10 +43,13 @@ jobs:
         working-directory: pr-${{ github.event.pull_request.number }}
         # Reuse .env.ci as the canonical "isolated app config" base
         # (same file used by `npm run test:e2e:start`). Append per-PR
-        # overrides + the two preview-specific corners that .env.ci
-        # doesn't cover (BASIC_AUTH must be non-empty for the prod
+        # overrides + the preview-specific corners that .env.ci
+        # doesn't cover: BASIC_AUTH must be non-empty for the prod
         # Traefik dynamic file to load; COMPOSE_FILE points at the
-        # preview override layer).
+        # preview override layer; PUBLIC_PORT must be 80 because the
+        # host-Traefik forward (docker-compose.preview.yml's
+        # loadbalancer.server.port label) and the healthcheck below
+        # both target :80, while .env.ci ships the e2e port (13001).
         run: |
           cp .env.ci .env
           cat >> .env <<EOF
@@ -55,6 +58,7 @@ jobs:
           COMPOSE_PROJECT_NAME=$PROJECT
           PUBLIC_WEBSITE_HOST=$HOST
           PUBLIC_URL=https://$HOST
+          PUBLIC_PORT=80
           EOF
 
       - name: Start preview stack
