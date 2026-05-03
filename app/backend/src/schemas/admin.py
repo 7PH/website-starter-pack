@@ -5,7 +5,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ..helpers.user_display import display_for
 from .event_log import EventLogRead
@@ -50,8 +50,7 @@ class AdminUserRead(BaseModel):
     organizations: list[UserOrganizationInfo] = []
     display_label: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @field_validator("is_admin", "is_premium", "email_confirmed", mode="before")
     @classmethod

@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # User's organization membership (for embedding in UserRead)
 
@@ -17,8 +17,7 @@ class UserOrganizationInfo(BaseModel):
     is_admin: bool
     has_premium_seat: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Organization schemas
@@ -65,8 +64,7 @@ class OrganizationMemberRead(BaseModel):
     has_premium_seat: bool = False
     joined_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrganizationRead(BaseModel):
@@ -95,8 +93,7 @@ class OrganizationRead(BaseModel):
     premium_member_count: int = 0
     members: list[OrganizationMemberRead] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrganizationListResponse(BaseModel):
@@ -236,8 +233,7 @@ class OrganizationInvitationRead(BaseModel):
     created_at: datetime
     token: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrganizationInvitationListResponse(BaseModel):

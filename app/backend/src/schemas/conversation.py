@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..constants_ext import UserInitiableSubtype
 
@@ -39,8 +39,7 @@ class MessageRead(BaseModel):
     is_admin_response: bool = False
     created_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversationCreate(BaseModel):
@@ -73,8 +72,7 @@ class ConversationRead(BaseModel):
     unread_count: int = 0  # Computed field
     last_message: MessageRead | None = None  # Preview of last message
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversationDetail(ConversationRead):
