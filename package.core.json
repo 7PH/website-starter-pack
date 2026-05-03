@@ -39,7 +39,7 @@
   "author": "7PH <b.raymond@protonmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "envfill": "^1.1.0",
+    "envfill": "^1.2.2",
     "json-schema-to-typescript": "^15.0.3"
   }
 }
