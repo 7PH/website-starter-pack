@@ -90,7 +90,7 @@ services:
         <<: *traefik-common
         ports:
             - "${PUBLIC_PORT}:${PUBLIC_PORT}"
-            - "8080:8080"
+            - "127.0.0.1:${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
         profiles:
             - dev
             - debug
@@ -163,8 +163,7 @@ services:
         environment:
             MODE: DEVELOPMENT
         ports:
-            - "8082:80"
-            - "5679:5679"
+            - "127.0.0.1:${BACKEND_DEBUG_PORT:-5679}:5679"
         profiles:
             - dev
         depends_on:

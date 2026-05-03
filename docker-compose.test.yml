@@ -1,5 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
-# E2E test environment - overrides for isolation from dev
+# E2E test environment - overrides for isolation from dev.
+# Host ports come from .env.ci (PUBLIC_PORT, TRAEFIK_DASHBOARD_PORT, BACKEND_DEBUG_PORT).
 services:
   db:
     volumes:
@@ -8,18 +9,10 @@ services:
   traefik-dev:
     env_file: !override
       - .env.ci
-    environment:
-      PUBLIC_PORT: "13001"
-    ports: !override
-      - "13001:13001"
-      - "13080:8080"
 
   backend-dev:
     env_file: !override
       - .env.ci
-    ports: !override
-      - "13082:80"
-      - "15679:5679"
 
   frontend-dev:
     env_file: !override

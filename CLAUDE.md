@@ -18,7 +18,7 @@ npm run build                               # If modifying dependencies/Dockerfi
 ## Quick Commands
 
 ```bash
-npm run dev      # Start development (hot reload, Traefik on :8080)
+npm run dev      # Start development (hot reload, app on :PUBLIC_PORT, Traefik dashboard on :TRAEFIK_DASHBOARD_PORT)
 npm run start    # Start production (Nginx, TLS-ready)
 npm run stop     # Stop all containers
 npm run restart  # Stop + dev
@@ -42,7 +42,7 @@ curl http://localhost/api/v1/healthcheck          # Backend health (dev)
 curl http://localhost:13001/api/v1/healthcheck    # Backend health (e2e)
 ```
 
-Traefik dashboard: `http://localhost:8080` (dev only).
+Traefik dashboard: `http://localhost:${TRAEFIK_DASHBOARD_PORT:-8080}` (dev only, bound to localhost). Override `TRAEFIK_DASHBOARD_PORT`, `BACKEND_DEBUG_PORT`, `PUBLIC_PORT`, and `COMPOSE_PROJECT_NAME` in `.env` to run multiple starterpacks side by side.
 
 ## Stack
 

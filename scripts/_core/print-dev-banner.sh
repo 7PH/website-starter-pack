@@ -83,7 +83,7 @@ label "Static"    "$STATIC_URL"
 label "Adminer"   "$ADMINER_URL"
 label "Analytics" "$UMAMI_URL"
 if [ "$MODE" = "dev" ]; then
-    label "Traefik"   "http://localhost:8080"
+    label "Traefik"   "http://localhost:${TRAEFIK_DASHBOARD_PORT:-8080}"
 fi
 echo
 printf "  ${BLUE}Features${NC}  stripe=%b  orgs=%b  oauth=%b  llm=%b\n" \

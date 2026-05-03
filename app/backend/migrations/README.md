@@ -44,7 +44,7 @@ applied the individual pre-v2.0.0 migrations can treat it as a no-op — it uses
 
 ### Via Adminer (Development)
 
-1. Open Adminer at `http://localhost:8080` (or your configured port)
+1. Open Adminer at `http://${ADMINER_SUBDOMAIN}.${PUBLIC_WEBSITE_HOST}` (default `http://adminer.localhost`)
 2. Connect to the database
 3. Go to "SQL command"
 4. Paste the migration SQL and execute

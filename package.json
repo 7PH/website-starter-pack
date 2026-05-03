@@ -31,7 +31,7 @@
     "format:backend": "cd app/backend && ruff format src/ tests/ --config ruff.toml",
     "test:unit:backend": "cd app/backend && pytest tests/ -v",
     "test:unit:frontend": "cd app/frontend && npm run test:unit",
-    "test:e2e:start": "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-app}-e2e PUBLIC_PORT=13001 USE_TLS= DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) DOCKER_USER=$USER docker compose --env-file .env.ci -f docker-compose.core.yml -f docker-compose.test.yml --profile dev up -d --build",
+    "test:e2e:start": "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-app}-e2e DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) DOCKER_USER=$USER docker compose --env-file .env.ci -f docker-compose.core.yml -f docker-compose.test.yml --profile dev up -d --build",
     "test:e2e:stop": "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-app}-e2e docker compose --env-file .env.ci -f docker-compose.core.yml -f docker-compose.test.yml --profile dev down",
     "test:e2e": "cd app/frontend && E2E_BASE_URL=http://localhost:13001 npm run test:e2e"
   },
