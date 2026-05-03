@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import { formatDate, formatTime, previewLabel } from '~/utils/formatters';
 
 definePageMeta({
     middleware: ['admin'],
@@ -10,7 +11,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 const modal = useModalStore();
 const auth = useAuth();
 
@@ -43,20 +44,13 @@ async function sendMessage() {
         newMessage.value = '';
         await refresh();
 
-        toast.add({
-            title: 'Message sent',
-            color: 'success',
-        });
+        showSuccess('Message sent');
 
         // Scroll to bottom after sending
         await nextTick();
         scrollToBottom();
-    } catch {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to send message',
-            color: 'error',
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     } finally {
         sending.value = false;
     }
@@ -65,6 +59,19 @@ async function sendMessage() {
 // Close/Reopen actions
 const actionPending = ref(false);
 
+async function setClosed(closed: boolean) {
+    actionPending.value = true;
+    try {
+        await conversationsApi.adminUpdateConversation(conversationId.value, { is_closed: closed });
+        await refresh();
+        showSuccess(closed ? 'Conversation closed' : 'Conversation reopened');
+    } catch (error) {
+        showError(error, 'core.errors.generic');
+    } finally {
+        actionPending.value = false;
+    }
+}
+
 async function closeConversation() {
     const confirmed = await modal.open('confirm', {
         title: 'Close Conversation',
@@ -72,98 +79,23 @@ async function closeConversation() {
         confirmText: 'Close',
         confirmColor: 'warning',
     });
-
-    if (!confirmed) return;
-
-    actionPending.value = true;
-    try {
-        await conversationsApi.adminUpdateConversation(conversationId.value, { is_closed: true });
-        await refresh();
-        toast.add({
-            title: 'Conversation closed',
-            color: 'success',
-        });
-    } catch {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to close conversation',
-            color: 'error',
-        });
-    } finally {
-        actionPending.value = false;
-    }
+    if (confirmed) await setClosed(true);
 }
 
-async function reopenConversation() {
-    actionPending.value = true;
-    try {
-        await conversationsApi.adminUpdateConversation(conversationId.value, { is_closed: false });
-        await refresh();
-        toast.add({
-            title: 'Conversation reopened',
-            color: 'success',
-        });
-    } catch {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to reopen conversation',
-            color: 'error',
-        });
-    } finally {
-        actionPending.value = false;
-    }
-}
+const reopenConversation = () => setClosed(false);
 
-// Scroll handling
-const messagesContainer = ref<HTMLElement | null>(null);
-
-function scrollToBottom() {
-    if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-}
-
-// Scroll to bottom on load
-onMounted(() => {
-    nextTick(() => scrollToBottom());
-});
-
-// Watch for conversation changes and scroll to bottom
-watch(
-    () => conversation.value?.messages?.length,
-    () => {
-        nextTick(() => scrollToBottom());
-    },
-);
-
-function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString();
-}
-
-function formatTime(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+const { container: messagesContainer, scrollToBottom } = useScrollToBottom(() => conversation.value?.messages?.length);
 
 function isOwnMessage(message: MessageRead): boolean {
     return message.sender_id === auth.user?.id;
 }
 
 function getSenderName(message: MessageRead): string {
-    if (message.sender) {
-        const name = [message.sender.first_name, message.sender.last_name].filter(Boolean).join(' ');
-        return name || message.sender.email;
-    }
-    return 'Unknown';
+    return previewLabel(message.sender);
 }
 
 function getUserDisplay(conv: ConversationDetail): string {
-    if (conv.created_by) {
-        const name = [conv.created_by.first_name, conv.created_by.last_name].filter(Boolean).join(' ');
-        return name || conv.created_by.email;
-    }
-    return 'Unknown';
+    return previewLabel(conv.created_by);
 }
 </script>
 

@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import { formatDate, formatTime, previewLabel } from '~/utils/formatters';
 
 definePageMeta({
     middleware: ['auth', 'nonmanaged-only'],
@@ -12,7 +13,7 @@ definePageMeta({
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
+const { showError } = useToastHelpers();
 const auth = useAuth();
 
 const conversationId = computed(() => Number(route.params.id));
@@ -35,11 +36,7 @@ const composeMode = ref<'write' | 'preview'>('write');
 async function sendMessage() {
     if (!newMessage.value.trim()) return;
     if (conversation.value?.is_closed) {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.conversationClosed'),
-            color: 'error',
-        });
+        showError(new Error(t('core.messages.conversationClosed')), 'core.messages.conversationClosed');
         return;
     }
 
@@ -55,48 +52,14 @@ async function sendMessage() {
         // Scroll to bottom after sending
         await nextTick();
         scrollToBottom();
-    } catch {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.sendFailed'),
-            color: 'error',
-        });
+    } catch (error) {
+        showError(error, 'core.messages.sendFailed');
     } finally {
         sending.value = false;
     }
 }
 
-// Scroll handling
-const messagesContainer = ref<HTMLElement | null>(null);
-
-function scrollToBottom() {
-    if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-}
-
-// Scroll to bottom on load
-onMounted(() => {
-    nextTick(() => scrollToBottom());
-});
-
-// Watch for conversation changes and scroll to bottom
-watch(
-    () => conversation.value?.messages?.length,
-    () => {
-        nextTick(() => scrollToBottom());
-    },
-);
-
-function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString();
-}
-
-function formatTime(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+const { container: messagesContainer, scrollToBottom } = useScrollToBottom(() => conversation.value?.messages?.length);
 
 function isOwnMessage(message: MessageRead): boolean {
     return message.sender_id === auth.user?.id;
@@ -106,11 +69,7 @@ function getSenderName(message: MessageRead): string {
     if (message.is_admin_response) {
         return t('core.messages.supportTeam');
     }
-    if (message.sender) {
-        const name = [message.sender.first_name, message.sender.last_name].filter(Boolean).join(' ');
-        return name || message.sender.email;
-    }
-    return t('core.messages.unknown');
+    return previewLabel(message.sender, t('core.messages.unknown'));
 }
 </script>
 

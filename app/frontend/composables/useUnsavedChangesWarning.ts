@@ -27,135 +27,66 @@ function getDefaultOptions(): UnsavedChangesOptions {
  * Composable that warns users when they try to leave a page with unsaved changes.
  * Handles both Vue Router navigation and browser tab close/refresh.
  *
+ * Returns `checkBeforeLeave` for programmatic navigation: call it to await user
+ * confirmation and only navigate if it resolves true.
+ *
  * @param hasUnsavedChanges - Reactive ref or function that returns true if there are unsaved changes
  * @param options - Customization options for the warning modal
  *
  * @example
  * const isDirty = ref(false);
+ * const { checkBeforeLeave } = useUnsavedChangesWarning(isDirty);
  *
- * // Simple usage with ref
- * useUnsavedChangesWarning(isDirty);
- *
- * // With custom messages
- * useUnsavedChangesWarning(isDirty, {
- *     title: 'Discard changes?',
- *     message: 'Your changes will be lost.',
- * });
- *
- * // With function
- * useUnsavedChangesWarning(() => form.isDirty);
+ * async function handleCustomNavigation() {
+ *     if (await checkBeforeLeave()) navigateTo('/somewhere');
+ * }
  */
 export function useUnsavedChangesWarning(
     hasUnsavedChanges: Ref<boolean> | (() => boolean),
     options: UnsavedChangesOptions = {},
-): void {
-    const modal = useModalStore();
-    const router = useRouter();
-
-    const mergedOptions = { ...getDefaultOptions(), ...options };
-
-    // Helper to check if there are unsaved changes
-    const checkUnsaved = (): boolean => {
-        return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;
-    };
-
-    // Handle browser beforeunload (tab close, refresh, external navigation)
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-        if (checkUnsaved()) {
-            event.preventDefault();
-            // Modern browsers ignore custom messages, but we need to return something
-            event.returnValue = mergedOptions.message!;
-            return mergedOptions.message;
-        }
-    };
-
-    // Register beforeunload handler
-    onMounted(() => {
-        if (import.meta.client) {
-            window.addEventListener('beforeunload', handleBeforeUnload);
-        }
-    });
-
-    onUnmounted(() => {
-        if (import.meta.client) {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        }
-    });
-
-    // Handle Vue Router navigation
-    onBeforeRouteLeave(async (_to, _from, next) => {
-        if (!checkUnsaved()) {
-            next();
-            return;
-        }
-
-        // Show confirmation modal
-        const confirmed = await modal.open<boolean>('confirm', {
-            title: mergedOptions.title,
-            message: mergedOptions.message,
-            confirmText: mergedOptions.confirmText,
-            cancelText: mergedOptions.cancelText,
-            confirmColor: 'error',
-        } as ConfirmModalOptions);
-
-        if (confirmed) {
-            next();
-        } else {
-            next(false);
-        }
-    });
-}
-
-/**
- * Same as useUnsavedChangesWarning but returns a function to manually trigger the check.
- * Useful when you need to check before programmatic navigation.
- *
- * @example
- * const { checkBeforeLeave } = useUnsavedChangesWarningManual(isDirty);
- *
- * async function handleCustomNavigation() {
- *     if (await checkBeforeLeave()) {
- *         // User confirmed or no changes
- *         navigateTo('/somewhere');
- *     }
- * }
- */
-export function useUnsavedChangesWarningManual(
-    hasUnsavedChanges: Ref<boolean> | (() => boolean),
-    options: UnsavedChangesOptions = {},
 ) {
-    // Set up the automatic guards
-    useUnsavedChangesWarning(hasUnsavedChanges, options);
-
     const modal = useModalStore();
-    const mergedOptions = { ...getDefaultOptions(), ...options };
+    const opts = { ...getDefaultOptions(), ...options };
 
-    const checkUnsaved = (): boolean => {
-        return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;
-    };
+    const isDirty = (): boolean =>
+        typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges.value;
 
-    /**
-     * Manually check if it's safe to leave.
-     * Shows modal if there are unsaved changes.
-     * @returns true if safe to leave (no changes or user confirmed)
-     */
-    async function checkBeforeLeave(): Promise<boolean> {
-        if (!checkUnsaved()) {
-            return true;
-        }
-
+    async function confirmLeave(): Promise<boolean> {
         return (
             (await modal.open<boolean>('confirm', {
-                title: mergedOptions.title,
-                message: mergedOptions.message,
-                confirmText: mergedOptions.confirmText,
-                cancelText: mergedOptions.cancelText,
+                title: opts.title,
+                message: opts.message,
+                confirmText: opts.confirmText,
+                cancelText: opts.cancelText,
                 confirmColor: 'error',
             } as ConfirmModalOptions)) ?? false
         );
     }
 
-    return {
-        checkBeforeLeave,
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+        if (isDirty()) {
+            event.preventDefault();
+            // Modern browsers ignore custom messages, but we need to return something
+            event.returnValue = opts.message!;
+            return opts.message;
+        }
     };
+
+    onMounted(() => {
+        if (import.meta.client) window.addEventListener('beforeunload', handleBeforeUnload);
+    });
+    onUnmounted(() => {
+        if (import.meta.client) window.removeEventListener('beforeunload', handleBeforeUnload);
+    });
+
+    onBeforeRouteLeave(async (_to, _from, next) => {
+        if (!isDirty()) return next();
+        next((await confirmLeave()) ? undefined : false);
+    });
+
+    async function checkBeforeLeave(): Promise<boolean> {
+        return isDirty() ? confirmLeave() : true;
+    }
+
+    return { checkBeforeLeave };
 }

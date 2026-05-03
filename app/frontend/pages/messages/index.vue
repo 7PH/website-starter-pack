@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import { formatDate, formatTime } from '~/utils/formatters';
 import MessagesPageActionsDefault from '~/components/messages/PageActions.vue';
 
 definePageMeta({
@@ -40,16 +41,6 @@ const { data: conversationsData, pending } = await useAsyncData<ConversationList
 const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / itemsPerPage));
 
 const showNewConversation = ref(false);
-
-function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString();
-}
-
-function formatTime(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
 
 function truncateMessage(content: string | undefined, maxLength = 60): string {
     if (!content) return '';

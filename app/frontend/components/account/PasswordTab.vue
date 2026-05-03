@@ -2,6 +2,8 @@
 <script setup lang="ts">
 const accountActions = useAccountActions();
 const { t } = useI18n();
+const backendConfig = useBackendConfig();
+const minPasswordLength = computed(() => backendConfig.config?.password_min_length ?? 8);
 
 // Loading state
 const isPasswordLoading = ref(false);
@@ -29,8 +31,8 @@ function validatePassword(): boolean {
     }
     if (!passwordForm.newPassword) {
         passwordErrors.value.newPassword = t('core.validation.required');
-    } else if (passwordForm.newPassword.length < 8) {
-        passwordErrors.value.newPassword = t('core.auth.passwordTooShort');
+    } else if (passwordForm.newPassword.length < minPasswordLength.value) {
+        passwordErrors.value.newPassword = t('core.auth.passwordTooShort', { minLength: minPasswordLength.value });
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
         passwordErrors.value.confirmPassword = t('core.auth.passwordMismatch');

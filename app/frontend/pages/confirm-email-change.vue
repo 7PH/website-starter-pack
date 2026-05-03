@@ -10,34 +10,15 @@ const accountActions = useAccountActions();
 const auth = useAuth();
 const { t } = useI18n();
 
-const status = ref<'loading' | 'success' | 'error'>('loading');
-const errorMessage = ref('');
-
-onMounted(async () => {
-    // Get token from URL fragment
-    const hash = window.location.hash;
-    const token = hash ? hash.substring(1) : null;
-
-    if (!token) {
-        status.value = 'error';
-        errorMessage.value = t('core.account.email.noToken');
-        return;
-    }
-
-    const success = await accountActions.confirmEmailChange(token);
-
-    if (success) {
-        status.value = 'success';
-        // Logout user since their email changed - they need to login with new email
+const { status, errorMessage } = useHashTokenAction({
+    action: accountActions.confirmEmailChange,
+    noTokenMessage: t('core.account.email.noToken'),
+    invalidMessage: t('core.account.email.invalidToken'),
+    onSuccess: () => {
+        // Email changed — force re-login with new address.
         auth.logout();
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-            router.push('/login');
-        }, 3000);
-    } else {
-        status.value = 'error';
-        errorMessage.value = t('core.account.email.invalidToken');
-    }
+        setTimeout(() => router.push('/login'), 3000);
+    },
 });
 </script>
 

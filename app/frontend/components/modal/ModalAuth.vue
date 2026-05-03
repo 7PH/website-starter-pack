@@ -15,76 +15,29 @@ interface AuthModalOptions extends ModalOptions {
 
 const MODAL_NAME = 'auth';
 
-const modal = useModalStore();
 const auth = useAuth();
 const { t } = useI18n();
 const accountActions = useAccountActions();
+const { isOpen, options, close } = useStoreModal<AuthModalOptions>(MODAL_NAME);
 
-// Register on mount
-onMounted(() => {
-    modal.register(MODAL_NAME);
-});
-
-onUnmounted(() => {
-    modal.unregister(MODAL_NAME);
-});
-
-// Modal state - use safe accessors (handle SSR and initialization)
-const isOpen = computed({
-    get: () => {
-        if (import.meta.server) return false;
-        return modal.isOpen?.(MODAL_NAME) ?? false;
-    },
-    set: (value: boolean) => {
-        if (!value) close();
-    },
-});
-
-const options = computed((): AuthModalOptions => {
-    if (import.meta.server) return {} as AuthModalOptions;
-    return (modal.getOptions?.(MODAL_NAME) ?? {}) as AuthModalOptions;
-});
-
-// Internal state
 const mode = ref<AuthModalMode>('login');
-const isLoading = ref(false);
 
-// Password visibility toggles
-const showLoginPassword = ref(false);
-const showSignupPassword = ref(false);
-const showSignupConfirmPassword = ref(false);
-const showResetPassword = ref(false);
-const showResetConfirmPassword = ref(false);
-
-// Form data
-const loginForm = reactive({
-    email: '',
-    password: '',
-    rememberMe: false,
-});
-
-const signupForm = reactive({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    customData: {} as UserCustomData,
-});
+const {
+    loginForm,
+    signupForm,
+    forgotPasswordForm,
+    resetPasswordForm,
+    passwordVisibility,
+    isLoading,
+    errors,
+    validateLogin,
+    validateSignup,
+    validateForgotPassword,
+    validateResetPassword,
+    withLoading,
+} = useAuthForms();
 
 const signupMetadataRef = ref<{ validate: () => boolean } | null>(null);
-
-const forgotPasswordForm = reactive({
-    email: '',
-});
-
-const resetPasswordForm = reactive({
-    password: '',
-    confirmPassword: '',
-});
-
-// Validation errors
-const errors = ref<Record<string, string>>({});
 
 // Reset forms when modal opens
 watch(isOpen, (open) => {
@@ -121,138 +74,64 @@ const title = computed(() => {
     }
 });
 
-// Handle logout
 function handleLogout() {
     accountActions.logout();
-    close();
+    close(false);
 }
 
-// Validation
-function validateLogin(): boolean {
-    errors.value = {};
-    if (!loginForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    if (!loginForm.password) {
-        errors.value.password = t('core.validation.required');
-    }
-    return Object.keys(errors.value).length === 0;
-}
-
-function validateSignup(): boolean {
-    errors.value = {};
-    if (!signupForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    if (!signupForm.firstName) {
-        errors.value.firstName = t('core.validation.required');
-    }
-    if (!signupForm.lastName) {
-        errors.value.lastName = t('core.validation.required');
-    }
-    if (!signupForm.password) {
-        errors.value.password = t('core.validation.required');
-    } else if (signupForm.password.length < 8) {
-        errors.value.password = t('core.auth.passwordTooShort');
-    }
-    if (signupForm.password !== signupForm.confirmPassword) {
-        errors.value.confirmPassword = t('core.auth.passwordMismatch');
-    }
+function validateSignupWithMetadata(): boolean {
+    const baseValid = validateSignup();
     const metadataValid = signupMetadataRef.value?.validate() ?? true;
-    if (!metadataValid) return false;
-    return Object.keys(errors.value).length === 0;
+    return baseValid && metadataValid;
 }
 
-function validateForgotPassword(): boolean {
-    errors.value = {};
-    if (!forgotPasswordForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    return Object.keys(errors.value).length === 0;
+function onAuthSuccess() {
+    options.value.onSuccess?.();
+    close(true);
 }
 
-function validateResetPassword(): boolean {
-    errors.value = {};
-    if (!resetPasswordForm.password) {
-        errors.value.password = t('core.validation.required');
-    } else if (resetPasswordForm.password.length < 8) {
-        errors.value.password = t('core.auth.passwordTooShort');
-    }
-    if (resetPasswordForm.password !== resetPasswordForm.confirmPassword) {
-        errors.value.confirmPassword = t('core.auth.passwordMismatch');
-    }
-    return Object.keys(errors.value).length === 0;
-}
-
-// Actions
 async function handleLogin() {
     if (!validateLogin()) return;
-
-    isLoading.value = true;
-    const success = await accountActions.login(loginForm.email, loginForm.password);
-    isLoading.value = false;
-
-    if (success) {
-        options.value.onSuccess?.();
-        modal.close(MODAL_NAME, true);
+    if (await withLoading(() => accountActions.login(loginForm.email, loginForm.password))) {
+        onAuthSuccess();
     }
 }
 
 async function handleSignup() {
-    if (!validateSignup()) return;
-
-    isLoading.value = true;
-    const success = await accountActions.signup(
-        signupForm.email,
-        signupForm.password,
-        signupForm.firstName,
-        signupForm.lastName,
-        signupForm.customData,
+    if (!validateSignupWithMetadata()) return;
+    const success = await withLoading(() =>
+        accountActions.signup(
+            signupForm.email,
+            signupForm.password,
+            signupForm.firstName,
+            signupForm.lastName,
+            signupForm.customData,
+        ),
     );
-    isLoading.value = false;
-
-    if (success) {
-        options.value.onSuccess?.();
-        modal.close(MODAL_NAME, true);
-    }
+    if (success) onAuthSuccess();
 }
 
 async function handleForgotPassword() {
     if (!validateForgotPassword()) return;
-
-    isLoading.value = true;
-    await accountActions.requestPasswordReset(forgotPasswordForm.email);
-    isLoading.value = false;
-
-    // Switch back to login mode
+    await withLoading(() => accountActions.requestPasswordReset(forgotPasswordForm.email));
     mode.value = 'login';
 }
 
 async function handleResetPassword() {
     if (!validateResetPassword()) return;
-
     const token = options.value.resetToken;
     if (!token) {
         errors.value.general = t('core.auth.invalidResetLink');
         return;
     }
-
-    isLoading.value = true;
-    const success = await accountActions.resetPassword(token, resetPasswordForm.password);
-    isLoading.value = false;
-
-    if (success) {
-        modal.close(MODAL_NAME, true);
+    if (await withLoading(() => accountActions.resetPassword(token, resetPasswordForm.password))) {
+        close(true);
     }
 }
 
 function switchMode(newMode: AuthModalMode) {
     mode.value = newMode;
     errors.value = {};
-}
-
-function close() {
-    modal.close(MODAL_NAME, false);
 }
 </script>
 
@@ -303,7 +182,7 @@ function close() {
                 <UFormField :label="t('core.auth.password')" :error="errors.password">
                     <UInput
                         v-model="loginForm.password"
-                        :type="showLoginPassword ? 'text' : 'password'"
+                        :type="passwordVisibility.login ? 'text' : 'password'"
                         autocomplete="current-password"
                         :placeholder="t('core.auth.password')"
                         :color="errors.password ? 'error' : undefined"
@@ -315,11 +194,11 @@ function close() {
                                 color="neutral"
                                 variant="link"
                                 size="sm"
-                                :icon="showLoginPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                :icon="passwordVisibility.login ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                                 :aria-label="
-                                    showLoginPassword ? t('core.auth.hidePassword') : t('core.auth.showPassword')
+                                    passwordVisibility.login ? t('core.auth.hidePassword') : t('core.auth.showPassword')
                                 "
-                                @click="showLoginPassword = !showLoginPassword"
+                                @click="passwordVisibility.login = !passwordVisibility.login"
                             />
                         </template>
                     </UInput>
@@ -390,7 +269,7 @@ function close() {
                 <UFormField :label="t('core.auth.password')" :error="errors.password">
                     <UInput
                         v-model="signupForm.password"
-                        :type="showSignupPassword ? 'text' : 'password'"
+                        :type="passwordVisibility.signup ? 'text' : 'password'"
                         autocomplete="new-password"
                         :placeholder="t('core.auth.password')"
                         :color="errors.password ? 'error' : undefined"
@@ -402,8 +281,8 @@ function close() {
                                 color="neutral"
                                 variant="link"
                                 size="sm"
-                                :icon="showSignupPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="showSignupPassword = !showSignupPassword"
+                                :icon="passwordVisibility.signup ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="passwordVisibility.signup = !passwordVisibility.signup"
                             />
                         </template>
                     </UInput>
@@ -412,7 +291,7 @@ function close() {
                 <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
                     <UInput
                         v-model="signupForm.confirmPassword"
-                        :type="showSignupConfirmPassword ? 'text' : 'password'"
+                        :type="passwordVisibility.signupConfirm ? 'text' : 'password'"
                         autocomplete="new-password"
                         :placeholder="t('core.auth.confirmPassword')"
                         :color="errors.confirmPassword ? 'error' : undefined"
@@ -424,8 +303,8 @@ function close() {
                                 color="neutral"
                                 variant="link"
                                 size="sm"
-                                :icon="showSignupConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="showSignupConfirmPassword = !showSignupConfirmPassword"
+                                :icon="passwordVisibility.signupConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="passwordVisibility.signupConfirm = !passwordVisibility.signupConfirm"
                             />
                         </template>
                     </UInput>
@@ -502,7 +381,7 @@ function close() {
                 <UFormField :label="t('core.auth.password')" :error="errors.password">
                     <UInput
                         v-model="resetPasswordForm.password"
-                        :type="showResetPassword ? 'text' : 'password'"
+                        :type="passwordVisibility.reset ? 'text' : 'password'"
                         autocomplete="new-password"
                         :placeholder="t('core.auth.password')"
                         :color="errors.password ? 'error' : undefined"
@@ -514,8 +393,8 @@ function close() {
                                 color="neutral"
                                 variant="link"
                                 size="sm"
-                                :icon="showResetPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="showResetPassword = !showResetPassword"
+                                :icon="passwordVisibility.reset ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="passwordVisibility.reset = !passwordVisibility.reset"
                             />
                         </template>
                     </UInput>
@@ -524,7 +403,7 @@ function close() {
                 <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
                     <UInput
                         v-model="resetPasswordForm.confirmPassword"
-                        :type="showResetConfirmPassword ? 'text' : 'password'"
+                        :type="passwordVisibility.resetConfirm ? 'text' : 'password'"
                         autocomplete="new-password"
                         :placeholder="t('core.auth.confirmPassword')"
                         :color="errors.confirmPassword ? 'error' : undefined"
@@ -536,8 +415,8 @@ function close() {
                                 color="neutral"
                                 variant="link"
                                 size="sm"
-                                :icon="showResetConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="showResetConfirmPassword = !showResetConfirmPassword"
+                                :icon="passwordVisibility.resetConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                @click="passwordVisibility.resetConfirm = !passwordVisibility.resetConfirm"
                             />
                         </template>
                     </UInput>

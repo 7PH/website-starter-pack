@@ -131,12 +131,16 @@ app/frontend/composables/useCanonical.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
+app/frontend/composables/useStoreModal.ts
+app/frontend/composables/useHashTokenAction.ts
 app/frontend/composables/useAccountActions.ts
 app/frontend/composables/useToastHelpers.ts
 app/frontend/composables/useAppLocale.ts
 app/frontend/composables/useAuthForms.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useTableState.ts
+app/frontend/composables/useScrollToBottom.ts
+app/frontend/composables/useAdminImpersonation.ts
 app/frontend/composables/useOAuth.ts
 app/frontend/composables/useAccessCode.ts
 app/frontend/composables/useManagedAccountGroup.ts
@@ -154,6 +158,7 @@ app/frontend/utils/api/stripe.ts
 app/frontend/utils/api/users.ts
 app/frontend/utils/api/conversations.ts
 app/frontend/utils/api/invitations.ts
+app/frontend/utils/admin-filters.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts

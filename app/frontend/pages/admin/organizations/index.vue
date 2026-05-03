@@ -6,45 +6,22 @@ definePageMeta({
 });
 
 import { formatDate } from '~/utils/formatters';
-import { getErrorMessage } from '~/utils/errors';
+import { DELETED_FILTER_OPTIONS, YES_NO_FILTER_OPTIONS, yesNoToBool } from '~/utils/admin-filters';
 
 // Types from models.ts are declared globally
 
 const api = useApi();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 const modal = useModalStore();
 
-const search = ref('');
-const searchDebounced = refDebounced(search, 300);
+const { search, debouncedSearch: searchDebounced, page, limit, offset } = useTableState({ defaultLimit: 100 });
 
 // Filters
 const premiumFilter = ref('all');
 const deletedFilter = ref('hide');
 
-const filterOptions = [
-    { label: 'All', value: 'all' },
-    { label: 'Yes', value: 'yes' },
-    { label: 'No', value: 'no' },
-];
-
-const deletedFilterOptions = [
-    { label: 'Hide deleted', value: 'hide' },
-    { label: 'Show all', value: 'all' },
-    { label: 'Only deleted', value: 'only' },
-];
-
-function filterToBool(value: string): boolean | undefined {
-    if (value === 'yes') return true;
-    if (value === 'no') return false;
-    return undefined;
-}
-
-// Pagination
-const page = ref(1);
-const ITEMS_PER_PAGE = 100;
-
-// Reset page when filters change
-watch([searchDebounced, premiumFilter, deletedFilter], () => {
+// useTableState resets page on debouncedSearch; reset on other filters too.
+watch([premiumFilter, deletedFilter], () => {
     page.value = 1;
 });
 
@@ -57,16 +34,16 @@ const {
     () =>
         api.get('/organizations', {
             search: searchDebounced.value || undefined,
-            stripe_premium: filterToBool(premiumFilter.value),
+            stripe_premium: yesNoToBool(premiumFilter.value),
             include_deleted: deletedFilter.value !== 'hide' ? true : undefined,
             only_deleted: deletedFilter.value === 'only' ? true : undefined,
-            limit: ITEMS_PER_PAGE,
-            offset: (page.value - 1) * ITEMS_PER_PAGE,
+            limit: limit.value,
+            offset: offset.value,
         }),
     { watch: [searchDebounced, premiumFilter, deletedFilter, page], server: false },
 );
 
-const totalPages = computed(() => Math.ceil((orgsData.value?.total ?? 0) / ITEMS_PER_PAGE));
+const totalPages = computed(() => Math.ceil((orgsData.value?.total ?? 0) / limit.value));
 
 // Table columns configuration
 const columns = [
@@ -92,21 +69,11 @@ async function createOrganization(formData: { name: string; email: string; descr
     isCreating.value = true;
     try {
         await api.post('/organizations', formData);
-        toast.add({
-            title: 'Organization created',
-            description: `${formData.name} has been created`,
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('Organization created', `${formData.name} has been created`);
         showCreateModal.value = false;
         refresh();
-    } catch (error: unknown) {
-        toast.add({
-            title: 'Error',
-            description: getErrorMessage(error, 'Failed to create organization'),
-            color: 'error',
-            duration: 3000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     } finally {
         isCreating.value = false;
     }
@@ -124,20 +91,10 @@ async function deleteOrganization(org: OrganizationRead) {
 
     try {
         await api.delete(`/organizations/${org.id}`);
-        toast.add({
-            title: 'Organization deleted',
-            description: `${org.name} has been deleted`,
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('Organization deleted', `${org.name} has been deleted`);
         refresh();
-    } catch (error: unknown) {
-        toast.add({
-            title: 'Error',
-            description: getErrorMessage(error, 'Failed to delete organization'),
-            color: 'error',
-            duration: 3000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     }
 }
 </script>
@@ -165,11 +122,11 @@ async function deleteOrganization(org: OrganizationRead) {
                 />
                 <div class="filter-item">
                     <label class="filter-label">Premium</label>
-                    <USelect v-model="premiumFilter" :items="filterOptions" class="w-24" />
+                    <USelect v-model="premiumFilter" :items="YES_NO_FILTER_OPTIONS" class="w-24" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">Deleted</label>
-                    <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
+                    <USelect v-model="deletedFilter" :items="DELETED_FILTER_OPTIONS" class="w-32" />
                 </div>
             </div>
 
@@ -246,12 +203,10 @@ async function deleteOrganization(org: OrganizationRead) {
                 <!-- Pagination -->
                 <div v-if="totalPages > 1" class="pagination-footer">
                     <div class="pagination-info">
-                        Showing {{ (page - 1) * ITEMS_PER_PAGE + 1 }}-{{
-                            Math.min(page * ITEMS_PER_PAGE, orgsData?.total ?? 0)
-                        }}
-                        of {{ orgsData?.total ?? 0 }}
+                        Showing {{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit, orgsData?.total ?? 0) }} of
+                        {{ orgsData?.total ?? 0 }}
                     </div>
-                    <UPagination v-model="page" :total="orgsData?.total ?? 0" :items-per-page="ITEMS_PER_PAGE" />
+                    <UPagination v-model="page" :total="orgsData?.total ?? 0" :items-per-page="limit" />
                 </div>
             </UCard>
 

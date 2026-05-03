@@ -40,16 +40,16 @@ const emailMismatch = computed(() => {
     return preview.value.email.toLowerCase() !== auth.user.email.toLowerCase();
 });
 
-async function accept() {
+async function actOnInvitation(action: () => Promise<void>, successKey: string, postSuccess?: () => Promise<void>) {
     if (!auth.isLoggedIn) {
         router.push({ path: '/login', query: { redirect: route.fullPath, email: preview.value?.email } });
         return;
     }
     busy.value = true;
     try {
-        await acceptInvitation(token.value);
-        showSuccess(t('core.organizations.invitationAccepted'));
-        await auth.refreshToken();
+        await action();
+        showSuccess(t(successKey));
+        await postSuccess?.();
         router.push('/account?tab=organizations');
     } catch (error: unknown) {
         showError(error, 'core.errors.generic');
@@ -58,22 +58,13 @@ async function accept() {
     }
 }
 
-async function decline() {
-    if (!auth.isLoggedIn) {
-        router.push({ path: '/login', query: { redirect: route.fullPath, email: preview.value?.email } });
-        return;
-    }
-    busy.value = true;
-    try {
-        await declineInvitation(token.value);
-        showSuccess(t('core.organizations.invitationDeclined'));
-        router.push('/account?tab=organizations');
-    } catch (error: unknown) {
-        showError(error, 'core.errors.generic');
-    } finally {
-        busy.value = false;
-    }
-}
+const accept = () =>
+    actOnInvitation(
+        () => acceptInvitation(token.value),
+        'core.organizations.invitationAccepted',
+        () => auth.refreshToken(),
+    );
+const decline = () => actOnInvitation(() => declineInvitation(token.value), 'core.organizations.invitationDeclined');
 
 onMounted(load);
 </script>

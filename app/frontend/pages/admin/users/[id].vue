@@ -1,6 +1,8 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { formatAction, formatDateTime } from '~/utils/formatters';
+
 definePageMeta({
     middleware: ['admin'],
 });
@@ -8,9 +10,10 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 const api = useApi();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 const modal = useModalStore();
 const userDisplay = useUserDisplay();
+const { impersonate } = useAdminImpersonation();
 
 const userId = computed(() => Number(route.params.id));
 
@@ -58,106 +61,48 @@ const eventColumns = [
     { accessorKey: 'details', header: 'Details' },
 ];
 
-// Initialize form when user data loads
+function formFromUser(u: AdminUserRead) {
+    return {
+        first_name: u.first_name ?? '',
+        last_name: u.last_name ?? '',
+        display_name: u.display_name ?? '',
+        email: u.email ?? '',
+        is_admin: u.is_admin ?? false,
+        is_premium: u.is_premium ?? false,
+        custom_data: (u.custom_data ?? {}) as UserCustomData,
+    };
+}
+
 watch(
     user,
     (newUser) => {
-        if (newUser) {
-            form.value = {
-                first_name: newUser.first_name ?? '',
-                last_name: newUser.last_name ?? '',
-                display_name: newUser.display_name ?? '',
-                email: newUser.email ?? '',
-                is_admin: newUser.is_admin ?? false,
-                is_premium: newUser.is_premium ?? false,
-                custom_data: (newUser.custom_data ?? {}) as UserCustomData,
-            };
-        }
+        if (newUser) form.value = formFromUser(newUser);
     },
     { immediate: true },
 );
-
-function formatDate(dateStr: string | null): string {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString();
-}
-
-function formatAction(action: string): string {
-    return action
-        .split('.')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-}
 
 async function saveChanges() {
     isSaving.value = true;
     try {
         await api.put(`/admin/users/${userId.value}`, form.value);
-        toast.add({
-            title: 'User updated',
-            description: 'Changes saved successfully',
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('User updated', 'Changes saved successfully');
         isEditing.value = false;
         refreshUser();
     } catch (error) {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to save changes',
-            color: 'error',
-            duration: 3000,
-        });
+        showError(error, 'core.errors.generic');
     } finally {
         isSaving.value = false;
     }
 }
 
 function cancelEdit() {
-    if (user.value) {
-        form.value = {
-            first_name: user.value.first_name ?? '',
-            last_name: user.value.last_name ?? '',
-            display_name: user.value.display_name ?? '',
-            email: user.value.email ?? '',
-            is_admin: user.value.is_admin ?? false,
-            is_premium: user.value.is_premium ?? false,
-            custom_data: (user.value.custom_data ?? {}) as UserCustomData,
-        };
-    }
+    if (user.value) form.value = formFromUser(user.value);
     isEditing.value = false;
 }
 
-async function impersonateUser() {
+function impersonateUser() {
     if (!user.value) return;
-
-    try {
-        const response = await api.post<ImpersonationResponse>('/admin/impersonations', { user_id: userId.value });
-        const auth = useAuth();
-
-        auth.saveUserToken({
-            access_token: response.access_token,
-            token_parsed: response.token_parsed,
-            user: response.user,
-            token_type: 'bearer',
-        });
-
-        toast.add({
-            title: 'Impersonation started',
-            description: `Now viewing as ${userDisplay.label(user.value)}`,
-            color: 'success',
-            duration: 3000,
-        });
-
-        await navigateTo('/');
-    } catch (error) {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to start impersonation',
-            color: 'error',
-            duration: 3000,
-        });
-    }
+    return impersonate(user.value.id, userDisplay.label(user.value));
 }
 
 async function deleteUser() {
@@ -175,19 +120,10 @@ async function deleteUser() {
 
     try {
         await api.delete(`/admin/users/${userId.value}`);
-        toast.add({
-            title: 'User deleted',
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('User deleted');
         await router.push('/admin/users');
     } catch (error) {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to delete user',
-            color: 'error',
-            duration: 3000,
-        });
+        showError(error, 'core.errors.generic');
     }
 }
 </script>
@@ -253,7 +189,7 @@ async function deleteUser() {
                     variant="subtle"
                     icon="i-lucide-trash-2"
                     title="This user has been deleted"
-                    :description="`Deleted on ${formatDate(user.deleted_at)}. Personal data has been anonymized.`"
+                    :description="`Deleted on ${formatDateTime(user.deleted_at)}. Personal data has been anonymized.`"
                     class="mb-6"
                 />
 
@@ -340,11 +276,11 @@ async function deleteUser() {
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Created</span>
-                                <span class="info-value">{{ formatDate(user.created_at) }}</span>
+                                <span class="info-value">{{ formatDateTime(user.created_at) }}</span>
                             </div>
                             <div v-if="user.deleted_at" class="info-item">
                                 <span class="info-label">Deleted</span>
-                                <span class="info-value deleted-value">{{ formatDate(user.deleted_at) }}</span>
+                                <span class="info-value deleted-value">{{ formatDateTime(user.deleted_at) }}</span>
                             </div>
                             <UsersMetadataDisplay :custom-data="(user.custom_data ?? {}) as UserCustomData" />
                         </div>
@@ -394,7 +330,7 @@ async function deleteUser() {
                             </template>
 
                             <template #created_at-cell="{ row }">
-                                {{ formatDate(row.original.created_at) }}
+                                {{ formatDateTime(row.original.created_at) }}
                             </template>
 
                             <template #details-cell="{ row }">

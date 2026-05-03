@@ -34,14 +34,19 @@ export function useStripe() {
     // Premium status comes directly from the JWT token (no API call needed)
     const isPremium = computed(() => auth.user?.is_premium ?? false);
 
+    function resetSubscription() {
+        plan.value = null;
+        expiresAt.value = null;
+        cancelAtPeriodEnd.value = false;
+    }
+
     /**
      * Fetch subscription status from Stripe API.
      * Updates plan/expiresAt and refreshes token if premium status changed.
      */
     async function refresh(): Promise<void> {
         if (!auth.isLoggedIn) {
-            plan.value = null;
-            expiresAt.value = null;
+            resetSubscription();
             return;
         }
 
@@ -60,9 +65,7 @@ export function useStripe() {
             }
         } catch {
             // Stripe not configured or user has no stripe_id
-            plan.value = null;
-            expiresAt.value = null;
-            cancelAtPeriodEnd.value = false;
+            resetSubscription();
         } finally {
             loading.value = false;
         }
@@ -81,23 +84,10 @@ export function useStripe() {
         }
     }
 
-    /**
-     * Get subscription status (one-time fetch, doesn't update state).
-     * Use refresh() instead if you want to update the composable's state.
-     */
-    async function getSubscriptionStatus() {
-        return stripeApi.getSubscriptionStatus();
-    }
-
-    // Reset subscription state when logged out
     watch(
         () => auth.isLoggedIn,
         (loggedIn) => {
-            if (!loggedIn) {
-                plan.value = null;
-                expiresAt.value = null;
-                cancelAtPeriodEnd.value = false;
-            }
+            if (!loggedIn) resetSubscription();
         },
     );
 
@@ -110,9 +100,7 @@ export function useStripe() {
         loading: readonly(loading),
         error: readonly(error),
 
-        // Actions
         refresh,
         openBillingPortal,
-        getSubscriptionStatus,
     };
 }

@@ -21,10 +21,9 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuth();
 const api = useApi();
-const toast = useToast();
 const modal = useModalStore();
 const { t } = useI18n();
-const { showSuccess, showError } = useToastHelpers();
+const { showSuccess, showWarning, showError } = useToastHelpers();
 
 const orgId = computed(() => Number(route.params.id));
 
@@ -204,21 +203,17 @@ async function contactOrgOwners() {
 
 onMounted(() => {
     if (route.query.subscription === 'success') {
-        toast.add({
-            title: t('core.organizations.subscriptionSuccess'),
-            description: t('core.organizations.subscriptionSuccessDescription'),
-            color: 'success',
-            duration: 5000,
-        });
+        showSuccess(
+            t('core.organizations.subscriptionSuccess'),
+            t('core.organizations.subscriptionSuccessDescription'),
+        );
         router.replace({ query: { tab: activeTab.value } });
         refreshOrg();
     } else if (route.query.subscription === 'canceled') {
-        toast.add({
-            title: t('core.organizations.subscriptionCanceled'),
-            description: t('core.organizations.subscriptionCanceledDescription'),
-            color: 'warning',
-            duration: 3000,
-        });
+        showWarning(
+            t('core.organizations.subscriptionCanceled'),
+            t('core.organizations.subscriptionCanceledDescription'),
+        );
         router.replace({ query: { tab: activeTab.value } });
     }
 });

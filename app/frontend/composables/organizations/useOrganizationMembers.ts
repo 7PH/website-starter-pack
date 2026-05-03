@@ -2,6 +2,7 @@
 
 import type { Ref } from 'vue';
 import { createInvitation } from '~/utils/api/invitations';
+import { previewLabel } from '~/utils/formatters';
 
 export interface MemberManagementCallbacks {
     onSelfDemoted?: () => void;
@@ -109,7 +110,7 @@ export function useOrganizationMembers(
     }
 
     async function removeMember(member: OrganizationMemberRead) {
-        const memberName = `${member.first_name} ${member.last_name}`.trim() || member.email;
+        const memberName = previewLabel(member);
         const confirmed = await modal.open('confirm', {
             title: t('core.organizations.removeMemberTitle'),
             message: t('core.organizations.removeMemberConfirm', { name: memberName }),

@@ -27,6 +27,18 @@ export function useToastHelpers() {
     }
 
     /**
+     * Show a warning toast notification.
+     */
+    function showWarning(title: string, description?: string) {
+        toast.add({
+            title,
+            description,
+            color: 'warning',
+            duration: SUCCESS_DURATION,
+        });
+    }
+
+    /**
      * Show an error toast notification.
      * Extracts message from Error instances or uses fallback.
      *
@@ -58,6 +70,7 @@ export function useToastHelpers() {
 
     return {
         showSuccess,
+        showWarning,
         showError,
         showErrorWithTitle,
     };

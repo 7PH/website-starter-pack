@@ -9,32 +9,11 @@ const router = useRouter();
 const accountActions = useAccountActions();
 const { t } = useI18n();
 
-const status = ref<'loading' | 'success' | 'error'>('loading');
-const errorMessage = ref('');
-
-onMounted(async () => {
-    // Get token from URL fragment
-    const hash = window.location.hash;
-    const token = hash ? hash.substring(1) : null;
-
-    if (!token) {
-        status.value = 'error';
-        errorMessage.value = t('core.auth.noVerificationToken');
-        return;
-    }
-
-    const success = await accountActions.verifyEmail(token);
-
-    if (success) {
-        status.value = 'success';
-        // Redirect to home after 3 seconds
-        setTimeout(() => {
-            router.push('/');
-        }, 3000);
-    } else {
-        status.value = 'error';
-        errorMessage.value = t('core.auth.invalidVerificationLink');
-    }
+const { status, errorMessage } = useHashTokenAction({
+    action: accountActions.verifyEmail,
+    noTokenMessage: t('core.auth.noVerificationToken'),
+    invalidMessage: t('core.auth.invalidVerificationLink'),
+    onSuccess: () => setTimeout(() => router.push('/'), 3000),
 });
 </script>
 
