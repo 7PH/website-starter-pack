@@ -19,72 +19,40 @@ EMAIL_CHANGE_EXPIRE_DAYS = 2
 ACCOUNT_DELETION_EXPIRE_MINUTES = 60
 
 
-def create_email_verification_token(user_id: int, email: str) -> str:
-    """
-    Create a JWT token for email verification.
+def _encode_typed_token(payload: dict, expires_in: timedelta) -> str:
+    exp = datetime.now(UTC) + expires_in
+    return jwt.encode({**payload, "exp": int(exp.timestamp())}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-    Token contains: type, user_id, email, exp
-    The email is included to invalidate tokens if user changes email.
-    """
-    exp = datetime.now(UTC) + timedelta(days=EMAIL_VERIFICATION_EXPIRE_DAYS)
-    payload = {
-        "type": "verify-email",
-        "user_id": user_id,
-        "email": email,
-        "exp": int(exp.timestamp()),
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+def create_email_verification_token(user_id: int, email: str) -> str:
+    # Email in payload invalidates the token if the user changes address.
+    return _encode_typed_token(
+        {"type": "verify-email", "user_id": user_id, "email": email},
+        timedelta(days=EMAIL_VERIFICATION_EXPIRE_DAYS),
+    )
 
 
 def create_password_reset_token(user_id: int) -> str:
-    """
-    Create a JWT token for password reset.
-
-    Token contains: type, user_id, exp
-    """
-    exp = datetime.now(UTC) + timedelta(days=PASSWORD_RESET_EXPIRE_DAYS)
-    payload = {
-        "type": "reset-password",
-        "user_id": user_id,
-        "exp": int(exp.timestamp()),
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return _encode_typed_token(
+        {"type": "reset-password", "user_id": user_id},
+        timedelta(days=PASSWORD_RESET_EXPIRE_DAYS),
+    )
 
 
 def create_email_change_token(user_id: int, current_email: str, new_email: str) -> str:
-    """
-    Create a JWT token for email change.
-
-    Token contains: type, user_id, current_email, new_email, exp
-    The current_email is included to invalidate tokens if user changes email again.
-    """
-    exp = datetime.now(UTC) + timedelta(days=EMAIL_CHANGE_EXPIRE_DAYS)
-    payload = {
-        "type": "change-email",
-        "user_id": user_id,
-        "current_email": current_email,
-        "new_email": new_email,
-        "exp": int(exp.timestamp()),
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    # current_email in payload invalidates the token on subsequent email changes.
+    return _encode_typed_token(
+        {"type": "change-email", "user_id": user_id, "current_email": current_email, "new_email": new_email},
+        timedelta(days=EMAIL_CHANGE_EXPIRE_DAYS),
+    )
 
 
 def create_account_deletion_token(user_id: int, current_email: str | None) -> str:
-    """
-    Create a JWT token for account deletion confirmation.
-
-    Token contains: type, user_id, email_at_request, exp.
-    The email is captured at request time so the token invalidates if the
-    user changes their email between requesting and confirming.
-    """
-    exp = datetime.now(UTC) + timedelta(minutes=ACCOUNT_DELETION_EXPIRE_MINUTES)
-    payload = {
-        "type": "delete-account",
-        "user_id": user_id,
-        "email_at_request": current_email,
-        "exp": int(exp.timestamp()),
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    # email_at_request invalidates the token if the user changes address mid-flow.
+    return _encode_typed_token(
+        {"type": "delete-account", "user_id": user_id, "email_at_request": current_email},
+        timedelta(minutes=ACCOUNT_DELETION_EXPIRE_MINUTES),
+    )
 
 
 def decode_typed_token(
@@ -106,36 +74,27 @@ def decode_typed_token(
         return None
 
 
-def get_email_verification_url(token: str) -> str:
-    """
-    Generate the email verification URL with fragment-based token.
+def _build_token_url(path: str, token: str) -> str:
+    """Build a URL with the token in the fragment, not the query string.
 
-    Using fragment (#) instead of query param (?) prevents the token
-    from being logged in server access logs.
+    Fragments aren't sent to the server, so the token never appears in
+    access logs or upstream proxies.
     """
     base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
-    return f"{base_url}/verify-email#{token}"
+    return f"{base_url}{path}#{token}"
+
+
+def get_email_verification_url(token: str) -> str:
+    return _build_token_url("/verify-email", token)
 
 
 def get_password_reset_url(token: str) -> str:
-    """
-    Generate the password reset URL with fragment-based token.
-    """
-    base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
-    return f"{base_url}/reset-password#{token}"
+    return _build_token_url("/reset-password", token)
 
 
 def get_email_change_url(token: str) -> str:
-    """
-    Generate the email change confirmation URL with fragment-based token.
-    """
-    base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
-    return f"{base_url}/confirm-email-change#{token}"
+    return _build_token_url("/confirm-email-change", token)
 
 
 def get_account_deletion_url(token: str) -> str:
-    """
-    Generate the account deletion confirmation URL with fragment-based token.
-    """
-    base_url = PUBLIC_URL.rstrip("/") if PUBLIC_URL else ""
-    return f"{base_url}/delete-account#{token}"
+    return _build_token_url("/delete-account", token)

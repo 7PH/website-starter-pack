@@ -35,20 +35,9 @@ def update_user(session: Session, user: UserBase) -> None:
     session.commit()
 
 
-def delete_user(session: Session, user: UserBase) -> None:
-    """Delete a user from the database."""
-    session.delete(user)
-    session.commit()
-
-
 def is_email_taken(session: Session, email: str) -> bool:
     """Check if an email is already registered by a non-deleted user."""
-    return (
-        session.execute(
-            select(UserBase).where(UserBase.email == email, UserBase.deleted_at.is_(None))
-        ).scalar_one_or_none()
-        is not None
-    )
+    return get_user_by_email(session, email) is not None
 
 
 def get_user_by_stripe_id(session: Session, stripe_id: str) -> UserBase | None:
@@ -56,12 +45,6 @@ def get_user_by_stripe_id(session: Session, stripe_id: str) -> UserBase | None:
     return session.execute(
         select(UserBase).where(UserBase.stripe_id == stripe_id, UserBase.deleted_at.is_(None))
     ).scalar_one_or_none()
-
-
-def set_user_premium_status(session: Session, user: UserBase, is_premium: bool) -> None:
-    """Update a user's premium status (legacy function, prefer update_user_premium_cache)."""
-    user.is_premium = is_premium
-    session.commit()
 
 
 def update_user_premium_cache(session: Session, user_id: int) -> None:

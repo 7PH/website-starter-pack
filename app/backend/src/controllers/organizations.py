@@ -89,6 +89,36 @@ ORG_DETAIL_MEMBER_LIMIT = 100
 # ============================================================================
 
 
+def _get_org_or_404(session: Session, org_id: int) -> OrganizationBase:
+    org = get_organization_by_id(session, org_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    return org
+
+
+def _ensure_self_service_billing(session: Session, org_id: int, user: UserRead) -> OrganizationBase:
+    """Billing-enabled + self-service-allowed (or app admin) + org admin guard."""
+    _ensure_billing_enabled()
+    if not ORG_SELF_SERVICE_SUBSCRIPTIONS and not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Self-service subscriptions are disabled",
+        )
+    return _check_org_access(session, org_id, user, require_admin=True)
+
+
+def _ensure_billing_enabled() -> None:
+    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+
+
+def _get_membership_or_404(session: Session, member_id: int, org_id: int) -> UserOrganizationBase:
+    membership = get_user_org_membership(session, member_id, org_id)
+    if membership is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    return membership
+
+
 def _validate_redirect_url(url: str, public_url: str | None = None) -> str:
     """Validate and sanitize a redirect URL. Returns empty string if invalid."""
     if not url:
@@ -119,9 +149,7 @@ def _check_org_access(
     require_admin: bool = False,
 ) -> OrganizationBase:
     """Check if user has access to org. Returns the org or raises 404/403."""
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     # System admins have full access
     if user.is_admin:
@@ -207,11 +235,6 @@ def _org_to_read(session: Session, org: OrganizationBase) -> OrganizationRead:
     return _build_org_read(org, total, premium_count, members_list)
 
 
-def _org_to_summary(org: OrganizationBase, member_count: int, premium_count: int) -> OrganizationRead:
-    """Convert org model to summary schema (no member list, uses pre-fetched counts)."""
-    return _build_org_read(org, member_count, premium_count)
-
-
 # ============================================================================
 # Organization CRUD
 # ============================================================================
@@ -234,10 +257,7 @@ def list_organizations(
     org_ids = [org.id for org in orgs]
     counts = get_org_member_counts(session, org_ids)
 
-    items = [
-        _org_to_summary(org, *counts.get(org.id, (0, 0)))
-        for org in orgs
-    ]
+    items = [_build_org_read(org, *counts.get(org.id, (0, 0))) for org in orgs]
 
     return OrganizationListResponse(
         items=items,
@@ -289,22 +309,13 @@ def create_new_organization(
     if org_data.custom_data:
         custom_data = OrganizationCustomData(**org_data.custom_data).model_dump(exclude_none=True)
 
-    # Create the organization
-    org = OrganizationBase(
-        name=org_data.name,
-        email=org_data.email,
-        description=org_data.description,
-        phone=org_data.phone,
-        tax_number=org_data.tax_number,
-        address_line1=org_data.address_line1,
-        address_line2=org_data.address_line2,
-        city=org_data.city,
-        state=org_data.state,
-        postal_code=org_data.postal_code,
-        country=org_data.country,
-        custom_data=custom_data,
+    org = create_organization(
+        session,
+        OrganizationBase(
+            **org_data.model_dump(exclude={"custom_data"}),
+            custom_data=custom_data,
+        ),
     )
-    org = create_organization(session, org)
 
     # Add creator as first admin
     add_organization_member(session, user.id, org.id, is_admin=True)
@@ -420,9 +431,7 @@ def delete_org(
     org_id: int,
 ):
     """Soft delete an organization (system admin only). Resets all members' premium."""
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     if org.deleted_at is not None:
         raise HTTPException(
@@ -557,9 +566,7 @@ def get_member(
     """Get member details. Org admin only."""
     _check_org_access(session, org_id, user, require_admin=True)
 
-    membership = get_user_org_membership(session, member_id, org_id)
-    if not membership:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    membership = _get_membership_or_404(session, member_id, org_id)
 
     target_user = get_user_by_id(session, member_id)
     if not target_user:
@@ -643,9 +650,7 @@ def update_member(
     """Update member status (is_admin, is_premium). Org admin only."""
     org = _check_org_access(session, org_id, user, require_admin=True)
 
-    membership = get_user_org_membership(session, member_id, org_id)
-    if not membership:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    membership = _get_membership_or_404(session, member_id, org_id)
 
     target_user = get_user_by_id(session, member_id)
     if not target_user:
@@ -670,9 +675,7 @@ def leave_organization(
     org_id: int,
 ):
     """Leave an organization voluntarily."""
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     membership = get_user_org_membership(session, user.id, org_id)
     if not membership:
@@ -707,9 +710,7 @@ def remove_member(
     """Remove a member from the organization. Org admin only."""
     org = _check_org_access(session, org_id, user, require_admin=True)
 
-    membership = get_user_org_membership(session, member_id, org_id)
-    if not membership:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    membership = _get_membership_or_404(session, member_id, org_id)
 
     # Check if removing last admin
     _check_not_last_admin(session, org.id, membership, action="remove")
@@ -743,14 +744,7 @@ def create_org_checkout(
     checkout_data: OrganizationCheckoutRequest,
 ):
     """Create a Stripe checkout session for org subscription. Org admin only."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
-
-    # Block self-service if disabled (unless user is app admin)
-    if not ORG_SELF_SERVICE_SUBSCRIPTIONS and not user.is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Self-service subscriptions are disabled")
-
-    org = _check_org_access(session, org_id, user, require_admin=True)
+    org = _ensure_self_service_billing(session, org_id, user)
 
     # Validate price_id is an allowed org price
     if checkout_data.price_id not in ORG_STRIPE_PRICE_IDS:
@@ -801,14 +795,7 @@ def get_org_billing_portal(
     return_url: str = Query(..., description="URL to return to after portal session"),
 ):
     """Get a Stripe billing portal URL for the organization. Org admin only."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
-
-    # Block self-service if disabled (unless user is app admin)
-    if not ORG_SELF_SERVICE_SUBSCRIPTIONS and not user.is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Self-service subscriptions are disabled")
-
-    org = _check_org_access(session, org_id, user, require_admin=True)
+    org = _ensure_self_service_billing(session, org_id, user)
 
     if not org.stripe_id:
         raise HTTPException(
@@ -841,8 +828,7 @@ def get_org_subscription(
     Always queries Stripe API for accuracy and syncs DB if status differs.
     Org admin only.
     """
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+    _ensure_billing_enabled()
 
     org = _check_org_access(session, org_id, user, require_admin=True)
 
@@ -1075,12 +1061,9 @@ def get_admin_billing(
     org_id: int,
 ):
     """Get admin billing view for an org (system admin only)."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+    _ensure_billing_enabled()
 
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     return _build_admin_billing_read(org)
 
@@ -1095,12 +1078,9 @@ def adjust_admin_billing(
     adjustment: OrganizationBalanceAdjustRequest,
 ):
     """Record a balance change (positive = credit org, negative = charge org)."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+    _ensure_billing_enabled()
 
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     _ensure_org_stripe_customer(session, org)
 
@@ -1135,15 +1115,12 @@ def assign_admin_plan(
     assignment: OrganizationAssignPlanRequest,
 ):
     """Assign a plan to an org without creating a Stripe subscription."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+    _ensure_billing_enabled()
 
     if assignment.price_id not in ORG_STRIPE_PRICE_IDS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price ID")
 
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     price = stripe_helper.get_price_details(assignment.price_id)
     if not price:
@@ -1179,12 +1156,9 @@ def unassign_admin_plan(
     org_id: int,
 ):
     """Unassign the admin-managed plan. Revokes premium for all members."""
-    if not STRIPE_ENABLED or not stripe_helper.is_enabled():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Billing not enabled")
+    _ensure_billing_enabled()
 
-    org = get_organization_by_id(session, org_id)
-    if not org:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    org = _get_org_or_404(session, org_id)
 
     was_assigned = org.billing_price_id is not None
 

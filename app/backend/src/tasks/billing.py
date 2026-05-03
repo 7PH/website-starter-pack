@@ -95,21 +95,14 @@ def run_billing_cycle(now: datetime | None = None) -> int:
 
 
 def register_billing_tasks(app):
-    """Register the daily billing cycle task with the FastAPI app."""
+    from . import DAILY_BILLING_HOUR
+    from ._scheduler import register_cron_task
 
-    @app.on_event("startup")
-    async def start_billing_scheduler():
-        # 3:00 AM — one hour before daily backup, so debits land first.
-        scheduler.add_job(
-            run_billing_cycle,
-            CronTrigger(hour=3, minute=0),
-            id="daily_billing_cycle",
-            replace_existing=True,
-        )
-        scheduler.start()
-        logger.info("Billing scheduler started (daily at 3:00 AM)")
-
-    @app.on_event("shutdown")
-    async def stop_billing_scheduler():
-        scheduler.shutdown()
-        logger.info("Billing scheduler stopped")
+    register_cron_task(
+        app,
+        scheduler,
+        job_func=run_billing_cycle,
+        cron=CronTrigger(hour=DAILY_BILLING_HOUR, minute=0),
+        job_id="daily_billing_cycle",
+        log_name="Billing",
+    )

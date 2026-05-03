@@ -30,11 +30,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/invitations")
 
 
+def _inviter_name(inviter) -> str | None:
+    """Return ``"First Last"`` (falling back to email) for an inviter row, or None."""
+    if not inviter:
+        return None
+    return f"{inviter.first_name} {inviter.last_name}".strip() or inviter.email
+
+
 def _invitation_to_read(invitation, include_token: bool = False) -> OrganizationInvitationRead:
-    inviter = invitation.invited_by
-    inviter_name = None
-    if inviter:
-        inviter_name = f"{inviter.first_name} {inviter.last_name}".strip() or inviter.email
     return OrganizationInvitationRead(
         id=invitation.id,
         organization_id=invitation.organization_id,
@@ -42,7 +45,7 @@ def _invitation_to_read(invitation, include_token: bool = False) -> Organization
         email=invitation.email,
         is_admin_invite=invitation.is_admin_invite,
         invited_by_user_id=invitation.invited_by_user_id,
-        invited_by_name=inviter_name,
+        invited_by_name=_inviter_name(invitation.invited_by),
         expires_at=invitation.expires_at,
         created_at=invitation.created_at,
         token=invitation.token if include_token else None,
@@ -52,6 +55,22 @@ def _invitation_to_read(invitation, include_token: bool = False) -> Organization
 def _enabled_or_404():
     if not ORG_INVITATIONS_ENABLED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitations are disabled")
+
+
+def _get_pending_invitation_or_404(session: Session, token: str, *, check_expired: bool = True):
+    """Resolve a token to a pending invitation, or raise 404/410. ``check_expired=False``
+    lets callers act on expired invites (e.g. decline)."""
+    inv = invitations_crud.get_invitation_by_token(session, token)
+    if not inv or inv.accepted_at or inv.declined_at:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+    if check_expired and invitations_crud.is_expired(inv):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation expired")
+    return inv
+
+
+def _assert_invitation_email_matches(invitation, user: UserRead) -> None:
+    if invitation.email.lower() != user.email.lower():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invitation is for a different email")
 
 
 @router.get("/pending", response_model=OrganizationInvitationListResponse)
@@ -73,22 +92,11 @@ def list_my_pending_invitations(
 def preview_invitation(*, session: Session = Depends(get_session), token: str):
     """Public preview of an invitation (used before login/signup)."""
     _enabled_or_404()
-    invitation = invitations_crud.get_invitation_by_token(session, token)
-    if not invitation or invitation.accepted_at or invitation.declined_at:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
-    if invitations_crud.is_expired(invitation):
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation expired")
-
-    inviter_name = None
-    if invitation.invited_by:
-        inviter_name = (
-            f"{invitation.invited_by.first_name} {invitation.invited_by.last_name}".strip()
-            or invitation.invited_by.email
-        )
+    invitation = _get_pending_invitation_or_404(session, token)
     return PendingInvitationPreview(
         organization_name=invitation.organization.name if invitation.organization else "",
         is_admin_invite=invitation.is_admin_invite,
-        invited_by_name=inviter_name,
+        invited_by_name=_inviter_name(invitation.invited_by),
         email=invitation.email,
         expires_at=invitation.expires_at,
     )
@@ -104,13 +112,8 @@ def accept_invitation(
 ):
     """Accept an invitation. Current user's email must match."""
     _enabled_or_404()
-    invitation = invitations_crud.get_invitation_by_token(session, token)
-    if not invitation or invitation.accepted_at or invitation.declined_at:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
-    if invitations_crud.is_expired(invitation):
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation expired")
-    if invitation.email.lower() != user.email.lower():
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invitation is for a different email")
+    invitation = _get_pending_invitation_or_404(session, token)
+    _assert_invitation_email_matches(invitation, user)
 
     # Already a member?
     if get_user_org_membership(session, user.id, invitation.organization_id):
@@ -155,11 +158,8 @@ def decline_invitation(
 ):
     """Decline an invitation. Current user's email must match."""
     _enabled_or_404()
-    invitation = invitations_crud.get_invitation_by_token(session, token)
-    if not invitation or invitation.accepted_at or invitation.declined_at:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
-    if invitation.email.lower() != user.email.lower():
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invitation is for a different email")
+    invitation = _get_pending_invitation_or_404(session, token, check_expired=False)
+    _assert_invitation_email_matches(invitation, user)
 
     invitations_crud.mark_declined(session, invitation)
 

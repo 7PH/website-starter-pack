@@ -68,25 +68,59 @@ MESSAGE_SEND_RATE_LIMIT_DURATION = 1  # 1 minute
 # ============================================================================
 
 
-def _message_to_read(message: MessageBase) -> MessageRead:
-    """Convert message model to read schema."""
-    sender = None
-    if message.sender:
-        sender = ConversationUserPreview(
-            id=message.sender.id,
-            email=message.sender.email,
-            first_name=message.sender.first_name,
-            last_name=message.sender.last_name,
-        )
+def _user_preview(user) -> ConversationUserPreview | None:
+    if not user:
+        return None
+    return ConversationUserPreview(
+        id=user.id,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+    )
 
+
+def _get_conversation_or_404(session: Session, conversation_id: int) -> ConversationBase:
+    conv = get_conversation_by_id(session, conversation_id)
+    if conv is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    return conv
+
+
+def _get_user_conversation_or_404(session: Session, conversation_id: int, user_id: int) -> ConversationBase:
+    """Return the conversation if the user can access it, else 404.
+
+    Hides existence of conversations from unauthorized users (no 403).
+    """
+    if not user_can_access_conversation(session, conversation_id, user_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    return _get_conversation_or_404(session, conversation_id)
+
+
+def _message_to_read(message: MessageBase) -> MessageRead:
     return MessageRead(
         id=message.id,
         conversation_id=message.conversation_id,
         sender_id=message.sender_id,
-        sender=sender,
+        sender=_user_preview(message.sender),
         content=message.content,
         is_admin_response=message.is_admin_response,
         created_at=message.created_at,
+    )
+
+
+def _conversation_base_fields(conversation: ConversationBase, unread_count: int = 0) -> dict:
+    return dict(
+        id=conversation.id,
+        type=conversation.type,
+        subtype=conversation.subtype,
+        subject=conversation.subject,
+        created_by_id=conversation.created_by_id,
+        created_by=_user_preview(conversation.created_by),
+        is_closed=conversation.is_closed,
+        closed_at=conversation.closed_at,
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
+        unread_count=unread_count,
     )
 
 
@@ -95,34 +129,34 @@ def _conversation_to_read(
     unread_count: int = 0,
     last_message: MessageBase | None = None,
 ) -> ConversationRead:
-    """Convert conversation model to read schema."""
-    created_by = None
-    if conversation.created_by:
-        created_by = ConversationUserPreview(
-            id=conversation.created_by.id,
-            email=conversation.created_by.email,
-            first_name=conversation.created_by.first_name,
-            last_name=conversation.created_by.last_name,
-        )
-
-    last_message_read = None
-    if last_message:
-        last_message_read = _message_to_read(last_message)
-
     return ConversationRead(
-        id=conversation.id,
-        type=conversation.type,
-        subtype=conversation.subtype,
-        subject=conversation.subject,
-        created_by_id=conversation.created_by_id,
-        created_by=created_by,
-        is_closed=conversation.is_closed,
-        closed_at=conversation.closed_at,
-        created_at=conversation.created_at,
-        updated_at=conversation.updated_at,
-        unread_count=unread_count,
-        last_message=last_message_read,
+        **_conversation_base_fields(conversation, unread_count),
+        last_message=_message_to_read(last_message) if last_message else None,
     )
+
+
+def _build_list_response(
+    session: Session,
+    conversations: list[ConversationBase],
+    total: int,
+    limit: int,
+    offset: int,
+    *,
+    unread_for_user_id: int | None,
+) -> "ConversationListResponse":
+    """Build a paginated conversation list, attaching unread count + last message per row.
+
+    ``unread_for_user_id`` controls whose perspective the unread count is from
+    (use the conversation creator for the admin list, the current user for the
+    user list).
+    """
+    items = []
+    for conv in conversations:
+        target_user = unread_for_user_id if unread_for_user_id is not None else conv.created_by_id
+        unread = get_unread_count(session, conv.id, target_user) if target_user is not None else 0
+        last_msg = get_last_message(session, conv.id)
+        items.append(_conversation_to_read(conv, unread_count=unread, last_message=last_msg))
+    return ConversationListResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 def _conversation_to_detail(
@@ -130,28 +164,8 @@ def _conversation_to_detail(
     messages: list[MessageBase],
     unread_count: int = 0,
 ) -> ConversationDetail:
-    """Convert conversation model to detail schema with messages."""
-    created_by = None
-    if conversation.created_by:
-        created_by = ConversationUserPreview(
-            id=conversation.created_by.id,
-            email=conversation.created_by.email,
-            first_name=conversation.created_by.first_name,
-            last_name=conversation.created_by.last_name,
-        )
-
     return ConversationDetail(
-        id=conversation.id,
-        type=conversation.type,
-        subtype=conversation.subtype,
-        subject=conversation.subject,
-        created_by_id=conversation.created_by_id,
-        created_by=created_by,
-        is_closed=conversation.is_closed,
-        closed_at=conversation.closed_at,
-        created_at=conversation.created_at,
-        updated_at=conversation.updated_at,
-        unread_count=unread_count,
+        **_conversation_base_fields(conversation, unread_count),
         messages=[_message_to_read(m) for m in messages],
     )
 
@@ -234,19 +248,7 @@ def list_user_conversations(
         limit=limit,
         offset=offset,
     )
-
-    items = []
-    for conv in conversations:
-        unread = get_unread_count(session, conv.id, user.id)
-        last_msg = get_last_message(session, conv.id)
-        items.append(_conversation_to_read(conv, unread_count=unread, last_message=last_msg))
-
-    return ConversationListResponse(
-        items=items,
-        total=total,
-        limit=limit,
-        offset=offset,
-    )
+    return _build_list_response(session, conversations, total, limit, offset, unread_for_user_id=user.id)
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)
@@ -257,18 +259,7 @@ def get_user_conversation(
     conversation_id: int,
 ):
     """Get a conversation by ID with messages."""
-    if not user_can_access_conversation(session, conversation_id, user.id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
-
-    conversation = get_conversation_by_id(session, conversation_id)
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    conversation = _get_user_conversation_or_404(session, conversation_id, user.id)
 
     messages, _, _ = get_messages(session, conversation_id, limit=100)
     unread = get_unread_count(session, conversation_id, user.id)
@@ -290,11 +281,7 @@ def get_conversation_messages(
     before_id: int | None = Query(None),
 ):
     """Get paginated messages for a conversation."""
-    if not user_can_access_conversation(session, conversation_id, user.id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    _get_user_conversation_or_404(session, conversation_id, user.id)
 
     messages, total, has_more = get_messages(
         session=session,
@@ -331,18 +318,7 @@ def send_message(
         duration_minutes=MESSAGE_SEND_RATE_LIMIT_DURATION,
     )
 
-    if not user_can_access_conversation(session, conversation_id, user.id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
-
-    conversation = get_conversation_by_id(session, conversation_id)
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    conversation = _get_user_conversation_or_404(session, conversation_id, user.id)
 
     if conversation.is_closed:
         raise HTTPException(
@@ -428,21 +404,8 @@ def admin_list_conversations(
         limit=limit,
         offset=offset,
     )
-
-    items = []
-    for conv in conversations:
-        # For admin, show unread count from user perspective (messages not from admin)
-        last_msg = get_last_message(session, conv.id)
-        # Count messages not read by the conversation creator
-        unread = get_unread_count(session, conv.id, conv.created_by_id) if conv.created_by_id else 0
-        items.append(_conversation_to_read(conv, unread_count=unread, last_message=last_msg))
-
-    return ConversationListResponse(
-        items=items,
-        total=total,
-        limit=limit,
-        offset=offset,
-    )
+    # Admin view: show unread from the conversation creator's perspective.
+    return _build_list_response(session, conversations, total, limit, offset, unread_for_user_id=None)
 
 
 @admin_router.get("/{conversation_id}", response_model=ConversationDetail)
@@ -453,12 +416,7 @@ def admin_get_conversation(
     conversation_id: int,
 ):
     """Get any conversation by ID (admin only)."""
-    conversation = get_conversation_by_id(session, conversation_id)
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    conversation = _get_conversation_or_404(session, conversation_id)
 
     messages, _, _ = get_messages(session, conversation_id, limit=100)
 
@@ -478,12 +436,7 @@ def admin_update_conversation(
     data: ConversationUpdate,
 ):
     """Update a conversation (admin only). Used to close/reopen conversations."""
-    conversation = get_conversation_by_id(session, conversation_id)
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    conversation = _get_conversation_or_404(session, conversation_id)
 
     # Handle is_closed update
     if data.is_closed is not None:
@@ -521,12 +474,7 @@ def admin_send_message(
     data: MessageCreate,
 ):
     """Send an admin reply to a conversation."""
-    conversation = get_conversation_by_id(session, conversation_id)
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    conversation = _get_conversation_or_404(session, conversation_id)
 
     if conversation.is_closed:
         raise HTTPException(

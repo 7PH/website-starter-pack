@@ -7,7 +7,7 @@ Provides billing portal access and webhook handling.
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from ..constants import ORG_STRIPE_PRICE_IDS
@@ -19,7 +19,7 @@ from ..crud.users import (
     update_user_premium_cache,
 )
 from ..helpers import stripe as stripe_helper
-from ..helpers.auth import get_current_nonmanaged_user
+from ..helpers.auth import get_current_nonmanaged_user, get_user_or_404
 from ..helpers.db import SessionLocal, get_session
 from ..schemas.stripe import BillingPortalResponse, SubscriptionStatus, WebhookResponse
 
@@ -39,10 +39,7 @@ def get_billing_portal(
     Allows users to manage their subscription, update payment methods, etc.
     Creates a Stripe customer if one doesn't exist.
     """
-    # Fetch full user from DB to get stripe_id
-    db_user = get_user_by_id(session, user.id)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    db_user = get_user_or_404(session, user.id)
 
     # Create Stripe customer if user doesn't have one
     if not db_user.stripe_id:
@@ -132,44 +129,32 @@ async def stripe_webhook(request: Request):
     return WebhookResponse(status="success")
 
 
+def _subscription_items(subscription: dict) -> list[dict]:
+    return subscription.get("items", {}).get("data", [])
+
+
 def _is_premium_subscription(subscription: dict) -> bool:
     """Check if a subscription is for a premium plan (vs free)."""
     if subscription.get("status") not in ("active", "trialing"):
         return False
-
-    items = subscription.get("items", {}).get("data", [])
-    if not items:
-        return False
-
-    # A subscription is premium if any item has a non-zero price
-    for item in items:
-        price = item.get("price", {})
-        unit_amount = price.get("unit_amount", 0)
-        if unit_amount > 0:
-            return True
-
-    return False
+    # Premium iff any item has a non-zero unit price.
+    return any(item.get("price", {}).get("unit_amount", 0) > 0 for item in _subscription_items(subscription))
 
 
 def _get_subscription_price_id(subscription: dict) -> str | None:
-    """Extract the price ID from a subscription."""
-    items = subscription.get("items", {}).get("data", [])
-    if items:
-        return items[0].get("price", {}).get("id")
-    return None
+    items = _subscription_items(subscription)
+    return items[0].get("price", {}).get("id") if items else None
 
 
 def _get_seats_from_subscription(subscription: dict) -> int:
-    """Extract the seats from price metadata."""
-    items = subscription.get("items", {}).get("data", [])
-    if items:
-        price = items[0].get("price", {})
-        metadata = price.get("metadata", {})
-        try:
-            return int(metadata.get("seats", 0))
-        except (ValueError, TypeError):
-            return 0
-    return 0
+    items = _subscription_items(subscription)
+    if not items:
+        return 0
+    metadata = items[0].get("price", {}).get("metadata", {})
+    try:
+        return int(metadata.get("seats", 0))
+    except (ValueError, TypeError):
+        return 0
 
 
 def _is_org_subscription(price_id: str | None) -> bool:
@@ -177,112 +162,75 @@ def _is_org_subscription(price_id: str | None) -> bool:
     return price_id is not None and price_id in ORG_STRIPE_PRICE_IDS
 
 
-def _update_user_premium_from_event(event: dict, has_subscription: bool) -> None:
-    """Update user personal subscription status from a webhook event."""
-    data = event.get("data", {})
-    subscription = data.get("object", {})
-    customer_id = subscription.get("customer")
+def _apply_user_premium(session: Session, customer_id: str, has_subscription: bool) -> None:
+    user = get_user_by_stripe_id(session, customer_id)
+    if not user:
+        logger.warning(f"No user found for Stripe customer {customer_id}")
+        return
+    user.has_personal_subscription = has_subscription
+    session.commit()
+    update_user_premium_cache(session, user.id)
+    logger.info(f"Updated user {user.id} has_personal_subscription={has_subscription}")
 
+
+def _apply_org_subscription(session: Session, customer_id: str, is_premium: bool, seats: int) -> None:
+    org = get_organization_by_stripe_id(session, customer_id)
+    if not org:
+        logger.warning(f"No org found for Stripe customer {customer_id}")
+        return
+    org.stripe_premium = is_premium
+    org.stripe_quota = seats if is_premium else 0
+    update_organization(session, org)
+    logger.info(f"Updated org {org.id} premium={is_premium} quota={seats}")
+    if not is_premium:
+        affected_user_ids = reset_org_members_premium(session, org.id)
+        for user_id in affected_user_ids:
+            update_user_premium_cache(session, user_id)
+        logger.info(f"Cleared {len(affected_user_ids)} premium seats for org {org.id}")
+
+
+def _apply_subscription_event(event: dict, action: str, *, is_premium: bool | None = None) -> None:
+    """Route a subscription webhook event to the user or org updater.
+
+    ``action`` is the verb used in the log line (created/updated/deleted).
+    Pass ``is_premium=False`` to force a deletion-style update without inspecting the payload.
+    """
+    subscription = event.get("data", {}).get("object", {})
+    customer_id = subscription.get("customer")
     if not customer_id:
         logger.warning("Webhook event missing customer ID")
         return
 
-    session = SessionLocal()
-    try:
-        user = get_user_by_stripe_id(session, customer_id)
-        if user:
-            user.has_personal_subscription = has_subscription
-            session.commit()
-            update_user_premium_cache(session, user.id)
-            logger.info(f"Updated user {user.id} has_personal_subscription={has_subscription}")
-        else:
-            logger.warning(f"No user found for Stripe customer {customer_id}")
-    except Exception as e:
-        logger.error(f"Error updating user subscription status: {e}")
-        session.rollback()
-    finally:
-        session.close()
-
-
-def _update_org_subscription_from_event(event: dict, is_premium: bool, seats: int = 0) -> None:
-    """Update organization subscription status from a webhook event."""
-    data = event.get("data", {})
-    subscription = data.get("object", {})
-    customer_id = subscription.get("customer")
-
-    if not customer_id:
-        logger.warning("Webhook event missing customer ID")
-        return
+    price_id = _get_subscription_price_id(subscription)
+    deleting = is_premium is False
+    effective_premium = False if deleting else _is_premium_subscription(subscription)
 
     session = SessionLocal()
     try:
-        org = get_organization_by_stripe_id(session, customer_id)
-        if org:
-            org.stripe_premium = is_premium
-            org.stripe_quota = seats if is_premium else 0
-            update_organization(session, org)
-            logger.info(f"Updated org {org.id} premium={is_premium} quota={seats}")
-
-            # If org subscription is canceled, clear all premium seats using CRUD function
-            if not is_premium:
-                affected_user_ids = reset_org_members_premium(session, org.id)
-                # Update premium cache for all affected users
-                for user_id in affected_user_ids:
-                    update_user_premium_cache(session, user_id)
-                logger.info(f"Cleared {len(affected_user_ids)} premium seats for org {org.id}")
+        if _is_org_subscription(price_id):
+            seats = 0 if deleting else _get_seats_from_subscription(subscription)
+            logger.info(f"Org subscription {action}: premium={effective_premium}, seats={seats}")
+            _apply_org_subscription(session, customer_id, effective_premium, seats)
         else:
-            logger.warning(f"No org found for Stripe customer {customer_id}")
+            logger.info(f"User subscription {action}: premium={effective_premium}")
+            _apply_user_premium(session, customer_id, effective_premium)
     except Exception as e:
-        logger.error(f"Error updating org subscription status: {e}")
+        logger.error(f"Error processing subscription {action}: {e}")
         session.rollback()
     finally:
         session.close()
 
 
 def _handle_subscription_created(event: dict):
-    """Handle new subscription creation."""
-    data = event.get("data", {})
-    subscription = data.get("object", {})
-    price_id = _get_subscription_price_id(subscription)
-    is_premium = _is_premium_subscription(subscription)
-
-    if _is_org_subscription(price_id):
-        seats = _get_seats_from_subscription(subscription)
-        logger.info(f"Org subscription created: premium={is_premium}, seats={seats}")
-        _update_org_subscription_from_event(event, is_premium, seats)
-    else:
-        logger.info(f"User subscription created: premium={is_premium}")
-        _update_user_premium_from_event(event, is_premium)
+    _apply_subscription_event(event, "created")
 
 
 def _handle_subscription_updated(event: dict):
-    """Handle subscription updates (plan changes, renewals)."""
-    data = event.get("data", {})
-    subscription = data.get("object", {})
-    price_id = _get_subscription_price_id(subscription)
-    is_premium = _is_premium_subscription(subscription)
-
-    if _is_org_subscription(price_id):
-        seats = _get_seats_from_subscription(subscription)
-        logger.info(f"Org subscription updated: premium={is_premium}, seats={seats}")
-        _update_org_subscription_from_event(event, is_premium, seats)
-    else:
-        logger.info(f"User subscription updated: premium={is_premium}")
-        _update_user_premium_from_event(event, is_premium)
+    _apply_subscription_event(event, "updated")
 
 
 def _handle_subscription_deleted(event: dict):
-    """Handle subscription cancellation or expiration."""
-    data = event.get("data", {})
-    subscription = data.get("object", {})
-    price_id = _get_subscription_price_id(subscription)
-
-    if _is_org_subscription(price_id):
-        logger.info("Org subscription deleted: setting premium=False, quota=0")
-        _update_org_subscription_from_event(event, False, 0)
-    else:
-        logger.info("User subscription deleted: setting premium=False")
-        _update_user_premium_from_event(event, False)
+    _apply_subscription_event(event, "deleted", is_premium=False)
 
 
 def _handle_payment_succeeded(_event: dict):

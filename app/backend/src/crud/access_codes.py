@@ -47,16 +47,6 @@ def issue_code(
     return code
 
 
-def revoke_code(session: Session, user_id: int, code: str) -> bool:
-    """Mark a code revoked. Returns True if it existed and was active."""
-    record = session.get(AccessCodeBase, (user_id, code))
-    if record is None or record.revoked_at is not None:
-        return False
-    record.revoked_at = datetime.now(UTC)
-    session.commit()
-    return True
-
-
 def resolve_code(session: Session, user_id: int, code: str) -> UserBase | None:
     """Look up a code scoped to the given managed-account ``user_id``. Returns
     the user row when the code is active and not expired, else ``None``.

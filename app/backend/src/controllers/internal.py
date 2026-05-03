@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..constants import INTERNAL_API_KEY
 from ..crud.users import get_user_by_email
-from ..helpers.auth import build_user_read_with_orgs, create_access_token
+from ..helpers.auth import issue_jwt_with_orgs
 from ..helpers.db import get_session
 from ..models.user import UserBase
 from ..schemas.user import UserTokenUpdate
@@ -55,4 +55,4 @@ def mint_token(*, payload: MintTokenRequest, session: Session = Depends(get_sess
         )
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return create_access_token(build_user_read_with_orgs(session, user))
+    return issue_jwt_with_orgs(session, user)

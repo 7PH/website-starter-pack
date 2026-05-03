@@ -7,12 +7,26 @@ Provides functions for sending transactional emails via Mailgun.
 
 import logging
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 import requests
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader, Template, TemplateNotFound
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def swallow_email_errors():
+    """Run a send_*_email() call without bubbling exceptions.
+
+    Use when an email failure (e.g. Mailgun unconfigured in dev) shouldn't
+    block the user flow. Failures are logged so ops can spot real outages.
+    """
+    try:
+        yield
+    except Exception as e:
+        logger.warning("Email send failed: %s", e)
 
 # Configuration
 MAILGUN_ENABLED = bool(os.environ.get("MAILGUN_API_KEY"))
@@ -36,30 +50,15 @@ if _template_dir.exists():
     )
 
 
-def _get_template(name: str) -> str | None:
-    """Load a template by name. Returns None if not found."""
+def _render_template(name: str, **context) -> str | None:
+    """Render a template by name with the default context, or None if missing."""
     if _template_env is None:
         return None
     try:
-        template = _template_env.get_template(name)
-        return template
+        template: Template = _template_env.get_template(name)
     except TemplateNotFound:
         return None
-
-
-def _render_template(name: str, **context) -> str | None:
-    """Render a template with the given context."""
-    template = _get_template(name)
-    if template is None:
-        return None
-
-    # Add default context
-    default_context = {
-        "public_url": PUBLIC_URL,
-        "app_name": APP_NAME,
-    }
-
-    return template.render(**default_context, **context)
+    return template.render(public_url=PUBLIC_URL, app_name=APP_NAME, **context)
 
 
 def send_email(
@@ -121,126 +120,77 @@ def send_email(
         return False
 
 
-def send_password_reset_email(
+def _send_templated_email(
+    *,
     to_email: str,
-    username: str,
-    reset_link: str,
+    subject: str,
+    template_basename: str,
+    context: dict,
+    text_fallback: str | None,
+    raise_on_error: bool = True,
 ) -> bool:
+    """Render the templated HTML+text bodies and send. Falls back to ``text_fallback`` text-only.
+
+    If ``text_fallback`` is None and the template is missing, raises — for emails
+    where shipping a plain-text default would be wrong (e.g. account deletion).
     """
-    Send a password reset email.
-
-    Args:
-        to_email: Recipient email address
-        username: User's display name
-        reset_link: Password reset URL
-
-    Returns:
-        True if email was sent successfully
-    """
-    context = {
-        "username": username,
-        "reset_link": reset_link,
-    }
-
-    # Try to render templates
-    html_body = _render_template("password_reset.html", **context)
-    text_body = _render_template("password_reset.txt", **context)
-
-    # Fallback if templates not available
+    html_body = _render_template(f"{template_basename}.html", **context)
+    text_body = _render_template(f"{template_basename}.txt", **context)
     if text_body is None:
-        text_body = f"""Hello {username},
-
-We received a request to reset your password. Click the link below:
-{reset_link}
-
-This link will expire in 1 hour.
-
-If you didn't request this, you can ignore this email.
-"""
-
+        if text_fallback is None:
+            raise RuntimeError(f"{template_basename} email template is missing")
+        text_body = text_fallback
     return send_email(
+        to_email=to_email,
+        subject=subject,
+        body=text_body,
+        html_body=html_body,
+        raise_on_error=raise_on_error,
+    )
+
+
+def send_password_reset_email(to_email: str, username: str, reset_link: str) -> bool:
+    return _send_templated_email(
         to_email=to_email,
         subject="Reset Your Password",
-        body=text_body,
-        html_body=html_body,
+        template_basename="password_reset",
+        context={"username": username, "reset_link": reset_link},
+        text_fallback=(
+            f"Hello {username},\n\n"
+            f"We received a request to reset your password. Click the link below:\n"
+            f"{reset_link}\n\n"
+            f"This link will expire in 1 hour.\n\n"
+            f"If you didn't request this, you can ignore this email.\n"
+        ),
     )
 
 
-def send_email_verification_email(
-    to_email: str,
-    username: str,
-    verification_link: str,
-) -> bool:
-    """
-    Send an email verification email.
-
-    Args:
-        to_email: Recipient email address
-        username: User's display name
-        verification_link: Email verification URL
-
-    Returns:
-        True if email was sent successfully
-    """
-    context = {
-        "username": username,
-        "verification_link": verification_link,
-    }
-
-    html_body = _render_template("email_verification.html", **context)
-    text_body = _render_template("email_verification.txt", **context)
-
-    if text_body is None:
-        text_body = f"""Hello {username},
-
-Thank you for signing up! Please verify your email by clicking the link below:
-{verification_link}
-
-This link will expire in 24 hours.
-"""
-
-    return send_email(
+def send_email_verification_email(to_email: str, username: str, verification_link: str) -> bool:
+    return _send_templated_email(
         to_email=to_email,
         subject="Verify Your Email Address",
-        body=text_body,
-        html_body=html_body,
+        template_basename="email_verification",
+        context={"username": username, "verification_link": verification_link},
+        text_fallback=(
+            f"Hello {username},\n\n"
+            f"Thank you for signing up! Please verify your email by clicking the link below:\n"
+            f"{verification_link}\n\n"
+            f"This link will expire in 24 hours.\n"
+        ),
     )
 
 
-def send_welcome_email(
-    to_email: str,
-    username: str,
-) -> bool:
-    """
-    Send a welcome email after registration.
-
-    Args:
-        to_email: Recipient email address
-        username: User's display name
-
-    Returns:
-        True if email was sent successfully
-    """
-    context = {
-        "username": username,
-    }
-
-    html_body = _render_template("welcome.html", **context)
-    text_body = _render_template("welcome.txt", **context)
-
-    if text_body is None:
-        text_body = f"""Hello {username},
-
-Welcome to {APP_NAME}! Your account has been created successfully.
-
-Get started: {PUBLIC_URL}
-"""
-
-    return send_email(
+def send_welcome_email(to_email: str, username: str) -> bool:
+    return _send_templated_email(
         to_email=to_email,
         subject=f"Welcome to {APP_NAME}!",
-        body=text_body,
-        html_body=html_body,
+        template_basename="welcome",
+        context={"username": username},
+        text_fallback=(
+            f"Hello {username},\n\n"
+            f"Welcome to {APP_NAME}! Your account has been created successfully.\n\n"
+            f"Get started: {PUBLIC_URL}\n"
+        ),
         raise_on_error=False,  # Welcome emails are not critical
     )
 
@@ -252,113 +202,50 @@ def send_organization_invitation_email(
     invitation_link: str,
     is_admin_invite: bool,
 ) -> bool:
-    """Send an organization invitation email to a prospective member."""
-    context = {
-        "organization_name": organization_name,
-        "inviter_name": inviter_name,
-        "invitation_link": invitation_link,
-        "is_admin_invite": is_admin_invite,
-    }
-
-    html_body = _render_template("organization_invitation.html", **context)
-    text_body = _render_template("organization_invitation.txt", **context)
-
-    if text_body is None:
-        role = "Owner" if is_admin_invite else "Member"
-        who = f"{inviter_name} has" if inviter_name else "You have been"
-        text_body = f"""Hello,
-
-{who} invited you to join {organization_name} as a {role}.
-
-Accept or decline the invitation here:
-{invitation_link}
-
-If you weren't expecting this, you can ignore this email.
-"""
-
-    return send_email(
+    role = "Owner" if is_admin_invite else "Member"
+    who = f"{inviter_name} has" if inviter_name else "You have been"
+    return _send_templated_email(
         to_email=to_email,
         subject=f"You've been invited to join {organization_name}",
-        body=text_body,
-        html_body=html_body,
+        template_basename="organization_invitation",
+        context={
+            "organization_name": organization_name,
+            "inviter_name": inviter_name,
+            "invitation_link": invitation_link,
+            "is_admin_invite": is_admin_invite,
+        },
+        text_fallback=(
+            f"Hello,\n\n"
+            f"{who} invited you to join {organization_name} as a {role}.\n\n"
+            f"Accept or decline the invitation here:\n"
+            f"{invitation_link}\n\n"
+            f"If you weren't expecting this, you can ignore this email.\n"
+        ),
         raise_on_error=False,
     )
 
 
-def send_account_deletion_email(
-    to_email: str,
-    username: str,
-    confirmation_link: str,
-) -> bool:
-    """
-    Send an account deletion confirmation email.
-
-    Args:
-        to_email: Recipient email address (the user's current email)
-        username: User's display name
-        confirmation_link: Account deletion confirmation URL
-
-    Returns:
-        True if email was sent successfully
-    """
-    context = {
-        "username": username,
-        "confirmation_link": confirmation_link,
-    }
-
-    html_body = _render_template("account_deletion.html", **context)
-    text_body = _render_template("account_deletion.txt", **context)
-
-    if text_body is None:
-        # Templates ship with the starterpack — if missing, the install is broken.
-        raise RuntimeError("account_deletion email template is missing")
-
-    return send_email(
+def send_account_deletion_email(to_email: str, username: str, confirmation_link: str) -> bool:
+    return _send_templated_email(
         to_email=to_email,
         subject="Confirm Account Deletion",
-        body=text_body,
-        html_body=html_body,
+        template_basename="account_deletion",
+        context={"username": username, "confirmation_link": confirmation_link},
+        text_fallback=None,  # No fallback: template is required.
     )
 
 
-def send_email_change_email(
-    to_email: str,
-    username: str,
-    confirmation_link: str,
-) -> bool:
-    """
-    Send an email change confirmation email to the NEW email address.
-
-    Args:
-        to_email: New email address to confirm
-        username: User's display name
-        confirmation_link: Email change confirmation URL
-
-    Returns:
-        True if email was sent successfully
-    """
-    context = {
-        "username": username,
-        "confirmation_link": confirmation_link,
-    }
-
-    html_body = _render_template("email_change.html", **context)
-    text_body = _render_template("email_change.txt", **context)
-
-    if text_body is None:
-        text_body = f"""Hello {username},
-
-You requested to change your email address to this one. Click the link below to confirm:
-{confirmation_link}
-
-This link will expire in 48 hours.
-
-If you didn't request this change, you can ignore this email.
-"""
-
-    return send_email(
+def send_email_change_email(to_email: str, username: str, confirmation_link: str) -> bool:
+    return _send_templated_email(
         to_email=to_email,
         subject="Confirm Your New Email Address",
-        body=text_body,
-        html_body=html_body,
+        template_basename="email_change",
+        context={"username": username, "confirmation_link": confirmation_link},
+        text_fallback=(
+            f"Hello {username},\n\n"
+            f"You requested to change your email address to this one. Click the link below to confirm:\n"
+            f"{confirmation_link}\n\n"
+            f"This link will expire in 48 hours.\n\n"
+            f"If you didn't request this change, you can ignore this email.\n"
+        ),
     )

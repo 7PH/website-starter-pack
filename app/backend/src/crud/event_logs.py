@@ -8,7 +8,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import Request
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..models.event_log import EventLogBase
@@ -100,64 +99,3 @@ def get_events(
     return [EventLogRead.model_validate(e) for e in events], total
 
 
-def get_user_events(
-    session: Session,
-    user_id: int,
-    limit: int = 50,
-    offset: int = 0,
-) -> tuple[list[EventLogRead], int]:
-    """
-    Get events for a specific user.
-
-    Args:
-        session: Database session
-        user_id: User ID to filter by
-        limit: Maximum number of results
-        offset: Number of results to skip
-
-    Returns:
-        Tuple of (list of events, total count)
-    """
-    query = session.query(EventLogBase).filter(EventLogBase.user_id == user_id)
-
-    total = query.count()
-    events = query.order_by(EventLogBase.created_at.desc()).offset(offset).limit(limit).all()
-
-    return [EventLogRead.model_validate(e) for e in events], total
-
-
-def get_recent_events(
-    session: Session,
-    limit: int = 10,
-) -> list[EventLogRead]:
-    """
-    Get the most recent events (for dashboard).
-
-    Args:
-        session: Database session
-        limit: Maximum number of results
-
-    Returns:
-        List of recent events
-    """
-    events = session.query(EventLogBase).order_by(EventLogBase.created_at.desc()).limit(limit).all()
-    return [EventLogRead.model_validate(e) for e in events]
-
-
-def get_event_stats(session: Session) -> dict[str, int]:
-    """
-    Get event statistics for dashboard.
-
-    Returns:
-        Dictionary with event counts by action prefix
-    """
-    # Count events by category (action prefix)
-    results = (
-        session.query(
-            func.split_part(EventLogBase.action, ".", 1).label("category"),
-            func.count().label("count"),
-        )
-        .group_by("category")
-        .all()
-    )
-    return {r.category: r.count for r in results}
