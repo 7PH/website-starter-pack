@@ -13,6 +13,7 @@ import json
 from pydantic import TypeAdapter
 
 from .convert_models_core import CoreModels
+from .schemas.config_ext import BackendConfig
 from .schemas.conversation import (
     ConversationCreate,
     ConversationDetail,
@@ -31,7 +32,8 @@ from .schemas.user_ext import UserCustomData, UserPreviewCustomData
 # ============================================================
 
 ProjectModels = (
-    ConversationCreate
+    BackendConfig
+    | ConversationCreate
     | ConversationRead
     | ConversationDetail
     | ConversationListResponse

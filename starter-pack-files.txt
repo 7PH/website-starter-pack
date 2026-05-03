@@ -16,6 +16,7 @@ app/backend/src/controllers/__init__.py
 app/backend/src/controllers/admin.py
 app/backend/src/controllers/auth.py
 app/backend/src/controllers/backups.py
+app/backend/src/controllers/config.py
 app/backend/src/controllers/db_health.py
 app/backend/src/controllers/healthcheck.py
 app/backend/src/controllers/internal.py
@@ -58,6 +59,8 @@ app/backend/src/schemas/__init__.py
 app/backend/src/schemas/admin.py
 app/backend/src/schemas/backup.py
 app/backend/src/schemas/base.py
+app/backend/src/schemas/config.py
+app/backend/src/schemas/config_ext.py:template
 app/backend/src/schemas/conversation.py
 app/backend/src/schemas/db_health.py
 app/backend/src/schemas/event_log.py
@@ -86,6 +89,7 @@ app/backend/tests/__init__.py
 app/backend/tests/conftest.py
 app/backend/tests/test_admin_billing.py
 app/backend/tests/test_auth_code.py
+app/backend/tests/test_config.py
 app/backend/tests/test_bug_report.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_managed_account_permissions.py
@@ -114,7 +118,9 @@ app/frontend/config/i18n.ts
 app/frontend/config/main-nav.ts
 app/frontend/config/security-headers.ts:template
 app/frontend/stores/useAuth.ts
+app/frontend/stores/useBackendConfig.ts
 app/frontend/stores/useModal.ts
+
 app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useStripe.ts
@@ -244,6 +250,7 @@ app/frontend/pages/admin/organizations/index.vue
 app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
 app/frontend/pages/admin/users/[id].vue
+app/frontend/plugins/backend-config.ts
 app/frontend/plugins/auth.client.ts
 app/frontend/server/routes/robots.txt.ts
 app/frontend/locales/core-en.json

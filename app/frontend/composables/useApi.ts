@@ -41,7 +41,9 @@ function getRetryDelay(attempt: number, baseDelay: number, maxDelay: number): nu
  */
 async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
     const authStore = useAuth();
-    const basepath = useRuntimeConfig().public.apiBase;
+    const config = useRuntimeConfig();
+    // SSR uses the internal Docker hostname; browser uses the public relative path.
+    const basepath = import.meta.server && config.apiInternal ? config.apiInternal : config.public.apiBase;
 
     const {
         retries = 0,

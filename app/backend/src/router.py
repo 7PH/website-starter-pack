@@ -13,6 +13,7 @@ from .controllers import (
     admin,
     auth,
     backups,
+    config,
     db_health,
     healthcheck,
     internal,
@@ -31,6 +32,7 @@ router_unversioned.include_router(healthcheck.router, tags=["Healthcheck"])
 # V1 API routes
 router_v1 = APIRouter(prefix="/v1")
 router_v1.include_router(healthcheck.router, tags=["Healthcheck"])  # Also available versioned for frontend
+router_v1.include_router(config.router, tags=["Config"])
 router_v1.include_router(users.router, tags=["Users"])
 router_v1.include_router(auth.router, tags=["Auth"])
 if STRIPE_ENABLED:
