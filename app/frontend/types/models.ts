@@ -71,6 +71,7 @@ export type Models =
   | ManagedAccountBulkCreated
   | PublicPickerEntry
   | PublicPickerPayload
+  | BackendConfig
   | ConversationCreate
   | ConversationRead
   | ConversationDetail
@@ -363,6 +364,21 @@ export type ManagedAccountId = number;
 export type DisplayName7 = string | null;
 export type GroupName = string;
 export type Members1 = PublicPickerEntry[];
+export type PasswordMinLength = number;
+export type OrgMaxPerUser = number;
+export type OrgMaxMembers = number;
+export type OrgInvitationExpiryDays = number;
+export type ManagedAccountGroupMaxPerUser = number;
+export type ManagedAccountsMaxPerUser = number;
+export type StripeEnabled = boolean;
+export type OrganizationsEnabled = boolean;
+export type OrgInvitationsEnabled = boolean;
+export type ManagedAccountsEnabled = boolean;
+export type LlmEnabled = boolean;
+export type OrgSelfServiceSubscriptions = boolean;
+export type OrgSelfServiceCreation = boolean;
+export type LlmProvider = string;
+export type LlmModel = string;
 export type Subject = string;
 export type Content = string;
 /**
@@ -988,6 +1004,23 @@ export interface PublicPickerEntry {
 export interface PublicPickerPayload {
   group_name: GroupName;
   members: Members1;
+}
+export interface BackendConfig {
+  password_min_length: PasswordMinLength;
+  org_max_per_user: OrgMaxPerUser;
+  org_max_members: OrgMaxMembers;
+  org_invitation_expiry_days: OrgInvitationExpiryDays;
+  managed_account_group_max_per_user: ManagedAccountGroupMaxPerUser;
+  managed_accounts_max_per_user: ManagedAccountsMaxPerUser;
+  stripe_enabled: StripeEnabled;
+  organizations_enabled: OrganizationsEnabled;
+  org_invitations_enabled: OrgInvitationsEnabled;
+  managed_accounts_enabled: ManagedAccountsEnabled;
+  llm_enabled: LlmEnabled;
+  org_self_service_subscriptions: OrgSelfServiceSubscriptions;
+  org_self_service_creation: OrgSelfServiceCreation;
+  llm_provider: LlmProvider;
+  llm_model: LlmModel;
 }
 /**
  * Schema for creating a new support conversation.

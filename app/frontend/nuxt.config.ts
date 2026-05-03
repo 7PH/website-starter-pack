@@ -53,6 +53,9 @@ export default defineNuxtConfig({
     },
 
     runtimeConfig: {
+        // Server-only (NOT exposed to the browser). Used by useApi during SSR
+        // to reach the backend over the Docker network rather than the public URL.
+        apiInternal: '', // NUXT_API_INTERNAL — e.g. http://backend:80/v1
         public: {
             appName: 'My App', // NUXT_PUBLIC_APP_NAME
             apiBase: '/api/v1', // NUXT_PUBLIC_API_BASE - relative path, same origin

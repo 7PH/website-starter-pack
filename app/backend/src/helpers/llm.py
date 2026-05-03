@@ -22,17 +22,11 @@ def init_llm() -> None:
         logger.info("LLM integration disabled")
         return
 
-    # LiteLLM uses environment variables for API keys
-    # Set the appropriate key based on provider
+    # LiteLLM looks up keys by provider-specific env var name
+    # (ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, GROQ_API_KEY, ...).
+    # Mirror LLM_API_KEY into the slot LiteLLM expects.
     if LLM_API_KEY:
-        if LLM_PROVIDER == "anthropic":
-            os.environ["ANTHROPIC_API_KEY"] = LLM_API_KEY
-        elif LLM_PROVIDER == "openai":
-            os.environ["OPENAI_API_KEY"] = LLM_API_KEY
-        elif LLM_PROVIDER == "azure":
-            os.environ["AZURE_API_KEY"] = LLM_API_KEY
-        # For other providers, set the generic key
-        # LiteLLM will pick it up based on the model prefix
+        os.environ[f"{LLM_PROVIDER.upper()}_API_KEY"] = LLM_API_KEY
 
     if LLM_API_BASE and LLM_PROVIDER == "azure":
         os.environ["AZURE_API_BASE"] = LLM_API_BASE

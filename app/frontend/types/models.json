@@ -356,6 +356,89 @@
       "title": "AuthMessageResponse",
       "type": "object"
     },
+    "BackendConfig": {
+      "properties": {
+        "password_min_length": {
+          "title": "Password Min Length",
+          "type": "integer"
+        },
+        "org_max_per_user": {
+          "title": "Org Max Per User",
+          "type": "integer"
+        },
+        "org_max_members": {
+          "title": "Org Max Members",
+          "type": "integer"
+        },
+        "org_invitation_expiry_days": {
+          "title": "Org Invitation Expiry Days",
+          "type": "integer"
+        },
+        "managed_account_group_max_per_user": {
+          "title": "Managed Account Group Max Per User",
+          "type": "integer"
+        },
+        "managed_accounts_max_per_user": {
+          "title": "Managed Accounts Max Per User",
+          "type": "integer"
+        },
+        "stripe_enabled": {
+          "title": "Stripe Enabled",
+          "type": "boolean"
+        },
+        "organizations_enabled": {
+          "title": "Organizations Enabled",
+          "type": "boolean"
+        },
+        "org_invitations_enabled": {
+          "title": "Org Invitations Enabled",
+          "type": "boolean"
+        },
+        "managed_accounts_enabled": {
+          "title": "Managed Accounts Enabled",
+          "type": "boolean"
+        },
+        "llm_enabled": {
+          "title": "Llm Enabled",
+          "type": "boolean"
+        },
+        "org_self_service_subscriptions": {
+          "title": "Org Self Service Subscriptions",
+          "type": "boolean"
+        },
+        "org_self_service_creation": {
+          "title": "Org Self Service Creation",
+          "type": "boolean"
+        },
+        "llm_provider": {
+          "title": "Llm Provider",
+          "type": "string"
+        },
+        "llm_model": {
+          "title": "Llm Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "password_min_length",
+        "org_max_per_user",
+        "org_max_members",
+        "org_invitation_expiry_days",
+        "managed_account_group_max_per_user",
+        "managed_accounts_max_per_user",
+        "stripe_enabled",
+        "organizations_enabled",
+        "org_invitations_enabled",
+        "managed_accounts_enabled",
+        "llm_enabled",
+        "org_self_service_subscriptions",
+        "org_self_service_creation",
+        "llm_provider",
+        "llm_model"
+      ],
+      "title": "BackendConfig",
+      "type": "object"
+    },
     "BackupInfo": {
       "description": "Information about a single backup file.",
       "properties": {
@@ -3477,6 +3560,9 @@
     },
     {
       "$ref": "#/$defs/PublicPickerPayload"
+    },
+    {
+      "$ref": "#/$defs/BackendConfig"
     },
     {
       "$ref": "#/$defs/ConversationCreate"
