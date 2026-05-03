@@ -14,6 +14,24 @@ export function useAccountActions() {
     const { t } = useI18n();
     const { showSuccess, showError } = useToastHelpers();
 
+    /** Run an API call, toast success/error, return true on success. */
+    async function withToast<T>(
+        op: () => Promise<T>,
+        successKey: string,
+        errorKey = 'core.errors.generic',
+        onSuccess?: (result: T) => void,
+    ): Promise<boolean> {
+        try {
+            const result = await op();
+            showSuccess(t(successKey));
+            onSuccess?.(result);
+            return true;
+        } catch (error) {
+            showError(error, errorKey);
+            return false;
+        }
+    }
+
     // ============================================
     // Auth Actions (from useAuthActions)
     // ============================================
@@ -22,15 +40,12 @@ export function useAccountActions() {
      * Login with email and password.
      */
     async function login(email: string, password: string): Promise<boolean> {
-        try {
-            const data = await usersApi.login(email, password);
-            auth.saveUserToken(data);
-            showSuccess(t('core.auth.loginSuccess'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.auth.invalidCredentials');
-            return false;
-        }
+        return withToast(
+            () => usersApi.login(email, password),
+            'core.auth.loginSuccess',
+            'core.auth.invalidCredentials',
+            (data) => auth.saveUserToken(data),
+        );
     }
 
     /**
@@ -43,25 +58,23 @@ export function useAccountActions() {
         lastName: string,
         customData?: UserCustomData,
     ): Promise<boolean> {
-        try {
-            const response = await usersApi.signup({
-                email,
-                password,
-                first_name: firstName,
-                last_name: lastName,
-                custom_data: customData,
-            });
-            auth.saveUserToken(response);
-            showSuccess(t('core.auth.registerSuccess'));
-
-            // Trigger email verification send (fire and forget)
-            sendVerificationEmail().catch(() => {});
-
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(
+            () =>
+                usersApi.signup({
+                    email,
+                    password,
+                    first_name: firstName,
+                    last_name: lastName,
+                    custom_data: customData,
+                }),
+            'core.auth.registerSuccess',
+            'core.errors.generic',
+            (response) => {
+                auth.saveUserToken(response);
+                // Trigger email verification send (fire and forget)
+                sendVerificationEmail().catch(() => {});
+            },
+        );
     }
 
     /**
@@ -83,14 +96,7 @@ export function useAccountActions() {
      * Reset password with token from email link.
      */
     async function resetPassword(token: string, password: string): Promise<boolean> {
-        try {
-            await authApi.resetPassword(token, password);
-            showSuccess(t('core.auth.passwordResetSuccess'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(() => authApi.resetPassword(token, password), 'core.auth.passwordResetSuccess');
     }
 
     /**
@@ -112,28 +118,14 @@ export function useAccountActions() {
      * Verify email with token from email link.
      */
     async function verifyEmail(token: string): Promise<boolean> {
-        try {
-            await authApi.verifyEmail(token);
-            showSuccess(t('core.auth.emailVerified'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(() => authApi.verifyEmail(token), 'core.auth.emailVerified');
     }
 
     /**
      * Confirm email change with token from email link.
      */
     async function confirmEmailChange(token: string): Promise<boolean> {
-        try {
-            await authApi.confirmEmailChange(token);
-            showSuccess(t('core.account.email.changeSuccess'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(() => authApi.confirmEmailChange(token), 'core.account.email.changeSuccess');
     }
 
     /**
@@ -153,47 +145,32 @@ export function useAccountActions() {
      * Update user profile (first name, last name, optional custom_data).
      */
     async function updateProfile(firstName: string, lastName: string, customData?: UserCustomData): Promise<boolean> {
-        try {
-            const updatedUser = await usersApi.updateProfile({
-                first_name: firstName,
-                last_name: lastName,
-                custom_data: customData,
-            });
-            auth.updateUser(updatedUser);
-            showSuccess(t('core.account.profileSaved'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(
+            () => usersApi.updateProfile({ first_name: firstName, last_name: lastName, custom_data: customData }),
+            'core.account.profileSaved',
+            'core.errors.generic',
+            (updated) => auth.updateUser(updated),
+        );
     }
 
     /**
      * Request email change. Sends confirmation email to the new address.
      */
     async function requestEmailChange(newEmail: string, password: string): Promise<boolean> {
-        try {
-            await usersApi.requestEmailChange({ new_email: newEmail, password });
-            showSuccess(t('core.account.email.verificationSent'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(
+            () => usersApi.requestEmailChange({ new_email: newEmail, password }),
+            'core.account.email.verificationSent',
+        );
     }
 
     /**
      * Change password.
      */
     async function changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
-        try {
-            await usersApi.changePassword({ old_password: oldPassword, new_password: newPassword });
-            showSuccess(t('core.account.password.changeSuccess'));
-            return true;
-        } catch (error) {
-            showError(error, 'core.errors.generic');
-            return false;
-        }
+        return withToast(
+            () => usersApi.changePassword({ old_password: oldPassword, new_password: newPassword }),
+            'core.account.password.changeSuccess',
+        );
     }
 
     return {

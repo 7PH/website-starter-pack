@@ -3,8 +3,7 @@
 import { requestAccountDeletion } from '~/utils/api/users';
 
 const { t } = useI18n();
-const { showSuccess } = useToastHelpers();
-const toast = useToast();
+const { showSuccess, showErrorWithTitle } = useToastHelpers();
 
 const isModalOpen = ref(false);
 const isSending = ref(false);
@@ -15,15 +14,14 @@ async function sendDeletionEmail() {
         await requestAccountDeletion();
         isModalOpen.value = false;
         showSuccess(t('core.account.privacy.requestModal.sentTitle'), t('core.account.privacy.requestModal.sentBody'));
-    } catch {
+    } catch (error) {
         // Always direct the user to support so they have a path forward when
         // the in-app flow can't complete (email outage, rate limit, etc.).
-        toast.add({
-            title: t('core.account.privacy.requestModal.failedTitle'),
-            description: t('core.account.privacy.requestModal.failedBody'),
-            color: 'error',
-            duration: 8000,
-        });
+        showErrorWithTitle(
+            t('core.account.privacy.requestModal.failedTitle'),
+            error,
+            'core.account.privacy.requestModal.failedBody',
+        );
     } finally {
         isSending.value = false;
     }

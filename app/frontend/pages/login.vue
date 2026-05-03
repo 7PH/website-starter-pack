@@ -9,53 +9,33 @@ const auth = useAuth();
 const accountActions = useAccountActions();
 const { t } = useI18n();
 
-// Form modes
 type AuthMode = 'login' | 'signup' | 'forgot-password';
 const initialMode = (route.query.mode as AuthMode) || 'login';
 const mode = ref<AuthMode>(initialMode);
 
-// Redirect if already logged in
 onMounted(() => {
-    if (auth.isLoggedIn) {
-        const redirectTo = (route.query.redirect as string) || '/';
-        navigateTo(redirectTo);
-    }
+    if (auth.isLoggedIn) redirectAfterAuth();
 });
 
-// Loading and errors
-const isLoading = ref(false);
-const errors = ref<Record<string, string>>({});
+const {
+    loginForm,
+    signupForm,
+    forgotPasswordForm,
+    passwordVisibility,
+    isLoading,
+    errors,
+    validateLogin,
+    validateSignup,
+    validateForgotPassword,
+    withLoading,
+} = useAuthForms();
 
-// Password visibility toggles
-const showLoginPassword = ref(false);
-const showSignupPassword = ref(false);
-const showSignupConfirmPassword = ref(false);
-
-// Login form
-const loginForm = reactive({
-    email: '',
-    password: '',
-    rememberMe: false,
-});
-
-// Signup form
-const signupForm = reactive({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    customData: {} as UserCustomData,
-});
+function redirectAfterAuth() {
+    navigateTo((route.query.redirect as string) || '/');
+}
 
 const signupMetadataRef = ref<{ validate: () => boolean } | null>(null);
 
-// Forgot password form
-const forgotPasswordForm = reactive({
-    email: '',
-});
-
-// Computed title
 const title = computed(() => {
     switch (mode.value) {
         case 'login':
@@ -67,89 +47,37 @@ const title = computed(() => {
     }
 });
 
-// Validation
-function validateLogin(): boolean {
-    errors.value = {};
-    if (!loginForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    if (!loginForm.password) {
-        errors.value.password = t('core.validation.required');
-    }
-    return Object.keys(errors.value).length === 0;
-}
-
-function validateSignup(): boolean {
-    errors.value = {};
-    if (!signupForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    if (!signupForm.firstName) {
-        errors.value.firstName = t('core.validation.required');
-    }
-    if (!signupForm.lastName) {
-        errors.value.lastName = t('core.validation.required');
-    }
-    if (!signupForm.password) {
-        errors.value.password = t('core.validation.required');
-    } else if (signupForm.password.length < 8) {
-        errors.value.password = t('core.auth.passwordTooShort');
-    }
-    if (signupForm.password !== signupForm.confirmPassword) {
-        errors.value.confirmPassword = t('core.auth.passwordMismatch');
-    }
+function validateSignupWithMetadata(): boolean {
+    const baseValid = validateSignup();
     signupMetadataRef.value?.validate(); // emits errors via @validate handler
-    return Object.keys(errors.value).length === 0;
-}
-
-function validateForgotPassword(): boolean {
-    errors.value = {};
-    if (!forgotPasswordForm.email) {
-        errors.value.email = t('core.validation.required');
-    }
-    return Object.keys(errors.value).length === 0;
+    return baseValid && Object.keys(errors.value).length === 0;
 }
 
 // Actions
 async function handleLogin() {
     if (!validateLogin()) return;
-
-    isLoading.value = true;
-    const success = await accountActions.login(loginForm.email, loginForm.password);
-    isLoading.value = false;
-
-    if (success) {
-        const redirectTo = (route.query.redirect as string) || '/';
-        navigateTo(redirectTo);
+    if (await withLoading(() => accountActions.login(loginForm.email, loginForm.password))) {
+        redirectAfterAuth();
     }
 }
 
 async function handleSignup() {
-    if (!validateSignup()) return;
-
-    isLoading.value = true;
-    const success = await accountActions.signup(
-        signupForm.email,
-        signupForm.password,
-        signupForm.firstName,
-        signupForm.lastName,
-        signupForm.customData,
+    if (!validateSignupWithMetadata()) return;
+    const success = await withLoading(() =>
+        accountActions.signup(
+            signupForm.email,
+            signupForm.password,
+            signupForm.firstName,
+            signupForm.lastName,
+            signupForm.customData,
+        ),
     );
-    isLoading.value = false;
-
-    if (success) {
-        const redirectTo = (route.query.redirect as string) || '/';
-        navigateTo(redirectTo);
-    }
+    if (success) redirectAfterAuth();
 }
 
 async function handleForgotPassword() {
     if (!validateForgotPassword()) return;
-
-    isLoading.value = true;
-    await accountActions.requestPasswordReset(forgotPasswordForm.email);
-    isLoading.value = false;
-
+    await withLoading(() => accountActions.requestPasswordReset(forgotPasswordForm.email));
     mode.value = 'login';
 }
 
@@ -182,7 +110,7 @@ function switchMode(newMode: AuthMode) {
             <UFormField :label="t('core.auth.password')" :error="errors.password">
                 <UInput
                     v-model="loginForm.password"
-                    :type="showLoginPassword ? 'text' : 'password'"
+                    :type="passwordVisibility.login ? 'text' : 'password'"
                     autocomplete="current-password"
                     :placeholder="t('core.auth.password')"
                     :color="errors.password ? 'error' : undefined"
@@ -194,9 +122,9 @@ function switchMode(newMode: AuthMode) {
                             color="neutral"
                             variant="link"
                             size="sm"
-                            :icon="showLoginPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            :aria-label="showLoginPassword ? 'Hide password' : 'Show password'"
-                            @click="showLoginPassword = !showLoginPassword"
+                            :icon="passwordVisibility.login ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="passwordVisibility.login ? 'Hide password' : 'Show password'"
+                            @click="passwordVisibility.login = !passwordVisibility.login"
                         />
                     </template>
                 </UInput>
@@ -267,7 +195,7 @@ function switchMode(newMode: AuthMode) {
             <UFormField :label="t('core.auth.password')" :error="errors.password">
                 <UInput
                     v-model="signupForm.password"
-                    :type="showSignupPassword ? 'text' : 'password'"
+                    :type="passwordVisibility.signup ? 'text' : 'password'"
                     autocomplete="new-password"
                     :placeholder="t('core.auth.password')"
                     :color="errors.password ? 'error' : undefined"
@@ -279,8 +207,8 @@ function switchMode(newMode: AuthMode) {
                             color="neutral"
                             variant="link"
                             size="sm"
-                            :icon="showSignupPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="showSignupPassword = !showSignupPassword"
+                            :icon="passwordVisibility.signup ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            @click="passwordVisibility.signup = !passwordVisibility.signup"
                         />
                     </template>
                 </UInput>
@@ -289,7 +217,7 @@ function switchMode(newMode: AuthMode) {
             <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
                 <UInput
                     v-model="signupForm.confirmPassword"
-                    :type="showSignupConfirmPassword ? 'text' : 'password'"
+                    :type="passwordVisibility.signupConfirm ? 'text' : 'password'"
                     autocomplete="new-password"
                     :placeholder="t('core.auth.confirmPassword')"
                     :color="errors.confirmPassword ? 'error' : undefined"
@@ -301,8 +229,8 @@ function switchMode(newMode: AuthMode) {
                             color="neutral"
                             variant="link"
                             size="sm"
-                            :icon="showSignupConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="showSignupConfirmPassword = !showSignupConfirmPassword"
+                            :icon="passwordVisibility.signupConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            @click="passwordVisibility.signupConfirm = !passwordVisibility.signupConfirm"
                         />
                     </template>
                 </UInput>

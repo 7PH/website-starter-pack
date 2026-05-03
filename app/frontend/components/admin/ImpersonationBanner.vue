@@ -3,7 +3,7 @@
 <script lang="ts" setup>
 const auth = useAuth();
 const api = useApi();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 const { t } = useI18n();
 const userDisplay = useUserDisplay();
 
@@ -24,21 +24,11 @@ async function stopImpersonation() {
             token_type: 'bearer',
         });
 
-        toast.add({
-            title: t('core.admin.impersonation.ended'),
-            description: t('core.admin.impersonation.backToAdmin'),
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess(t('core.admin.impersonation.ended'), t('core.admin.impersonation.backToAdmin'));
 
         await navigateTo('/admin/users');
     } catch (error) {
-        toast.add({
-            title: t('core.errors.generic'),
-            description: t('core.admin.impersonation.errorStopping'),
-            color: 'error',
-            duration: 3000,
-        });
+        showError(error, 'core.admin.impersonation.errorStopping');
     } finally {
         isLoading.value = false;
     }
@@ -48,11 +38,7 @@ async function stopOpenAs() {
     isLoading.value = true;
     try {
         auth.stopOpenAs();
-        toast.add({
-            title: t('core.managed_accounts.openAsEnded'),
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess(t('core.managed_accounts.openAsEnded'));
         await navigateTo('/managed-account-groups');
     } finally {
         isLoading.value = false;

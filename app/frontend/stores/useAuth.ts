@@ -40,28 +40,12 @@ export const useAuth = defineStore('auth', {
     },
     actions: {
         /**
-         * Initialize auth state from localStorage.
-         * Should be called on app startup (client-side only).
-         * Attempts to refresh the token to extend the session.
+         * Initialize auth state from localStorage on app startup (client-side
+         * only). The token is already loaded synchronously via getInitialToken;
+         * this just refreshes it to extend the session.
          */
-        async init(): Promise<void> {
-            if (import.meta.server || !this.token) {
-                return;
-            }
-
-            // Try to refresh the token (token already loaded synchronously via getInitialToken)
-            try {
-                const freshToken = await $fetch<UserTokenUpdate>('/api/v1/users/me/token', {
-                    method: 'PUT',
-                    headers: {
-                        Authorization: `Bearer ${this.token.access_token}`,
-                    },
-                });
-                this.saveUserToken(freshToken);
-            } catch {
-                // Token invalid or expired - logout
-                this.logout();
-            }
+        init(): Promise<void> {
+            return this.refreshToken();
         },
 
         /**

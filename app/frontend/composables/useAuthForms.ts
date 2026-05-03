@@ -6,6 +6,8 @@
  */
 export function useAuthForms() {
     const { t } = useI18n();
+    const backendConfig = useBackendConfig();
+    const minPasswordLength = computed(() => backendConfig.config?.password_min_length ?? 8);
 
     // Form data
     const loginForm = reactive({
@@ -20,6 +22,7 @@ export function useAuthForms() {
         confirmPassword: '',
         firstName: '',
         lastName: '',
+        customData: {} as UserCustomData,
     });
 
     const forgotPasswordForm = reactive({
@@ -43,6 +46,16 @@ export function useAuthForms() {
     // Loading and errors
     const isLoading = ref(false);
     const errors = ref<Record<string, string>>({});
+
+    /** Run an op while flipping isLoading. Caller awaits the result. */
+    async function withLoading<T>(op: () => Promise<T>): Promise<T> {
+        isLoading.value = true;
+        try {
+            return await op();
+        } finally {
+            isLoading.value = false;
+        }
+    }
 
     // Clear all errors
     function clearErrors() {
@@ -74,8 +87,8 @@ export function useAuthForms() {
         }
         if (!signupForm.password) {
             errors.value.password = t('core.validation.required');
-        } else if (signupForm.password.length < 8) {
-            errors.value.password = t('core.auth.passwordTooShort');
+        } else if (signupForm.password.length < minPasswordLength.value) {
+            errors.value.password = t('core.auth.passwordTooShort', { minLength: minPasswordLength.value });
         }
         if (signupForm.password !== signupForm.confirmPassword) {
             errors.value.confirmPassword = t('core.auth.passwordMismatch');
@@ -95,8 +108,8 @@ export function useAuthForms() {
         errors.value = {};
         if (!resetPasswordForm.password) {
             errors.value.password = t('core.validation.required');
-        } else if (resetPasswordForm.password.length < 8) {
-            errors.value.password = t('core.auth.passwordTooShort');
+        } else if (resetPasswordForm.password.length < minPasswordLength.value) {
+            errors.value.password = t('core.auth.passwordTooShort', { minLength: minPasswordLength.value });
         }
         if (resetPasswordForm.password !== resetPasswordForm.confirmPassword) {
             errors.value.confirmPassword = t('core.auth.passwordMismatch');
@@ -115,6 +128,7 @@ export function useAuthForms() {
         signupForm.confirmPassword = '';
         signupForm.firstName = '';
         signupForm.lastName = '';
+        signupForm.customData = {} as UserCustomData;
 
         forgotPasswordForm.email = '';
 
@@ -151,6 +165,7 @@ export function useAuthForms() {
         // State
         isLoading,
         errors,
+        withLoading,
 
         // Validation
         validateLogin,

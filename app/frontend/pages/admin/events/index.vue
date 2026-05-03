@@ -1,6 +1,8 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { formatAction, formatDateTime } from '~/utils/formatters';
+
 definePageMeta({
     middleware: ['admin'],
 });
@@ -52,17 +54,6 @@ const {
         }),
     { watch: [actionFilter, userIdFilter, fromDate, toDate], server: false },
 );
-
-function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleString();
-}
-
-function formatAction(action: string): string {
-    return action
-        .split('.')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-}
 
 function getActionColor(
     action: string,
@@ -154,7 +145,7 @@ function clearFilters() {
                     </template>
 
                     <template #created_at-cell="{ row }">
-                        {{ row.original.created_at ? formatDate(row.original.created_at) : '-' }}
+                        {{ formatDateTime(row.original.created_at) }}
                     </template>
 
                     <template #details-cell="{ row }">

@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
+import { formatDate, formatTime, previewLabel } from '~/utils/formatters';
 import { CORE_CONVERSATION_SUBTYPES, type ConversationSubtypeValue } from '~/config/conversation-subtypes';
 import { PROJECT_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes-ext';
 
@@ -15,11 +16,8 @@ const allSubtypes = [...CORE_CONVERSATION_SUBTYPES, ...PROJECT_CONVERSATION_SUBT
 const subtypeFilter = ref<'all' | ConversationSubtypeValue>('all');
 const subtypeOptions = [{ value: 'all' as const, label: 'All' }, ...allSubtypes];
 
-// Pagination
-const page = ref(1);
-const itemsPerPage = 50;
+const { page, limit, offset } = useTableState({ defaultLimit: 50 });
 
-// Reset page when filters change
 watch([includeClosed, subtypeFilter], () => {
     page.value = 1;
 });
@@ -30,13 +28,13 @@ const { data: conversationsData, pending } = await useAsyncData<ConversationList
         conversationsApi.adminGetConversations({
             includeClosed: includeClosed.value,
             subtype: subtypeFilter.value !== 'all' ? subtypeFilter.value : undefined,
-            limit: itemsPerPage,
-            offset: (page.value - 1) * itemsPerPage,
+            limit: limit.value,
+            offset: offset.value,
         }),
     { watch: [includeClosed, subtypeFilter, page], server: false },
 );
 
-const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / itemsPerPage));
+const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / limit.value));
 
 // Table columns configuration
 const columns = [
@@ -48,22 +46,8 @@ const columns = [
     { accessorKey: 'actions', header: 'Actions' },
 ];
 
-function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString();
-}
-
-function formatTime(dateStr: string | null | undefined): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
 function getUserDisplay(conversation: ConversationRead): string {
-    if (conversation.created_by) {
-        const name = [conversation.created_by.first_name, conversation.created_by.last_name].filter(Boolean).join(' ');
-        return name || conversation.created_by.email;
-    }
-    return 'Unknown';
+    return previewLabel(conversation.created_by);
 }
 </script>
 
@@ -153,12 +137,12 @@ function getUserDisplay(conversation: ConversationRead): string {
                 <!-- Pagination -->
                 <div v-if="totalPages > 1" class="pagination-footer">
                     <div class="pagination-info">
-                        Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
-                            Math.min(page * itemsPerPage, conversationsData?.total ?? 0)
+                        Showing {{ (page - 1) * limit + 1 }}-{{
+                            Math.min(page * limit, conversationsData?.total ?? 0)
                         }}
                         of {{ conversationsData?.total ?? 0 }}
                     </div>
-                    <UPagination v-model="page" :total="conversationsData?.total ?? 0" :items-per-page="itemsPerPage" />
+                    <UPagination v-model="page" :total="conversationsData?.total ?? 0" :items-per-page="limit" />
                 </div>
             </UCard>
         </div>

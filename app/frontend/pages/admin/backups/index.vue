@@ -1,13 +1,15 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { formatDateTime } from '~/utils/formatters';
+
 definePageMeta({
     middleware: ['admin'],
 });
 
 const api = useApi();
 const auth = useAuth();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 
 const creating = ref(false);
 const deleting = ref<string | null>(null);
@@ -32,10 +34,6 @@ const {
     refresh,
 } = await useAsyncData<BackupListResponse>('admin-backups', () => api.get('/admin/backups'), { server: false });
 
-function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleString();
-}
-
 function formatSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -46,20 +44,10 @@ async function createBackup() {
     creating.value = true;
     try {
         await api.post('/admin/backups');
-        toast.add({
-            title: 'Backup created',
-            description: 'Database backup completed successfully',
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('Backup created', 'Database backup completed successfully');
         refresh();
-    } catch {
-        toast.add({
-            title: 'Backup failed',
-            description: 'Failed to create database backup',
-            color: 'error',
-            duration: 5000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     } finally {
         creating.value = false;
     }
@@ -86,13 +74,8 @@ async function downloadBackup(filename: string) {
         link.download = filename;
         link.click();
         URL.revokeObjectURL(link.href);
-    } catch {
-        toast.add({
-            title: 'Download failed',
-            description: 'Failed to download backup file',
-            color: 'error',
-            duration: 3000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     }
 }
 
@@ -107,20 +90,10 @@ async function deleteBackup() {
     deleting.value = backupToDelete.value;
     try {
         await api.delete(`/admin/backups/${backupToDelete.value}`);
-        toast.add({
-            title: 'Backup deleted',
-            description: 'Backup file removed successfully',
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('Backup deleted', 'Backup file removed successfully');
         refresh();
-    } catch {
-        toast.add({
-            title: 'Delete failed',
-            description: 'Failed to delete backup file',
-            color: 'error',
-            duration: 5000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     } finally {
         deleting.value = null;
         showDeleteModal.value = false;
@@ -155,20 +128,10 @@ async function executeRestore() {
         const safetyBackup = await api.post<BackupInfo>(`/admin/backups/${backupToRestore.value}/restore`, {
             confirm_filename: backupToRestore.value,
         });
-        toast.add({
-            title: 'Database restored',
-            description: `Safety backup created: ${safetyBackup.filename}`,
-            color: 'success',
-            duration: 8000,
-        });
+        showSuccess('Database restored', `Safety backup created: ${safetyBackup.filename}`);
         refresh();
-    } catch {
-        toast.add({
-            title: 'Restore failed',
-            description: 'Failed to restore database from backup',
-            color: 'error',
-            duration: 5000,
-        });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
     } finally {
         restoring.value = null;
         cancelRestore();
@@ -204,7 +167,7 @@ async function executeRestore() {
                     </template>
 
                     <template #created_at-cell="{ row }">
-                        {{ formatDate(row.original.created_at) }}
+                        {{ formatDateTime(row.original.created_at) }}
                     </template>
 
                     <template #actions-cell="{ row }">

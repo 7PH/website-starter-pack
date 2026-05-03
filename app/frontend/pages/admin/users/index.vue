@@ -1,46 +1,27 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { formatDate } from '~/utils/formatters';
+import { DELETED_FILTER_OPTIONS, YES_NO_FILTER_OPTIONS, yesNoToBool } from '~/utils/admin-filters';
+
 definePageMeta({
     middleware: ['admin'],
 });
 
 const api = useApi();
-const toast = useToast();
+const { showSuccess, showError } = useToastHelpers();
 const modal = useModalStore();
+const { impersonate } = useAdminImpersonation();
 
-const search = ref('');
-const searchDebounced = refDebounced(search, 300);
+const { search, debouncedSearch: searchDebounced, page, limit, offset } = useTableState({ defaultLimit: 100 });
 
 // Filters
 const isAdminFilter = ref('all');
 const isPremiumFilter = ref('all');
 const deletedFilter = ref('hide');
 
-const filterOptions = [
-    { label: 'All', value: 'all' },
-    { label: 'Yes', value: 'yes' },
-    { label: 'No', value: 'no' },
-];
-
-const deletedFilterOptions = [
-    { label: 'Hide deleted', value: 'hide' },
-    { label: 'Show all', value: 'all' },
-    { label: 'Only deleted', value: 'only' },
-];
-
-function filterToBool(value: string): boolean | undefined {
-    if (value === 'yes') return true;
-    if (value === 'no') return false;
-    return undefined;
-}
-
-// Pagination
-const page = ref(1);
-const itemsPerPage = 100;
-
-// Reset page when filters change
-watch([searchDebounced, isAdminFilter, isPremiumFilter, deletedFilter], () => {
+// useTableState resets page on debouncedSearch; reset on other filters too.
+watch([isAdminFilter, isPremiumFilter, deletedFilter], () => {
     page.value = 1;
 });
 
@@ -53,17 +34,17 @@ const {
     () =>
         api.get('/admin/users', {
             search: searchDebounced.value || undefined,
-            is_admin: filterToBool(isAdminFilter.value),
-            is_premium: filterToBool(isPremiumFilter.value),
+            is_admin: yesNoToBool(isAdminFilter.value),
+            is_premium: yesNoToBool(isPremiumFilter.value),
             include_deleted: deletedFilter.value !== 'hide' ? true : undefined,
             only_deleted: deletedFilter.value === 'only' ? true : undefined,
-            limit: itemsPerPage,
-            offset: (page.value - 1) * itemsPerPage,
+            limit: limit.value,
+            offset: offset.value,
         }),
     { watch: [searchDebounced, isAdminFilter, isPremiumFilter, deletedFilter, page], server: false },
 );
 
-const totalPages = computed(() => Math.ceil((usersData.value?.total ?? 0) / itemsPerPage));
+const totalPages = computed(() => Math.ceil((usersData.value?.total ?? 0) / limit.value));
 
 // Table columns configuration
 const columns = [
@@ -74,11 +55,6 @@ const columns = [
     { accessorKey: 'created_at', header: 'Created' },
     { accessorKey: 'actions', header: 'Actions' },
 ];
-
-function formatDate(dateStr: string | null): string {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString();
-}
 
 function nameLabel(user: AdminUserRead): string {
     return user.display_label ?? `User #${user.id}`;
@@ -94,38 +70,8 @@ function authBadge(method: string | undefined | null) {
     return method ? AUTH_BADGE[method] : undefined;
 }
 
-async function impersonateUser(user: AdminUserRead) {
-    try {
-        const response = await api.post<ImpersonationResponse>('/admin/impersonations', { user_id: user.id });
-
-        // Get the auth store
-        const auth = useAuth();
-
-        // Save the new impersonation token
-        auth.saveUserToken({
-            access_token: response.access_token,
-            token_parsed: response.token_parsed,
-            user: response.user,
-            token_type: 'bearer',
-        });
-
-        toast.add({
-            title: 'Impersonation started',
-            description: `Now viewing as ${nameLabel(user)}`,
-            color: 'success',
-            duration: 3000,
-        });
-
-        // Navigate to home to experience as user
-        await navigateTo('/');
-    } catch (error) {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to start impersonation',
-            color: 'error',
-            duration: 3000,
-        });
-    }
+function impersonateUser(user: AdminUserRead) {
+    return impersonate(user.id, nameLabel(user));
 }
 
 async function deleteUser(user: AdminUserRead) {
@@ -141,20 +87,10 @@ async function deleteUser(user: AdminUserRead) {
 
     try {
         await api.delete(`/admin/users/${user.id}`);
-        toast.add({
-            title: 'User deleted',
-            description: `${label} has been deleted`,
-            color: 'success',
-            duration: 3000,
-        });
+        showSuccess('User deleted', `${label} has been deleted`);
         refresh();
     } catch (error) {
-        toast.add({
-            title: 'Error',
-            description: 'Failed to delete user',
-            color: 'error',
-            duration: 3000,
-        });
+        showError(error, 'core.errors.generic');
     }
 }
 </script>
@@ -179,15 +115,15 @@ async function deleteUser(user: AdminUserRead) {
                 />
                 <div class="filter-item">
                     <label class="filter-label">Admin</label>
-                    <USelect v-model="isAdminFilter" :items="filterOptions" class="w-24" />
+                    <USelect v-model="isAdminFilter" :items="YES_NO_FILTER_OPTIONS" class="w-24" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">Premium</label>
-                    <USelect v-model="isPremiumFilter" :items="filterOptions" class="w-24" />
+                    <USelect v-model="isPremiumFilter" :items="YES_NO_FILTER_OPTIONS" class="w-24" />
                 </div>
                 <div class="filter-item">
                     <label class="filter-label">Deleted</label>
-                    <USelect v-model="deletedFilter" :items="deletedFilterOptions" class="w-32" />
+                    <USelect v-model="deletedFilter" :items="DELETED_FILTER_OPTIONS" class="w-32" />
                 </div>
             </div>
 
@@ -258,12 +194,10 @@ async function deleteUser(user: AdminUserRead) {
                 <!-- Pagination -->
                 <div v-if="totalPages > 1" class="pagination-footer">
                     <div class="pagination-info">
-                        Showing {{ (page - 1) * itemsPerPage + 1 }}-{{
-                            Math.min(page * itemsPerPage, usersData?.total ?? 0)
-                        }}
-                        of {{ usersData?.total ?? 0 }}
+                        Showing {{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit, usersData?.total ?? 0) }} of
+                        {{ usersData?.total ?? 0 }}
                     </div>
-                    <UPagination v-model="page" :total="usersData?.total ?? 0" :items-per-page="itemsPerPage" />
+                    <UPagination v-model="page" :total="usersData?.total ?? 0" :items-per-page="limit" />
                 </div>
             </UCard>
         </div>

@@ -39,7 +39,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const toast = useToast();
+const { showError } = useToastHelpers();
 const router = useRouter();
 
 const isOpen = computed({
@@ -85,11 +85,7 @@ function buildSubject(): string {
 
 async function submit() {
     if (!canSubmit.value) {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.messageRequired'),
-            color: 'error',
-        });
+        showError(new Error(t('core.messages.messageRequired')), 'core.messages.messageRequired');
         return;
     }
 
@@ -102,12 +98,8 @@ async function submit() {
         });
         isOpen.value = false;
         router.push(`/messages/${conversation.id}`);
-    } catch {
-        toast.add({
-            title: t('core.messages.error'),
-            description: t('core.messages.createFailed'),
-            color: 'error',
-        });
+    } catch (error) {
+        showError(error, 'core.messages.createFailed');
     } finally {
         submitting.value = false;
     }
