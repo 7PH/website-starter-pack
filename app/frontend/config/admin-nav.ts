@@ -40,20 +40,20 @@ export const CORE_ADMIN_NAV: AdminNavItem[] = [
         order: 12,
     },
     {
-        label: 'Organizations',
+        label: 'Orgs',
         icon: 'i-lucide-building-2',
         to: '/admin/organizations',
         order: 15,
         condition: () => useRuntimeConfig().public.organizationsEnabled === true,
     },
     {
-        label: 'Event Logs',
+        label: 'Events',
         icon: 'i-lucide-list',
         to: '/admin/events',
         order: 20,
     },
     {
-        label: 'DB Health',
+        label: 'DB',
         icon: 'i-lucide-activity',
         to: '/admin/db-health',
         order: 25,
@@ -63,5 +63,11 @@ export const CORE_ADMIN_NAV: AdminNavItem[] = [
         icon: 'i-lucide-database-backup',
         to: '/admin/backups',
         order: 30,
+    },
+    {
+        label: 'Config',
+        icon: 'i-lucide-settings',
+        to: '/admin/config',
+        order: 35,
     },
 ];

@@ -247,6 +247,7 @@ app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
 app/frontend/components/managed-accounts/BulkImportModal.vue
 app/frontend/pages/admin/backups/index.vue
+app/frontend/pages/admin/config/index.vue
 app/frontend/pages/admin/db-health/index.vue
 app/frontend/pages/admin/events/index.vue
 app/frontend/pages/admin/messages/index.vue
