@@ -24,13 +24,11 @@ export async function getConversations(params?: {
     limit?: number;
     offset?: number;
 }): Promise<ConversationListResponse> {
-    const query = new URLSearchParams();
-    if (params?.includeClosed) query.set('include_closed', 'true');
-    if (params?.limit) query.set('limit', params.limit.toString());
-    if (params?.offset) query.set('offset', params.offset.toString());
-
-    const queryString = query.toString();
-    return useApi().get<ConversationListResponse>(`/conversations${queryString ? `?${queryString}` : ''}`);
+    return useApi().get<ConversationListResponse>('/conversations', {
+        include_closed: params?.includeClosed ? true : undefined,
+        limit: params?.limit,
+        offset: params?.offset,
+    });
 }
 
 /**
@@ -51,15 +49,11 @@ export async function getMessages(
         beforeId?: number;
     },
 ): Promise<MessageListResponse> {
-    const query = new URLSearchParams();
-    if (params?.limit) query.set('limit', params.limit.toString());
-    if (params?.offset) query.set('offset', params.offset.toString());
-    if (params?.beforeId) query.set('before_id', params.beforeId.toString());
-
-    const queryString = query.toString();
-    return useApi().get<MessageListResponse>(
-        `/conversations/${conversationId}/messages${queryString ? `?${queryString}` : ''}`,
-    );
+    return useApi().get<MessageListResponse>(`/conversations/${conversationId}/messages`, {
+        limit: params?.limit,
+        offset: params?.offset,
+        before_id: params?.beforeId,
+    });
 }
 
 /**
@@ -94,14 +88,12 @@ export async function adminGetConversations(params?: {
     limit?: number;
     offset?: number;
 }): Promise<ConversationListResponse> {
-    const query = new URLSearchParams();
-    if (params?.includeClosed) query.set('include_closed', 'true');
-    if (params?.subtype) query.set('subtype', params.subtype);
-    if (params?.limit) query.set('limit', params.limit.toString());
-    if (params?.offset) query.set('offset', params.offset.toString());
-
-    const queryString = query.toString();
-    return useApi().get<ConversationListResponse>(`/admin/conversations${queryString ? `?${queryString}` : ''}`);
+    return useApi().get<ConversationListResponse>('/admin/conversations', {
+        include_closed: params?.includeClosed ? true : undefined,
+        subtype: params?.subtype,
+        limit: params?.limit,
+        offset: params?.offset,
+    });
 }
 
 /**

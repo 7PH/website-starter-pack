@@ -1,52 +1,17 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 /**
- * Authentication middleware for protected routes.
- * Redirects to login page when accessing protected route while logged out.
+ * Auth middleware. Pages opt in with `definePageMeta({ middleware: ['auth'], auth: true })`;
+ * unauthenticated visitors are bounced to /login with ?redirect=<original path>.
  *
- * Usage in page:
- * definePageMeta({
- *   middleware: ['auth'],
- *   auth: true,
- * });
+ * external: true forces a full reload so the auth layout renders cleanly.
  */
-
 export default defineNuxtRouteMiddleware((to) => {
-    // Skip auth check on server - token is in localStorage, not available during SSR
-    if (import.meta.server) {
-        return;
-    }
+    // Token lives in localStorage — auth state isn't available during SSR.
+    if (import.meta.server) return;
+    if (!to.meta.auth) return;
 
-    const auth = useAuth();
+    if (useAuth().isLoggedIn) return;
 
-    // Check if route requires authentication
-    const authMeta = to.meta.auth;
-    if (!authMeta) {
-        return;
-    }
-
-    // Parse auth options
-    const authOptions = typeof authMeta === 'object' ? authMeta : { required: true };
-    const { required = true } = authOptions as {
-        required?: boolean;
-    };
-
-    if (!required) {
-        return;
-    }
-
-    // Check if user is logged in
-    if (auth.isLoggedIn) {
-        return;
-    }
-
-    // Redirect to login with return URL
-    // Use external: true to force full page reload, ensuring correct layout renders
-    return navigateTo(
-        {
-            path: '/login',
-            query: { redirect: to.fullPath },
-        },
-        { external: true },
-    );
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } }, { external: true });
 });

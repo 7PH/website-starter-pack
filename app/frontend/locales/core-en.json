@@ -27,7 +27,7 @@
             "passwordResetSuccess": "Password reset successfully",
             "invalidCredentials": "Invalid email or password",
             "emailTaken": "This email is already registered",
-            "passwordTooShort": "Password must be at least 8 characters",
+            "passwordTooShort": "Password must be at least {minLength} characters",
             "passwordMismatch": "Passwords do not match",
             "verificationEmailSent": "Verification email sent",
             "emailVerified": "Email verified successfully",
