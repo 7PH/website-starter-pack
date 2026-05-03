@@ -4,8 +4,9 @@
 
 import datetime
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ..constants import PASSWORD_MIN_LENGTH
 from ..helpers.user_display import display_for
 from .organization import UserOrganizationInfo
 from .user_ext import UserCustomData, UserPreviewCustomData
@@ -30,8 +31,7 @@ class UserRead(BaseModel):
     # Computed below; one source of truth for "what label do we show?".
     display_label: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @model_validator(mode="after")
     def _populate_display_label(self) -> "UserRead":
@@ -48,8 +48,7 @@ class UserPreviewRead(BaseModel):
     custom_data: UserPreviewCustomData = Field(default_factory=UserPreviewCustomData)
     display_label: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     # Replace last name with its first letter for privacy
     @field_validator("last_name")
@@ -67,7 +66,7 @@ class UserPreviewRead(BaseModel):
 
 class UserCreate(BaseModel):
     email: str = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     custom_data: UserCustomData | None = None
@@ -86,7 +85,7 @@ class UserChangeInfo(BaseModel):
 
 class UserChangePassword(BaseModel):
     old_password: str = Field(max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
 
 
 class UserChangeEmail(BaseModel):

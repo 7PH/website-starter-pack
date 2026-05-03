@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ManagedAccountGroupCreate(BaseModel):
@@ -27,8 +27,7 @@ class ManagedAccountGroupRead(BaseModel):
     archived_at: datetime | None
     member_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ManagedAccountCreate(BaseModel):
@@ -51,8 +50,7 @@ class ManagedAccountRead(BaseModel):
     created_at: datetime | None = None
     code: str | None = None  # active code, populated by the controller
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ManagedAccountCreated(BaseModel):

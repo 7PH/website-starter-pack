@@ -5,7 +5,7 @@
 import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EventLogCreate(BaseModel):
@@ -26,8 +26,7 @@ class EventLogRead(BaseModel):
     user_agent: str | None
     created_at: datetime.datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EventLogFilter(BaseModel):
