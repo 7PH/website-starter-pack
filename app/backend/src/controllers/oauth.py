@@ -11,9 +11,8 @@ from sqlalchemy.orm import Session
 
 from ..constants import EventType
 from ..crud.event_logs import log_event
-from ..crud.users import create_user, get_user_by_email, update_user
-from ..helpers import stripe as stripe_helper
-from ..helpers.auth import build_user_read_with_orgs, create_access_token, hash_password
+from ..crud.users import create_user, get_user_by_email
+from ..helpers.auth import hash_password, issue_jwt_with_orgs, setup_new_user_stripe
 from ..helpers.db import get_session
 from ..helpers.oauth import (
     generate_state,
@@ -21,7 +20,7 @@ from ..helpers.oauth import (
     get_user_from_code,
     is_oauth_enabled,
 )
-from ..helpers.ratelimit import ensure_rate_limit
+from ..helpers.ratelimit import ensure_rate_limit, get_client_ip
 from ..models.user import UserBase
 from ..schemas.oauth import (
     OAuthCallbackRequest,
@@ -90,12 +89,10 @@ async def handle_google_callback(
             detail="OAuth is not enabled",
         )
 
-    # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
     ensure_rate_limit(
         action="oauth-callback",
         quota=OAUTH_CALLBACK_RATE_LIMIT,
-        key=client_ip,
+        key=get_client_ip(request),
         duration_minutes=OAUTH_CALLBACK_RATE_LIMIT_MINUTES,
     )
 
@@ -144,16 +141,7 @@ async def handle_google_callback(
         )
         create_user(session, user)
 
-        # Create Stripe customer for new user
-        if stripe_helper.is_enabled():
-            user.stripe_id = stripe_helper.sync_customer(
-                user_id=user.id,
-                email=user.email,
-                name=f"{user.first_name} {user.last_name}",
-                check_user_exists=lambda uid: True,  # User was just created
-            )
-            stripe_helper.create_subscription(user.stripe_id)
-            update_user(session, user)
+        setup_new_user_stripe(session, user, allow_orphan_reuse=False)
 
         log_event(
             session,
@@ -163,4 +151,4 @@ async def handle_google_callback(
             details={"method": "oauth", "provider": "google"},
         )
 
-    return create_access_token(build_user_read_with_orgs(session, user))
+    return issue_jwt_with_orgs(session, user)

@@ -8,6 +8,7 @@ Provides unified interface for LLM completions across multiple providers.
 import logging
 import os
 from collections.abc import Generator
+from contextlib import contextmanager
 
 from fastapi import HTTPException
 
@@ -80,104 +81,54 @@ def _convert_messages(messages: list) -> list[dict]:
     return result
 
 
-def complete(
-    messages: list,
-    model: str | None = None,
-) -> dict:
-    """
-    Create a completion using LiteLLM.
+def _build_completion_kwargs(messages: list, model: str | None, *, stream: bool = False) -> dict:
+    kwargs: dict = {
+        "model": get_model_name(model),
+        "messages": _convert_messages(messages),
+    }
+    if stream:
+        kwargs["stream"] = True
+    if LLM_API_BASE and LLM_PROVIDER in ("ollama", "azure"):
+        kwargs["api_base"] = LLM_API_BASE
+    return kwargs
 
-    Args:
-        messages: List of message dicts or LLMMessage objects
-        model: Optional model override
 
-    Returns:
-        Dict with 'content', 'model', and 'usage' keys
-
-    Raises:
-        HTTPException if LLM is not enabled or on API errors
-    """
+@contextmanager
+def _llm_available():
+    """Gate calls on ``LLM_ENABLED`` and translate litellm/import failures to HTTPException."""
     if not LLM_ENABLED:
         raise HTTPException(status_code=503, detail="LLM service not enabled")
-
     try:
+        yield
+    except HTTPException:
+        raise
+    except ImportError:
+        logger.error("litellm package not installed")
+        raise HTTPException(status_code=500, detail="LLM service not configured") from None
+    except Exception as e:
+        logger.error(f"LLM call error: {e}")
+        raise HTTPException(status_code=500, detail=f"LLM service error: {e!s}") from e
+
+
+def complete(messages: list, model: str | None = None) -> dict:
+    """Create a completion. Returns dict with content/model/usage."""
+    with _llm_available():
         import litellm
 
-        model_name = get_model_name(model)
-        converted_messages = _convert_messages(messages)
-
-        # Build kwargs for the completion call
-        kwargs: dict = {
-            "model": model_name,
-            "messages": converted_messages,
-        }
-
-        # Add API base for providers that need it
-        if LLM_API_BASE and LLM_PROVIDER in ("ollama", "azure"):
-            kwargs["api_base"] = LLM_API_BASE
-
-        response = litellm.completion(**kwargs)
-
+        response = litellm.completion(**_build_completion_kwargs(messages, model))
         return {
             "content": response.choices[0].message.content,
             "model": response.model,
             "usage": dict(response.usage) if response.usage else None,
         }
 
-    except ImportError:
-        logger.error("litellm package not installed")
-        raise HTTPException(status_code=500, detail="LLM service not configured") from None
-    except Exception as e:
-        logger.error(f"LLM completion error: {e}")
-        raise HTTPException(status_code=500, detail=f"LLM service error: {e!s}") from e
 
-
-def complete_stream(
-    messages: list,
-    model: str | None = None,
-) -> Generator[str]:
-    """
-    Create a streaming completion using LiteLLM.
-
-    Args:
-        messages: List of message dicts or LLMMessage objects
-        model: Optional model override
-
-    Yields:
-        Content chunks as strings
-
-    Raises:
-        HTTPException if LLM is not enabled or on API errors
-    """
-    if not LLM_ENABLED:
-        raise HTTPException(status_code=503, detail="LLM service not enabled")
-
-    try:
+def complete_stream(messages: list, model: str | None = None) -> Generator[str]:
+    """Streaming variant of :func:`complete`. Yields content chunks."""
+    with _llm_available():
         import litellm
 
-        model_name = get_model_name(model)
-        converted_messages = _convert_messages(messages)
-
-        # Build kwargs for the completion call
-        kwargs: dict = {
-            "model": model_name,
-            "messages": converted_messages,
-            "stream": True,
-        }
-
-        # Add API base for providers that need it
-        if LLM_API_BASE and LLM_PROVIDER in ("ollama", "azure"):
-            kwargs["api_base"] = LLM_API_BASE
-
-        response = litellm.completion(**kwargs)
-
+        response = litellm.completion(**_build_completion_kwargs(messages, model, stream=True))
         for chunk in response:
             if chunk.choices and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
-
-    except ImportError:
-        logger.error("litellm package not installed")
-        raise HTTPException(status_code=500, detail="LLM service not configured") from None
-    except Exception as e:
-        logger.error(f"LLM streaming error: {e}")
-        raise HTTPException(status_code=500, detail=f"LLM service error: {e!s}") from e

@@ -55,17 +55,22 @@ def get_invitation_by_id(session: Session, invitation_id: int) -> OrganizationIn
     return session.get(OrganizationInvitationBase, invitation_id)
 
 
+def _pending_filters() -> list:
+    return [
+        OrganizationInvitationBase.accepted_at.is_(None),
+        OrganizationInvitationBase.declined_at.is_(None),
+        OrganizationInvitationBase.expires_at > _now(),
+    ]
+
+
 def get_pending_invitation(
     session: Session, organization_id: int, email: str
 ) -> OrganizationInvitationBase | None:
-    """Find a pending (not accepted/declined, not expired) invitation for this org+email."""
     return session.execute(
         select(OrganizationInvitationBase).where(
             OrganizationInvitationBase.organization_id == organization_id,
             OrganizationInvitationBase.email == email.lower(),
-            OrganizationInvitationBase.accepted_at.is_(None),
-            OrganizationInvitationBase.declined_at.is_(None),
-            OrganizationInvitationBase.expires_at > _now(),
+            *_pending_filters(),
         )
     ).scalar_one_or_none()
 
@@ -73,15 +78,12 @@ def get_pending_invitation(
 def list_org_pending_invitations(
     session: Session, organization_id: int
 ) -> list[OrganizationInvitationBase]:
-    """List pending invitations for an organization."""
     return list(
         session.execute(
             select(OrganizationInvitationBase)
             .where(
                 OrganizationInvitationBase.organization_id == organization_id,
-                OrganizationInvitationBase.accepted_at.is_(None),
-                OrganizationInvitationBase.declined_at.is_(None),
-                OrganizationInvitationBase.expires_at > _now(),
+                *_pending_filters(),
             )
             .order_by(OrganizationInvitationBase.created_at.desc())
         )
@@ -93,15 +95,12 @@ def list_org_pending_invitations(
 def list_user_pending_invitations(
     session: Session, email: str
 ) -> list[OrganizationInvitationBase]:
-    """List pending invitations matching an email address."""
     return list(
         session.execute(
             select(OrganizationInvitationBase)
             .where(
                 OrganizationInvitationBase.email == email.lower(),
-                OrganizationInvitationBase.accepted_at.is_(None),
-                OrganizationInvitationBase.declined_at.is_(None),
-                OrganizationInvitationBase.expires_at > _now(),
+                *_pending_filters(),
             )
             .options(joinedload(OrganizationInvitationBase.organization))
             .order_by(OrganizationInvitationBase.created_at.desc())

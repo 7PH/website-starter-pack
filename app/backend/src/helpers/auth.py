@@ -95,6 +95,65 @@ async def get_current_nonmanaged_user(user: UserRead = Depends(get_current_user)
     return user
 
 
+def sync_existing_user_to_stripe(user: UserBase) -> None:
+    """Push the user's current name/email to their Stripe customer record.
+
+    No-op if Stripe is disabled or the user has no stripe_id yet (use
+    :func:`setup_new_user_stripe` for the create path).
+    """
+    from . import stripe as stripe_helper
+
+    if stripe_helper.is_enabled() and user.stripe_id:
+        stripe_helper.sync_customer(
+            user_id=user.id,
+            email=user.email,
+            name=f"{user.first_name} {user.last_name}",
+            existing_stripe_id=user.stripe_id,
+        )
+
+
+def setup_new_user_stripe(session: Session, user: UserBase, *, allow_orphan_reuse: bool = True) -> None:
+    """Create a Stripe customer + initial subscription for a freshly-created user.
+
+    ``allow_orphan_reuse=True`` lets the Stripe helper reuse a customer record
+    whose linked DB user has been deleted; pass ``False`` for OAuth flows where
+    a fresh customer record is preferable.
+    """
+    from ..crud.users import get_user_by_id, update_user
+    from . import stripe as stripe_helper
+
+    if not stripe_helper.is_enabled():
+        return
+    check_user_exists = (
+        (lambda uid: get_user_by_id(session, uid) is not None)
+        if allow_orphan_reuse
+        else (lambda uid: True)
+    )
+    user.stripe_id = stripe_helper.sync_customer(
+        user_id=user.id,
+        email=user.email,
+        name=f"{user.first_name} {user.last_name}",
+        check_user_exists=check_user_exists,
+    )
+    stripe_helper.create_subscription(user.stripe_id)
+    update_user(session, user)
+
+
+def get_user_or_404(session: Session, user_id: int, *, include_deleted: bool = False) -> UserBase:
+    """Look up a user and raise 404 if missing.
+
+    Centralized so controllers don't repeat the get + raise pattern. Pass
+    ``include_deleted=True`` for admin endpoints that need to inspect
+    soft-deleted accounts.
+    """
+    from ..crud.users import get_user_by_id
+
+    user = get_user_by_id(session, user_id, include_deleted=include_deleted)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
 def is_premium_effective(session: Session, user: UserBase) -> bool:
     """Return the premium status to use for entitlement decisions.
 
@@ -157,22 +216,18 @@ def build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
     )
 
 
-async def get_real_admin_id(token: str = Depends(oauth2_scheme)) -> int | None:
-    """
-    Get the real admin ID from an impersonation token.
+def _get_data_claim(token: str, key: str) -> int | None:
+    return decode_access_token(token)["data"].get(key)
 
-    Returns the real_admin_id if the token contains impersonation info, else None.
-    """
-    token_decoded = decode_access_token(token)
-    return token_decoded["data"].get("real_admin_id")
+
+async def get_real_admin_id(token: str = Depends(oauth2_scheme)) -> int | None:
+    """Real admin ID from an impersonation token, or None if not impersonating."""
+    return _get_data_claim(token, "real_admin_id")
 
 
 async def get_parent_user_id(token: str = Depends(oauth2_scheme)) -> int | None:
-    """Owner-as-managed-account "open as" claim. Mirrors get_real_admin_id but
-    for non-admin owners opening one of their managed accounts.
-    """
-    token_decoded = decode_access_token(token)
-    return token_decoded["data"].get("parent_user_id")
+    """Owner ID from an "open as managed account" token, or None if not in that flow."""
+    return _get_data_claim(token, "parent_user_id")
 
 
 def create_access_token(
@@ -284,6 +339,11 @@ def _reset_code_validator_for_tests() -> None:
     """Test-only helper. Do not call from production code."""
     global _code_validator
     _code_validator = None
+
+
+def issue_jwt_with_orgs(session: Session, user: UserBase) -> UserTokenUpdate:
+    """Mint an access token whose UserRead includes the user's org memberships."""
+    return create_access_token(build_user_read_with_orgs(session, user))
 
 
 def issue_jwt_for_user(session: Session, user: UserBase) -> UserTokenUpdate:

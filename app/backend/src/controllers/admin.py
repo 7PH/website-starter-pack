@@ -11,10 +11,10 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ..constants import EventType
-from ..crud.event_logs import get_events, get_user_events, log_event
+from ..crud.event_logs import get_events, log_event
 from ..crud.organizations import get_user_organizations
 from ..crud.users import get_user_by_id, soft_delete_user, update_user
-from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id
+from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id, get_user_or_404
 from ..helpers.db import get_session
 from ..models.user import UserBase
 from ..schemas.admin import (
@@ -128,9 +128,7 @@ def get_user_detail(
     user_id: int,
 ):
     """Get detailed user info (including deleted users for audit purposes)."""
-    user = get_user_by_id(session, user_id, include_deleted=True)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, user_id, include_deleted=True)
     user_data = AdminUserRead.model_validate(user)
     memberships = get_user_organizations(session, user_id)
     user_data.organizations = [
@@ -155,36 +153,21 @@ def update_user_by_admin(
     user_update: AdminUserUpdate,
 ):
     """Update a user (admin only)."""
-    user = get_user_by_id(session, user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, user_id)
 
     changes: dict[str, Any] = {}
 
-    if user_update.first_name is not None:
-        changes["first_name"] = {"from": user.first_name, "to": user_update.first_name}
-        user.first_name = user_update.first_name
-
-    if user_update.last_name is not None:
-        changes["last_name"] = {"from": user.last_name, "to": user_update.last_name}
-        user.last_name = user_update.last_name
-
-    if user_update.display_name is not None:
-        changes["display_name"] = {"from": user.display_name, "to": user_update.display_name}
-        user.display_name = user_update.display_name
+    for field in ("first_name", "last_name", "display_name", "is_admin", "is_premium"):
+        new_value = getattr(user_update, field)
+        if new_value is None:
+            continue
+        changes[field] = {"from": getattr(user, field), "to": new_value}
+        setattr(user, field, new_value)
 
     if user_update.email is not None and user.email != user_update.email:
         changes["email"] = {"from": user.email, "to": user_update.email}
         user.email = user_update.email
         user.email_confirmed = False
-
-    if user_update.is_admin is not None:
-        changes["is_admin"] = {"from": user.is_admin, "to": user_update.is_admin}
-        user.is_admin = user_update.is_admin
-
-    if user_update.is_premium is not None:
-        changes["is_premium"] = {"from": user.is_premium, "to": user_update.is_premium}
-        user.is_premium = user_update.is_premium
 
     if user_update.custom_data is not None:
         incoming = user_update.custom_data.model_dump(exclude_none=True)
@@ -224,9 +207,7 @@ def delete_user_by_admin(
         )
 
     # Fetch user including deleted ones to give proper error message
-    user = get_user_by_id(session, user_id, include_deleted=True)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, user_id, include_deleted=True)
 
     # Check if already deleted
     if user.deleted_at is not None:
@@ -270,9 +251,7 @@ def start_impersonation(
             detail="Cannot impersonate yourself",
         )
 
-    target_user = get_user_by_id(session, user_id)
-    if not target_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    target_user = get_user_or_404(session, user_id)
 
     # Log the impersonation
     log_event(
@@ -379,7 +358,7 @@ def get_user_event_log(
     offset: int = Query(0, ge=0),
 ):
     """Get event log for a specific user."""
-    events, total = get_user_events(session, user_id=user_id, limit=limit, offset=offset)
+    events, total = get_events(session, filters=EventLogFilter(user_id=user_id), limit=limit, offset=offset)
 
     return EventLogListResponse(
         items=events,

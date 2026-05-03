@@ -10,14 +10,12 @@ from sqlalchemy.orm import Session
 from ..models.conversation import ConversationBase, ConversationParticipantBase, ConversationType, MessageBase
 
 
-def add_participant(
+def _find_participant(
     session: Session,
     conversation_id: int,
     user_id: int,
-    last_read_at: datetime | None = None,
-) -> ConversationParticipantBase:
-    """Add a user as a participant to a conversation, or update if already exists."""
-    participant = (
+) -> ConversationParticipantBase | None:
+    return (
         session.query(ConversationParticipantBase)
         .filter(
             ConversationParticipantBase.conversation_id == conversation_id,
@@ -25,6 +23,16 @@ def add_participant(
         )
         .first()
     )
+
+
+def add_participant(
+    session: Session,
+    conversation_id: int,
+    user_id: int,
+    last_read_at: datetime | None = None,
+) -> ConversationParticipantBase:
+    """Add a user as a participant to a conversation, or update if already exists."""
+    participant = _find_participant(session, conversation_id, user_id)
     if participant:
         if last_read_at is not None:
             participant.last_read_at = last_read_at
@@ -39,6 +47,36 @@ def add_participant(
     return participant
 
 
+def _create_conversation_with_initial_message(
+    session: Session,
+    *,
+    creator_id: int,
+    subject: str | None,
+    subtype: str | None,
+    initial_content: str,
+    conversation_type: str,
+    is_admin_response: bool,
+) -> ConversationBase:
+    """Create a conversation, its first message, and add the creator as a (read) participant."""
+    conversation = ConversationBase(
+        type=conversation_type,
+        subject=subject,
+        subtype=subtype,
+        created_by_id=creator_id,
+    )
+    session.add(conversation)
+    session.flush()
+
+    session.add(MessageBase(
+        conversation_id=conversation.id,
+        sender_id=creator_id,
+        content=initial_content,
+        is_admin_response=is_admin_response,
+    ))
+    add_participant(session, conversation.id, creator_id, last_read_at=datetime.now(UTC))
+    return conversation
+
+
 def create_conversation(
     session: Session,
     user_id: int,
@@ -47,26 +85,15 @@ def create_conversation(
     conversation_type: str = ConversationType.SUPPORT.value,
     subtype: str | None = None,
 ) -> ConversationBase:
-    """Create a new conversation with an initial message."""
-    conversation = ConversationBase(
-        type=conversation_type,
+    conversation = _create_conversation_with_initial_message(
+        session,
+        creator_id=user_id,
         subject=subject,
         subtype=subtype,
-        created_by_id=user_id,
-    )
-    session.add(conversation)
-    session.flush()
-
-    message = MessageBase(
-        conversation_id=conversation.id,
-        sender_id=user_id,
-        content=initial_content,
+        initial_content=initial_content,
+        conversation_type=conversation_type,
         is_admin_response=False,
     )
-    session.add(message)
-
-    add_participant(session, conversation.id, user_id, last_read_at=datetime.now(UTC))
-
     session.commit()
     session.refresh(conversation)
     return conversation
@@ -81,31 +108,19 @@ def create_admin_conversation(
     subtype: str | None = None,
 ) -> ConversationBase:
     """Create a conversation initiated by an admin with specific users as participants."""
-    conversation = ConversationBase(
-        type=ConversationType.SUPPORT.value,
+    conversation = _create_conversation_with_initial_message(
+        session,
+        creator_id=admin_user_id,
         subject=subject,
         subtype=subtype,
-        created_by_id=admin_user_id,
-    )
-    session.add(conversation)
-    session.flush()
-
-    message = MessageBase(
-        conversation_id=conversation.id,
-        sender_id=admin_user_id,
-        content=initial_content,
+        initial_content=initial_content,
+        conversation_type=ConversationType.SUPPORT.value,
         is_admin_response=True,
     )
-    session.add(message)
-
-    # Add admin as participant (already read)
-    add_participant(session, conversation.id, admin_user_id, last_read_at=datetime.now(UTC))
-
-    # Add target users as participants (unread), skipping admin (already added above)
+    # Target users join unread; admin is already a (read) participant.
     for user_id in participant_user_ids:
         if user_id != admin_user_id:
             add_participant(session, conversation.id, user_id)
-
     session.commit()
     session.refresh(conversation)
     return conversation
@@ -234,60 +249,34 @@ def mark_as_read(session: Session, conversation_id: int, user_id: int) -> None:
 
 def get_unread_count(session: Session, conversation_id: int, user_id: int) -> int:
     """Get the count of unread messages for a user in a conversation."""
-    participant = (
-        session.query(ConversationParticipantBase)
-        .filter(
-            ConversationParticipantBase.conversation_id == conversation_id,
-            ConversationParticipantBase.user_id == user_id,
-        )
-        .first()
-    )
+    participant = _find_participant(session, conversation_id, user_id)
+    last_read_at = participant.last_read_at if participant else None
 
-    if not participant or not participant.last_read_at:
-        # If no read record, count all messages not from this user
-        return (
-            session.query(func.count(MessageBase.id))
-            .filter(
-                MessageBase.conversation_id == conversation_id,
-                MessageBase.sender_id != user_id,
-            )
-            .scalar()
-            or 0
-        )
-
-    # Count messages after last_read_at not from this user
-    return (
-        session.query(func.count(MessageBase.id))
-        .filter(
-            MessageBase.conversation_id == conversation_id,
-            MessageBase.sender_id != user_id,
-            MessageBase.created_at > participant.last_read_at,
-        )
-        .scalar()
-        or 0
+    query = session.query(func.count(MessageBase.id)).filter(
+        MessageBase.conversation_id == conversation_id,
+        MessageBase.sender_id != user_id,
     )
+    if last_read_at is not None:
+        query = query.filter(MessageBase.created_at > last_read_at)
+    return query.scalar() or 0
+
+
+def _set_closed(session: Session, conversation_id: int, *, closed: bool) -> ConversationBase | None:
+    conversation = get_conversation_by_id(session, conversation_id)
+    if conversation:
+        conversation.is_closed = closed
+        conversation.closed_at = datetime.now(UTC) if closed else None
+        session.commit()
+        session.refresh(conversation)
+    return conversation
 
 
 def close_conversation(session: Session, conversation_id: int) -> ConversationBase | None:
-    """Close a conversation."""
-    conversation = get_conversation_by_id(session, conversation_id)
-    if conversation:
-        conversation.is_closed = True
-        conversation.closed_at = datetime.now(UTC)
-        session.commit()
-        session.refresh(conversation)
-    return conversation
+    return _set_closed(session, conversation_id, closed=True)
 
 
 def reopen_conversation(session: Session, conversation_id: int) -> ConversationBase | None:
-    """Reopen a closed conversation."""
-    conversation = get_conversation_by_id(session, conversation_id)
-    if conversation:
-        conversation.is_closed = False
-        conversation.closed_at = None
-        session.commit()
-        session.refresh(conversation)
-    return conversation
+    return _set_closed(session, conversation_id, closed=False)
 
 
 def user_can_access_conversation(session: Session, conversation_id: int, user_id: int) -> bool:
@@ -299,12 +288,4 @@ def user_can_access_conversation(session: Session, conversation_id: int, user_id
     if conversation.created_by_id == user_id:
         return True
 
-    participant = (
-        session.query(ConversationParticipantBase)
-        .filter(
-            ConversationParticipantBase.conversation_id == conversation_id,
-            ConversationParticipantBase.user_id == user_id,
-        )
-        .first()
-    )
-    return participant is not None
+    return _find_participant(session, conversation_id, user_id) is not None

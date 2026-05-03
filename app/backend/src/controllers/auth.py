@@ -11,16 +11,17 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from ..constants import EventType
+from ..constants import PASSWORD_MIN_LENGTH, EventType
 from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, soft_delete_user, update_user
-from ..helpers import stripe as stripe_helper
 from ..helpers.account_deletion import mask_email, resolve_deletion_token
 from ..helpers.auth import (
     get_code_validator,
     get_current_user,
+    get_user_or_404,
     hash_password,
     issue_jwt_for_user,
+    sync_existing_user_to_stripe,
     verify_password,
 )
 from ..helpers.auth_tokens import (
@@ -31,8 +32,12 @@ from ..helpers.auth_tokens import (
     get_password_reset_url,
 )
 from ..helpers.db import get_session
-from ..helpers.email import send_email_verification_email, send_password_reset_email
-from ..helpers.ratelimit import ensure_rate_limit
+from ..helpers.email import (
+    send_email_verification_email,
+    send_password_reset_email,
+    swallow_email_errors,
+)
+from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
 from ..schemas.user import (
     AccountDeletionConfirm,
     AccountDeletionInfo,
@@ -59,6 +64,15 @@ AUTH_CODE_FAILURE_COOLDOWN_MINUTES = 15
 AUTH_CODE_FAILURE_THRESHOLD = 5
 
 
+def _decode_token_and_get_user(session: Session, token: str, token_type: str):
+    """Decode a typed JWT and load its user, raising 400/404 on failure."""
+    payload = decode_typed_token(token, token_type)
+    if not payload:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    user = get_user_or_404(session, payload["user_id"])
+    return payload, user
+
+
 @router.post(
     "/email-verifications",
     response_model=AuthMessageResponse,
@@ -81,35 +95,23 @@ def send_verification_email(
     if user.email_confirmed:
         raise HTTPException(status_code=400, detail="Email already verified")
 
-    # Rate limit: per-user cooldown
-    ensure_rate_limit(
+    ensure_user_cooldown_and_daily(
         action="send-verification-email",
-        quota=1,
-        key=str(user.id),
-        duration_minutes=EMAIL_VERIFICATION_COOLDOWN_MINUTES,
-    )
-
-    # Rate limit: per-user daily limit
-    ensure_rate_limit(
-        action="send-verification-email-daily",
-        quota=EMAIL_VERIFICATION_DAILY_LIMIT,
-        key=str(user.id),
-        duration_minutes=60 * 24,
+        user_id=user.id,
+        cooldown_minutes=EMAIL_VERIFICATION_COOLDOWN_MINUTES,
+        daily_quota=EMAIL_VERIFICATION_DAILY_LIMIT,
     )
 
     # Generate token and send email
     token = create_email_verification_token(user.id, user.email)
     verification_url = get_email_verification_url(token)
 
-    try:  # noqa: SIM105
+    with swallow_email_errors():
         send_email_verification_email(
             to_email=user.email,
             username=user.first_name,
             verification_link=verification_url,
         )
-    except Exception:
-        # Email service might not be configured - that's OK in development
-        pass
 
     # Update sent_at timestamp if the column exists
     if hasattr(user, "email_verification_sent_at"):
@@ -133,13 +135,7 @@ def verify_email(
     Verify email address using the token from the verification email.
     Token is a JWT containing user_id, email, type, exp.
     """
-    payload = decode_typed_token(body.token, "verify-email")
-    if not payload:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
-
-    user = get_user_by_id(session, payload["user_id"])
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    payload, user = _decode_token_and_get_user(session, body.token, "verify-email")
 
     # Ensure the email in the token matches current user email
     # This invalidates old tokens if user changed their email
@@ -174,7 +170,6 @@ def request_password_reset(
     Always returns success to prevent email enumeration.
     """
     email = body.email.lower()
-    client_ip = request.client.host if request.client else "unknown"
 
     # Rate limit: per-email cooldown
     ensure_rate_limit(
@@ -188,7 +183,7 @@ def request_password_reset(
     ensure_rate_limit(
         action="password-reset-request-ip-daily",
         quota=PASSWORD_RESET_IP_DAILY_LIMIT,
-        key=client_ip,
+        key=get_client_ip(request),
         duration_minutes=60 * 24,
     )
 
@@ -201,15 +196,12 @@ def request_password_reset(
         token = create_password_reset_token(user.id)
         reset_url = get_password_reset_url(token)
 
-        try:  # noqa: SIM105
+        with swallow_email_errors():
             send_password_reset_email(
                 to_email=user.email,
                 username=user.first_name,
                 reset_link=reset_url,
             )
-        except Exception:
-            # Email service might not be configured
-            pass
 
         # Log password reset request
         log_event(session, action=EventType.USER_PASSWORD_RESET_REQUEST, user_id=user.id, request=request)
@@ -231,22 +223,18 @@ def reset_password(
     """
     Reset password using the JWT token from the reset email.
     """
-    payload = decode_typed_token(body.token, "reset-password")
-    if not payload:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
-
-    user = get_user_by_id(session, payload["user_id"])
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    _, user = _decode_token_and_get_user(session, body.token, "reset-password")
 
     # Reject non-password accounts: even a leaked reset token shouldn't be able
     # to graft a password onto an oauth/access_code/deleted user.
     if user.auth_method != "password":
         raise HTTPException(status_code=400, detail="Password reset is not available for this account")
 
-    # Validate password length
-    if len(body.password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    if len(body.password) < PASSWORD_MIN_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Password must be at least {PASSWORD_MIN_LENGTH} characters",
+        )
 
     user.hashed_password = hash_password(body.password)
     update_user(session, user)
@@ -271,13 +259,7 @@ def confirm_email_change(
     Confirm email change using the JWT token from the confirmation email.
     Token contains user_id, current_email, new_email, exp.
     """
-    payload = decode_typed_token(body.token, "change-email")
-    if not payload:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
-
-    user = get_user_by_id(session, payload["user_id"])
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    payload, user = _decode_token_and_get_user(session, body.token, "change-email")
 
     # Ensure the current_email in the token matches user's current email
     # This invalidates old tokens if user requested another email change
@@ -295,14 +277,7 @@ def confirm_email_change(
     user.email_confirmed = True  # Already verified by clicking the link
     update_user(session, user)
 
-    # Sync new email to Stripe
-    if stripe_helper.is_enabled() and user.stripe_id:
-        stripe_helper.sync_customer(
-            user_id=user.id,
-            email=new_email,
-            name=f"{user.first_name} {user.last_name}",
-            existing_stripe_id=user.stripe_id,
-        )
+    sync_existing_user_to_stripe(user)
 
     # Log email change
     log_event(
@@ -397,7 +372,7 @@ def sign_in_with_code(
         # no validator wired" silently accepting things.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
 
     # Per-IP rate limit: minute and day windows. Single-replica today, so the
     # in-process limiter is fine; revisit when scaling out.

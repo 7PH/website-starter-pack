@@ -2,7 +2,13 @@
 
 import time
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+
+
+def get_client_ip(request: Request) -> str:
+    """Best-effort client IP for rate-limit keys, falling back to 'unknown'."""
+    return request.client.host if request.client else "unknown"
+
 
 entries = {
     # duration min -> action -> key -> [timestamps]
@@ -72,3 +78,24 @@ def ensure_rate_limit(action: str, quota: float, key: str, duration_minutes: int
     """
     if is_rate_limited(action, quota, key, duration_minutes, True):
         raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
+
+def ensure_user_cooldown_and_daily(
+    *,
+    action: str,
+    user_id: int,
+    cooldown_minutes: int,
+    daily_quota: float,
+) -> None:
+    """Pair a single-use cooldown with a daily cap, both keyed by ``user_id``.
+
+    The daily bucket is namespaced as ``f"{action}-daily"`` so cooldown and daily
+    counters never collide.
+    """
+    ensure_rate_limit(action=action, quota=1, key=str(user_id), duration_minutes=cooldown_minutes)
+    ensure_rate_limit(
+        action=f"{action}-daily",
+        quota=daily_quota,
+        key=str(user_id),
+        duration_minutes=60 * 24,
+    )

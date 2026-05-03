@@ -418,76 +418,47 @@ def _parse_subscription(sub) -> dict:
     }
 
 
-def get_subscription_status(stripe_customer_id: str) -> dict:
-    """
-    Get the subscription status for a customer.
-
-    Args:
-        stripe_customer_id: Stripe customer ID
-
-    Returns:
-        Dict with is_premium, plan, expires_at, and cancel_at_period_end
-    """
+def _fetch_active_subscription(stripe_customer_id: str) -> dict | None:
+    """Return the first active subscription parsed via :func:`_parse_subscription`, or None."""
     if not STRIPE_ENABLED or not stripe_customer_id:
-        return _DEFAULT_USER_SUB_STATUS.copy()
-
+        return None
     try:
         subscriptions = stripe.Subscription.list(
             customer=stripe_customer_id,
             status="active",
             limit=1,
         )
-
         for sub in subscriptions.auto_paging_iter():
-            parsed = _parse_subscription(sub)
-            return {
-                "is_premium": parsed["is_premium"],
-                "plan": parsed["price_id"],
-                "expires_at": parsed["expires_at"],
-                "cancel_at_period_end": parsed["cancel_at_period_end"],
-            }
-
-        return _DEFAULT_USER_SUB_STATUS.copy()
-
+            return _parse_subscription(sub)
     except stripe.error.StripeError as e:
         logger.error(f"Stripe subscription check error: {e}")
+    return None
+
+
+def get_subscription_status(stripe_customer_id: str) -> dict:
+    """Return is_premium / plan / expires_at / cancel_at_period_end for a user."""
+    parsed = _fetch_active_subscription(stripe_customer_id)
+    if not parsed:
         return _DEFAULT_USER_SUB_STATUS.copy()
+    return {
+        "is_premium": parsed["is_premium"],
+        "plan": parsed["price_id"],
+        "expires_at": parsed["expires_at"],
+        "cancel_at_period_end": parsed["cancel_at_period_end"],
+    }
 
 
 def get_org_subscription_status(stripe_customer_id: str) -> dict:
-    """
-    Get the subscription status for an organization, including seat quota.
-
-    Args:
-        stripe_customer_id: Stripe customer ID for the organization
-
-    Returns:
-        Dict with stripe_premium, stripe_quota, expires_at, and cancel_at_period_end
-    """
-    if not STRIPE_ENABLED or not stripe_customer_id:
+    """Return stripe_premium / stripe_quota / expires_at / cancel_at_period_end for an org."""
+    parsed = _fetch_active_subscription(stripe_customer_id)
+    if not parsed:
         return _DEFAULT_ORG_SUB_STATUS.copy()
-
-    try:
-        subscriptions = stripe.Subscription.list(
-            customer=stripe_customer_id,
-            status="active",
-            limit=1,
-        )
-
-        for sub in subscriptions.auto_paging_iter():
-            parsed = _parse_subscription(sub)
-            return {
-                "stripe_premium": parsed["is_premium"],
-                "stripe_quota": parsed["seats"],
-                "expires_at": parsed["expires_at"],
-                "cancel_at_period_end": parsed["cancel_at_period_end"],
-            }
-
-        return _DEFAULT_ORG_SUB_STATUS.copy()
-
-    except stripe.error.StripeError as e:
-        logger.error(f"Stripe org subscription check error: {e}")
-        return _DEFAULT_ORG_SUB_STATUS.copy()
+    return {
+        "stripe_premium": parsed["is_premium"],
+        "stripe_quota": parsed["seats"],
+        "expires_at": parsed["expires_at"],
+        "cancel_at_period_end": parsed["cancel_at_period_end"],
+    }
 
 
 # ---------------------------------------------------------------------------

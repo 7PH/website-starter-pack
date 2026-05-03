@@ -16,15 +16,18 @@ from ..crud.users import (
     is_email_taken,
     update_user,
 )
-from ..helpers import stripe as stripe_helper
 from ..helpers.auth import (
     build_user_read_with_orgs,
     create_access_token,
     decode_access_token,
     get_current_nonmanaged_user,
     get_current_user,
+    get_user_or_404,
     hash_password,
+    issue_jwt_with_orgs,
     oauth2_scheme,
+    setup_new_user_stripe,
+    sync_existing_user_to_stripe,
     verify_password,
 )
 from ..helpers.auth_app import pre_login
@@ -35,8 +38,12 @@ from ..helpers.auth_tokens import (
     get_email_change_url,
 )
 from ..helpers.db import get_session
-from ..helpers.email import send_account_deletion_email, send_email_change_email
-from ..helpers.ratelimit import ensure_rate_limit
+from ..helpers.email import (
+    send_account_deletion_email,
+    send_email_change_email,
+    swallow_email_errors,
+)
+from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
 from ..models.user import UserBase
 from ..schemas.user import (
     AuthMessageResponse,
@@ -68,12 +75,10 @@ TOKEN_REFRESH_COOLDOWN_SECONDS = 300  # 5 minutes
 
 @router.post("/users", response_model=UserTokenUpdate, status_code=status.HTTP_201_CREATED)
 def register_user(*, request: Request, session: Session = Depends(get_session), user_create: UserCreate):
-    # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
     ensure_rate_limit(
         action="register",
         quota=REGISTER_RATE_LIMIT_PER_IP,
-        key=client_ip,
+        key=get_client_ip(request),
         duration_minutes=REGISTER_RATE_LIMIT_MINUTES,
     )
 
@@ -94,16 +99,7 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
     )
     create_user(session, user)
 
-    # Create Stripe customer and free subscription for the new user
-    if stripe_helper.is_enabled():
-        user.stripe_id = stripe_helper.sync_customer(
-            user_id=user.id,
-            email=user.email,
-            name=f"{user.first_name} {user.last_name}",
-            check_user_exists=lambda uid: get_user_by_id(session, uid) is not None,
-        )
-        stripe_helper.create_subscription(user.stripe_id)
-        update_user(session, user)
+    setup_new_user_stripe(session, user)
 
     token = create_access_token(UserRead.model_validate(user))
 
@@ -124,12 +120,10 @@ def login_user(
     session: Session = Depends(get_session),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
-    # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
     ensure_rate_limit(
         action="login",
         quota=LOGIN_RATE_LIMIT_PER_IP,
-        key=client_ip,
+        key=get_client_ip(request),
         duration_minutes=LOGIN_RATE_LIMIT_MINUTES,
     )
 
@@ -148,7 +142,7 @@ def login_user(
     # Log the login event
     log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
 
-    return create_access_token(build_user_read_with_orgs(session, user))
+    return issue_jwt_with_orgs(session, user)
 
 
 @router.get("/users/me", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -156,9 +150,7 @@ def get_me(*, session: Session = Depends(get_session), current_user: UserRead = 
     """
     Get the details of the currently authenticated user, including organization memberships.
     """
-    user = get_user_by_id(session, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, current_user.id)
 
     return build_user_read_with_orgs(session, user)
 
@@ -219,9 +211,7 @@ def get_user(
     if current_user.id != user_id and not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
-    user = get_user_by_id(session, user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, user_id)
     return build_user_read_with_orgs(session, user)
 
 
@@ -238,9 +228,7 @@ def update_me(
     Update the profile (name) of the currently authenticated user.
     Email changes are handled separately via POST /users/me/email-changes.
     """
-    user = get_user_by_id(session, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, current_user.id)
 
     if user_change_info.first_name is not None:
         user.first_name = user_change_info.first_name
@@ -255,14 +243,7 @@ def update_me(
 
     update_user(session, user)
 
-    # Sync name change to Stripe if enabled
-    if stripe_helper.is_enabled() and user.stripe_id:
-        stripe_helper.sync_customer(
-            user_id=user.id,
-            email=user.email,
-            name=f"{user.first_name} {user.last_name}",
-            existing_stripe_id=user.stripe_id,
-        )
+    sync_existing_user_to_stripe(user)
 
     # Log profile update
     log_event(session, action=EventType.USER_PROFILE_UPDATE, user_id=user.id, request=request)
@@ -286,9 +267,7 @@ def update_my_password(
     """
     Update the password of the currently authenticated user.
     """
-    user = get_user_by_id(session, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, current_user.id)
 
     if not verify_password(user_change_pwd.old_password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid current password")
@@ -325,9 +304,7 @@ def request_email_change(
     Request to change the email address of the currently authenticated user.
     Sends a confirmation email to the new address with a verification link.
     """
-    user = get_user_by_id(session, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, current_user.id)
 
     # Verify current password
     if not verify_password(body.password, user.hashed_password):
@@ -344,35 +321,23 @@ def request_email_change(
     if is_email_taken(session, new_email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
 
-    # Rate limit: per-user cooldown
-    ensure_rate_limit(
+    ensure_user_cooldown_and_daily(
         action="email-change",
-        quota=1,
-        key=str(user.id),
-        duration_minutes=EMAIL_CHANGE_COOLDOWN_MINUTES,
-    )
-
-    # Rate limit: per-user daily limit
-    ensure_rate_limit(
-        action="email-change-daily",
-        quota=EMAIL_CHANGE_DAILY_LIMIT,
-        key=str(user.id),
-        duration_minutes=60 * 24,
+        user_id=user.id,
+        cooldown_minutes=EMAIL_CHANGE_COOLDOWN_MINUTES,
+        daily_quota=EMAIL_CHANGE_DAILY_LIMIT,
     )
 
     # Generate token and send email to NEW address
     token = create_email_change_token(user.id, user.email, new_email)
     confirmation_url = get_email_change_url(token)
 
-    try:  # noqa: SIM105
+    with swallow_email_errors():
         send_email_change_email(
             to_email=new_email,
             username=user.first_name,
             confirmation_link=confirmation_url,
         )
-    except Exception:
-        # Email service might not be configured - that's OK in development
-        pass
 
     # Log the request
     log_event(
@@ -402,9 +367,7 @@ def request_account_deletion(
     Request deletion of the current user's account.
     Sends a confirmation email with a link that expires in 1 hour.
     """
-    user = get_user_by_id(session, current_user.id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user = get_user_or_404(session, current_user.id)
 
     if not user.email:
         raise HTTPException(
@@ -412,17 +375,11 @@ def request_account_deletion(
             detail="Cannot send deletion email: no email address on file",
         )
 
-    ensure_rate_limit(
+    ensure_user_cooldown_and_daily(
         action="account-deletion-request",
-        quota=1,
-        key=str(user.id),
-        duration_minutes=ACCOUNT_DELETION_COOLDOWN_MINUTES,
-    )
-    ensure_rate_limit(
-        action="account-deletion-request-daily",
-        quota=ACCOUNT_DELETION_DAILY_LIMIT,
-        key=str(user.id),
-        duration_minutes=60 * 24,
+        user_id=user.id,
+        cooldown_minutes=ACCOUNT_DELETION_COOLDOWN_MINUTES,
+        daily_quota=ACCOUNT_DELETION_DAILY_LIMIT,
     )
 
     token = create_account_deletion_token(user.id, user.email)

@@ -46,24 +46,35 @@ def parse_backup_comment(filename: str) -> str | None:
     return TAG_COMMENTS[tag]
 
 
+def _backup_info(filepath: Path) -> BackupInfo:
+    stat = filepath.stat()
+    return BackupInfo(
+        filename=filepath.name,
+        size=stat.st_size,
+        created_at=datetime.fromtimestamp(stat.st_mtime),
+        comment=parse_backup_comment(filepath.name),
+    )
+
+
+def _pg_env() -> tuple[dict[str, str], str, str, str]:
+    """Return (subprocess env, host, user, db_name) sourced from APP_DB_* vars."""
+    env = {
+        **os.environ,
+        "PGPASSWORD": os.environ.get("APP_DB_PASSWORD") or "",
+    }
+    return (
+        env,
+        os.environ.get("APP_DB_HOST", "db"),
+        os.environ.get("APP_DB_USER", ""),
+        os.environ.get("APP_DB_NAME", ""),
+    )
+
+
 def get_backup_files() -> list[BackupInfo]:
-    """Get list of backup files with metadata."""
+    """Get list of backup files with metadata, newest first."""
     if not BACKUP_DIR.exists():
         return []
-
-    backups = []
-    for file in BACKUP_DIR.glob("db_backup_*.sql.gz"):
-        stat = file.stat()
-        backups.append(
-            BackupInfo(
-                filename=file.name,
-                size=stat.st_size,
-                created_at=datetime.fromtimestamp(stat.st_mtime),
-                comment=parse_backup_comment(file.name),
-            )
-        )
-
-    # Sort by date descending (newest first)
+    backups = [_backup_info(f) for f in BACKUP_DIR.glob("db_backup_*.sql.gz")]
     return sorted(backups, key=lambda b: b.created_at, reverse=True)
 
 
@@ -78,43 +89,24 @@ def cleanup_old_backups() -> None:
 
 def run_backup(tag: BackupTag | None = None) -> BackupInfo:
     """Execute the backup and return the new backup info."""
-    # Create backup directory if needed
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     suffix = f"_{tag}" if tag else ""
-    filename = f"db_backup_{timestamp}{suffix}.sql.gz"
-    filepath = BACKUP_DIR / filename
+    filepath = BACKUP_DIR / f"db_backup_{timestamp}{suffix}.sql.gz"
 
-    # Get database credentials from environment
-    db_name = os.environ.get("APP_DB_NAME")
-    db_user = os.environ.get("APP_DB_USER")
-    db_password = os.environ.get("APP_DB_PASSWORD")
-    db_host = os.environ.get("APP_DB_HOST", "db")
-
-    # Run pg_dump and compress with gzip
+    env, db_host, db_user, db_name = _pg_env()
     cmd = f"pg_dump -h {db_host} -U {db_user} {db_name} | gzip > {filepath}"
-    env = {**os.environ, "PGPASSWORD": db_password or ""}
-
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
     if result.returncode != 0:
-        # Clean up partial file if exists
         filepath.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Backup failed: {result.stderr}",
         )
 
-    # Cleanup old backups
     cleanup_old_backups()
-
-    stat = filepath.stat()
-    return BackupInfo(
-        filename=filename,
-        size=stat.st_size,
-        created_at=datetime.fromtimestamp(stat.st_mtime),
-        comment=parse_backup_comment(filename),
-    )
+    return _backup_info(filepath)
 
 
 def validate_backup_filename(filename: str) -> Path:
@@ -131,13 +123,8 @@ def validate_backup_filename(filename: str) -> Path:
 
 def run_restore(filepath: Path) -> None:
     """Drop all public tables and restore from a gzipped backup."""
-    db_name = os.environ.get("APP_DB_NAME")
-    db_user = os.environ.get("APP_DB_USER")
-    db_password = os.environ.get("APP_DB_PASSWORD")
-    db_host = os.environ.get("APP_DB_HOST", "db")
-    env = {**os.environ, "PGPASSWORD": db_password or ""}
+    env, db_host, db_user, db_name = _pg_env()
 
-    # Drop all tables in the public schema
     drop_sql = (
         "DO $$ DECLARE r RECORD; BEGIN "
         "FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP "
@@ -154,7 +141,6 @@ def run_restore(filepath: Path) -> None:
             detail=f"Failed to drop tables: {result.stderr}",
         )
 
-    # Restore from gzipped backup
     cmd = f"gunzip -c {filepath} | psql -h {db_host} -U {db_user} -d {db_name}"
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
     if result.returncode != 0:

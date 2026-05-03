@@ -73,44 +73,21 @@ def get_organizations(
 
 
 def get_org_member_counts(session: Session, org_ids: list[int]) -> dict[int, tuple[int, int]]:
-    """Get member and premium counts for multiple orgs in one query.
-
-    Returns dict mapping org_id -> (member_count, premium_count)
-    """
+    """Return {org_id: (member_count, premium_count)} for the given orgs."""
     if not org_ids:
         return {}
 
-    # Get member counts
-    member_counts = dict(
-        session.execute(
-            select(
-                UserOrganizationBase.organization_id,
-                func.count().label("count"),
-            )
-            .where(UserOrganizationBase.organization_id.in_(org_ids))
-            .group_by(UserOrganizationBase.organization_id)
-        ).all()
-    )
-
-    # Get premium counts
-    premium_counts = dict(
-        session.execute(
-            select(
-                UserOrganizationBase.organization_id,
-                func.count().label("count"),
-            )
-            .where(
-                UserOrganizationBase.organization_id.in_(org_ids),
-                UserOrganizationBase.has_premium_seat.is_(True),
-            )
-            .group_by(UserOrganizationBase.organization_id)
-        ).all()
-    )
-
-    return {
-        org_id: (member_counts.get(org_id, 0), premium_counts.get(org_id, 0))
-        for org_id in org_ids
-    }
+    rows = session.execute(
+        select(
+            UserOrganizationBase.organization_id,
+            func.count().label("members"),
+            func.count().filter(UserOrganizationBase.has_premium_seat.is_(True)).label("premium"),
+        )
+        .where(UserOrganizationBase.organization_id.in_(org_ids))
+        .group_by(UserOrganizationBase.organization_id)
+    ).all()
+    counts = {org_id: (members, premium) for org_id, members, premium in rows}
+    return {org_id: counts.get(org_id, (0, 0)) for org_id in org_ids}
 
 
 def create_organization(session: Session, org: OrganizationBase) -> OrganizationBase:
@@ -224,50 +201,32 @@ def is_org_admin(session: Session, user_id: int, org_id: int) -> bool:
     return membership is not None and membership.is_admin
 
 
+def _count_memberships(session: Session, *filters) -> int:
+    return session.execute(select(func.count()).where(*filters)).scalar() or 0
+
+
 def count_org_admins(session: Session, org_id: int) -> int:
-    """Count the number of admins in an organization."""
-    return (
-        session.execute(
-            select(func.count()).where(
-                UserOrganizationBase.organization_id == org_id,
-                UserOrganizationBase.is_admin.is_(True),
-            )
-        ).scalar()
-        or 0
+    return _count_memberships(
+        session,
+        UserOrganizationBase.organization_id == org_id,
+        UserOrganizationBase.is_admin.is_(True),
     )
 
 
 def count_org_premium_members(session: Session, org_id: int) -> int:
-    """Count the number of members with premium seats in an organization."""
-    return (
-        session.execute(
-            select(func.count()).where(
-                UserOrganizationBase.organization_id == org_id,
-                UserOrganizationBase.has_premium_seat.is_(True),
-            )
-        ).scalar()
-        or 0
+    return _count_memberships(
+        session,
+        UserOrganizationBase.organization_id == org_id,
+        UserOrganizationBase.has_premium_seat.is_(True),
     )
 
 
 def count_user_organizations(session: Session, user_id: int) -> int:
-    """Count the number of organizations a user belongs to."""
-    return (
-        session.execute(
-            select(func.count()).where(UserOrganizationBase.user_id == user_id)
-        ).scalar()
-        or 0
-    )
+    return _count_memberships(session, UserOrganizationBase.user_id == user_id)
 
 
 def count_organization_members(session: Session, org_id: int) -> int:
-    """Count the number of members in an organization."""
-    return (
-        session.execute(
-            select(func.count()).where(UserOrganizationBase.organization_id == org_id)
-        ).scalar()
-        or 0
-    )
+    return _count_memberships(session, UserOrganizationBase.organization_id == org_id)
 
 
 def get_orgs_due_for_cycle_debit(session: Session, now: datetime) -> list[OrganizationBase]:
