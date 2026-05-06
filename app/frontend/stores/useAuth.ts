@@ -128,7 +128,8 @@ export const useAuth = defineStore('auth', {
             }
 
             try {
-                const freshToken = await $fetch<UserTokenUpdate>('/api/v1/users/me/token', {
+                const apiBase = useRuntimeConfig().public.apiBase;
+                const freshToken = await $fetch<UserTokenUpdate>(`${apiBase}/users/me/token`, {
                     method: 'PUT',
                     headers: {
                         Authorization: `Bearer ${this.token.access_token}`,
