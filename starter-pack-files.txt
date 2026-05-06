@@ -283,6 +283,7 @@ scripts/_core/*
 
 # Root project files
 .env.template
+.env.preview.app:template
 docker-compose.core.yml
 docker-compose.preview.yml
 docker-compose.test.yml

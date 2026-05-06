@@ -41,17 +41,21 @@ jobs:
 
       - name: Prepare .env
         working-directory: pr-${{ github.event.pull_request.number }}
-        # Reuse .env.ci as the canonical "isolated app config" base
-        # (same file used by `npm run test:e2e:start`). Append per-PR
-        # overrides + the preview-specific corners that .env.ci
-        # doesn't cover: BASIC_AUTH must be non-empty for the prod
-        # Traefik dynamic file to load; COMPOSE_FILE points at the
-        # preview override layer; PUBLIC_PORT must be 80 because the
-        # host-Traefik forward (docker-compose.preview.yml's
-        # loadbalancer.server.port label) and the healthcheck below
-        # both target :80, while .env.ci ships the e2e port (13001).
+        # Layered, last write wins:
+        #   1. .env.ci           — starterpack defaults (also used by e2e)
+        #   2. .env.preview.app  — optional app additions (preview only;
+        #                          intentionally not loaded by e2e, so apps
+        #                          can't break CI by toggling flags here)
+        #   3. heredoc           — per-PR infra the prior layers can't know:
+        #                          PROJECT/HOST come from the PR number;
+        #                          BASIC_AUTH must be non-empty for the prod
+        #                          Traefik dynamic file to load; PUBLIC_PORT
+        #                          must be 80 because the host-Traefik
+        #                          forward and the healthcheck below target
+        #                          :80, while .env.ci ships the e2e port.
         run: |
           cp .env.ci .env
+          [ -f .env.preview.app ] && cat .env.preview.app >> .env
           cat >> .env <<EOF
           COMPOSE_FILE=docker-compose.core.yml:docker-compose.preview.yml
           BASIC_AUTH='preview:\$apr1\$dummysalt\$dummyhashvaluehere'

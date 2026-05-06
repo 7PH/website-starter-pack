@@ -51,6 +51,7 @@ Traefik dashboard: `http://localhost:${TRAEFIK_DASHBOARD_PORT:-8080}` (dev only,
 - **Database**: PostgreSQL 15 (`npm run db-connect` for psql access)
 - **Proxy**: Traefik (handles TLS, routing)
 - **Env vars**: See `.env.template` for all available config
+- **`.env.preview.app`** (optional, app-owned): extra env vars appended in PR previews only. Not loaded by e2e tests.
 
 ### Feature Flags
 
