@@ -1,4 +1,6 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
@@ -40,7 +42,11 @@ app = FastAPI(debug=False, lifespan=lifespan)
 register_core_tasks(app)
 
 
-# Add CORS middleware (only needed in development when frontend runs separately)
+# Add CORS middleware.
+# Dev: wildcard so a separately-running frontend can hit the API.
+# Prod: same-origin by default. Set EXTRA_ALLOWED_ORIGINS (comma-separated) when
+# the frontend lives on a different origin (e.g. a Capacitor mobile shell loaded
+# from https://localhost or capacitor://localhost).
 if not IS_PROD:
     app.add_middleware(
         CORSMiddleware,
@@ -49,6 +55,16 @@ if not IS_PROD:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+else:
+    extra_origins = [o.strip() for o in os.environ.get("EXTRA_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+    if extra_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=extra_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
 # Add security headers to all responses
 app.add_middleware(SecurityHeadersMiddleware)
