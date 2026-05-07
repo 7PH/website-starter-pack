@@ -10,6 +10,9 @@ Conventions:
 - Handlers have signature ``(session: Session, event: E) -> None``.
 - Single-result events expose a named mutable field (``allow``, ``valid``,
   ``user``, ``extra``). Handlers mutate it; the firing site reads it back.
+- Gate events that may want to surface a human-readable failure message
+  pair ``allow: bool`` with ``reason: str | None`` — handlers set both
+  together, the firing site uses ``reason`` in the error response.
 - Multi-handler events (e.g. SubscriptionChanged) have no mutation field;
   handlers observe and write to ``session``.
 - No return values. No string keys. Handlers are identified by their
@@ -141,6 +144,31 @@ class GroupManagementCheck(HookEvent):
 
     user: UserRead
     allow: bool = True
+
+
+@dataclass
+class ManagedAccountSeatGate(HookEvent):
+    """Fired before a managed-account create (single or bulk).
+
+    Default ``allow=True``. Handlers set ``allow=False`` to deny — typically
+    because the user's tier-specific seat quota would be exceeded. The
+    starterpack-level ``MANAGED_ACCOUNTS_MAX_PER_USER`` env cap still runs
+    independently as a baseline guardrail; this hook layers per-tier rules
+    on top.
+
+    Set ``reason`` to surface a human-readable message in the 402 response
+    body. Leave ``None`` for a generic "Seat quota exceeded" string.
+
+    ``count_to_create`` is the worst-case number of new accounts the request
+    would create (1 for the single-create endpoint, ``len(payload)`` for
+    bulk — handlers see the upper bound, mirroring the env-cap check).
+    """
+
+    user: UserRead
+    group_id: int
+    count_to_create: int
+    allow: bool = True
+    reason: str | None = None
 
 
 @dataclass

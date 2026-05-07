@@ -18,10 +18,12 @@ from src.controllers.managed_account_groups import (
     _require_owned_account,
     _require_owned_group,
     bulk_create_accounts,
+    create_account,
     open_as_account,
 )
 from src.crud import managed_account_groups as crud
 from src.helpers import policies
+from src.helpers.hooks import ManagedAccountSeatGate, on
 from src.models.managed_account_group import ManagedAccountGroupBase
 from src.models.user import UserBase
 from src.schemas.managed_account import ManagedAccountBulkCreate, ManagedAccountCreate
@@ -293,3 +295,220 @@ class TestBulkCreateController:
         assert len(result.accounts) == 2
         assert result.skipped == 1
         assert result.accounts[0].code == "C1"
+
+
+class TestSeatGate:
+    """ManagedAccountSeatGate: per-tier seat-quota hook on the create paths.
+
+    The reset_policy fixture clears every registered hook, so each test
+    starts with no handlers (default ``allow=True``).
+    """
+
+    def _patches(self, current_count: int = 0):
+        """Common patch stack: owned group, count under env cap, CRUD stubbed."""
+        owner_group = _group(owner_id=1)
+        return (
+            patch("src.controllers.managed_account_groups.get_group", return_value=owner_group),
+            patch(
+                "src.controllers.managed_account_groups.count_accounts_for_owner",
+                return_value=current_count,
+            ),
+            patch(
+                "src.controllers.managed_account_groups.create_managed_account",
+                return_value=(_account(1), "CODE"),
+            ),
+            patch(
+                "src.controllers.managed_account_groups.bulk_create_managed_accounts",
+                return_value=([(_account(1), "C1")], 0),
+            ),
+        )
+
+    def test_no_handler_allows_create(self, reset_policy):
+        """No registered handler → fire returns event.allow=True → controller proceeds."""
+        session = MagicMock()
+        with self._patches()[0], self._patches()[1], self._patches()[2]:
+            result = create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+        assert result.code == "CODE"
+
+    def test_handler_can_deny_single_create(self, reset_policy):
+        @on(ManagedAccountSeatGate)
+        def _deny(_session, event):
+            event.allow = False
+
+        session = MagicMock()
+        with (
+            self._patches()[0],
+            self._patches()[1],
+            self._patches()[2],
+            pytest.raises(HTTPException) as exc,
+        ):
+            create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+
+        assert exc.value.status_code == 402
+
+    def test_handler_can_deny_bulk_create(self, reset_policy):
+        @on(ManagedAccountSeatGate)
+        def _deny(_session, event):
+            event.allow = False
+
+        session = MagicMock()
+        with (
+            self._patches()[0],
+            self._patches()[1],
+            self._patches()[3],
+            pytest.raises(HTTPException) as exc,
+        ):
+            bulk_create_accounts(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountBulkCreate(
+                    accounts=[ManagedAccountCreate(display_name="Alice")]
+                ),
+            )
+
+        assert exc.value.status_code == 402
+
+    def test_reason_propagates_to_response_detail(self, reset_policy):
+        @on(ManagedAccountSeatGate)
+        def _deny_with_reason(_session, event):
+            event.allow = False
+            event.reason = "Upgrade to Teacher 50 to add more"
+
+        session = MagicMock()
+        with (
+            self._patches()[0],
+            self._patches()[1],
+            self._patches()[2],
+            pytest.raises(HTTPException) as exc,
+        ):
+            create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+
+        assert exc.value.status_code == 402
+        assert exc.value.detail == "Upgrade to Teacher 50 to add more"
+
+    def test_default_reason_when_handler_omits(self, reset_policy):
+        """Handler sets allow=False but leaves reason=None → generic message."""
+
+        @on(ManagedAccountSeatGate)
+        def _deny(_session, event):
+            event.allow = False  # reason left as None
+
+        session = MagicMock()
+        with (
+            self._patches()[0],
+            self._patches()[1],
+            self._patches()[2],
+            pytest.raises(HTTPException) as exc,
+        ):
+            create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+
+        assert exc.value.detail == "Seat quota exceeded"
+
+    def test_count_to_create_matches_payload(self, reset_policy):
+        captured: list[ManagedAccountSeatGate] = []
+
+        @on(ManagedAccountSeatGate)
+        def _capture(_session, event):
+            captured.append(event)
+
+        session = MagicMock()
+
+        # Single create → count_to_create = 1.
+        with self._patches()[0], self._patches()[1], self._patches()[2]:
+            create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+
+        # Bulk of 25 → count_to_create = 25 (worst case, pre-dedup).
+        with self._patches()[0], self._patches()[1], self._patches()[3]:
+            bulk_create_accounts(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountBulkCreate(
+                    accounts=[ManagedAccountCreate(display_name=f"S{i}") for i in range(25)]
+                ),
+            )
+
+        assert [e.count_to_create for e in captured] == [1, 25]
+        assert all(e.group_id == 10 and e.user.id == 1 for e in captured)
+
+    def test_handler_runs_in_same_session(self, reset_policy):
+        """Handler receives the request-scoped Session passed in by the controller."""
+        seen_sessions: list = []
+
+        @on(ManagedAccountSeatGate)
+        def _capture(session, _event):
+            seen_sessions.append(session)
+
+        session = MagicMock()
+        with self._patches()[0], self._patches()[1], self._patches()[2]:
+            create_account(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountCreate(display_name="Alice"),
+            )
+
+        assert seen_sessions == [session]
+
+    def test_env_cap_still_runs_first(self, reset_policy):
+        """Env cap exceeded → 400 with env-cap detail; the new hook never fires."""
+        fired: list = []
+
+        @on(ManagedAccountSeatGate)
+        def _record(_session, event):
+            fired.append(event)
+
+        session = MagicMock()
+        with (
+            patch(
+                "src.controllers.managed_account_groups.get_group",
+                return_value=_group(owner_id=1),
+            ),
+            patch(
+                "src.controllers.managed_account_groups.count_accounts_for_owner",
+                return_value=999,
+            ),
+            patch("src.controllers.managed_account_groups.MANAGED_ACCOUNTS_MAX_PER_USER", 1000),
+            pytest.raises(HTTPException) as exc,
+        ):
+            bulk_create_accounts(
+                session=session,
+                user=_owner(),
+                group_id=10,
+                body=ManagedAccountBulkCreate(
+                    accounts=[
+                        ManagedAccountCreate(display_name="A"),
+                        ManagedAccountCreate(display_name="B"),
+                    ]
+                ),
+            )
+
+        assert exc.value.status_code == 400
+        assert "1000 managed-account quota" in exc.value.detail
+        assert fired == []  # hook never fired
