@@ -25,6 +25,7 @@ PASSWORD_MIN_LENGTH = 8
 # Stripe
 STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "false").lower() == "true"
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+USER_STRIPE_PRICE_IDS = [p.strip() for p in os.environ.get("USER_STRIPE_PRICE_IDS", "").split(",") if p.strip()]
 
 # Organizations
 ORGANIZATIONS_ENABLED = os.environ.get("ORGANIZATIONS_ENABLED", "false").lower() == "true"

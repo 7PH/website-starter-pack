@@ -2840,6 +2840,68 @@
       "title": "Recommendation",
       "type": "object"
     },
+    "StripeCheckoutRequest": {
+      "description": "Body for POST /stripe/checkout.",
+      "properties": {
+        "price_id": {
+          "title": "Price Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "price_id"
+      ],
+      "title": "StripeCheckoutRequest",
+      "type": "object"
+    },
+    "StripeCheckoutResponse": {
+      "description": "Response from POST /stripe/checkout.",
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "StripeCheckoutResponse",
+      "type": "object"
+    },
+    "StripePlan": {
+      "description": "Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).",
+      "properties": {
+        "price_id": {
+          "title": "Price Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "amount": {
+          "title": "Amount",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "interval": {
+          "title": "Interval",
+          "type": "string"
+        }
+      },
+      "required": [
+        "price_id",
+        "name",
+        "amount",
+        "currency",
+        "interval"
+      ],
+      "title": "StripePlan",
+      "type": "object"
+    },
     "SubscriptionStatus": {
       "description": "Current user's subscription status.",
       "properties": {
@@ -3287,6 +3349,11 @@
           "title": "Organizations",
           "type": "array"
         },
+        "extra": {
+          "additionalProperties": true,
+          "title": "Extra",
+          "type": "object"
+        },
         "display_label": {
           "anyOf": [
             {
@@ -3443,6 +3510,15 @@
     },
     {
       "$ref": "#/$defs/SubscriptionStatus"
+    },
+    {
+      "$ref": "#/$defs/StripePlan"
+    },
+    {
+      "$ref": "#/$defs/StripeCheckoutRequest"
+    },
+    {
+      "$ref": "#/$defs/StripeCheckoutResponse"
     },
     {
       "$ref": "#/$defs/DatabaseHealthResponse"

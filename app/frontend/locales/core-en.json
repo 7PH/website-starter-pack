@@ -169,7 +169,10 @@
             "subscribePersonally": "Subscribe Personally",
             "subscriptionCanceling": "Subscription ending soon",
             "subscriptionCancelingDescription": "Your subscription will end on {date}. You'll keep premium access until then.",
-            "premiumPageSubtitle": "Manage your subscription and billing"
+            "premiumPageSubtitle": "Manage your subscription and billing",
+            "subscribeToPlan": "Subscribe to a Plan",
+            "selectPlan": "Select",
+            "noPlanAvailable": "No subscription plans available"
         },
         "legal": {
             "lastUpdated": "Last updated",

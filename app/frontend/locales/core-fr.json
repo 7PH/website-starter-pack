@@ -169,7 +169,10 @@
             "subscribePersonally": "S'abonner personnellement",
             "subscriptionCanceling": "Abonnement bientôt terminé",
             "subscriptionCancelingDescription": "Votre abonnement se termine le {date}. Vous conserverez l'accès premium jusqu'à cette date.",
-            "premiumPageSubtitle": "Gérez votre abonnement et facturation"
+            "premiumPageSubtitle": "Gérez votre abonnement et facturation",
+            "subscribeToPlan": "Souscrire à un plan",
+            "selectPlan": "Choisir",
+            "noPlanAvailable": "Aucun plan disponible"
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",

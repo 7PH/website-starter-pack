@@ -31,9 +31,9 @@ from ..crud.managed_account_groups import (
     update_managed_account,
 )
 from ..crud.users import soft_delete_user
-from ..helpers.auth import create_access_token, get_current_user, is_premium_effective
+from ..helpers.auth import create_access_token, is_premium_effective
 from ..helpers.db import get_session
-from ..helpers.policies import can_manage_groups
+from ..helpers.policies import get_user_with_manage_groups_perm
 from ..models.managed_account_group import ManagedAccountGroupBase
 from ..models.user import UserBase
 from ..schemas.managed_account import (
@@ -112,7 +112,7 @@ def _require_owned_account(
 def list_my_groups(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(can_manage_groups),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
 ):
     groups = list_groups_for_owner(session, user.id)
     return [_read_group(g, count_accounts_in_group(session, g.id)) for g in groups]
@@ -126,7 +126,7 @@ def list_my_groups(
 def create_my_group(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(can_manage_groups),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     body: ManagedAccountGroupCreate,
 ):
     if count_groups_for_owner(session, user.id) >= MANAGED_ACCOUNT_GROUP_MAX_PER_USER:
@@ -142,7 +142,7 @@ def create_my_group(
 def update_my_group(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(can_manage_groups),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
     body: ManagedAccountGroupUpdate,
 ):
@@ -155,7 +155,7 @@ def update_my_group(
 def delete_my_group(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(can_manage_groups),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
 ):
     group = _require_owned_group(session, group_id, user.id)
@@ -169,7 +169,7 @@ def delete_my_group(
 def rotate_my_group_token(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(can_manage_groups),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
 ):
     group = _require_owned_group(session, group_id, user.id)
@@ -187,7 +187,7 @@ def rotate_my_group_token(
 def list_accounts(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
 ):
     _require_owned_group(session, group_id, user.id)
@@ -203,7 +203,7 @@ def list_accounts(
 def create_account(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
     body: ManagedAccountCreate,
 ):
@@ -229,7 +229,7 @@ def create_account(
 def bulk_create_accounts(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     group_id: int,
     body: ManagedAccountBulkCreate,
 ):
@@ -267,7 +267,7 @@ def bulk_create_accounts(
 def update_account(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     account_id: int,
     body: ManagedAccountUpdate,
 ):
@@ -291,7 +291,7 @@ def update_account(
 def delete_account(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     account_id: int,
 ):
     account = _require_owned_account(session, account_id, user.id)
@@ -302,7 +302,7 @@ def delete_account(
 def reissue_code(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     account_id: int,
 ):
     account = _require_owned_account(session, account_id, user.id)
@@ -314,7 +314,7 @@ def reissue_code(
 def open_as_account(
     *,
     session: Session = Depends(get_session),
-    user: UserRead = Depends(get_current_user),
+    user: UserRead = Depends(get_user_with_manage_groups_perm),
     account_id: int,
 ):
     """Mint a JWT for one of my managed accounts. Owner JWT is the authorization;

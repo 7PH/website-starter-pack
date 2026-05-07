@@ -22,11 +22,21 @@ const formattedExpiresAt = computed(() => {
 
 onMounted(() => refresh());
 
+const {
+    showSubscribeModal,
+    plans,
+    isLoadingPlans,
+    subscribingPriceId,
+    openSubscribeModal,
+    subscribeToPlan,
+    openBillingPortal,
+} = useUserSubscription();
+
 const openingPortal = ref(false);
-async function openBillingPortal() {
+async function onOpenBillingPortal() {
     openingPortal.value = true;
     try {
-        await stripe.openBillingPortal();
+        await openBillingPortal();
     } finally {
         openingPortal.value = false;
     }
@@ -108,7 +118,7 @@ const sourceLabel = computed(() => {
                     icon="i-lucide-credit-card"
                     color="neutral"
                     variant="outline"
-                    @click="openBillingPortal"
+                    @click="onOpenBillingPortal"
                 />
 
                 <NuxtLink
@@ -133,14 +143,21 @@ const sourceLabel = computed(() => {
                 <UButton
                     v-if="stripeEnabled && !isPremium"
                     :label="t('core.billing.subscribePersonally')"
-                    :loading="openingPortal"
                     icon="i-lucide-sparkles"
                     :color="organizations.length > 0 ? 'neutral' : 'primary'"
                     :variant="organizations.length > 0 ? 'outline' : 'solid'"
-                    @click="openBillingPortal"
+                    @click="openSubscribeModal"
                 />
             </div>
         </UCard>
+
+        <AccountSubscribeModal
+            v-model:open="showSubscribeModal"
+            :plans="plans"
+            :is-loading="isLoadingPlans"
+            :subscribing-price-id="subscribingPriceId"
+            @subscribe="subscribeToPlan"
+        />
     </div>
 </template>
 

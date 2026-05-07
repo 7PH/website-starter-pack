@@ -85,6 +85,9 @@ from .schemas.organization import (
 )
 from .schemas.stripe import (
     BillingPortalResponse,
+    StripeCheckoutRequest,
+    StripeCheckoutResponse,
+    StripePlan,
     SubscriptionStatus,
 )
 
@@ -120,6 +123,9 @@ CoreModels = (
     # Stripe models
     | BillingPortalResponse
     | SubscriptionStatus
+    | StripePlan
+    | StripeCheckoutRequest
+    | StripeCheckoutResponse
     # Database health models
     | DatabaseHealthResponse
     | TableStats

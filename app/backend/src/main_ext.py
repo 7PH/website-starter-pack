@@ -38,15 +38,14 @@ def extend_app(app: FastAPI, router: APIRouter) -> None:
         async def my_exception_handler(request, exc):
             return JSONResponse({"error": str(exc)}, status_code=400)
     """
-    # Sign-in by access code: opt in to the default validator (looks up the
-    # access_codes table). Apps with custom semantics replace this line with
-    # their own register_code_validator(my_validator) call.
+    # Sign-in by access code: opt in to the default resolver (looks up the
+    # access_codes table). Apps with custom semantics register their own
+    # @on(AccessCodeResolution) handler instead.
     # Only registered when MANAGED_ACCOUNTS_ENABLED is true so apps that
     # don't use managed accounts get a clean 404 on /auth/code.
     from .constants import MANAGED_ACCOUNTS_ENABLED
 
     if MANAGED_ACCOUNTS_ENABLED:
-        from .helpers.access_codes import default_access_code_validator
-        from .helpers.auth import register_code_validator
+        from .helpers.access_codes import register_default_access_code_resolver
 
-        register_code_validator(default_access_code_validator)
+        register_default_access_code_resolver()

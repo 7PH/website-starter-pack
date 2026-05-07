@@ -47,7 +47,9 @@ app/backend/src/helpers/security_headers_ext.py:template
 app/backend/src/helpers/auth_app.py:template
 app/backend/src/helpers/user_display.py
 app/backend/src/helpers/access_codes.py
+app/backend/src/helpers/hooks.py
 app/backend/src/helpers/policies.py
+app/backend/src/helpers/redirects.py
 app/backend/src/models/__init__.py
 app/backend/src/models/access_code.py
 app/backend/src/models/conversation.py
@@ -91,8 +93,10 @@ app/backend/tests/test_admin_billing.py
 app/backend/tests/test_auth_code.py
 app/backend/tests/test_config.py
 app/backend/tests/test_bug_report.py
+app/backend/tests/test_hooks.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_managed_account_permissions.py
+app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 app/backend/tests/test_user_display.py
@@ -124,6 +128,7 @@ app/frontend/stores/useModal.ts
 app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useStripe.ts
+app/frontend/composables/useUserSubscription.ts
 app/frontend/composables/usePremiumStatus.ts
 app/frontend/composables/schema.ts
 app/frontend/composables/useBreadcrumb.ts
@@ -212,6 +217,7 @@ app/frontend/components/account/BillingTab.vue
 app/frontend/components/account/OrganizationsTab.vue
 app/frontend/components/account/PasswordTab.vue
 app/frontend/components/account/PrivacyTab.vue
+app/frontend/components/account/SubscribeModal.vue
 app/frontend/components/organizations/AdminBillingTab.vue
 app/frontend/components/organizations/BillingTab.vue
 app/frontend/components/organizations/Card.vue
