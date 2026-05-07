@@ -135,7 +135,12 @@ class OrganizationMemberListResponse(BaseModel):
 
 
 class OrganizationPlan(BaseModel):
-    """Schema for available organization plans."""
+    """Schema for available organization plans.
+
+    ``metadata`` is a passthrough of the Stripe price's metadata dict.
+    Apps can label plans with arbitrary keys without growing the schema;
+    ``seats`` stays as a typed int for back-compat with existing callers.
+    """
 
     price_id: str
     name: str
@@ -143,6 +148,7 @@ class OrganizationPlan(BaseModel):
     currency: str
     seats: int
     interval: str  # month, year, week, day
+    metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class OrganizationCheckoutRequest(BaseModel):

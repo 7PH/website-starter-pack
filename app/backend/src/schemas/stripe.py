@@ -2,7 +2,7 @@
 
 """Stripe-related Pydantic schemas."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BillingPortalResponse(BaseModel):
@@ -24,13 +24,20 @@ class WebhookResponse(BaseModel):
 
 
 class StripePlan(BaseModel):
-    """Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS)."""
+    """Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).
+
+    ``metadata`` is a passthrough of the Stripe price's metadata dict.
+    Apps can label plans with arbitrary keys (tier, seat quota, feature
+    flags) and read them off ``plan.metadata`` on the frontend without
+    duplicating data via env vars.
+    """
 
     price_id: str
     name: str
     amount: int
     currency: str
     interval: str  # month, year, week, day
+    metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class StripeCheckoutRequest(BaseModel):

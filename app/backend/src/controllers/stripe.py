@@ -68,6 +68,7 @@ def get_user_plans():
                     amount=details["amount"],
                     currency=details["currency"],
                     interval=details["interval"],
+                    metadata=details.get("metadata", {}),
                 )
             )
     return plans

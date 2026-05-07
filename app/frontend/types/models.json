@@ -2256,7 +2256,7 @@
       "type": "object"
     },
     "OrganizationPlan": {
-      "description": "Schema for available organization plans.",
+      "description": "Schema for available organization plans.\n\n``metadata`` is a passthrough of the Stripe price's metadata dict.\nApps can label plans with arbitrary keys without growing the schema;\n``seats`` stays as a typed int for back-compat with existing callers.",
       "properties": {
         "price_id": {
           "title": "Price Id",
@@ -2281,6 +2281,13 @@
         "interval": {
           "title": "Interval",
           "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Metadata",
+          "type": "object"
         }
       },
       "required": [
@@ -2869,7 +2876,7 @@
       "type": "object"
     },
     "StripePlan": {
-      "description": "Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).",
+      "description": "Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).\n\n``metadata`` is a passthrough of the Stripe price's metadata dict.\nApps can label plans with arbitrary keys (tier, seat quota, feature\nflags) and read them off ``plan.metadata`` on the frontend without\nduplicating data via env vars.",
       "properties": {
         "price_id": {
           "title": "Price Id",
@@ -2890,6 +2897,13 @@
         "interval": {
           "title": "Interval",
           "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Metadata",
+          "type": "object"
         }
       },
       "required": [
