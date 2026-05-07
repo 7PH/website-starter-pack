@@ -33,6 +33,7 @@ from ..crud.managed_account_groups import (
 from ..crud.users import soft_delete_user
 from ..helpers.auth import create_access_token, is_premium_effective
 from ..helpers.db import get_session
+from ..helpers.hooks import ManagedAccountSeatGate, fire
 from ..helpers.policies import get_user_with_manage_groups_perm
 from ..models.managed_account_group import ManagedAccountGroupBase
 from ..models.user import UserBase
@@ -213,6 +214,17 @@ def create_account(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"You can only have up to {MANAGED_ACCOUNTS_MAX_PER_USER} managed accounts in total",
         )
+
+    gate = fire(
+        session,
+        ManagedAccountSeatGate(user=user, group_id=group_id, count_to_create=1),
+    )
+    if not gate.allow:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=gate.reason or "Seat quota exceeded",
+        )
+
     account, code = create_managed_account(
         session,
         group_id=group_id,
@@ -250,6 +262,22 @@ def bulk_create_accounts(
                 f"This batch would exceed your {MANAGED_ACCOUNTS_MAX_PER_USER} "
                 f"managed-account quota ({current_count} already present)."
             ),
+        )
+
+    # App-side per-tier quota gate. Worst-case count (pre-dedup) so handlers
+    # see the same upper bound the env-cap check uses.
+    gate = fire(
+        session,
+        ManagedAccountSeatGate(
+            user=user,
+            group_id=group_id,
+            count_to_create=len(body.accounts),
+        ),
+    )
+    if not gate.allow:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=gate.reason or "Seat quota exceeded",
         )
 
     created, skipped = bulk_create_managed_accounts(
