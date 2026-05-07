@@ -662,6 +662,11 @@ export interface SubscriptionStatus {
 }
 /**
  * Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).
+ *
+ * ``metadata`` is a passthrough of the Stripe price's metadata dict.
+ * Apps can label plans with arbitrary keys (tier, seat quota, feature
+ * flags) and read them off ``plan.metadata`` on the frontend without
+ * duplicating data via env vars.
  */
 export interface StripePlan {
   price_id: PriceId;
@@ -669,6 +674,10 @@ export interface StripePlan {
   amount: Amount;
   currency: Currency;
   interval: Interval;
+  metadata?: Metadata;
+}
+export interface Metadata {
+  [k: string]: string;
 }
 /**
  * Body for POST /stripe/checkout.
@@ -840,6 +849,10 @@ export interface OrganizationMemberListResponse {
 }
 /**
  * Schema for available organization plans.
+ *
+ * ``metadata`` is a passthrough of the Stripe price's metadata dict.
+ * Apps can label plans with arbitrary keys without growing the schema;
+ * ``seats`` stays as a typed int for back-compat with existing callers.
  */
 export interface OrganizationPlan {
   price_id: PriceId2;
@@ -848,6 +861,10 @@ export interface OrganizationPlan {
   currency: Currency1;
   seats: Seats;
   interval: Interval1;
+  metadata?: Metadata1;
+}
+export interface Metadata1 {
+  [k: string]: string;
 }
 /**
  * Schema for creating a checkout session.

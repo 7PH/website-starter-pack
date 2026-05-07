@@ -33,7 +33,6 @@ _DEFAULT_ORG_SUB_STATUS: dict = {
 STRIPE_ENABLED = bool(os.environ.get("STRIPE_API_KEY"))
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_PRICING_FREE = os.environ.get("STRIPE_PRICING_FREE", "")
 
 
 def init_stripe():
@@ -97,13 +96,20 @@ def sync_org_customer(
 
 def get_price_details(price_id: str) -> dict | None:
     """
-    Get price details from Stripe including product name and seats from metadata.
+    Get price details from Stripe.
+
+    Returns the full ``price.metadata`` dict as a passthrough so apps can
+    label plans with arbitrary keys (tier, seat quota, etc.) without the
+    starterpack growing a typed field per use case. ``seats`` is also
+    extracted as a typed int for backward compatibility with existing
+    callers.
 
     Args:
         price_id: Stripe price ID
 
     Returns:
-        Dict with price_id, name, amount, currency, seats or None if not found/error
+        Dict with price_id, name, amount, currency, seats, interval, metadata
+        or None if not found/error.
     """
     if not STRIPE_ENABLED:
         return None
@@ -115,9 +121,12 @@ def get_price_details(price_id: str) -> dict | None:
         # Get product name
         product_name = product.name if hasattr(product, "name") else "Unknown Plan"
 
-        # Get seats from price metadata (fallback to 0)
+        # Full metadata passthrough (Stripe stores values as strings).
+        metadata = dict(price.metadata or {})
+
+        # Typed seats extraction kept for OrganizationPlan back-compat.
         try:
-            seats = int(price.metadata.get("seats", 0)) if price.metadata else 0
+            seats = int(metadata.get("seats", 0))
         except (ValueError, TypeError):
             seats = 0
 
@@ -131,6 +140,7 @@ def get_price_details(price_id: str) -> dict | None:
             "currency": price.currency,
             "seats": seats,
             "interval": interval,
+            "metadata": metadata,
         }
 
     except stripe.error.StripeError as e:
@@ -215,30 +225,27 @@ def sync_customer(
 
 def create_subscription(
     stripe_customer_id: str,
-    price_id: str | None = None,
+    price_id: str,
 ) -> str | None:
     """
     Create a subscription for a customer.
 
     Args:
         stripe_customer_id: Stripe customer ID
-        price_id: Stripe price ID (defaults to STRIPE_PRICING_FREE)
+        price_id: Stripe price ID. Required since v3.4.1 — the
+            STRIPE_PRICING_FREE env var fallback was removed alongside
+            the auto-create-free-sub flow.
 
     Returns:
-        Subscription ID if created, None otherwise
+        Subscription ID if created, None otherwise.
     """
     if not STRIPE_ENABLED:
-        return None
-
-    price = price_id or STRIPE_PRICING_FREE
-    if not price:
-        logger.debug("No price ID configured, skipping subscription creation")
         return None
 
     try:
         subscription = stripe.Subscription.create(
             customer=stripe_customer_id,
-            items=[{"price": price}],
+            items=[{"price": price_id}],
         )
         logger.info(f"Created subscription {subscription.id} for customer {stripe_customer_id}")
         return subscription.id
