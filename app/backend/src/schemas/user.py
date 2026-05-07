@@ -3,6 +3,7 @@
 """User-related Pydantic schemas for API requests/responses."""
 
 import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -28,6 +29,9 @@ class UserRead(BaseModel):
     managed_account_group_id: int | None = None
     custom_data: UserCustomData = Field(default_factory=UserCustomData)
     organizations: list[UserOrganizationInfo] = []
+    # App-side fields appended by UserReadAssembled handlers (tier, seat
+    # quota, feature flags, etc.). Empty when assembled from a JWT alone.
+    extra: dict[str, Any] = Field(default_factory=dict)
     # Computed below; one source of truth for "what label do we show?".
     display_label: str | None = None
 

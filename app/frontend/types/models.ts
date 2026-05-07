@@ -32,6 +32,9 @@ export type Models =
   | BackupListResponse
   | BillingPortalResponse
   | SubscriptionStatus
+  | StripePlan
+  | StripeCheckoutRequest
+  | StripeCheckoutResponse
   | DatabaseHealthResponse
   | TableStats
   | IndexStats
@@ -185,12 +188,19 @@ export type IsPremium3 = boolean;
 export type Plan = string | null;
 export type ExpiresAt1 = string | null;
 export type CancelAtPeriodEnd = boolean;
+export type PriceId = string;
+export type Name = string;
+export type Amount = number;
+export type Currency = string;
+export type Interval = string;
+export type PriceId1 = string;
+export type Url1 = string;
 export type DatabaseSize = number;
 export type DatabaseSizePretty = string;
 export type ActiveConnections = number;
 export type MaxConnections = number;
 export type CacheHitRatio = number;
-export type Name = string;
+export type Name1 = string;
 export type Size1 = number;
 export type SizePretty = string;
 export type RowCount = number;
@@ -199,7 +209,7 @@ export type SeqScans = number;
 export type IdxScans = number;
 export type LastVacuum = string | null;
 export type Tables = TableStats[];
-export type Name1 = string;
+export type Name2 = string;
 export type Table = string;
 export type Size2 = number;
 export type SizePretty1 = string;
@@ -213,7 +223,7 @@ export type Message2 = string;
 export type Action2 = string;
 export type Recommendations = Recommendation[];
 export type Id4 = number;
-export type Name2 = string;
+export type Name3 = string;
 export type Email5 = string;
 export type Description = string | null;
 export type Phone = string | null;
@@ -253,7 +263,7 @@ export type Country1 = string | null;
 export type CustomData1 = {
   [k: string]: unknown;
 } | null;
-export type Name3 = string;
+export type Name4 = string;
 export type Email7 = string;
 export type Description2 = string | null;
 export type Phone2 = string | null;
@@ -267,7 +277,7 @@ export type Country2 = string | null;
 export type CustomData2 = {
   [k: string]: unknown;
 } | null;
-export type Name4 = string | null;
+export type Name5 = string | null;
 export type Email8 = string | null;
 export type Items3 = OrganizationRead[];
 export type Total3 = number;
@@ -281,14 +291,14 @@ export type Items4 = OrganizationMemberRead[];
 export type Total4 = number;
 export type Page1 = number;
 export type PerPage1 = number;
-export type PriceId = string;
-export type Name5 = string;
-export type Amount = number;
-export type Currency = string;
+export type PriceId2 = string;
+export type Name6 = string;
+export type Amount1 = number;
+export type Currency1 = string;
 export type Seats = number;
-export type Interval = string;
-export type PriceId1 = string;
-export type Url1 = string;
+export type Interval1 = string;
+export type PriceId3 = string;
+export type Url2 = string;
 export type StripePremium1 = boolean;
 export type StripeQuota1 = number;
 export type CancelAtPeriodEnd1 = boolean;
@@ -312,13 +322,13 @@ export type InvitedByName1 = string | null;
 export type Email12 = string;
 export type ExpiresAt4 = string;
 export type BalanceCents = number;
-export type Currency1 = string;
+export type Currency2 = string;
 export type CycleStartedAt = string | null;
 export type CycleEnd = string | null;
 export type Id6 = string;
 export type Type1 = string;
 export type AmountCents = number;
-export type Currency2 = string;
+export type Currency3 = string;
 export type Description3 = string | null;
 export type CreatedAt6 = string;
 export type Transactions = OrganizationBalanceTransactionRead[];
@@ -327,19 +337,19 @@ export type Transactions = OrganizationBalanceTransactionRead[];
  */
 export type AmountCents1 = number;
 export type Description4 = string;
-export type PriceId2 = string;
+export type PriceId4 = string;
 export type Enabled = boolean;
 export type Providers = string[];
-export type Url2 = string;
+export type Url3 = string;
 export type State3 = string;
 export type Code = string;
 export type State4 = string;
-export type Name6 = string;
-export type Name7 = string | null;
+export type Name7 = string;
+export type Name8 = string | null;
 export type Archived = boolean | null;
 export type Id7 = number;
 export type OwnerId = number;
-export type Name8 = string;
+export type Name9 = string;
 export type ShareToken = string;
 export type CreatedAt7 = string;
 export type ArchivedAt = string | null;
@@ -448,6 +458,7 @@ export interface UserRead {
   managed_account_group_id?: ManagedAccountGroupId;
   custom_data?: UserCustomData;
   organizations?: Organizations;
+  extra?: Extra;
   display_label?: DisplayLabel;
 }
 /**
@@ -462,6 +473,9 @@ export interface UserOrganizationInfo {
   organization_name: OrganizationName;
   is_admin: IsAdmin1;
   has_premium_seat?: HasPremiumSeat;
+}
+export interface Extra {
+  [k: string]: unknown;
 }
 export interface UserPreviewRead {
   id: Id1;
@@ -647,6 +661,28 @@ export interface SubscriptionStatus {
   cancel_at_period_end?: CancelAtPeriodEnd;
 }
 /**
+ * Available individual-user subscription plan (one entry per USER_STRIPE_PRICE_IDS).
+ */
+export interface StripePlan {
+  price_id: PriceId;
+  name: Name;
+  amount: Amount;
+  currency: Currency;
+  interval: Interval;
+}
+/**
+ * Body for POST /stripe/checkout.
+ */
+export interface StripeCheckoutRequest {
+  price_id: PriceId1;
+}
+/**
+ * Response from POST /stripe/checkout.
+ */
+export interface StripeCheckoutResponse {
+  url: Url1;
+}
+/**
  * Complete database health response.
  */
 export interface DatabaseHealthResponse {
@@ -663,7 +699,7 @@ export interface DatabaseHealthResponse {
  * Statistics for a database table.
  */
 export interface TableStats {
-  name: Name;
+  name: Name1;
   size: Size1;
   size_pretty: SizePretty;
   row_count: RowCount;
@@ -676,7 +712,7 @@ export interface TableStats {
  * Statistics for a database index.
  */
 export interface IndexStats {
-  name: Name1;
+  name: Name2;
   table: Table;
   size: Size2;
   size_pretty: SizePretty1;
@@ -698,7 +734,7 @@ export interface Recommendation {
  */
 export interface OrganizationRead {
   id: Id4;
-  name: Name2;
+  name: Name3;
   email: Email5;
   description?: Description;
   phone?: Phone;
@@ -750,7 +786,7 @@ export interface OrganizationCreate {
   postal_code?: PostalCode1;
   country?: Country1;
   custom_data?: CustomData1;
-  name: Name3;
+  name: Name4;
   email: Email7;
 }
 /**
@@ -767,7 +803,7 @@ export interface OrganizationUpdate {
   postal_code?: PostalCode2;
   country?: Country2;
   custom_data?: CustomData2;
-  name?: Name4;
+  name?: Name5;
   email?: Email8;
 }
 /**
@@ -806,24 +842,24 @@ export interface OrganizationMemberListResponse {
  * Schema for available organization plans.
  */
 export interface OrganizationPlan {
-  price_id: PriceId;
-  name: Name5;
-  amount: Amount;
-  currency: Currency;
+  price_id: PriceId2;
+  name: Name6;
+  amount: Amount1;
+  currency: Currency1;
   seats: Seats;
-  interval: Interval;
+  interval: Interval1;
 }
 /**
  * Schema for creating a checkout session.
  */
 export interface OrganizationCheckoutRequest {
-  price_id: PriceId1;
+  price_id: PriceId3;
 }
 /**
  * Schema for checkout session response.
  */
 export interface OrganizationCheckoutResponse {
-  url: Url1;
+  url: Url2;
 }
 /**
  * Schema for organization subscription status (synced from Stripe).
@@ -881,7 +917,7 @@ export interface PendingInvitationPreview {
  */
 export interface OrganizationAdminBillingRead {
   balance_cents: BalanceCents;
-  currency: Currency1;
+  currency: Currency2;
   plan?: OrganizationPlan | null;
   cycle_started_at?: CycleStartedAt;
   cycle_end?: CycleEnd;
@@ -894,7 +930,7 @@ export interface OrganizationBalanceTransactionRead {
   id: Id6;
   type: Type1;
   amount_cents: AmountCents;
-  currency: Currency2;
+  currency: Currency3;
   description?: Description3;
   created_at: CreatedAt6;
 }
@@ -909,7 +945,7 @@ export interface OrganizationBalanceAdjustRequest {
  * Admin assigns a plan to an org (no Stripe subscription is created).
  */
 export interface OrganizationAssignPlanRequest {
-  price_id: PriceId2;
+  price_id: PriceId4;
 }
 /**
  * Response indicating OAuth availability.
@@ -922,7 +958,7 @@ export interface OAuthStatusResponse {
  * Response containing the OAuth authorization URL.
  */
 export interface OAuthUrlResponse {
-  url: Url2;
+  url: Url3;
   state: State3;
 }
 /**
@@ -933,10 +969,10 @@ export interface OAuthCallbackRequest {
   state: State4;
 }
 export interface ManagedAccountGroupCreate {
-  name: Name6;
+  name: Name7;
 }
 export interface ManagedAccountGroupUpdate {
-  name?: Name7;
+  name?: Name8;
   archived?: Archived;
 }
 /**
@@ -945,7 +981,7 @@ export interface ManagedAccountGroupUpdate {
 export interface ManagedAccountGroupRead {
   id: Id7;
   owner_id: OwnerId;
-  name: Name8;
+  name: Name9;
   share_token: ShareToken;
   created_at: CreatedAt7;
   archived_at: ArchivedAt;

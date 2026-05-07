@@ -16,7 +16,6 @@ from ..crud.event_logs import log_event
 from ..crud.users import get_user_by_email, get_user_by_id, is_email_taken, soft_delete_user, update_user
 from ..helpers.account_deletion import mask_email, resolve_deletion_token
 from ..helpers.auth import (
-    get_code_validator,
     get_current_user,
     get_user_or_404,
     hash_password,
@@ -37,6 +36,7 @@ from ..helpers.email import (
     send_password_reset_email,
     swallow_email_errors,
 )
+from ..helpers.hooks import AccessCodeResolution, fire, has_handlers
 from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
 from ..schemas.user import (
     AccountDeletionConfirm,
@@ -362,14 +362,13 @@ def sign_in_with_code(
 
     The code lives in the JSON body (not the URL path) so it stays out of
     Traefik access logs, browser history and Referer headers. Apps register
-    a validator via `register_code_validator(...)` from main_ext.py; without
-    a validator this endpoint returns 404 (it's effectively not configured).
+    a handler via ``@on(AccessCodeResolution)`` from main_ext.py; without
+    one this endpoint returns 404 (it's effectively not configured).
     """
-    validator = get_code_validator()
-    if validator is None:
+    if not has_handlers(AccessCodeResolution):
         # Fail closed: behave as if the route doesn't exist for apps that
         # didn't opt in. Avoids the misconfiguration of "endpoint up but
-        # no validator wired" silently accepting things.
+        # no resolver wired" silently accepting things.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
     client_ip = get_client_ip(request)
@@ -389,7 +388,15 @@ def sign_in_with_code(
         duration_minutes=60 * 24,
     )
 
-    user = validator(body.managed_account_id, body.code, request)
+    event = fire(
+        session,
+        AccessCodeResolution(
+            managed_account_id=body.managed_account_id,
+            code=body.code,
+            request=request,
+        ),
+    )
+    user = event.user
     if user is None:
         # Bucket failure cooldowns per (IP, account_id) instead of IP alone so
         # one user typo'ing on a school NAT doesn't lock out the rest, and so

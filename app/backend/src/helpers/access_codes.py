@@ -1,39 +1,49 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-"""Default access-code validator.
+"""Default access-code resolver.
 
-Wired by sub-apps in main_ext.py via:
+Wired by sub-apps in ``main_ext.py``::
 
-    from .helpers.auth import register_code_validator
-    from .helpers.access_codes import default_access_code_validator
-    register_code_validator(default_access_code_validator)
+    from .helpers.access_codes import register_default_access_code_resolver
+    register_default_access_code_resolver()
 
-The validator signature is (managed_account_id, code, request); apps with
-custom semantics (paired teacher+student tokens, single-use codes, ...)
-write their own with the same signature.
+Apps with custom semantics (paired teacher+student tokens, single-use codes,
+...) skip this and register their own handler::
+
+    from .helpers.hooks import AccessCodeResolution, on
+
+    @on(AccessCodeResolution)
+    def my_resolver(session, event):
+        if event.user is None:
+            event.user = my_lookup(...)
 """
 
-from fastapi import Request
+from sqlalchemy.orm import Session
 
 from ..crud.access_codes import resolve_code as crud_resolve_code
 from ..helpers.db import SessionLocal
-from ..models.user import UserBase
+from .hooks import AccessCodeResolution, on
 
 
-def default_access_code_validator(
-    managed_account_id: int,
-    code: str,
-    request: Request,  # noqa: ARG001
-) -> UserBase | None:
-    """Look up the ``(managed_account_id, code)`` pair in the access_codes
-    table and return the bound user, or ``None`` when no active code matches.
+def register_default_access_code_resolver() -> None:
+    """Register the default access-code resolver as a hook handler.
 
-    Codes are unique per managed account (PK is composite), so two different
-    managers' students can share a code string — the lookup scopes correctly.
+    Looks up the ``(managed_account_id, code)`` pair in the access_codes
+    table and binds ``event.user`` to the resolved row. Codes are unique
+    per managed account (PK is composite), so two different managers'
+    students can share a code string — the lookup scopes correctly.
     """
-    with SessionLocal() as session:
-        user = crud_resolve_code(session, managed_account_id, code)
-        if user is None:
-            return None
-        session.expunge(user)
-        return user
+
+    @on(AccessCodeResolution)
+    def _default_resolver(_session: Session, event: AccessCodeResolution) -> None:
+        if event.user is not None:
+            return
+        # Use a fresh session: the resolver may be called outside the
+        # request scope in some test paths, and we want the read to be
+        # isolated from the controller's session lifecycle.
+        with SessionLocal() as session:
+            user = crud_resolve_code(session, event.managed_account_id, event.code)
+            if user is None:
+                return
+            session.expunge(user)
+            event.user = user

@@ -79,14 +79,14 @@ def _account(user_id: int = 100, group_id: int = 10) -> UserBase:
 class TestPolicy:
     @pytest.mark.asyncio
     async def test_default_policy_allows_any_user(self, reset_policy):
-        result = await policies.can_manage_groups(_owner())
+        result = await policies.get_user_with_manage_groups_perm(_owner(), MagicMock())
         assert result.id == 1
 
     @pytest.mark.asyncio
     async def test_override_policy_can_block(self, reset_policy):
         policies.set_group_management_policy(lambda u: u.is_premium)
         with pytest.raises(HTTPException) as exc:
-            await policies.can_manage_groups(_owner())
+            await policies.get_user_with_manage_groups_perm(_owner(), MagicMock())
         assert exc.value.status_code == 403
 
     @pytest.mark.asyncio
@@ -94,7 +94,7 @@ class TestPolicy:
         policies.set_group_management_policy(lambda u: u.is_premium)
         u = _owner()
         u.is_premium = True
-        result = await policies.can_manage_groups(u)
+        result = await policies.get_user_with_manage_groups_perm(u, MagicMock())
         assert result.is_premium is True
 
 

@@ -6,7 +6,6 @@ Organizations controller for org management, member management, and subscription
 
 import logging
 from datetime import UTC, datetime
-from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
@@ -49,6 +48,7 @@ from ..helpers import stripe as stripe_helper
 from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
 from ..helpers.email import send_organization_invitation_email
+from ..helpers.redirects import validate_redirect_url as _validate_redirect_url
 from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
 from ..models.user import UserBase
 from ..schemas.organization import (
@@ -118,28 +118,6 @@ def _get_membership_or_404(session: Session, member_id: int, org_id: int) -> Use
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     return membership
 
-
-def _validate_redirect_url(url: str, public_url: str | None = None) -> str:
-    """Validate and sanitize a redirect URL. Returns empty string if invalid."""
-    if not url:
-        return ""
-    try:
-        parsed = urlparse(url)
-        # Must be http or https
-        if parsed.scheme not in ("http", "https"):
-            return ""
-        # Must have a valid netloc (host)
-        if not parsed.netloc:
-            return ""
-        # If PUBLIC_URL is set, validate origin matches
-        if public_url:
-            public_parsed = urlparse(public_url)
-            if parsed.netloc != public_parsed.netloc:
-                logger.warning(f"Redirect URL host mismatch: {parsed.netloc} != {public_parsed.netloc}")
-                return ""
-        return url
-    except Exception:
-        return ""
 
 
 def _check_org_access(
