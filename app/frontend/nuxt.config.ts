@@ -6,6 +6,9 @@ import sitemapExt from './config/sitemap-ext';
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 
+// When MOBILE_APP=1, build a static SPA bundle suitable for bundling into a Capacitor wrapper.
+const IS_MOBILE_APP = process.env.MOBILE_APP === '1';
+
 // Default security headers (merged with project overrides)
 const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
     'X-Content-Type-Options': 'nosniff',
@@ -22,6 +25,11 @@ const securityHeaders = Object.fromEntries(
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-01-01',
+
+    ...(IS_MOBILE_APP && {
+        ssr: false,
+        nitro: { preset: 'static' },
+    }),
 
     // Route-specific rules
     routeRules: {
@@ -73,6 +81,7 @@ export default defineNuxtConfig({
             umamiWebsiteId: '', // NUXT_PUBLIC_UMAMI_WEBSITE_ID
             umamiDashboardUrl: '', // NUXT_PUBLIC_UMAMI_DASHBOARD_URL - admin panel link
             defaultLocale: '', // NUXT_PUBLIC_DEFAULT_LOCALE
+            mobileApp: IS_MOBILE_APP, // true when bundled inside a Capacitor wrapper
         },
     },
 

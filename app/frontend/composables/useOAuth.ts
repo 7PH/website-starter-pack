@@ -33,8 +33,13 @@ export function useOAuth() {
 
     /**
      * Start the Google OAuth flow.
-     * Gets the authorization URL from the backend, saves the state for CSRF protection,
-     * and redirects the user to Google.
+     *
+     * On the web, the current tab redirects to Google. Inside a Capacitor
+     * wrapper, Google opens in the native browser (Chrome custom tab /
+     * SFSafariViewController) — Google blocks OAuth in embedded webviews
+     * (`disallowed_useragent`). The wrapper is expected to forward the
+     * deep-link callback to `/oauth/callback?code=...&state=...` in the
+     * webview, where `handleOAuthCallback` takes over.
      */
     async function startGoogleOAuth(): Promise<void> {
         try {
@@ -45,7 +50,11 @@ export function useOAuth() {
                 localStorage.setItem(OAUTH_STATE_KEY, response.state);
             }
 
-            // Redirect to Google
+            const bridge = useNativeBridge();
+            if (bridge.isNative()) {
+                await bridge.openExternal(response.url);
+                return;
+            }
             window.location.href = response.url;
         } catch (error) {
             showError(error, 'core.oauth.errorStarting');

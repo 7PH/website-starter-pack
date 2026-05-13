@@ -30,6 +30,41 @@ To enable "Continue with Google" on the login page:
 
 The Google sign-in button will appear on the login and signup pages when properly configured.
 
+## Mobile wrapper (Capacitor)
+
+The starterpack is Capacitor-ready: outbound URLs (Stripe checkout / billing portal, Google OAuth) route through `useNativeBridge()`. On the web it's a no-op stub; in a Capacitor wrapper, install a real bridge from a client plugin:
+
+```ts
+// app/frontend/plugins/capacitor.client.ts (app-owned, not core)
+import { Browser } from '@capacitor/browser';
+import type { NativeBridge } from '~/composables/useNativeBridge';
+
+export default defineNuxtPlugin(() => {
+    window.__nativeBridge = {
+        isNative: () => true,
+        openExternal: (url) => Browser.open({ url }).then(() => undefined),
+    } satisfies NativeBridge;
+});
+```
+
+**Build:** `MOBILE_APP=1 npm run build` (inside `app/frontend/`) produces a static SPA in `.output/public/` for bundling into the wrapper.
+
+**OAuth deep-link:** the wrapper listens on `App.appUrlOpen`, parses the callback URL, and navigates the webview to `/oauth/callback?code=...&state=...`. The existing route's `handleOAuthCallback` does the rest.
+
+**Extending the bridge** with app-specific methods (haptic, audio, push) — use TypeScript module augmentation:
+
+```ts
+// In your app's plugin file or a dedicated `types/native-bridge.d.ts`:
+declare module '~/composables/useNativeBridge' {
+    interface NativeBridge {
+        haptic(): Promise<void>;
+        playSample(note: string): Promise<void>;
+    }
+}
+```
+
+Methods added this way are typed everywhere `useNativeBridge()` is called. Core does not call them — only app code does.
+
 ## Running
 
 For running in production, run `npm start`

@@ -72,16 +72,22 @@ export function useStripe() {
     }
 
     /**
-     * Open the Stripe billing portal in a new tab.
-     * Allows users to manage their subscription, update payment methods, etc.
+     * Open the Stripe billing portal in a new tab (web) or the native browser
+     * (Capacitor wrapper). Payments stay on the web — Apple/Play IAP isn't
+     * involved. Allows users to manage their subscription, update payment
+     * methods, etc.
      */
     async function openBillingPortal(): Promise<void> {
         const returnUrl = window.location.href;
         const response = await stripeApi.getBillingPortalUrl(returnUrl);
+        if (!response.url) return;
 
-        if (response.url) {
-            window.open(response.url, '_blank');
+        const bridge = useNativeBridge();
+        if (bridge.isNative()) {
+            await bridge.openExternal(response.url);
+            return;
         }
+        window.open(response.url, '_blank');
     }
 
     watch(
