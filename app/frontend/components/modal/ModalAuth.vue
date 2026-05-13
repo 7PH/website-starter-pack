@@ -166,264 +166,271 @@ function switchMode(newMode: AuthModalMode) {
                 />
             </div>
 
-            <!-- Login Form -->
-            <form v-else-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
-                <UFormField :label="t('core.auth.email')" :error="errors.email">
-                    <UInput
-                        v-model="loginForm.email"
-                        type="email"
-                        autocomplete="email"
-                        :placeholder="t('core.auth.email')"
-                        :color="errors.email ? 'error' : undefined"
-                        class="w-full"
-                    />
-                </UFormField>
+            <template v-else>
+                <!-- OAuth Buttons (shown for login and signup modes) -->
+                <AuthOAuthButtons v-if="mode === 'login' || mode === 'signup'" />
 
-                <UFormField :label="t('core.auth.password')" :error="errors.password">
-                    <UInput
-                        v-model="loginForm.password"
-                        :type="passwordVisibility.login ? 'text' : 'password'"
-                        autocomplete="current-password"
-                        :placeholder="t('core.auth.password')"
-                        :color="errors.password ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="passwordVisibility.login ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                :aria-label="
-                                    passwordVisibility.login ? t('core.auth.hidePassword') : t('core.auth.showPassword')
-                                "
-                                @click="passwordVisibility.login = !passwordVisibility.login"
-                            />
-                        </template>
-                    </UInput>
-                </UFormField>
-
-                <div class="flex items-center justify-between">
-                    <UCheckbox v-model="loginForm.rememberMe" :label="t('core.auth.rememberMe')" />
-                    <UButton
-                        :label="t('core.auth.forgotPassword')"
-                        variant="link"
-                        color="primary"
-                        size="sm"
-                        @click="switchMode('forgot-password')"
-                    />
-                </div>
-
-                <UButton type="submit" :label="t('core.auth.login')" :loading="isLoading" block />
-
-                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
-
-                <p class="text-center text-sm text-gray-500">
-                    {{ t('core.auth.noAccount') }}
-                    <UButton
-                        :label="t('core.auth.createAccount')"
-                        variant="link"
-                        color="primary"
-                        size="sm"
-                        @click="switchMode('signup')"
-                    />
-                </p>
-            </form>
-
-            <!-- Signup Form -->
-            <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
-                <div class="flex gap-3">
-                    <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">
+                <!-- Login Form -->
+                <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
+                    <UFormField :label="t('core.auth.email')" :error="errors.email">
                         <UInput
-                            v-model="signupForm.firstName"
-                            autocomplete="given-name"
-                            :placeholder="t('core.auth.firstName')"
-                            :color="errors.firstName ? 'error' : undefined"
+                            v-model="loginForm.email"
+                            type="email"
+                            autocomplete="email"
+                            :placeholder="t('core.auth.email')"
+                            :color="errors.email ? 'error' : undefined"
                             class="w-full"
                         />
                     </UFormField>
 
-                    <UFormField :label="t('core.auth.lastName')" :error="errors.lastName" class="flex-1">
+                    <UFormField :label="t('core.auth.password')" :error="errors.password">
                         <UInput
-                            v-model="signupForm.lastName"
-                            autocomplete="family-name"
-                            :placeholder="t('core.auth.lastName')"
-                            :color="errors.lastName ? 'error' : undefined"
+                            v-model="loginForm.password"
+                            :type="passwordVisibility.login ? 'text' : 'password'"
+                            autocomplete="current-password"
+                            :placeholder="t('core.auth.password')"
+                            :color="errors.password ? 'error' : undefined"
+                            :ui="{ trailing: 'pe-1' }"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    :icon="passwordVisibility.login ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    :aria-label="
+                                        passwordVisibility.login
+                                            ? t('core.auth.hidePassword')
+                                            : t('core.auth.showPassword')
+                                    "
+                                    @click="passwordVisibility.login = !passwordVisibility.login"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
+
+                    <div class="flex items-center justify-between">
+                        <UCheckbox v-model="loginForm.rememberMe" :label="t('core.auth.rememberMe')" />
+                        <UButton
+                            :label="t('core.auth.forgotPassword')"
+                            variant="link"
+                            color="primary"
+                            size="sm"
+                            @click="switchMode('forgot-password')"
+                        />
+                    </div>
+
+                    <UButton type="submit" :label="t('core.auth.login')" :loading="isLoading" block />
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
+
+                    <p class="text-center text-sm text-gray-500">
+                        {{ t('core.auth.noAccount') }}
+                        <UButton
+                            :label="t('core.auth.createAccount')"
+                            variant="link"
+                            color="primary"
+                            size="sm"
+                            @click="switchMode('signup')"
+                        />
+                    </p>
+                </form>
+
+                <!-- Signup Form -->
+                <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
+                    <div class="flex gap-3">
+                        <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">
+                            <UInput
+                                v-model="signupForm.firstName"
+                                autocomplete="given-name"
+                                :placeholder="t('core.auth.firstName')"
+                                :color="errors.firstName ? 'error' : undefined"
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <UFormField :label="t('core.auth.lastName')" :error="errors.lastName" class="flex-1">
+                            <UInput
+                                v-model="signupForm.lastName"
+                                autocomplete="family-name"
+                                :placeholder="t('core.auth.lastName')"
+                                :color="errors.lastName ? 'error' : undefined"
+                                class="w-full"
+                            />
+                        </UFormField>
+                    </div>
+
+                    <UFormField :label="t('core.auth.email')" :error="errors.email">
+                        <UInput
+                            v-model="signupForm.email"
+                            type="email"
+                            autocomplete="email"
+                            :placeholder="t('core.auth.email')"
+                            :color="errors.email ? 'error' : undefined"
                             class="w-full"
                         />
                     </UFormField>
-                </div>
 
-                <UFormField :label="t('core.auth.email')" :error="errors.email">
-                    <UInput
-                        v-model="signupForm.email"
-                        type="email"
-                        autocomplete="email"
-                        :placeholder="t('core.auth.email')"
-                        :color="errors.email ? 'error' : undefined"
-                        class="w-full"
+                    <UFormField :label="t('core.auth.password')" :error="errors.password">
+                        <UInput
+                            v-model="signupForm.password"
+                            :type="passwordVisibility.signup ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            :placeholder="t('core.auth.password')"
+                            :color="errors.password ? 'error' : undefined"
+                            :ui="{ trailing: 'pe-1' }"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    :icon="passwordVisibility.signup ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    @click="passwordVisibility.signup = !passwordVisibility.signup"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
+
+                    <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
+                        <UInput
+                            v-model="signupForm.confirmPassword"
+                            :type="passwordVisibility.signupConfirm ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            :placeholder="t('core.auth.confirmPassword')"
+                            :color="errors.confirmPassword ? 'error' : undefined"
+                            :ui="{ trailing: 'pe-1' }"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    :icon="passwordVisibility.signupConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    @click="passwordVisibility.signupConfirm = !passwordVisibility.signupConfirm"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
+
+                    <UsersSignupMetadataFields
+                        ref="signupMetadataRef"
+                        :custom-data="signupForm.customData"
+                        @update:custom-data="signupForm.customData = $event"
+                        @validate="(metaErrors) => Object.assign(errors, metaErrors)"
                     />
-                </UFormField>
 
-                <UFormField :label="t('core.auth.password')" :error="errors.password">
-                    <UInput
-                        v-model="signupForm.password"
-                        :type="passwordVisibility.signup ? 'text' : 'password'"
-                        autocomplete="new-password"
-                        :placeholder="t('core.auth.password')"
-                        :color="errors.password ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="passwordVisibility.signup ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="passwordVisibility.signup = !passwordVisibility.signup"
-                            />
-                        </template>
-                    </UInput>
-                </UFormField>
+                    <UButton type="submit" :label="t('core.auth.createAccount')" :loading="isLoading" block />
 
-                <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
-                    <UInput
-                        v-model="signupForm.confirmPassword"
-                        :type="passwordVisibility.signupConfirm ? 'text' : 'password'"
-                        autocomplete="new-password"
-                        :placeholder="t('core.auth.confirmPassword')"
-                        :color="errors.confirmPassword ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="passwordVisibility.signupConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="passwordVisibility.signupConfirm = !passwordVisibility.signupConfirm"
-                            />
-                        </template>
-                    </UInput>
-                </UFormField>
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
 
-                <UsersSignupMetadataFields
-                    ref="signupMetadataRef"
-                    :custom-data="signupForm.customData"
-                    @update:custom-data="signupForm.customData = $event"
-                    @validate="(metaErrors) => Object.assign(errors, metaErrors)"
-                />
+                    <p class="text-center text-sm text-gray-500">
+                        {{ t('core.auth.hasAccount') }}
+                        <UButton
+                            :label="t('core.auth.login')"
+                            variant="link"
+                            color="primary"
+                            size="sm"
+                            @click="switchMode('login')"
+                        />
+                    </p>
+                </form>
 
-                <UButton type="submit" :label="t('core.auth.createAccount')" :loading="isLoading" block />
-
-                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
-
-                <p class="text-center text-sm text-gray-500">
-                    {{ t('core.auth.hasAccount') }}
-                    <UButton
-                        :label="t('core.auth.login')"
-                        variant="link"
-                        color="primary"
-                        size="sm"
-                        @click="switchMode('login')"
+                <!-- Forgot Password Form -->
+                <form
+                    v-else-if="mode === 'forgot-password'"
+                    class="flex flex-col gap-5"
+                    @submit.prevent="handleForgotPassword"
+                >
+                    <UAlert
+                        color="info"
+                        :title="t('core.auth.passwordResetTitle')"
+                        :description="t('core.auth.forgotPasswordMessage')"
                     />
-                </p>
-            </form>
 
-            <!-- Forgot Password Form -->
-            <form
-                v-else-if="mode === 'forgot-password'"
-                class="flex flex-col gap-5"
-                @submit.prevent="handleForgotPassword"
-            >
-                <UAlert
-                    color="info"
-                    :title="t('core.auth.passwordResetTitle')"
-                    :description="t('core.auth.forgotPasswordMessage')"
-                />
+                    <UFormField :label="t('core.auth.email')" :error="errors.email">
+                        <UInput
+                            v-model="forgotPasswordForm.email"
+                            type="email"
+                            autocomplete="email"
+                            :placeholder="t('core.auth.email')"
+                            :color="errors.email ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
 
-                <UFormField :label="t('core.auth.email')" :error="errors.email">
-                    <UInput
-                        v-model="forgotPasswordForm.email"
-                        type="email"
-                        autocomplete="email"
-                        :placeholder="t('core.auth.email')"
-                        :color="errors.email ? 'error' : undefined"
-                        class="w-full"
-                    />
-                </UFormField>
+                    <UButton type="submit" :label="t('core.auth.sendResetLink')" :loading="isLoading" block />
 
-                <UButton type="submit" :label="t('core.auth.sendResetLink')" :loading="isLoading" block />
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
 
-                <div class="border-t border-gray-200 dark:border-gray-700 my-2" />
+                    <p class="text-center">
+                        <UButton
+                            :label="t('core.auth.backToLogin')"
+                            variant="link"
+                            color="neutral"
+                            @click="switchMode('login')"
+                        />
+                    </p>
+                </form>
 
-                <p class="text-center">
-                    <UButton
-                        :label="t('core.auth.backToLogin')"
-                        variant="link"
-                        color="neutral"
-                        @click="switchMode('login')"
-                    />
-                </p>
-            </form>
+                <!-- Reset Password Form -->
+                <form
+                    v-else-if="mode === 'reset-password'"
+                    class="flex flex-col gap-5"
+                    @submit.prevent="handleResetPassword"
+                >
+                    <UAlert v-if="errors.general" color="error" :title="errors.general" />
 
-            <!-- Reset Password Form -->
-            <form
-                v-else-if="mode === 'reset-password'"
-                class="flex flex-col gap-5"
-                @submit.prevent="handleResetPassword"
-            >
-                <UAlert v-if="errors.general" color="error" :title="errors.general" />
+                    <UFormField :label="t('core.auth.password')" :error="errors.password">
+                        <UInput
+                            v-model="resetPasswordForm.password"
+                            :type="passwordVisibility.reset ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            :placeholder="t('core.auth.password')"
+                            :color="errors.password ? 'error' : undefined"
+                            :ui="{ trailing: 'pe-1' }"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    :icon="passwordVisibility.reset ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    @click="passwordVisibility.reset = !passwordVisibility.reset"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
 
-                <UFormField :label="t('core.auth.password')" :error="errors.password">
-                    <UInput
-                        v-model="resetPasswordForm.password"
-                        :type="passwordVisibility.reset ? 'text' : 'password'"
-                        autocomplete="new-password"
-                        :placeholder="t('core.auth.password')"
-                        :color="errors.password ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="passwordVisibility.reset ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="passwordVisibility.reset = !passwordVisibility.reset"
-                            />
-                        </template>
-                    </UInput>
-                </UFormField>
+                    <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
+                        <UInput
+                            v-model="resetPasswordForm.confirmPassword"
+                            :type="passwordVisibility.resetConfirm ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            :placeholder="t('core.auth.confirmPassword')"
+                            :color="errors.confirmPassword ? 'error' : undefined"
+                            :ui="{ trailing: 'pe-1' }"
+                            class="w-full"
+                        >
+                            <template #trailing>
+                                <UButton
+                                    color="neutral"
+                                    variant="link"
+                                    size="sm"
+                                    :icon="passwordVisibility.resetConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                    @click="passwordVisibility.resetConfirm = !passwordVisibility.resetConfirm"
+                                />
+                            </template>
+                        </UInput>
+                    </UFormField>
 
-                <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
-                    <UInput
-                        v-model="resetPasswordForm.confirmPassword"
-                        :type="passwordVisibility.resetConfirm ? 'text' : 'password'"
-                        autocomplete="new-password"
-                        :placeholder="t('core.auth.confirmPassword')"
-                        :color="errors.confirmPassword ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="passwordVisibility.resetConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="passwordVisibility.resetConfirm = !passwordVisibility.resetConfirm"
-                            />
-                        </template>
-                    </UInput>
-                </UFormField>
-
-                <UButton type="submit" :label="t('core.auth.resetPassword')" :loading="isLoading" block />
-            </form>
+                    <UButton type="submit" :label="t('core.auth.resetPassword')" :loading="isLoading" block />
+                </form>
+            </template>
         </template>
     </UModal>
 </template>
