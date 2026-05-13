@@ -35,7 +35,12 @@ export function useUserSubscription() {
         subscribingPriceId.value = plan.price_id;
         try {
             const response = await stripeApi.createUserCheckoutSession(plan.price_id);
-            window.location.href = response.url;
+            const bridge = useNativeBridge();
+            if (bridge.isNative()) {
+                await bridge.openExternal(response.url);
+            } else {
+                window.location.href = response.url;
+            }
         } finally {
             subscribingPriceId.value = null;
         }
@@ -43,7 +48,12 @@ export function useUserSubscription() {
 
     async function openBillingPortal() {
         const response = await stripeApi.getBillingPortalUrl(window.location.href);
-        if (response.url) {
+        if (!response.url) return;
+
+        const bridge = useNativeBridge();
+        if (bridge.isNative()) {
+            await bridge.openExternal(response.url);
+        } else {
             window.open(response.url, '_blank');
         }
     }

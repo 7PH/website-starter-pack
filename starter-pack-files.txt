@@ -127,6 +127,7 @@ app/frontend/stores/useModal.ts
 
 app/frontend/composables/useApi.ts
 app/frontend/composables/useAnalytics.ts
+app/frontend/composables/useNativeBridge.ts
 app/frontend/composables/useStripe.ts
 app/frontend/composables/useUserSubscription.ts
 app/frontend/composables/usePremiumStatus.ts

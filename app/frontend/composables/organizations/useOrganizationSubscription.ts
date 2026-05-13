@@ -44,6 +44,8 @@ export function useOrganizationSubscription(
 
     /**
      * Create a checkout session for a plan and redirect to Stripe.
+     * On web, the current tab navigates to Stripe; in a Capacitor wrapper,
+     * Stripe opens in the native browser via the bridge.
      */
     async function subscribeToPlan(plan: OrganizationPlan) {
         subscribingPriceId.value = plan.price_id;
@@ -51,20 +53,30 @@ export function useOrganizationSubscription(
             const response = await api.post<{ url: string }>(`/organizations/${orgId.value}/checkout`, {
                 price_id: plan.price_id,
             });
-            window.location.href = response.url;
+            const bridge = useNativeBridge();
+            if (bridge.isNative()) {
+                await bridge.openExternal(response.url);
+            } else {
+                window.location.href = response.url;
+            }
         } finally {
             subscribingPriceId.value = null;
         }
     }
 
     /**
-     * Open the Stripe billing portal in a new tab.
+     * Open the Stripe billing portal in a new tab (web) or the native browser (Capacitor wrapper).
      */
     async function openBillingPortal() {
         const response = await api.get<{ url: string }>(`/organizations/${orgId.value}/portal`, {
             return_url: window.location.href,
         });
-        window.open(response.url, '_blank');
+        const bridge = useNativeBridge();
+        if (bridge.isNative()) {
+            await bridge.openExternal(response.url);
+        } else {
+            window.open(response.url, '_blank');
+        }
     }
 
     /**
