@@ -15,3 +15,14 @@
 #   LLM_ENABLED=true
 #   LLM_API_KEY=sk-preview-...
 #   MY_APP_FEATURE_X=enabled
+#
+# Roster of users to upsert into the preview DB after the stack is healthy.
+# JSON array on a single line. Leave unset to inherit the core default
+# (admin/user/premium under @preview.app — see scripts/_core/seed-preview-users.sh).
+#
+# Spec fields: email (required), password (required), is_admin, is_premium,
+# first_name, last_name, display_name. Managed-account seeding isn't supported
+# by /internal/seed-users yet; if you need it, create the group + accounts
+# from a follow-up step using the managed-account-groups API.
+#
+#   PREVIEW_SEED_USERS=[{"email":"teacher@preview.app","password":"pw","is_premium":true},{"email":"student@preview.app","password":"pw"}]

@@ -16,8 +16,8 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from ..constants import INTERNAL_API_KEY
-from ..crud.users import get_user_by_email
-from ..helpers.auth import issue_jwt_with_orgs
+from ..crud.users import create_user, get_user_by_email
+from ..helpers.auth import hash_password, issue_jwt_with_orgs
 from ..helpers.db import get_session
 from ..models.user import UserBase
 from ..schemas.user import UserTokenUpdate
@@ -56,3 +56,73 @@ def mint_token(*, payload: MintTokenRequest, session: Session = Depends(get_sess
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return issue_jwt_with_orgs(session, user)
+
+
+class SeedUserSpec(BaseModel):
+    email: EmailStr
+    password: str
+    is_admin: bool = False
+    is_premium: bool = False
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str | None = None
+
+
+class SeedUsersRequest(BaseModel):
+    users: list[SeedUserSpec]
+
+
+class SeedUserResult(BaseModel):
+    email: EmailStr
+    status: str  # "created" | "updated"
+
+
+class SeedUsersResponse(BaseModel):
+    results: list[SeedUserResult]
+
+
+@router.post(
+    "/seed-users",
+    response_model=SeedUsersResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(_require_internal_key)],
+)
+def seed_users(
+    *, payload: SeedUsersRequest, session: Session = Depends(get_session)
+) -> SeedUsersResponse:
+    """Idempotently upsert a roster of password-auth users for preview/dev.
+
+    Same gating as the rest of /internal: the route is unregistered when
+    INTERNAL_API_KEY is empty, so prod stacks can't reach it. Always sets
+    ``email_confirmed=True`` and ``auth_method='password'`` — seeded users
+    skip the email-verification step that signup normally requires.
+    """
+    results: list[SeedUserResult] = []
+    for spec in payload.users:
+        email = spec.email.lower()
+        existing = get_user_by_email(session, email)
+        if existing is not None:
+            existing.hashed_password = hash_password(spec.password)
+            existing.is_admin = spec.is_admin
+            existing.is_premium = spec.is_premium
+            existing.first_name = spec.first_name
+            existing.last_name = spec.last_name
+            existing.display_name = spec.display_name
+            existing.email_confirmed = True
+            session.commit()
+            results.append(SeedUserResult(email=email, status="updated"))
+        else:
+            user = UserBase(
+                email=email,
+                hashed_password=hash_password(spec.password),
+                is_admin=spec.is_admin,
+                is_premium=spec.is_premium,
+                first_name=spec.first_name,
+                last_name=spec.last_name,
+                display_name=spec.display_name,
+                email_confirmed=True,
+                auth_method="password",
+            )
+            create_user(session, user)
+            results.append(SeedUserResult(email=email, status="created"))
+    return SeedUsersResponse(results=results)
