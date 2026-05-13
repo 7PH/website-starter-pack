@@ -94,6 +94,7 @@ app/backend/tests/test_auth_code.py
 app/backend/tests/test_config.py
 app/backend/tests/test_bug_report.py
 app/backend/tests/test_hooks.py
+app/backend/tests/test_internal.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_stripe_webhook.py

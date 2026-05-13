@@ -91,6 +91,10 @@ For frontend changes, don't claim done until you've actually looked at the resul
 - **Auth-gated pages**: run `npm run dev-mint-token` (no args → first admin user) or `npm run dev-mint-token -- <email>` for a specific user. The script calls `POST /api/v1/internal/mint-token` (gated by `INTERNAL_API_KEY` in `.env`; route is unregistered when the key is empty) and prints a JS snippet — `() => { localStorage.setItem('user-token', '...'); return 'ok'; }` — that you paste straight into `browser_evaluate`. Then navigate to the protected route. The token sits in `localStorage` and persists across tool calls in one Claude Code session. Add `--jwt` for a bare access token (curl) or `--json` for the raw payload.
 - **First-time setup** (one shot, prompts sudo): `npx playwright install --with-deps chromium`.
 
+## Preview user seeding
+
+Preview stacks and `npm run seed-preview-users` upsert a roster via `/api/v1/internal/seed-users` (idempotent). Default roster (password = `preview-<role>`): `admin@preview.app` (admin), `user@preview.app`, `premium@preview.app` (premium). Override with `PREVIEW_SEED_USERS` in `.env.preview.app` — see the commented example there for the schema.
+
 ## i18n
 
 ALL user-facing text must be translated. Never hardcode user-visible strings.

@@ -93,6 +93,23 @@ jobs:
           docker logs --tail 30 "${PROJECT}-traefik" 2>&1 || true
           exit 1
 
+      - name: Seed preview users
+        working-directory: pr-${{ github.event.pull_request.number }}
+        # Uses the same Host-header trick as the healthcheck because the
+        # runner can't address the per-PR Traefik directly. INTERNAL_API_KEY
+        # comes from .env.ci; apps override the roster via PREVIEW_SEED_USERS
+        # in .env.preview.app. Read each var with grep instead of sourcing
+        # .env — .env entries aren't required to be shell-safe (e.g.
+        # `APP_NAME=CI Test App` in .env.ci would break `. ./.env`).
+        run: |
+          INTERNAL_API_KEY=$(grep -E '^INTERNAL_API_KEY=' .env | tail -n1 | cut -d= -f2-)
+          PREVIEW_SEED_USERS=$(grep -E '^PREVIEW_SEED_USERS=' .env | tail -n1 | cut -d= -f2-)
+          export INTERNAL_API_KEY PREVIEW_SEED_USERS
+          SEED_NETWORK=preview-net \
+          SEED_HOST_HEADER="$HOST" \
+          SEED_TARGET="${PROJECT}-traefik" \
+          bash scripts/_core/seed-preview-users.sh
+
       - name: Comment preview URL on PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
