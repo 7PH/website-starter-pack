@@ -171,9 +171,13 @@ services:
                 condition: service_healthy
 
     # Backend for Production
+    # BACKEND_WORKERS>1 requires every scheduled job to use a cluster-singleton
+    # lock (see src/tasks/_scheduler.py::_run_once_per_cluster).
+    # ${BACKEND_WORKERS:-1} is interpolated by compose at parse time so uvicorn
+    # remains PID 1 (no `sh -c` wrapper) and receives SIGTERM cleanly.
     backend-prod:
         <<: *backend-common
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api", "--workers", "${BACKEND_WORKERS:-1}"]
         environment:
             MODE: PRODUCTION
         profiles:

@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import Request
 from sqlalchemy.orm import Session
 
+from ..helpers.real_ip import get_real_ip
 from ..models.event_log import EventLogBase
 from ..schemas.event_log import EventLogFilter, EventLogRead
 
@@ -38,10 +39,7 @@ def log_event(
     user_agent = None
 
     if request:
-        # Get client IP (handle proxies)
-        forwarded = request.headers.get("X-Forwarded-For")
-        ip_address = forwarded.split(",")[0].strip() if forwarded else request.client.host if request.client else None
-
+        ip_address = get_real_ip(request)
         user_agent = request.headers.get("User-Agent")
 
     event = EventLogBase(

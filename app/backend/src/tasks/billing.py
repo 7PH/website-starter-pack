@@ -95,7 +95,7 @@ def run_billing_cycle(now: datetime | None = None) -> int:
 
 
 def register_billing_tasks(app):
-    from . import DAILY_BILLING_HOUR
+    from . import CORE_LOCK_ID_BILLING, DAILY_BILLING_HOUR
     from ._scheduler import register_cron_task
 
     register_cron_task(
@@ -105,4 +105,5 @@ def register_billing_tasks(app):
         cron=CronTrigger(hour=DAILY_BILLING_HOUR, minute=0),
         job_id="daily_billing_cycle",
         log_name="Billing",
+        cluster_lock_id=CORE_LOCK_ID_BILLING,
     )
