@@ -1,6 +1,7 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite';
+import { ROUTE_RULES_EXT } from './config/route-rules-ext';
 import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
 import sitemapExt from './config/sitemap-ext';
 
@@ -36,8 +37,10 @@ export default defineNuxtConfig({
         nitro: { preset: 'static' },
     }),
 
-    // Route-specific rules
+    // Route-specific rules. Sub-app rules (config/route-rules-ext.ts) are
+    // spread FIRST so starter's own rules win on conflict.
     routeRules: {
+        ...ROUTE_RULES_EXT,
         // Security headers for all routes (customize in config/security-headers.ts)
         '/**': { headers: securityHeaders },
         // Disable SSR for auth/admin pages (auth is client-side, no SEO needed)
