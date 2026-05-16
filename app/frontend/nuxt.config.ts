@@ -9,6 +9,11 @@ const PUBLIC_URL = process.env.PUBLIC_URL || '';
 // When MOBILE_APP=1, build a static SPA bundle suitable for bundling into a Capacitor wrapper.
 const IS_MOBILE_APP = process.env.MOBILE_APP === '1';
 
+// When SITEMAP_ENABLED=false, the @nuxtjs/sitemap module registers no /sitemap.xml
+// route. High-scale apps (precomputed XML, cron-driven indexing) can flip this off
+// and serve /sitemap.xml their own way — via public/, a server route, or upstream Nginx.
+const SITEMAP_ENABLED = process.env.SITEMAP_ENABLED !== 'false';
+
 // Default security headers (merged with project overrides)
 const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
     'X-Content-Type-Options': 'nosniff',
@@ -93,6 +98,7 @@ export default defineNuxtConfig({
     },
 
     sitemap: {
+        enabled: SITEMAP_ENABLED,
         // Disable auto-discovery; ship explicit URLs so private pages don't leak.
         // Sub-apps add their own public URLs via config/sitemap-ext.ts.
         excludeAppSources: true,

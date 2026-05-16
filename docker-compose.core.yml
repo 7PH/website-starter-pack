@@ -51,6 +51,9 @@ x-frontend-common: &frontend-common
         NUXT_PUBLIC_ADMINER_URL: ${NUXT_PUBLIC_ADMINER_URL:-}
         NUXT_PUBLIC_UMAMI_DASHBOARD_URL: ${NUXT_PUBLIC_UMAMI_DASHBOARD_URL:-}
         NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+        # Build-time flag read by nuxt.config.ts. Compose propagates this to the
+        # dev container at runtime; for prod-node, see build.args below.
+        SITEMAP_ENABLED: ${SITEMAP_ENABLED:-true}
     networks:
         - web
 
@@ -212,6 +215,8 @@ services:
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-node
+            args:
+                SITEMAP_ENABLED: ${SITEMAP_ENABLED:-true}
         networks:
             web:
                 aliases:
