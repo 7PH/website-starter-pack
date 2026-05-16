@@ -215,6 +215,7 @@ app/frontend/config/conversation-subtypes-ext.ts:template
 app/frontend/config/component-overrides.ts:template
 app/frontend/config/sitemap-ext.ts:template
 app/frontend/config/robots-ext.ts:template
+app/frontend/config/route-rules-ext.ts:template
 app/frontend/components/account/AccountInfoTab.vue
 app/frontend/components/account/BillingTab.vue
 app/frontend/components/account/OrganizationsTab.vue
