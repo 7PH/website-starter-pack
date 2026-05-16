@@ -37,6 +37,7 @@ app/backend/src/helpers/logging.py
 app/backend/src/helpers/account.py
 app/backend/src/helpers/bug_report.py
 app/backend/src/helpers/ratelimit.py
+app/backend/src/helpers/real_ip.py
 app/backend/src/helpers/stripe.py
 app/backend/src/helpers/file_upload.py
 app/backend/src/helpers/sanitize.py

@@ -13,6 +13,7 @@ from .helpers.db import create_db_and_tables
 from .helpers.llm import init_llm
 from .helpers.logging import configure_logging, get_logger, set_request_id
 from .helpers.ratelimit import cleanup_entries
+from .helpers.real_ip import RealIPMiddleware
 from .helpers.security_headers import SecurityHeadersMiddleware
 from .helpers.stripe import init_stripe
 from .main_ext import extend_app
@@ -68,6 +69,13 @@ else:
 
 # Add security headers to all responses
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Resolve real client IP from a trusted proxy header (see helpers/real_ip.py).
+# No-op unless TRUSTED_IP_HEADER is set.
+# Order contract: this must be added AFTER any middleware that wants to read
+# `request.state.real_ip`, because Starlette runs add_middleware in reverse
+# registration order (last added wraps outermost, runs first).
+app.add_middleware(RealIPMiddleware)
 
 
 @app.middleware("http")

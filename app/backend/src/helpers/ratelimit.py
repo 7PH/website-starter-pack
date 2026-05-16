@@ -4,10 +4,16 @@ import time
 
 from fastapi import HTTPException, Request
 
+from .real_ip import get_real_ip
+
 
 def get_client_ip(request: Request) -> str:
-    """Best-effort client IP for rate-limit keys, falling back to 'unknown'."""
-    return request.client.host if request.client else "unknown"
+    """Best-effort client IP for rate-limit keys, falling back to 'unknown'.
+
+    Prefers `request.state.real_ip` (set by RealIPMiddleware) so rate limits
+    bucket on the actual end user when behind a trusted reverse proxy.
+    """
+    return get_real_ip(request)
 
 
 entries = {

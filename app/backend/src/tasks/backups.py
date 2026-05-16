@@ -27,7 +27,7 @@ def scheduled_backup():
 
 
 def register_backup_tasks(app):
-    from . import DAILY_BACKUP_HOUR
+    from . import CORE_LOCK_ID_BACKUP, DAILY_BACKUP_HOUR
     from ._scheduler import register_cron_task
 
     register_cron_task(
@@ -37,4 +37,5 @@ def register_backup_tasks(app):
         cron=CronTrigger(hour=DAILY_BACKUP_HOUR, minute=0),
         job_id="daily_backup",
         log_name="Backup",
+        cluster_lock_id=CORE_LOCK_ID_BACKUP,
     )

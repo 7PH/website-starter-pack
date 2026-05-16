@@ -10,12 +10,28 @@ Base = declarative_base()
 
 db_url = f"postgresql://{os.environ["APP_DB_USER"]}:{os.environ["APP_DB_PASSWORD"]}@db/{os.environ["APP_DB_NAME"]}"
 
-# Connection pool configuration
-# - pool_size: Number of permanent connections to keep (default: 5)
-# - max_overflow: Additional connections allowed when pool is full (default: 10)
-# - pool_timeout: Seconds to wait for a connection before error (default: 30)
-# - pool_recycle: Recycle connections after N seconds to avoid stale connections (default: 1800 = 30 min)
-# - pool_pre_ping: Test connections before use to detect disconnects (default: True)
+
+def _build_options_string() -> str:
+    """Build the libpq `options` connect arg from per-connection server settings.
+
+    `0` disables a given timeout. Both default to 30s to cap pathological queries
+    and transactions that block connection-pool slots.
+    """
+    parts: list[str] = []
+    statement_timeout_ms = int(os.environ.get("DB_STATEMENT_TIMEOUT_MS", "30000"))
+    idle_tx_timeout_ms = int(os.environ.get("DB_IDLE_IN_TRANSACTION_TIMEOUT_MS", "30000"))
+    if statement_timeout_ms > 0:
+        parts.append(f"-c statement_timeout={statement_timeout_ms}")
+    if idle_tx_timeout_ms > 0:
+        parts.append(f"-c idle_in_transaction_session_timeout={idle_tx_timeout_ms}")
+    return " ".join(parts)
+
+
+connect_args: dict = {}
+options = _build_options_string()
+if options:
+    connect_args["options"] = options
+
 engine = create_engine(
     db_url,
     echo=os.environ.get("DB_ECHO", "false").lower() == "true",
@@ -25,6 +41,7 @@ engine = create_engine(
     pool_timeout=int(os.environ.get("DB_POOL_TIMEOUT", "30")),
     pool_recycle=int(os.environ.get("DB_POOL_RECYCLE", "1800")),
     pool_pre_ping=True,
+    connect_args=connect_args,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

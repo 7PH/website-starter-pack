@@ -19,6 +19,13 @@ from .cleanup import register_cleanup_tasks
 DAILY_BILLING_HOUR = 3
 DAILY_BACKUP_HOUR = 4
 
+# Reserved cluster-singleton lock IDs for starterpack-core scheduled jobs
+# (see tasks/_scheduler.py::_run_once_per_cluster). 64-bit signed int.
+# Sub-apps adding their own cluster-locked jobs should pick IDs OUTSIDE the
+# 71500000-71509999 range to avoid collisions on starterpack upgrade.
+CORE_LOCK_ID_BACKUP = 71500001
+CORE_LOCK_ID_BILLING = 71500002
+
 
 def register_core_tasks(app):
     """
