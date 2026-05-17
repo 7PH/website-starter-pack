@@ -241,6 +241,26 @@ def get_last_message(session: Session, conversation_id: int) -> MessageBase | No
     )
 
 
+def get_last_messages_for(
+    session: Session, conversation_ids: list[int]
+) -> dict[int, MessageBase]:
+    """Return ``{conversation_id: last_message}`` in a single query.
+
+    Uses Postgres DISTINCT ON to pick the newest message per conversation —
+    avoids N round-trips when rendering a conversation list.
+    """
+    if not conversation_ids:
+        return {}
+    rows = (
+        session.query(MessageBase)
+        .filter(MessageBase.conversation_id.in_(conversation_ids))
+        .order_by(MessageBase.conversation_id, MessageBase.created_at.desc())
+        .distinct(MessageBase.conversation_id)
+        .all()
+    )
+    return {m.conversation_id: m for m in rows}
+
+
 def mark_as_read(session: Session, conversation_id: int, user_id: int) -> None:
     """Mark a conversation as read for a user."""
     add_participant(session, conversation_id, user_id, last_read_at=datetime.now(UTC))
@@ -259,6 +279,44 @@ def get_unread_count(session: Session, conversation_id: int, user_id: int) -> in
     if last_read_at is not None:
         query = query.filter(MessageBase.created_at > last_read_at)
     return query.scalar() or 0
+
+
+def get_unread_counts_for(
+    session: Session, pairs: list[tuple[int, int]]
+) -> dict[tuple[int, int], int]:
+    """Return ``{(conversation_id, user_id): unread_count}`` in 1 + N queries.
+
+    One batched query fetches participants (for last_read_at), then one COUNT
+    per pair. Net cost is 1 + N instead of the per-call 2N from get_unread_count;
+    a single GROUP BY would be 1 query total but each pair has a different
+    last_read_at cutoff, which doesn't fold cleanly into one aggregate.
+    """
+    if not pairs:
+        return {}
+
+    participants = (
+        session.query(ConversationParticipantBase)
+        .filter(
+            ConversationParticipantBase.conversation_id.in_({p[0] for p in pairs}),
+            ConversationParticipantBase.user_id.in_({p[1] for p in pairs}),
+        )
+        .all()
+    )
+    last_read_map: dict[tuple[int, int], datetime | None] = {
+        (p.conversation_id, p.user_id): p.last_read_at for p in participants
+    }
+
+    counts: dict[tuple[int, int], int] = {}
+    for conv_id, user_id in pairs:
+        last_read_at = last_read_map.get((conv_id, user_id))
+        q = session.query(func.count(MessageBase.id)).filter(
+            MessageBase.conversation_id == conv_id,
+            MessageBase.sender_id != user_id,
+        )
+        if last_read_at is not None:
+            q = q.filter(MessageBase.created_at > last_read_at)
+        counts[(conv_id, user_id)] = q.scalar() or 0
+    return counts
 
 
 def _set_closed(session: Session, conversation_id: int, *, closed: bool) -> ConversationBase | None:

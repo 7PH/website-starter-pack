@@ -2,7 +2,7 @@
 
 """User SQLAlchemy model (database table definition)."""
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 
 from ..helpers.db import Base
@@ -58,6 +58,8 @@ class UserBase(Base):
             " OR (auth_method = 'deleted')",
             name="users_auth_integrity",
         ),
+        # Partial index: Stripe webhooks resolve users by stripe_id on every event.
+        Index("idx_users_stripe_id", "stripe_id", postgresql_where=text("stripe_id IS NOT NULL")),
     )
 
     # This table is used for polymorphic inheritance

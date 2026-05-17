@@ -81,6 +81,12 @@ def list_org_pending_invitations(
     return list(
         session.execute(
             select(OrganizationInvitationBase)
+            .options(
+                # _invitation_to_read reads both relations; eager-load to avoid
+                # N+1 when rendering a long invitation list.
+                joinedload(OrganizationInvitationBase.invited_by),
+                joinedload(OrganizationInvitationBase.organization),
+            )
             .where(
                 OrganizationInvitationBase.organization_id == organization_id,
                 *_pending_filters(),

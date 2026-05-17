@@ -48,12 +48,16 @@ def run_billing_cycle(now: datetime | None = None) -> int:
 
             cycle_started = org.billing_cycle_started_at or current
             description = f"Subscription cycle {cycle_started:%Y-%m-%d}"
+            # Stable per-cycle key so a re-run after a DB-commit failure
+            # reuses Stripe's existing transaction instead of double-charging.
+            idempotency_key = f"org-cycle-debit-{org.id}-{cycle_started.isoformat()}"
             try:
                 stripe_helper.adjust_org_balance(
                     stripe_customer_id=org.stripe_id,
                     amount_cents=-price["amount"],
                     description=description,
                     currency=price["currency"],
+                    idempotency_key=idempotency_key,
                 )
             except Exception as e:
                 logger.error(f"Failed to debit org {org.id}: {e}")

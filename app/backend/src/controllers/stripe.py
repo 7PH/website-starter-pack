@@ -315,6 +315,10 @@ def _apply_subscription_event(
         logger.warning("Webhook event missing customer ID")
         return
 
+    # Drop the cached /subscription response for this customer so the next
+    # call sees Stripe's updated view immediately instead of waiting for TTL.
+    stripe_helper.invalidate_subscription_cache(customer_id)
+
     price_id = _get_subscription_price_id(subscription)
     deleting = is_premium is False
     effective_premium = False if deleting else _is_premium_subscription(subscription)

@@ -44,13 +44,14 @@ def get_dashboard_stats(
     admin: UserRead = Depends(get_current_admin),
 ):
     """Get dashboard statistics (excludes deleted users)."""
-    total_users = session.query(func.count(UserBase.id)).filter(UserBase.deleted_at.is_(None)).scalar()
-    admin_users = (
-        session.query(func.count(UserBase.id)).filter(UserBase.is_admin, UserBase.deleted_at.is_(None)).scalar()
-    )
-    premium_users = (
-        session.query(func.count(UserBase.id)).filter(UserBase.is_premium, UserBase.deleted_at.is_(None)).scalar()
-    )
+    # Single COUNT with FILTER clauses returns all three figures in one query
+    # against one scan, instead of three separate sequential scans.
+    row = session.query(
+        func.count(UserBase.id),
+        func.count(UserBase.id).filter(UserBase.is_admin),
+        func.count(UserBase.id).filter(UserBase.is_premium),
+    ).filter(UserBase.deleted_at.is_(None)).one()
+    total_users, admin_users, premium_users = row
 
     # Get recent events
     recent_events, _ = get_events(session, limit=10)

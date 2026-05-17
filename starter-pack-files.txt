@@ -6,6 +6,7 @@ app/backend/requirements.core.txt
 app/backend/migrations/README.md
 app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
 app/backend/migrations/2026-04-26-v2.1.0-managed-accounts.sql
+app/backend/migrations/2026-05-16-vNEXT-perf-indexes.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -69,6 +70,7 @@ app/backend/src/schemas/db_health.py
 app/backend/src/schemas/event_log.py
 app/backend/src/schemas/managed_account.py
 app/backend/src/schemas/organization.py
+app/backend/src/schemas/organization_invitation.py
 app/backend/src/schemas/stripe.py
 app/backend/src/schemas/user.py
 app/backend/src/schemas/oauth.py

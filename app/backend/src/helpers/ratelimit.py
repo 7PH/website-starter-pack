@@ -25,9 +25,11 @@ def cleanup_entries():
     """
     Cleanup function. Called every minute.
     """
-    for duration_minutes in entries:
-        for action in entries[duration_minutes]:
-            for key in entries[duration_minutes][action]:
+    # Snapshot keys before mutation — del-during-iter raises RuntimeError, which
+    # the scheduler swallowed, so the dict otherwise grew unbounded.
+    for duration_minutes in list(entries.keys()):
+        for action in list(entries[duration_minutes].keys()):
+            for key in list(entries[duration_minutes][action].keys()):
                 # If latest entry is older than 1 minute, remove all
                 if (
                     len(entries[duration_minutes][action][key]) == 0

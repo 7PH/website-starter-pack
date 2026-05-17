@@ -4,7 +4,7 @@
 
 import enum
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, func, text
 from sqlalchemy.orm import relationship
 
 from ..helpers.db import Base
@@ -81,6 +81,13 @@ class MessageBase(Base):
     # Relationships
     conversation = relationship("ConversationBase", back_populates="messages")
     sender = relationship("UserBase")
+
+    __table_args__ = (
+        # Composite index for "newest message per conversation" lookups
+        # (get_last_message, get_messages with ORDER BY created_at DESC).
+        # DESC matches the migration so model-built and migration-built DBs agree.
+        Index("idx_messages_conv_created", "conversation_id", text("created_at DESC")),
+    )
 
 
 class ConversationParticipantBase(Base):
