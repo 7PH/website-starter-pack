@@ -8,10 +8,49 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Decide whether the expensive check needs to run. We can't use workflow-level
+  # `paths:` because a workflow that doesn't run leaves the required status check
+  # missing, which blocks PRs on sub-apps with branch protection. Job-level skip
+  # via `if:` reports as "skipped", which GitHub counts as a passed required check.
+  changes:
+    name: Detect schema changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          # Full coverage on master pushes; only filter PRs.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          BASE='${{ github.event.pull_request.base.sha }}'
+          HEAD='${{ github.event.pull_request.head.sha }}'
+          # Trigger surface: anything that can change generator inputs/outputs.
+          # Broad on purpose — false positives only cost runner time; false
+          # negatives ship out-of-sync TS models.
+          PATTERN='^(app/backend/|app/frontend/types/|scripts/_core/convert-models|docker-compose|.github/workflows/models-sync\.yml)'
+          if git diff --name-only "$BASE" "$HEAD" | grep -Eq "$PATTERN"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
   check-sync:
     name: Verify TypeScript models match Python
-    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
+    runs-on: ${{ vars.CI_RUNNER_LABEL && fromJson(format('["self-hosted", "{0}"]', vars.CI_RUNNER_LABEL)) || 'ubuntu-latest' }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -28,8 +67,26 @@ jobs:
       - name: Create CI environment file
         run: cp .env.ci .env
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Share the backend-dev GHA cache scope with e2e.yml so the first job
+      # to run populates the cache and the other reuses it. COMPOSE_BAKE=true
+      # makes `docker compose up --build` delegate to buildx bake, which
+      # auto-loads docker-bake.override.hcl.
+      - name: Write GHA cache config for compose
+        run: |
+          cat > docker-bake.override.hcl <<'HCL'
+          target "backend-dev" {
+            cache-from = ["type=gha,scope=backend-dev"]
+            cache-to   = ["type=gha,scope=backend-dev,mode=max"]
+          }
+          HCL
+
       - name: Start backend service
-        run: docker compose --profile dev up -d backend-dev db
+        env:
+          COMPOSE_BAKE: "true"
+        run: docker compose --profile dev up -d --build backend-dev db
 
       - name: Wait for backend to be ready
         run: |

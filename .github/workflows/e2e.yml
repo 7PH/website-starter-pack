@@ -8,10 +8,15 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   e2e:
     name: Playwright
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER_LABEL && fromJson(format('["self-hosted", "{0}"]', vars.CI_RUNNER_LABEL)) || 'ubuntu-latest' }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -26,11 +31,50 @@ jobs:
         working-directory: app/frontend
         run: npm ci
 
+      # Playwright browser binaries live outside npm and are slow to
+      # download (~80MB). Key on the lockfile so a version bump misses
+      # the cache and pulls fresh browsers, but everyday runs hit it.
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('app/frontend/package-lock.json') }}
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: app/frontend
         run: npx playwright install chromium
 
+      - name: Install Playwright system deps
+        # Always run — system deps live in /usr/lib (not cached) and the
+        # browser binaries refuse to start without them.
+        working-directory: app/frontend
+        run: npx playwright install-deps chromium
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # COMPOSE_BAKE=true delegates `docker compose build` to buildx bake,
+      # which auto-loads this override and gives each image its own GHA
+      # cache scope. e2e uses the dev profile via test:e2e:start, so the
+      # scopes are dev-specific and don't collide with build.yml.
+      - name: Write GHA cache config for compose
+        run: |
+          cat > docker-bake.override.hcl <<'HCL'
+          target "frontend-dev" {
+            cache-from = ["type=gha,scope=frontend-dev"]
+            cache-to   = ["type=gha,scope=frontend-dev,mode=max"]
+          }
+          target "backend-dev" {
+            cache-from = ["type=gha,scope=backend-dev"]
+            cache-to   = ["type=gha,scope=backend-dev,mode=max"]
+          }
+          HCL
+
       - name: Start test environment
+        env:
+          COMPOSE_BAKE: "true"
         run: npm run test:e2e:start
 
       - name: Wait for services

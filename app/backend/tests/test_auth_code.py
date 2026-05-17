@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
+
 from src.controllers.auth import sign_in_with_code
 from src.helpers.hooks import AccessCodeResolution, _reset_hooks_for_tests, on
 from src.models.user import UserBase

@@ -1,0 +1,55 @@
+# ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
+
+name: Backend Checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Ruff + Pytest
+    runs-on: ${{ vars.CI_RUNNER_LABEL && fromJson(format('["self-hosted", "{0}"]', vars.CI_RUNNER_LABEL)) || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: app/backend/requirements.txt
+
+      - name: Install libmagic
+        run: sudo apt-get update && sudo apt-get install -y libmagic1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff (lint)
+        id: ruff
+        continue-on-error: true
+        run: ruff check src/ tests/ --config ruff.toml
+
+      - name: Pytest (unit tests)
+        id: pytest
+        continue-on-error: true
+        run: pytest tests/ -v
+
+      - name: Fail if any check failed
+        if: steps.ruff.outcome == 'failure' || steps.pytest.outcome == 'failure'
+        run: |
+          echo "::error::One or more backend checks failed:"
+          echo "  ruff:   ${{ steps.ruff.outcome }}"
+          echo "  pytest: ${{ steps.pytest.outcome }}"
+          exit 1
