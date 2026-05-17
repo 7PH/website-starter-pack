@@ -8,10 +8,15 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate:
     name: Check core file consistency
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER_LABEL && fromJson(format('["self-hosted", "{0}"]', vars.CI_RUNNER_LABEL)) || 'ubuntu-latest' }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 

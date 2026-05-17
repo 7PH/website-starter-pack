@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
+
 from src.controllers.managed_account_groups import (
     _require_owned_account,
     _require_owned_group,
