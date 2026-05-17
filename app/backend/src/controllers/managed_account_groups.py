@@ -20,6 +20,7 @@ from ..crud.managed_account_groups import (
     create_managed_account,
     delete_group,
     get_active_code_for_account,
+    get_active_codes_for_accounts,
     get_group,
     get_group_by_share_token,
     get_managed_account,
@@ -193,7 +194,8 @@ def list_accounts(
 ):
     _require_owned_group(session, group_id, user.id)
     accounts = list_accounts_in_group(session, group_id)
-    return [_read_account(a, get_active_code_for_account(session, a.id)) for a in accounts]
+    codes = get_active_codes_for_accounts(session, [a.id for a in accounts])
+    return [_read_account(a, codes.get(a.id)) for a in accounts]
 
 
 @router.post(

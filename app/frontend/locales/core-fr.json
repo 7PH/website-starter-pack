@@ -22,11 +22,9 @@
             "loginSuccess": "Bienvenue !",
             "logoutSuccess": "Vous avez été déconnecté",
             "registerSuccess": "Compte créé avec succès",
-            "passwordChanged": "Mot de passe modifié avec succès",
             "passwordResetSent": "Email de réinitialisation envoyé",
             "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
             "invalidCredentials": "Email ou mot de passe invalide",
-            "emailTaken": "Cet email est déjà utilisé",
             "passwordTooShort": "Le mot de passe doit contenir au moins {minLength} caractères",
             "passwordMismatch": "Les mots de passe ne correspondent pas",
             "verificationEmailSent": "Email de vérification envoyé",
@@ -68,35 +66,13 @@
             "missingParams": "Callback invalide. Veuillez vous reconnecter."
         },
         "common": {
-            "save": "Enregistrer",
             "cancel": "Annuler",
             "delete": "Supprimer",
-            "edit": "Modifier",
             "create": "Créer",
-            "update": "Mettre à jour",
             "confirm": "Confirmer",
-            "close": "Fermer",
-            "back": "Retour",
             "home": "Accueil",
-            "next": "Suivant",
-            "previous": "Précédent",
-            "search": "Rechercher",
-            "filter": "Filtrer",
-            "sort": "Trier",
             "loading": "Chargement...",
-            "noResults": "Aucun résultat trouvé",
             "actions": "Actions",
-            "settings": "Paramètres",
-            "profile": "Profil",
-            "help": "Aide",
-            "yes": "Oui",
-            "no": "Non",
-            "or": "ou",
-            "and": "et",
-            "all": "Tous",
-            "none": "Aucun",
-            "optional": "Optionnel",
-            "required": "Requis",
             "goToHome": "Retour à l'accueil"
         },
         "unsavedChanges": {
@@ -107,50 +83,23 @@
         },
         "errors": {
             "generic": "Une erreur est survenue",
-            "network": "Erreur réseau. Veuillez vérifier votre connexion.",
-            "unauthorized": "Veuillez vous connecter pour continuer",
             "forbidden": "Vous n'avez pas la permission d'effectuer cette action",
             "notFound": "Ressource non trouvée",
-            "validation": "Veuillez vérifier votre saisie",
-            "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
-            "timeout": "La requête a expiré",
             "somethingWentWrong": "Une erreur est survenue",
             "unexpectedError": "Une erreur inattendue s'est produite",
             "tryAgain": "Réessayer"
         },
         "validation": {
-            "required": "Ce champ est requis",
-            "email": "Veuillez entrer un email valide",
-            "minLength": "Doit contenir au moins {min} caractères",
-            "maxLength": "Doit contenir au maximum {max} caractères",
-            "min": "Doit être au moins {min}",
-            "max": "Doit être au maximum {max}"
-        },
-        "time": {
-            "justNow": "À l'instant",
-            "minutesAgo": "Il y a {n} minute | Il y a {n} minutes",
-            "hoursAgo": "Il y a {n} heure | Il y a {n} heures",
-            "daysAgo": "Il y a {n} jour | Il y a {n} jours",
-            "weeksAgo": "Il y a {n} semaine | Il y a {n} semaines",
-            "monthsAgo": "Il y a {n} mois | Il y a {n} mois",
-            "yearsAgo": "Il y a {n} an | Il y a {n} ans"
+            "required": "Ce champ est requis"
         },
         "billing": {
             "subscription": "Abonnement",
-            "plan": "Forfait",
             "free": "Gratuit",
             "premium": "Premium",
             "manage": "Gérer",
             "upgrade": "Passer à Premium",
-            "currentPlan": "Forfait actuel",
-            "youArePremium": "Vous êtes Premium",
-            "freeAccount": "Compte gratuit",
             "upgradePrompt": "Passez à Premium pour débloquer toutes les fonctionnalités",
-            "personalSubscription": "Abonnement personnel actif",
-            "manageSubscription": "Gérer mon abonnement",
             "subscribe": "S'abonner",
-            "modifyOrCancel": "Modifier ou annuler votre abonnement",
-            "unlockFeatures": "Débloquez toutes les fonctionnalités",
             "yourPremiumAccess": "Votre accès premium",
             "source": "Source",
             "sourcePersonal": "Abonnement personnel",
@@ -158,18 +107,14 @@
             "sourceBoth": "Abonnement personnel + {orgName}",
             "sourceNone": "Aucune",
             "bothSourcesHint": "Vous pouvez annuler votre abonnement personnel et conserver l'accès fourni par votre organisation.",
-            "premiumActive": "Accès premium actif",
             "managePersonalBilling": "Gérer la facturation personnelle",
             "manageOrganization": "Gérer l'organisation",
             "youAreOrgOwner": "Vous possédez {orgName}",
             "manageOrgPrompt": "Gérez l'abonnement et les accès premium de votre organisation.",
-            "orPersonalSubscription": "Ou obtenez un abonnement personnel :",
-            "youAreOrgMember": "Vous êtes membre de {orgName}",
             "contactOrgOwners": "Contactez les propriétaires de votre organisation pour un accès premium, ou obtenez un abonnement personnel.",
             "subscribePersonally": "S'abonner personnellement",
             "subscriptionCanceling": "Abonnement bientôt terminé",
             "subscriptionCancelingDescription": "Votre abonnement se termine le {date}. Vous conserverez l'accès premium jusqu'à cette date.",
-            "premiumPageSubtitle": "Gérez votre abonnement et facturation",
             "subscribeToPlan": "Souscrire à un plan",
             "selectPlan": "Choisir",
             "noPlanAvailable": "Aucun plan disponible"
@@ -182,8 +127,7 @@
             "cookies": "Politique des cookies"
         },
         "footer": {
-            "copyright": "Tous droits réservés.",
-            "legal": "Mentions légales"
+            "copyright": "Tous droits réservés."
         },
         "account": {
             "title": "Paramètres du compte",
@@ -192,13 +136,6 @@
             "cancel": "Annuler",
             "goHome": "Retour à l'accueil",
             "profileSaved": "Profil enregistré avec succès",
-            "tabs": {
-                "account": "Compte",
-                "password": "Mot de passe",
-                "organizations": "Organisations",
-                "billing": "Facturation",
-                "privacy": "Confidentialité"
-            },
             "profile": {
                 "title": "Profil",
                 "description": "Mettre à jour vos informations personnelles"
@@ -261,14 +198,10 @@
             "description": "Gérer vos appartenances aux organisations",
             "whatIsAnOrg": "Une organisation est un groupe de facturation partagé. Les membres bénéficient d'un accès premium via un pool de places payées par l'organisation.",
             "noOrganizations": "Vous n'êtes membre d'aucune organisation",
-            "noOrganizationsHint": "Créez une organisation pour collaborer avec votre équipe",
-            "manageOrganizations": "Gérer les organisations",
-            "memberOfCount": "Vous êtes membre de {count} organisation | Vous êtes membre de {count} organisations",
             "createOrganization": "Créer une organisation",
             "createSuccess": "Organisation créée",
             "createSuccessDescription": "{name} a été créée. Vous en êtes maintenant le propriétaire.",
             "createFailed": "Échec de la création de l'organisation",
-            "maxOrganizationsReached": "Vous avez atteint le nombre maximum d'organisations",
             "admin": "Propriétaire",
             "roleTooltip": "Les propriétaires gèrent l'organisation et la facturation. Les membres accèdent aux fonctionnalités partagées.",
             "member": "Membre",
@@ -303,7 +236,6 @@
             "updateFailed": "Échec de l'enregistrement",
             "members": "Membres",
             "addMember": "Inviter un membre",
-            "addMemberByEmail": "Inviter un membre par email",
             "emailPlaceholder": "utilisateur{'@'}exemple.com",
             "addAsAdmin": "Inviter comme propriétaire",
             "add": "Inviter",
@@ -336,9 +268,6 @@
             "subscribeToPlan": "Choisir un abonnement",
             "selectPlan": "Choisir",
             "noPlanAvailable": "Aucun abonnement disponible",
-            "loadPlansFailed": "Échec du chargement des abonnements",
-            "subscribeFailed": "Échec de la création de la session de paiement",
-            "portalFailed": "Échec de l'ouverture du portail de facturation",
             "subscriptionSuccess": "Abonnement activé",
             "subscriptionSuccessDescription": "L'abonnement de votre organisation a été activé",
             "subscriptionCanceled": "Abonnement annulé",
@@ -424,8 +353,7 @@
             "invitationCanceled": "Invitation annulée",
             "invitationCancelFailed": "Échec de l'annulation de l'invitation",
             "invitationSendFailed": "Échec de l'envoi de l'invitation",
-            "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation.",
-            "invitationSignupPrompt": "Créez un compte pour rejoindre {orgName}."
+            "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation."
         },
         "theme": {
             "light": "Mode clair",
@@ -442,15 +370,11 @@
             }
         },
         "home": {
-            "title": "Website Starter Pack",
             "headline": "Lancez des apps full-stack en un après-midi.",
             "subtitle": "Auth, facturation, organisations et i18n — branchés d'avance.",
             "eyebrow": "Template full-stack prêt pour la prod",
             "getStarted": "Commencer",
             "signIn": "Se connecter",
-            "apiConnected": "Connecté",
-            "apiOffline": "Hors ligne",
-            "apiChecking": "Vérification...",
             "features": {
                 "auth": "Authentification",
                 "authDescription": "Authentification intégrée avec email/mot de passe et connexions sociales",
@@ -481,10 +405,7 @@
             "messageLabel": "Message",
             "messagePlaceholder": "Décrivez votre problème ou question...",
             "send": "Envoyer",
-            "success": "Succès",
-            "error": "Erreur",
             "messageRequired": "Veuillez entrer un message",
-            "conversationCreated": "Conversation créée",
             "createFailed": "Échec de la création de la conversation",
             "backToMessages": "Retour aux messages",
             "conversationNotFound": "Conversation non trouvée",
@@ -509,10 +430,6 @@
                 "url_label": "URL",
                 "useragent_label": "Navigateur",
                 "viewport_label": "Taille d'écran"
-            },
-            "errors": {
-                "too_new_account": "Votre compte est tout nouveau. Réessayez dans quelques minutes.",
-                "rate_limited": "Vous avez atteint la limite de signalements. Réessayez plus tard."
             }
         },
         "premium": {
@@ -544,7 +461,6 @@
             "emptyShareTitle": "Aucun compte pour se connecter",
             "emptyShareMessage": "Ce groupe est vide. Ajoutez au moins un compte, ou copiez le lien pour le partager plus tard.",
             "copyAnyway": "Copier quand même",
-            "shareLink": "Lien de connexion",
             "rotateToken": "Nouveau lien",
             "confirmRotateToken": "Remplacer le lien de connexion ? L'ancien lien cessera de fonctionner.",
             "tokenRotated": "Lien remplacé",

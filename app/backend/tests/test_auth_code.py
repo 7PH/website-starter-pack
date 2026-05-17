@@ -14,19 +14,31 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-
 from src.controllers.auth import sign_in_with_code
-from src.helpers import auth as auth_helper
+from src.helpers.hooks import AccessCodeResolution, _reset_hooks_for_tests, on
 from src.models.user import UserBase
 from src.schemas.user import SignInWithCodeRequest
 
 
 @pytest.fixture
-def reset_validator():
-    """Clear the module-global validator before and after each test."""
-    auth_helper._reset_code_validator_for_tests()
+def reset_hooks():
+    """Clear all hook handlers before and after each test."""
+    _reset_hooks_for_tests()
     yield
-    auth_helper._reset_code_validator_for_tests()
+    _reset_hooks_for_tests()
+
+
+def _resolve_with(fn):
+    """Register an AccessCodeResolution handler that delegates to ``fn``.
+
+    ``fn`` matches the legacy ``(account_id, code, request) -> UserBase | None``
+    shape so the per-test bodies stay short.
+    """
+
+    @on(AccessCodeResolution)
+    def _handler(_session, event):
+        if event.user is None:
+            event.user = fn(event.managed_account_id, event.code, event.request)
 
 
 def _stub_user(user_id: int = 42) -> UserBase:
@@ -58,7 +70,7 @@ def _body(account_id: int = 42, code: str = "OK") -> SignInWithCodeRequest:
 
 
 class TestSignInWithCode:
-    def test_unconfigured_endpoint_returns_404(self, reset_validator):
+    def test_unconfigured_endpoint_returns_404(self, reset_hooks):
         """No validator registered → endpoint behaves as if it doesn't exist."""
         with patch("src.controllers.auth.ensure_rate_limit"), pytest.raises(HTTPException) as exc:
             sign_in_with_code(
@@ -68,9 +80,9 @@ class TestSignInWithCode:
             )
         assert exc.value.status_code == 404
 
-    def test_valid_id_and_code_issues_jwt(self, reset_validator):
+    def test_valid_id_and_code_issues_jwt(self, reset_hooks):
         """Validator accepts (account_id, code); we get a Bearer token back."""
-        auth_helper.register_code_validator(
+        _resolve_with(
             lambda account_id, code, _req: _stub_user(account_id) if code == "OK" else None
         )
 
@@ -93,9 +105,9 @@ class TestSignInWithCode:
         assert result.user.email is None
         assert result.user.managed_account_group_id == 7
 
-    def test_invalid_code_returns_401(self, reset_validator):
+    def test_invalid_code_returns_401(self, reset_hooks):
         """Validator returning None surfaces as 401."""
-        auth_helper.register_code_validator(lambda _id, _code, _req: None)
+        _resolve_with(lambda _id, _code, _req: None)
 
         with (
             patch("src.controllers.auth.log_event") as mock_log,
@@ -116,9 +128,9 @@ class TestSignInWithCode:
         assert "code_hash" in details
         assert "NOPE" not in str(details)
 
-    def test_id_mismatch_returns_401(self, reset_validator):
+    def test_id_mismatch_returns_401(self, reset_hooks):
         """A correct code paired with the wrong account_id is still rejected."""
-        auth_helper.register_code_validator(
+        _resolve_with(
             lambda account_id, code, _req: _stub_user(account_id) if (account_id == 42 and code == "OK") else None
         )
 
@@ -133,9 +145,3 @@ class TestSignInWithCode:
                 body=_body(account_id=99, code="OK"),
             )
         assert exc.value.status_code == 401
-
-    def test_double_register_raises(self, reset_validator):
-        """Silent override of a validator would be a security footgun."""
-        auth_helper.register_code_validator(lambda _id, _code, _req: None)
-        with pytest.raises(RuntimeError, match="already registered"):
-            auth_helper.register_code_validator(lambda _id, _code, _req: None)

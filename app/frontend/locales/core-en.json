@@ -22,11 +22,9 @@
             "loginSuccess": "Welcome back!",
             "logoutSuccess": "You have been logged out",
             "registerSuccess": "Account created successfully",
-            "passwordChanged": "Password changed successfully",
             "passwordResetSent": "Password reset email sent",
             "passwordResetSuccess": "Password reset successfully",
             "invalidCredentials": "Invalid email or password",
-            "emailTaken": "This email is already registered",
             "passwordTooShort": "Password must be at least {minLength} characters",
             "passwordMismatch": "Passwords do not match",
             "verificationEmailSent": "Verification email sent",
@@ -68,35 +66,13 @@
             "missingParams": "Invalid callback. Please try signing in again."
         },
         "common": {
-            "save": "Save",
             "cancel": "Cancel",
             "delete": "Delete",
-            "edit": "Edit",
             "create": "Create",
-            "update": "Update",
             "confirm": "Confirm",
-            "close": "Close",
-            "back": "Back",
             "home": "Home",
-            "next": "Next",
-            "previous": "Previous",
-            "search": "Search",
-            "filter": "Filter",
-            "sort": "Sort",
             "loading": "Loading...",
-            "noResults": "No results found",
             "actions": "Actions",
-            "settings": "Settings",
-            "profile": "Profile",
-            "help": "Help",
-            "yes": "Yes",
-            "no": "No",
-            "or": "or",
-            "and": "and",
-            "all": "All",
-            "none": "None",
-            "optional": "Optional",
-            "required": "Required",
             "goToHome": "Go to Home"
         },
         "unsavedChanges": {
@@ -107,50 +83,23 @@
         },
         "errors": {
             "generic": "An error occurred",
-            "network": "Network error. Please check your connection.",
-            "unauthorized": "Please log in to continue",
             "forbidden": "You don't have permission to do this",
             "notFound": "Resource not found",
-            "validation": "Please check your input",
-            "serverError": "Server error. Please try again later.",
-            "timeout": "Request timed out",
             "somethingWentWrong": "Something went wrong",
             "unexpectedError": "An unexpected error occurred",
             "tryAgain": "Try again"
         },
         "validation": {
-            "required": "This field is required",
-            "email": "Please enter a valid email",
-            "minLength": "Must be at least {min} characters",
-            "maxLength": "Must be at most {max} characters",
-            "min": "Must be at least {min}",
-            "max": "Must be at most {max}"
-        },
-        "time": {
-            "justNow": "Just now",
-            "minutesAgo": "{n} minute ago | {n} minutes ago",
-            "hoursAgo": "{n} hour ago | {n} hours ago",
-            "daysAgo": "{n} day ago | {n} days ago",
-            "weeksAgo": "{n} week ago | {n} weeks ago",
-            "monthsAgo": "{n} month ago | {n} months ago",
-            "yearsAgo": "{n} year ago | {n} years ago"
+            "required": "This field is required"
         },
         "billing": {
             "subscription": "Subscription",
-            "plan": "Plan",
             "free": "Free",
             "premium": "Premium",
             "manage": "Manage",
             "upgrade": "Upgrade",
-            "currentPlan": "Current plan",
-            "youArePremium": "You are Premium",
-            "freeAccount": "Free account",
             "upgradePrompt": "Upgrade to Premium to unlock all features",
-            "personalSubscription": "Personal subscription active",
-            "manageSubscription": "Manage subscription",
             "subscribe": "Subscribe",
-            "modifyOrCancel": "Modify or cancel your subscription",
-            "unlockFeatures": "Unlock all features",
             "yourPremiumAccess": "Your premium access",
             "source": "Source",
             "sourcePersonal": "Personal subscription",
@@ -158,18 +107,14 @@
             "sourceBoth": "Personal subscription + {orgName}",
             "sourceNone": "None",
             "bothSourcesHint": "You can cancel your personal subscription and keep the access your organization provides.",
-            "premiumActive": "Premium access active",
             "managePersonalBilling": "Manage Personal Billing",
             "manageOrganization": "Manage Organization",
             "youAreOrgOwner": "You own {orgName}",
             "manageOrgPrompt": "Manage your organization's subscription and premium seats.",
-            "orPersonalSubscription": "Or get a personal subscription:",
-            "youAreOrgMember": "You're a member of {orgName}",
             "contactOrgOwners": "Contact your organization's Owners for premium access, or get a personal subscription.",
             "subscribePersonally": "Subscribe Personally",
             "subscriptionCanceling": "Subscription ending soon",
             "subscriptionCancelingDescription": "Your subscription will end on {date}. You'll keep premium access until then.",
-            "premiumPageSubtitle": "Manage your subscription and billing",
             "subscribeToPlan": "Subscribe to a Plan",
             "selectPlan": "Select",
             "noPlanAvailable": "No subscription plans available"
@@ -182,8 +127,7 @@
             "cookies": "Cookie Policy"
         },
         "footer": {
-            "copyright": "All rights reserved.",
-            "legal": "Legal"
+            "copyright": "All rights reserved."
         },
         "account": {
             "title": "Account Settings",
@@ -192,13 +136,6 @@
             "cancel": "Cancel",
             "goHome": "Go to Home",
             "profileSaved": "Profile saved successfully",
-            "tabs": {
-                "account": "Account",
-                "password": "Password",
-                "organizations": "Organizations",
-                "billing": "Billing",
-                "privacy": "Privacy"
-            },
             "profile": {
                 "title": "Profile",
                 "description": "Update your personal information"
@@ -261,14 +198,10 @@
             "description": "Manage your organization memberships",
             "whatIsAnOrg": "An organization is a shared billing group. Members get premium access through a pool of seats the organization pays for.",
             "noOrganizations": "You are not a member of any organization",
-            "noOrganizationsHint": "Create an organization to collaborate with your team",
-            "manageOrganizations": "Manage Organizations",
-            "memberOfCount": "You are a member of {count} organization | You are a member of {count} organizations",
             "createOrganization": "Create Organization",
             "createSuccess": "Organization created",
             "createSuccessDescription": "{name} has been created. You are now the Owner.",
             "createFailed": "Failed to create organization",
-            "maxOrganizationsReached": "You have reached the maximum number of organizations",
             "admin": "Owner",
             "roleTooltip": "Owners manage the organization and billing. Members just access shared features.",
             "member": "Member",
@@ -303,7 +236,6 @@
             "updateFailed": "Failed to save changes",
             "members": "Members",
             "addMember": "Invite Member",
-            "addMemberByEmail": "Invite a member by email",
             "emailPlaceholder": "user{'@'}example.com",
             "addAsAdmin": "Invite as Owner",
             "add": "Invite",
@@ -336,9 +268,6 @@
             "subscribeToPlan": "Subscribe to a Plan",
             "selectPlan": "Select",
             "noPlanAvailable": "No subscription plans available",
-            "loadPlansFailed": "Failed to load plans",
-            "subscribeFailed": "Failed to create checkout session",
-            "portalFailed": "Failed to open billing portal",
             "subscriptionSuccess": "Subscription successful",
             "subscriptionSuccessDescription": "Your organization subscription has been activated",
             "subscriptionCanceled": "Subscription canceled",
@@ -424,8 +353,7 @@
             "invitationCanceled": "Invitation canceled",
             "invitationCancelFailed": "Failed to cancel invitation",
             "invitationSendFailed": "Failed to send invitation",
-            "invitationLoginPrompt": "Log in or sign up to accept this invitation.",
-            "invitationSignupPrompt": "Create an account to join {orgName}."
+            "invitationLoginPrompt": "Log in or sign up to accept this invitation."
         },
         "theme": {
             "light": "Light mode",
@@ -442,15 +370,11 @@
             }
         },
         "home": {
-            "title": "Website Starter Pack",
             "headline": "Ship full-stack apps in an afternoon.",
             "subtitle": "Auth, billing, orgs, and i18n — wired up out of the box.",
             "eyebrow": "Production-ready full-stack template",
             "getStarted": "Get Started",
             "signIn": "Sign in",
-            "apiConnected": "Connected",
-            "apiOffline": "Offline",
-            "apiChecking": "Checking...",
             "features": {
                 "auth": "Authentication",
                 "authDescription": "Built-in auth with email/password and social logins",
@@ -481,10 +405,7 @@
             "messageLabel": "Message",
             "messagePlaceholder": "Describe your issue or question...",
             "send": "Send",
-            "success": "Success",
-            "error": "Error",
             "messageRequired": "Please enter a message",
-            "conversationCreated": "Conversation created",
             "createFailed": "Failed to create conversation",
             "backToMessages": "Back to Messages",
             "conversationNotFound": "Conversation not found",
@@ -509,10 +430,6 @@
                 "url_label": "URL",
                 "useragent_label": "User-agent",
                 "viewport_label": "Viewport"
-            },
-            "errors": {
-                "too_new_account": "Your account is brand-new. Please try again in a few minutes.",
-                "rate_limited": "You've reached the bug-report limit. Try again later."
             }
         },
         "premium": {
@@ -544,7 +461,6 @@
             "emptyShareTitle": "No accounts to sign in",
             "emptyShareMessage": "This group is empty. Add at least one account, or copy the link and share it once you have.",
             "copyAnyway": "Copy anyway",
-            "shareLink": "Sign-in link",
             "rotateToken": "New link",
             "confirmRotateToken": "Replace the sign-in link? The old link will stop working.",
             "tokenRotated": "Link replaced",

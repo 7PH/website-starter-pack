@@ -18,7 +18,7 @@ from ..crud.organizations import (
 )
 from ..helpers.auth import get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
-from ..schemas.organization import (
+from ..schemas.organization_invitation import (
     OrganizationInvitationListResponse,
     OrganizationInvitationRead,
     PendingInvitationPreview,

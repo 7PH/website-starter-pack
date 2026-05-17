@@ -18,9 +18,10 @@ from ..crud.conversations import (
     create_conversation,
     get_all_support_conversations,
     get_conversation_by_id,
-    get_last_message,
+    get_last_messages_for,
     get_messages,
     get_unread_count,
+    get_unread_counts_for,
     get_user_conversations,
     mark_as_read,
     reopen_conversation,
@@ -150,12 +151,22 @@ def _build_list_response(
     (use the conversation creator for the admin list, the current user for the
     user list).
     """
+    conv_ids = [c.id for c in conversations]
+    last_messages = get_last_messages_for(session, conv_ids)
+    unread_pairs = [
+        (c.id, unread_for_user_id if unread_for_user_id is not None else c.created_by_id)
+        for c in conversations
+        if (unread_for_user_id if unread_for_user_id is not None else c.created_by_id) is not None
+    ]
+    unread_counts = get_unread_counts_for(session, unread_pairs)
+
     items = []
     for conv in conversations:
         target_user = unread_for_user_id if unread_for_user_id is not None else conv.created_by_id
-        unread = get_unread_count(session, conv.id, target_user) if target_user is not None else 0
-        last_msg = get_last_message(session, conv.id)
-        items.append(_conversation_to_read(conv, unread_count=unread, last_message=last_msg))
+        unread = unread_counts.get((conv.id, target_user), 0) if target_user is not None else 0
+        items.append(
+            _conversation_to_read(conv, unread_count=unread, last_message=last_messages.get(conv.id))
+        )
     return ConversationListResponse(items=items, total=total, limit=limit, offset=offset)
 
 

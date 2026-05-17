@@ -68,9 +68,6 @@ from .schemas.organization import (
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
-    OrganizationInvitationCreate,
-    OrganizationInvitationListResponse,
-    OrganizationInvitationRead,
     OrganizationListResponse,
     OrganizationMemberAdd,
     OrganizationMemberListResponse,
@@ -80,8 +77,13 @@ from .schemas.organization import (
     OrganizationRead,
     OrganizationSubscriptionStatus,
     OrganizationUpdate,
-    PendingInvitationPreview,
     UserOrganizationInfo,
+)
+from .schemas.organization_invitation import (
+    OrganizationInvitationCreate,
+    OrganizationInvitationListResponse,
+    OrganizationInvitationRead,
+    PendingInvitationPreview,
 )
 from .schemas.stripe import (
     BillingPortalResponse,

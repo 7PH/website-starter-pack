@@ -180,21 +180,6 @@ def send_email_verification_email(to_email: str, username: str, verification_lin
     )
 
 
-def send_welcome_email(to_email: str, username: str) -> bool:
-    return _send_templated_email(
-        to_email=to_email,
-        subject=f"Welcome to {APP_NAME}!",
-        template_basename="welcome",
-        context={"username": username},
-        text_fallback=(
-            f"Hello {username},\n\n"
-            f"Welcome to {APP_NAME}! Your account has been created successfully.\n\n"
-            f"Get started: {PUBLIC_URL}\n"
-        ),
-        raise_on_error=False,  # Welcome emails are not critical
-    )
-
-
 def send_organization_invitation_email(
     to_email: str,
     organization_name: str,

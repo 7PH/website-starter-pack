@@ -59,9 +59,6 @@ from ..schemas.organization import (
     OrganizationCheckoutRequest,
     OrganizationCheckoutResponse,
     OrganizationCreate,
-    OrganizationInvitationCreate,
-    OrganizationInvitationListResponse,
-    OrganizationInvitationRead,
     OrganizationListResponse,
     OrganizationMemberAdd,
     OrganizationMemberListResponse,
@@ -73,6 +70,11 @@ from ..schemas.organization import (
     OrganizationUpdate,
 )
 from ..schemas.organization_ext import OrganizationCustomData
+from ..schemas.organization_invitation import (
+    OrganizationInvitationCreate,
+    OrganizationInvitationListResponse,
+    OrganizationInvitationRead,
+)
 from ..schemas.stripe import BillingPortalResponse
 from ..schemas.user import UserRead
 
@@ -595,11 +597,21 @@ def _update_member_premium_status(
         return
 
     if new_has_premium:
-        current_premium = count_org_premium_members(session, org.id)
-        if current_premium >= org.stripe_quota:
+        # Lock the org row for the duration of this transaction so concurrent
+        # grants can't both pass the quota check and oversubscribe. Re-read
+        # the live row inside the lock to pick up any changes made between
+        # the caller's load and now.
+        locked_org = (
+            session.query(OrganizationBase)
+            .filter(OrganizationBase.id == org.id)
+            .with_for_update()
+            .one()
+        )
+        current_premium = count_org_premium_members(session, locked_org.id)
+        if current_premium >= locked_org.stripe_quota:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Organization has reached its premium seat limit ({org.stripe_quota})",
+                detail=f"Organization has reached its premium seat limit ({locked_org.stripe_quota})",
             )
 
     membership.has_premium_seat = new_has_premium

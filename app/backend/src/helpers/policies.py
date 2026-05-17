@@ -2,7 +2,7 @@
 
 """Pluggable authorization policies.
 
-Group-management policy is now driven by the typed event bus
+Group-management policy is driven by the typed event bus
 (``GroupManagementCheck`` in ``helpers/hooks.py``). Sub-apps register a
 handler from ``main_ext.py``::
 
@@ -10,13 +10,7 @@ handler from ``main_ext.py``::
     def my_policy(session: Session, event: GroupManagementCheck) -> None:
         if not is_teacher(session, event.user):
             event.allow = False
-
-The legacy ``set_group_management_policy(fn)`` API is kept as a
-deprecated shim for one release. New code should use ``@on(...)``.
 """
-
-import warnings
-from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -24,36 +18,7 @@ from sqlalchemy.orm import Session
 from ..schemas.user import UserRead
 from .auth import get_current_user
 from .db import get_session
-from .hooks import GroupManagementCheck, fire, on
-
-GroupManagementPolicy = Callable[[UserRead], bool]
-
-
-def set_group_management_policy(fn: GroupManagementPolicy) -> None:
-    """**Deprecated.** Use ``@on(GroupManagementCheck)`` instead.
-
-    Registers ``fn`` as a handler that flips ``event.allow`` to False
-    when ``fn(user)`` returns False. Kept for backwards compatibility
-    with sub-apps that haven't migrated yet; will be removed in v3.5.0.
-    """
-    warnings.warn(
-        "set_group_management_policy is deprecated; use @on(GroupManagementCheck) "
-        "from helpers/hooks.py instead. Will be removed in v3.5.0.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    @on(GroupManagementCheck)
-    def _shim(_session: Session, event: GroupManagementCheck) -> None:
-        if not fn(event.user):
-            event.allow = False
-
-
-def _reset_group_management_policy_for_tests() -> None:
-    """Test-only helper. Clears every registered hook handler. Do not call from production code."""
-    from .hooks import _reset_hooks_for_tests
-
-    _reset_hooks_for_tests()
+from .hooks import GroupManagementCheck, fire
 
 
 async def get_user_with_manage_groups_perm(

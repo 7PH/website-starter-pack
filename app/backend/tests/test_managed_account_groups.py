@@ -13,7 +13,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-
 from src.controllers.managed_account_groups import (
     _require_owned_account,
     _require_owned_group,
@@ -32,9 +31,21 @@ from src.schemas.user import UserRead
 
 @pytest.fixture
 def reset_policy():
-    policies._reset_group_management_policy_for_tests()
+    from src.helpers.hooks import _reset_hooks_for_tests
+
+    _reset_hooks_for_tests()
     yield
-    policies._reset_group_management_policy_for_tests()
+    _reset_hooks_for_tests()
+
+
+def _require_premium_to_manage():
+    """Register a GroupManagementCheck handler that denies non-premium users."""
+    from src.helpers.hooks import GroupManagementCheck, on
+
+    @on(GroupManagementCheck)
+    def _handler(_session, event):
+        if not event.user.is_premium:
+            event.allow = False
 
 
 def _owner(user_id: int = 1) -> UserRead:
@@ -86,14 +97,14 @@ class TestPolicy:
 
     @pytest.mark.asyncio
     async def test_override_policy_can_block(self, reset_policy):
-        policies.set_group_management_policy(lambda u: u.is_premium)
+        _require_premium_to_manage()
         with pytest.raises(HTTPException) as exc:
             await policies.get_user_with_manage_groups_perm(_owner(), MagicMock())
         assert exc.value.status_code == 403
 
     @pytest.mark.asyncio
     async def test_override_policy_can_allow_premium(self, reset_policy):
-        policies.set_group_management_policy(lambda u: u.is_premium)
+        _require_premium_to_manage()
         u = _owner()
         u.is_premium = True
         result = await policies.get_user_with_manage_groups_perm(u, MagicMock())

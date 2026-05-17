@@ -285,3 +285,26 @@ def get_active_code_for_account(session: Session, user_id: int) -> str | None:
         .order_by(AccessCodeBase.created_at.desc())
     ).scalar_one_or_none()
     return row.code if row else None
+
+
+def get_active_codes_for_accounts(session: Session, user_ids: list[int]) -> dict[int, str]:
+    """Return ``{user_id: latest_active_code}`` in a single query.
+
+    Postgres DISTINCT ON picks the newest non-revoked, non-expired code per
+    user. Users with no active code are absent from the result (callers use
+    ``dict.get``). Replaces an N+1 over `get_active_code_for_account`.
+    """
+    if not user_ids:
+        return {}
+    now = datetime.now(UTC)
+    rows = session.execute(
+        select(AccessCodeBase)
+        .where(
+            AccessCodeBase.user_id.in_(user_ids),
+            AccessCodeBase.revoked_at.is_(None),
+            (AccessCodeBase.expires_at.is_(None)) | (AccessCodeBase.expires_at > now),
+        )
+        .order_by(AccessCodeBase.user_id, AccessCodeBase.created_at.desc())
+        .distinct(AccessCodeBase.user_id)
+    ).scalars().all()
+    return {row.user_id: row.code for row in rows}

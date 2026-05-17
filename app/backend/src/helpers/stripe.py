@@ -7,6 +7,7 @@ Provides functions for customer management, billing portal, and webhook handling
 
 import logging
 import os
+import time
 from collections.abc import Callable
 from datetime import datetime, timedelta
 
@@ -14,6 +15,14 @@ import stripe
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
+
+# In-process TTL cache for /stripe/subscription. Eliminates per-pageload Stripe
+# round-trips while keeping the staleness window short (webhook handlers also
+# invalidate explicitly). Each worker has its own cache; with N workers and a
+# T-second TTL each user costs at most N Stripe calls every T seconds.
+_SUBSCRIPTION_CACHE_TTL_SECONDS = 30.0
+_subscription_status_cache: dict[str, tuple[float, dict]] = {}
+_org_subscription_status_cache: dict[str, tuple[float, dict]] = {}
 
 # Default status dicts for subscriptions (avoid duplication)
 _DEFAULT_USER_SUB_STATUS: dict = {
@@ -443,29 +452,65 @@ def _fetch_active_subscription(stripe_customer_id: str) -> dict | None:
 
 
 def get_subscription_status(stripe_customer_id: str) -> dict:
-    """Return is_premium / plan / expires_at / cancel_at_period_end for a user."""
+    """Return is_premium / plan / expires_at / cancel_at_period_end for a user.
+
+    Cached for ~30s per customer to avoid a Stripe round-trip on every
+    authenticated page load. Webhook handlers call
+    :func:`invalidate_subscription_cache` so state-changing events show up
+    immediately.
+    """
+    now = time.monotonic()
+    cached = _subscription_status_cache.get(stripe_customer_id)
+    if cached and now - cached[0] < _SUBSCRIPTION_CACHE_TTL_SECONDS:
+        return cached[1].copy()
+
     parsed = _fetch_active_subscription(stripe_customer_id)
     if not parsed:
-        return _DEFAULT_USER_SUB_STATUS.copy()
-    return {
-        "is_premium": parsed["is_premium"],
-        "plan": parsed["price_id"],
-        "expires_at": parsed["expires_at"],
-        "cancel_at_period_end": parsed["cancel_at_period_end"],
-    }
+        result = _DEFAULT_USER_SUB_STATUS.copy()
+    else:
+        result = {
+            "is_premium": parsed["is_premium"],
+            "plan": parsed["price_id"],
+            "expires_at": parsed["expires_at"],
+            "cancel_at_period_end": parsed["cancel_at_period_end"],
+        }
+    _subscription_status_cache[stripe_customer_id] = (now, result)
+    return result.copy()
 
 
 def get_org_subscription_status(stripe_customer_id: str) -> dict:
-    """Return stripe_premium / stripe_quota / expires_at / cancel_at_period_end for an org."""
+    """Return stripe_premium / stripe_quota / expires_at / cancel_at_period_end for an org.
+
+    Cached identically to :func:`get_subscription_status`.
+    """
+    now = time.monotonic()
+    cached = _org_subscription_status_cache.get(stripe_customer_id)
+    if cached and now - cached[0] < _SUBSCRIPTION_CACHE_TTL_SECONDS:
+        return cached[1].copy()
+
     parsed = _fetch_active_subscription(stripe_customer_id)
     if not parsed:
-        return _DEFAULT_ORG_SUB_STATUS.copy()
-    return {
-        "stripe_premium": parsed["is_premium"],
-        "stripe_quota": parsed["seats"],
-        "expires_at": parsed["expires_at"],
-        "cancel_at_period_end": parsed["cancel_at_period_end"],
-    }
+        result = _DEFAULT_ORG_SUB_STATUS.copy()
+    else:
+        result = {
+            "stripe_premium": parsed["is_premium"],
+            "stripe_quota": parsed["seats"],
+            "expires_at": parsed["expires_at"],
+            "cancel_at_period_end": parsed["cancel_at_period_end"],
+        }
+    _org_subscription_status_cache[stripe_customer_id] = (now, result)
+    return result.copy()
+
+
+def invalidate_subscription_cache(stripe_customer_id: str) -> None:
+    """Drop both user and org subscription cache entries for a customer.
+
+    Call this from webhook handlers when subscription state changes so the
+    next read sees Stripe's updated view immediately rather than waiting for
+    the 30s TTL.
+    """
+    _subscription_status_cache.pop(stripe_customer_id, None)
+    _org_subscription_status_cache.pop(stripe_customer_id, None)
 
 
 # ---------------------------------------------------------------------------
@@ -500,8 +545,14 @@ def adjust_org_balance(
     amount_cents: int,
     description: str,
     currency: str | None = None,
+    idempotency_key: str | None = None,
 ) -> dict:
-    """Record a balance change. Positive = credit them, negative = charge them."""
+    """Record a balance change. Positive = credit them, negative = charge them.
+
+    Pass ``idempotency_key`` for at-least-once callers (cron-driven debits) so
+    a retry of the same logical event reuses Stripe's prior transaction instead
+    of double-charging.
+    """
     if not STRIPE_ENABLED or not stripe_customer_id:
         raise HTTPException(status_code=500, detail="Payment provider not configured")
 
@@ -514,11 +565,17 @@ def adjust_org_balance(
             customer = stripe.Customer.retrieve(stripe_customer_id)
             resolved_currency = customer.get("currency") or "eur"
 
+        create_kwargs: dict = {
+            "amount": -amount_cents,
+            "currency": resolved_currency,
+            "description": description,
+        }
+        if idempotency_key:
+            create_kwargs["idempotency_key"] = idempotency_key
+
         tx = stripe.Customer.create_balance_transaction(
             stripe_customer_id,
-            amount=-amount_cents,
-            currency=resolved_currency,
-            description=description,
+            **create_kwargs,
         )
         return {
             "id": tx.id,

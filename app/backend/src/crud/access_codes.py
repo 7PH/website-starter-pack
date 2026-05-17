@@ -3,8 +3,8 @@
 """CRUD for access codes — the default backing for sign-in by code.
 
 Apps that want fancier semantics (paired teacher+student codes, single-use,
-context-bound, ...) ignore this module and register their own validator via
-`register_code_validator(...)`.
+context-bound, ...) ignore this module and register their own
+`@on(AccessCodeResolution)` handler in `main_ext.py`.
 """
 
 import secrets

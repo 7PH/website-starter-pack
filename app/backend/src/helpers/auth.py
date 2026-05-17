@@ -1,11 +1,10 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -321,56 +320,7 @@ def decode_access_token(token: str) -> dict:
 #     def my_resolver(session, event):
 #         if event.user is None:
 #             event.user = lookup_by_code(session, event.managed_account_id, event.code)
-#
-# The legacy register_code_validator(fn) API is kept as a deprecated shim.
 # ---------------------------------------------------------------------------
-
-CodeValidator = Callable[[int, str, Request], UserBase | None]
-
-# Module-local flag preserves the "raise on double-register" behavior the
-# shim used to give. The new event-bus pattern allows multiple handlers,
-# but the deprecated entry point keeps its single-slot contract.
-_shim_already_registered = False
-
-
-def register_code_validator(fn: CodeValidator) -> None:
-    """**Deprecated.** Use ``@on(AccessCodeResolution)`` instead.
-
-    Registers ``fn`` as a handler that sets ``event.user = fn(...)`` when
-    no earlier handler has resolved the code. Raises if called twice —
-    silent override would let a misordered import swap the auth path
-    without anyone noticing. Will be removed in v3.5.0.
-    """
-    import warnings
-
-    from .hooks import AccessCodeResolution, on
-
-    global _shim_already_registered
-    if _shim_already_registered:
-        raise RuntimeError("A code validator is already registered")
-    _shim_already_registered = True
-
-    warnings.warn(
-        "register_code_validator is deprecated; use @on(AccessCodeResolution) "
-        "from helpers/hooks.py instead. Will be removed in v3.5.0.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    @on(AccessCodeResolution)
-    def _shim(_session: Session, event: AccessCodeResolution) -> None:
-        if event.user is not None:
-            return
-        event.user = fn(event.managed_account_id, event.code, event.request)
-
-
-def _reset_code_validator_for_tests() -> None:
-    """Test-only helper. Clears every registered hook handler. Do not call from production code."""
-    from .hooks import _reset_hooks_for_tests
-
-    global _shim_already_registered
-    _shim_already_registered = False
-    _reset_hooks_for_tests()
 
 
 def issue_jwt_with_orgs(session: Session, user: UserBase) -> UserTokenUpdate:

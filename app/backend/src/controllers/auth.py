@@ -68,7 +68,7 @@ def _decode_token_and_get_user(session: Session, token: str, token_type: str):
     """Decode a typed JWT and load its user, raising 400/404 on failure."""
     payload = decode_typed_token(token, token_type)
     if not payload:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
     user = get_user_or_404(session, payload["user_id"])
     return payload, user
 
@@ -90,10 +90,10 @@ def send_verification_email(
     """
     user = get_user_by_id(session, current_user.id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if user.email_confirmed:
-        raise HTTPException(status_code=400, detail="Email already verified")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already verified")
 
     ensure_user_cooldown_and_daily(
         action="send-verification-email",
@@ -140,7 +140,7 @@ def verify_email(
     # Ensure the email in the token matches current user email
     # This invalidates old tokens if user changed their email
     if user.email != payload["email"]:
-        raise HTTPException(status_code=400, detail="Token email does not match current email")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token email does not match current email")
 
     if user.email_confirmed:
         return AuthMessageResponse(message="Email already verified")
@@ -228,11 +228,11 @@ def reset_password(
     # Reject non-password accounts: even a leaked reset token shouldn't be able
     # to graft a password onto an oauth/access_code/deleted user.
     if user.auth_method != "password":
-        raise HTTPException(status_code=400, detail="Password reset is not available for this account")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset is not available for this account")
 
     if len(body.password) < PASSWORD_MIN_LENGTH:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Password must be at least {PASSWORD_MIN_LENGTH} characters",
         )
 
@@ -264,13 +264,13 @@ def confirm_email_change(
     # Ensure the current_email in the token matches user's current email
     # This invalidates old tokens if user requested another email change
     if user.email != payload["current_email"]:
-        raise HTTPException(status_code=400, detail="Token is no longer valid (email was changed)")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token is no longer valid (email was changed)")
 
     new_email = payload["new_email"]
 
     # Double-check the new email is still available
     if is_email_taken(session, new_email):
-        raise HTTPException(status_code=409, detail="Email is no longer available")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is no longer available")
 
     # Apply the email change
     user.email = new_email
