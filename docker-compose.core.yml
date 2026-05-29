@@ -231,6 +231,9 @@ services:
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-nginx
+            # Must match frontend-prod-node, or the two builds' _nuxt hashes diverge.
+            args:
+                SITEMAP_ENABLED: ${SITEMAP_ENABLED:-true}
         profiles:
             - prod
         depends_on:
