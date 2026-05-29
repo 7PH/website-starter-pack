@@ -1,6 +1,10 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 FROM node:20-alpine3.20 AS build-stage
 
+# Must match Dockerfile.prod-node, or the two builds' _nuxt hashes diverge and every /_nuxt/*.js 404s.
+ARG SITEMAP_ENABLED=true
+ENV SITEMAP_ENABLED=${SITEMAP_ENABLED}
+
 WORKDIR /app
 
 COPY . .
