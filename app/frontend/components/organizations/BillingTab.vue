@@ -1,6 +1,6 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script lang="ts" setup>
-import { useOrganizationQuota } from '~/composables/organizations/useOrganizationMembers';
+import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
 
 const props = defineProps<{
     org: OrganizationRead;
@@ -15,21 +15,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const orgRef = computed(() => props.org);
-const { quotaState, isOverQuota } = useOrganizationQuota(orgRef);
-
-const progressColor = computed(() => {
-    switch (quotaState.value) {
-        case 'exceeded':
-            return 'error';
-        case 'warn':
-            return 'warning';
-        default:
-            return 'primary';
-    }
-});
-
-const usedSeats = computed(() => props.org.premium_member_count ?? 0);
-const totalSeats = computed(() => props.org.stripe_quota ?? 0);
+const { isOverQuota, progressColor, usedSeats, totalSeats, progressValue } = useOrganizationQuotaDisplay(orgRef);
 </script>
 
 <template>
@@ -68,11 +54,7 @@ const totalSeats = computed(() => props.org.stripe_quota ?? 0);
                     }}</span>
                     <UBadge v-if="isOverQuota" :label="t('core.organizations.overQuota')" color="error" size="sm" />
                 </div>
-                <UProgress
-                    :model-value="totalSeats > 0 ? Math.min(100, (usedSeats / totalSeats) * 100) : 0"
-                    :color="progressColor"
-                    class="mt-2"
-                />
+                <UProgress :model-value="progressValue" :color="progressColor" class="mt-2" />
             </div>
 
             <UAlert

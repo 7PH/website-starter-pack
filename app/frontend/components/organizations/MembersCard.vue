@@ -1,8 +1,8 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-import { useOrganizationQuota } from '~/composables/organizations/useOrganizationMembers';
 import { useOrganizationInvitations } from '~/composables/organizations/useOrganizationInvitations';
+import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
 import { formatDate } from '~/utils/formatters';
 
 const props = withDefaults(
@@ -34,21 +34,7 @@ const invitationsEnabled = computed(() => String(config.public.orgInvitationsEna
 
 const orgRef = computed(() => props.org);
 const orgId = computed(() => props.org.id);
-const { quotaState } = useOrganizationQuota(orgRef);
-
-const progressColor = computed(() => {
-    switch (quotaState.value) {
-        case 'exceeded':
-            return 'error';
-        case 'warn':
-            return 'warning';
-        default:
-            return 'primary';
-    }
-});
-
-const usedSeats = computed(() => props.org.premium_member_count ?? 0);
-const totalSeats = computed(() => props.org.stripe_quota ?? 0);
+const { progressColor, usedSeats, totalSeats, progressValue } = useOrganizationQuotaDisplay(orgRef);
 
 const ownerCount = computed(() => (props.org.members ?? []).filter((m) => m.is_admin).length);
 
@@ -179,11 +165,7 @@ function handleInvite(email: string, isAdmin: boolean) {
                         {{ t('core.organizations.seatsUsedDetailed', { used: usedSeats, total: totalSeats }) }}
                     </span>
                 </div>
-                <UProgress
-                    :model-value="totalSeats > 0 ? Math.min(100, (usedSeats / totalSeats) * 100) : 0"
-                    :color="progressColor"
-                    class="mt-2"
-                />
+                <UProgress :model-value="progressValue" :color="progressColor" class="mt-2" />
             </div>
 
             <UTable :columns="memberColumns" :data="org.members" class="members-table">
