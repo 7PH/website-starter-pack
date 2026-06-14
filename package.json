@@ -15,6 +15,7 @@
     "logs": "docker compose --profile dev --profile prod logs -f",
     "build": "docker compose --profile dev build",
     "setup": "bash scripts/_core/setup.sh",
+    "setup-host-proxy": "bash scripts/_core/setup-host-proxy.sh",
     "db-dump": "set -a && . ./.env && set +a && bash scripts/_core/db-dump.sh",
     "db-delete": "set -a && . ./.env && set +a && bash scripts/_core/db-delete.sh",
     "db-restore": "set -a && . ./.env && set +a && bash scripts/_core/db-restore.sh",
