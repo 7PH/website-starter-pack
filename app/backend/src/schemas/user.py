@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from ..constants import PASSWORD_MIN_LENGTH
 from ..helpers.user_display import display_for
 from .organization import UserOrganizationInfo
-from .user_ext import UserCustomData, UserPreviewCustomData
+from .user_ext import UserCustomData, UserCustomDataWritable, UserPreviewCustomData
 
 
 class UserRead(BaseModel):
@@ -73,7 +73,8 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    custom_data: UserCustomData | None = None
+    # Writable subset only: users must not self-set privileged custom_data.
+    custom_data: UserCustomDataWritable | None = None
 
     @field_validator("last_name")
     @classmethod
@@ -84,7 +85,8 @@ class UserCreate(BaseModel):
 class UserChangeInfo(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    custom_data: UserCustomData | None = None
+    # Writable subset only: users must not self-set privileged custom_data.
+    custom_data: UserCustomDataWritable | None = None
 
 
 class UserChangePassword(BaseModel):

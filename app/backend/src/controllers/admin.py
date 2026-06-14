@@ -173,7 +173,9 @@ def update_user_by_admin(
     if user_update.custom_data is not None:
         incoming = user_update.custom_data.model_dump(exclude_none=True)
         merged = {**(user.custom_data or {}), **incoming}
-        new_custom_data = UserCustomData(**merged).model_dump(exclude_none=True)
+        # mode="json" so stored ISO-string datetimes (e.g. last_seen_at) stay
+        # JSON-serializable for the JSONB write instead of becoming datetime objects.
+        new_custom_data = UserCustomData(**merged).model_dump(mode="json", exclude_none=True)
         if new_custom_data != (user.custom_data or {}):
             changes["custom_data"] = {"from": user.custom_data or {}, "to": new_custom_data}
             user.custom_data = new_custom_data

@@ -3053,7 +3053,7 @@
         "custom_data": {
           "anyOf": [
             {
-              "$ref": "#/$defs/UserCustomData"
+              "$ref": "#/$defs/UserCustomDataWritable"
             },
             {
               "type": "null"
@@ -3118,7 +3118,7 @@
         "custom_data": {
           "anyOf": [
             {
-              "$ref": "#/$defs/UserCustomData"
+              "$ref": "#/$defs/UserCustomDataWritable"
             },
             {
               "type": "null"
@@ -3137,9 +3137,15 @@
       "type": "object"
     },
     "UserCustomData": {
-      "description": "Full custom-data shape. Add your fields here (with defaults).",
+      "description": "Full custom-data shape, used on reads and the admin write path.\n\nInherits every self-writable field; declare privileged/admin-only fields\ndirectly here. Add your fields with defaults.",
       "properties": {},
       "title": "UserCustomData",
+      "type": "object"
+    },
+    "UserCustomDataWritable": {
+      "description": "Fields a user may set on THEMSELVES (signup + /account profile edit).\n\nAdd ONLY self-writable fields here. Privileged fields (roles,\nentitlements, credits, internal flags, ...) must NOT go here \u2014 declare\nthem on UserCustomData so only admins can write them. All fields must\nhave defaults (same reasons as UserCustomData).",
+      "properties": {},
+      "title": "UserCustomDataWritable",
       "type": "object"
     },
     "UserInitiableSubtype": {
