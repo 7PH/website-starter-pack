@@ -69,6 +69,8 @@ Methods added this way are typed everywhere `useNativeBridge()` is called. Core 
 
 For running in production, run `npm start`
 
+Behind a reverse proxy (nginx, optionally Cloudflare)? Run `npm run setup-host-proxy` so the app records real client IPs instead of the Docker gateway. Topologies and manual steps: [docs/deployment/reverse-proxy.md](docs/deployment/reverse-proxy.md).
+
 For usual development (Nuxt debugger, frontend and backend hot-reload):
 
 - Run `npm run dev`

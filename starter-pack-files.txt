@@ -316,6 +316,9 @@ UPGRADE.md
 .vscode/launch.json:template
 .vscode/settings.json:template
 
+# Deployment documentation
+docs/deployment/*
+
 # Upgrade documentation
 docs/upgrades/*
 

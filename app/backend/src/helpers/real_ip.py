@@ -13,6 +13,13 @@ just use `request.client.host` and the middleware is a no-op. Only set
 the only ingress route; if a client can reach the backend directly with that
 header set, they can spoof their IP.
 
+Note on the default Traefik topology: do NOT point this at `X-Forwarded-For`.
+Behind a Docker published port, Traefik overwrites both `X-Forwarded-For` and
+`X-Real-IP` with the Docker gateway IP (172.18.0.x), so they never carry the
+real client. The working pattern is to have the front proxy (nginx) put the
+real IP in a custom header that Traefik forwards verbatim, e.g. `X-Client-IP`,
+and set `TRUSTED_IP_HEADER=X-Client-IP`. See docs/deployment/reverse-proxy.md.
+
 We take the RIGHTMOST entry of the header, not the leftmost. The convention is
 "each proxy appends the IP it observed", so the rightmost entry is what our
 direct proxy saw (i.e. the real client when there's one trusted hop in front).
