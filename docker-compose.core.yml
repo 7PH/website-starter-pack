@@ -121,6 +121,7 @@ services:
         image: nginx:1.26-alpine3.20-perl
         volumes:
             - ./static:/usr/share/nginx/html:ro
+            - ./services/static/nginx.conf:/etc/nginx/conf.d/default.conf:ro
         networks:
             - web
         profiles:
@@ -147,6 +148,20 @@ services:
         networks:
             - web
 
+    # Redis — rate-limit store (mandatory). Ephemeral: no persistence, since
+    # rate-limit counters are short-lived and expire via key TTLs.
+    redis:
+        container_name: ${COMPOSE_PROJECT_NAME}-redis
+        image: redis:7.4-alpine
+        command: ["redis-server", "--save", "", "--appendonly", "no"]
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+        networks:
+            - web
+
     # Adminer database management tool
     adminer:
         container_name: ${COMPOSE_PROJECT_NAME}-adminer
@@ -164,7 +179,7 @@ services:
     backend-dev:
         <<: *backend-common
         entrypoint: python3 -m debugpy --log-to-stderr --listen 0.0.0.0:5679 -m
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--root-path", "/api", "--no-server-header"]
         environment:
             MODE: DEVELOPMENT
         ports:
@@ -174,6 +189,8 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            redis:
+                condition: service_healthy
 
     # Backend for Production
     # BACKEND_WORKERS>1 requires every scheduled job to use a cluster-singleton
@@ -182,13 +199,15 @@ services:
     # remains PID 1 (no `sh -c` wrapper) and receives SIGTERM cleanly.
     backend-prod:
         <<: *backend-common
-        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api", "--workers", "${BACKEND_WORKERS:-1}"]
+        command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api", "--workers", "${BACKEND_WORKERS:-1}", "--no-server-header"]
         environment:
             MODE: PRODUCTION
         profiles:
             - prod
         depends_on:
             db:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
 
     # Frontend for development (Nuxt)

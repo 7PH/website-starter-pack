@@ -274,6 +274,7 @@ app/frontend/pages/admin/users/[id].vue
 app/frontend/plugins/backend-config.ts
 app/frontend/plugins/auth.client.ts
 app/frontend/server/routes/robots.txt.ts
+app/frontend/server/plugins/strip-headers.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 app/frontend/playwright.config.ts
@@ -289,6 +290,9 @@ app/frontend/tests/useBreadcrumb.test.ts
 
 # Traefik
 services/traefik/*.core.yml
+
+# Static media host
+services/static/nginx.conf
 
 # Scripts
 scripts/_core/*

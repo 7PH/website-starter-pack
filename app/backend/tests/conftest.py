@@ -57,3 +57,20 @@ def sample_png_bytes():
 def sample_text_bytes():
     """Returns plain text bytes for testing invalid uploads."""
     return b"This is just plain text, not an image."
+
+
+@pytest.fixture(autouse=True)
+def _ratelimit_store(monkeypatch):
+    """Back the rate limiter with an in-memory fake Redis so tests stay hermetic.
+
+    The limiter talks to Redis in production; here each test gets a fresh fake
+    instance, exercising the real sliding-window Lua without a running service.
+    """
+    import fakeredis
+
+    from src.helpers import ratelimit
+
+    fake = fakeredis.FakeStrictRedis(decode_responses=True)
+    monkeypatch.setattr(ratelimit, "_redis", fake)
+    monkeypatch.setattr(ratelimit, "_check_quota", fake.register_script(ratelimit._SLIDING_WINDOW_LUA))
+    yield

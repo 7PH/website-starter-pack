@@ -12,7 +12,6 @@ from .constants import IS_PROD
 from .helpers.db import create_db_and_tables
 from .helpers.llm import init_llm
 from .helpers.logging import configure_logging, get_logger, set_request_id
-from .helpers.ratelimit import cleanup_entries
 from .helpers.real_ip import RealIPMiddleware
 from .helpers.security_headers import SecurityHeadersMiddleware
 from .helpers.stripe import init_stripe
@@ -29,7 +28,6 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting app")
     create_db_and_tables()
-    cleanup_entries()
     init_stripe()
     init_llm()
     yield

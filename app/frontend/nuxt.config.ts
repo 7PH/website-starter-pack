@@ -15,6 +15,30 @@ const IS_MOBILE_APP = process.env.MOBILE_APP === '1';
 // and serve /sitemap.xml their own way — via public/, a server route, or upstream Nginx.
 const SITEMAP_ENABLED = process.env.SITEMAP_ENABLED !== 'false';
 
+// Content-Security-Policy, built from env so each app's media + analytics
+// origins are allowed. Override or remove it in config/security-headers.ts
+// (set to ''); per-route exceptions (e.g. /embed needing `frame-ancestors *`)
+// go in config/route-rules-ext.ts at a path more specific than '/**'.
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const STATIC_ORIGIN = PUBLIC_URL ? PUBLIC_URL.replace('://', '://static.') : '';
+const UMAMI_ORIGIN =
+    process.env.NUXT_PUBLIC_UMAMI_ENABLED === 'true' && PUBLIC_URL
+        ? PUBLIC_URL.replace('://', `://${process.env.UMAMI_SUBDOMAIN || 'analytics'}.`)
+        : '';
+const cspDirective = (...parts: string[]) => parts.filter(Boolean).join(' ');
+const CONTENT_SECURITY_POLICY = [
+    "default-src 'self'",
+    // 'unsafe-inline' is required by Nuxt SSR (no nonces); 'unsafe-eval' + ws: are dev-only (HMR).
+    cspDirective("script-src 'self' 'unsafe-inline'", UMAMI_ORIGIN, IS_DEV ? "'unsafe-eval'" : ''),
+    "style-src 'self' 'unsafe-inline'",
+    cspDirective("img-src 'self' data: blob:", STATIC_ORIGIN),
+    // api.iconify.design: @nuxt/icon fetches icons from the Iconify CDN (see the `icon` config below).
+    cspDirective("connect-src 'self' https://api.iconify.design", UMAMI_ORIGIN, IS_DEV ? 'ws: wss:' : ''),
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+].join('; ');
+
 // Default security headers (merged with project overrides)
 const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
     'X-Content-Type-Options': 'nosniff',
@@ -22,6 +46,7 @@ const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+    'Content-Security-Policy': CONTENT_SECURITY_POLICY,
 };
 
 // Merge and filter out empty values (empty string = remove header)
