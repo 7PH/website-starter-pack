@@ -140,6 +140,10 @@ Types auto-generated from Pydantic schemas. Run `./scripts/_core/convert-models.
 
 Use `/upgrade-starterpack`. See `docs/upgrades/` for version-specific notes.
 
+## Deployment
+
+Behind a host reverse proxy (nginx, optionally Cloudflare)? Run `npm run setup-host-proxy` to generate the nginx config and wire up real-client-IP resolution. Topologies and manual steps: `docs/deployment/reverse-proxy.md`.
+
 ## App-Specific Instructions
 
 @CLAUDE.app.md

@@ -104,7 +104,9 @@ services:
     traefik-prod:
         <<: *traefik-common
         ports:
-            - "${PUBLIC_PORT}:${PUBLIC_PORT}"
+            # Bind all interfaces by default. Set PUBLIC_BIND_HOST=127.0.0.1 when a
+            # host reverse proxy fronts the stack, so the public can't bypass it.
+            - "${PUBLIC_BIND_HOST:-0.0.0.0}:${PUBLIC_PORT}:${PUBLIC_PORT}"
         profiles:
             - prod
         environment:
