@@ -462,7 +462,10 @@ export interface UserRead {
   display_label?: DisplayLabel;
 }
 /**
- * Full custom-data shape. Add your fields here (with defaults).
+ * Full custom-data shape, used on reads and the admin write path.
+ *
+ * Inherits every self-writable field; declare privileged/admin-only fields
+ * directly here. Add your fields with defaults.
  */
 export interface UserCustomData {}
 /**
@@ -495,8 +498,17 @@ export interface UserCreate {
   password: Password;
   first_name: FirstName2;
   last_name: LastName2;
-  custom_data?: UserCustomData | null;
+  custom_data?: UserCustomDataWritable | null;
 }
+/**
+ * Fields a user may set on THEMSELVES (signup + /account profile edit).
+ *
+ * Add ONLY self-writable fields here. Privileged fields (roles,
+ * entitlements, credits, internal flags, ...) must NOT go here — declare
+ * them on UserCustomData so only admins can write them. All fields must
+ * have defaults (same reasons as UserCustomData).
+ */
+export interface UserCustomDataWritable {}
 export interface UserChangeEmail {
   new_email: NewEmail;
   password: Password1;
@@ -504,7 +516,7 @@ export interface UserChangeEmail {
 export interface UserChangeInfo {
   first_name: FirstName3;
   last_name: LastName3;
-  custom_data?: UserCustomData | null;
+  custom_data?: UserCustomDataWritable | null;
 }
 export interface UserChangePassword {
   old_password: OldPassword;

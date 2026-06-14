@@ -239,7 +239,9 @@ def update_me(
     if user_change_info.custom_data is not None:
         incoming = user_change_info.custom_data.model_dump(exclude_none=True)
         merged = {**(user.custom_data or {}), **incoming}
-        user.custom_data = UserCustomData(**merged).model_dump(exclude_none=True)
+        # mode="json" so stored ISO-string datetimes (e.g. last_seen_at) stay
+        # JSON-serializable for the JSONB write instead of becoming datetime objects.
+        user.custom_data = UserCustomData(**merged).model_dump(mode="json", exclude_none=True)
 
     update_user(session, user)
 
