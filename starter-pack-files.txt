@@ -104,6 +104,7 @@ app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 app/backend/tests/test_user_display.py
+app/backend/tests/test_custom_data_privesc.py
 
 # Frontend - Docker & Tooling
 app/frontend/Dockerfile.dev
@@ -154,6 +155,7 @@ app/frontend/composables/useAdminImpersonation.ts
 app/frontend/composables/useOAuth.ts
 app/frontend/composables/useAccessCode.ts
 app/frontend/composables/useManagedAccountGroup.ts
+app/frontend/composables/useShareLink.ts
 app/frontend/composables/usePickerLink.ts
 app/frontend/composables/useUserDisplay.ts
 app/frontend/composables/useOverridable.ts
@@ -254,6 +256,7 @@ app/frontend/composables/organizations/useOrganizationInvitations.ts
 app/frontend/composables/organizations/useOrganizationMembers.ts
 app/frontend/composables/organizations/useOrganizationStatus.ts
 app/frontend/composables/organizations/useOrganizationSubscription.ts
+app/frontend/composables/organizations/useOrganizationQuotaDisplay.ts
 app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
