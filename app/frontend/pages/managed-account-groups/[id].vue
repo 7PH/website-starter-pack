@@ -12,6 +12,7 @@ const auth = useAuth();
 const { showError, showSuccess } = useToastHelpers();
 const composable = useManagedAccountGroup();
 const modal = useModalStore();
+const { shareUrl, copyShareLink: copyShare } = useShareLink();
 
 const groupId = computed(() => Number(route.params.id));
 
@@ -102,20 +103,6 @@ async function loadAll() {
 
 onMounted(loadAll);
 
-function shareUrl(token: string) {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/c/${token}`;
-}
-
-async function doCopy(token: string) {
-    try {
-        await navigator.clipboard.writeText(shareUrl(token));
-        showSuccess(t('core.managed_accounts.linkCopied'));
-    } catch (error) {
-        showError(error, 'core.managed_accounts.linkCopyFailed');
-    }
-}
-
 async function copyShareLink() {
     if (!group.value) return;
     if (accounts.value.length === 0) {
@@ -130,7 +117,7 @@ async function copyShareLink() {
         });
         if (!confirmed) return;
     }
-    await doCopy(group.value.share_token);
+    await copyShare(group.value.share_token);
 }
 
 async function rotateLink() {
