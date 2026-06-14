@@ -44,9 +44,13 @@ def test_admin_write_keeps_full_type():
 
 
 def test_undeclared_field_is_dropped_on_self_write():
-    # A user POSTing an undeclared key (e.g. a privileged field they don't
-    # own) must have it stripped at the Pydantic boundary, not persisted.
-    payload = {"first_name": "Ann", "last_name": "Lee", "custom_data": {"is_admin": True}}
+    # A user POSTing a key outside the writable subset (a privileged field they
+    # don't own, or an undeclared one) must have it stripped at the Pydantic
+    # boundary, not persisted. is_mod is privileged-on-full; is_admin is undeclared.
+    payload = {"first_name": "Ann", "last_name": "Lee", "custom_data": {"is_mod": True, "is_admin": True}}
     parsed = UserChangeInfo(**payload)
     assert parsed.custom_data is not None
-    assert parsed.custom_data.model_dump() == {}
+    # No key outside the self-writable set may survive. Robust to sub-apps that add
+    # writable fields, and to the empty baseline (set() <= set()); fails loudly if a
+    # self-write schema ever regressed to the full type (is_mod would survive).
+    assert set(parsed.custom_data.model_dump()) <= set(UserCustomDataWritable.model_fields)
