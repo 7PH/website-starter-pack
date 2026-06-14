@@ -311,6 +311,11 @@ CLAUDE.app.md:template
 UPGRADE.md
 .mcp.json
 
+# Editor config (app-owned starting point, not enforced)
+.vscode/extensions.json:template
+.vscode/launch.json:template
+.vscode/settings.json:template
+
 # Upgrade documentation
 docs/upgrades/*
 
