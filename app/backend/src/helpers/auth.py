@@ -16,6 +16,7 @@ from ..constants import (
 from ..models.managed_account_group import ManagedAccountGroupBase
 from ..models.user import UserBase
 from ..schemas.user import UserRead, UserTokenUpdate
+from .db import get_session
 from .exception import InvalidTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
@@ -68,13 +69,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
     )
 
 
-async def get_current_admin(current_user: UserRead = Depends(get_current_user)) -> UserRead:
+async def get_current_admin(
+    current_user: UserRead = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> UserRead:
     """
     Get the current user, requiring admin privileges.
 
-    Raises HTTPException 403 if the user is not an admin.
+    Re-checks ``is_admin`` against the DB rather than trusting the JWT claim, so
+    a demoted admin loses access immediately instead of keeping it until the
+    token expires. Raises HTTPException 403 if the user is not (or no longer) an
+    admin. Mirrors the DB-backed ``require_premium`` pattern.
     """
-    if not current_user.is_admin:
+    from ..crud.users import get_user_by_id
+
+    db_user = get_user_by_id(session, current_user.id)
+    if not db_user or not db_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 

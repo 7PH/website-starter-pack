@@ -83,6 +83,13 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
     )
 
     user_create.email = user_create.email.lower()
+    # This 409 lets a caller tell taken emails from free ones (account
+    # enumeration). Accepted tradeoff: a signup form must tell the user the
+    # email is taken so they can log in instead, so it can't return a uniform
+    # response the way password-reset does. The per-IP register rate limit above
+    # throttles bulk enumeration. Apps wanting zero enumeration need a
+    # verification-first signup flow (always 2xx, "you already have an account"
+    # email) — a larger change, intentionally not done here.
     if is_email_taken(session, user_create.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 

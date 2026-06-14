@@ -15,7 +15,6 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from src.helpers import ratelimit as ratelimit_module
 from src.helpers.account import assert_min_account_age
 from src.helpers.bug_report import strip_url_query_in_body
 from src.helpers.ratelimit import ensure_rate_limit
@@ -122,11 +121,11 @@ class TestConversationCreateValidation:
 
 
 class TestPerSubtypeRateLimit:
-    """ensure_rate_limit keeps independent counters when the action encodes the subtype."""
+    """ensure_rate_limit keeps independent counters when the action encodes the subtype.
 
-    def setup_method(self):
-        # Fresh bucket per test
-        ratelimit_module.entries.clear()
+    The autouse `_ratelimit_store` fixture (conftest) gives each test a fresh
+    in-memory fake Redis, so no manual reset is needed.
+    """
 
     def test_bug_report_and_feature_request_counters_independent(self):
         # Burn the bug-report quota (5/hour).
