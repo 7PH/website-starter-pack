@@ -30,6 +30,9 @@ services:
             - ./services/db/initdb.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
 
     backend-prod:
+        # Previews run the prod profile but the seeding step needs /internal/*.
+        environment:
+            INTERNAL_API_ENABLED: "true"
         # The backend Dockerfile doesn't COPY src/ — it relies on the bind-mount
         # from docker-compose.core.yml. Keep that mount; swap only the writeable
         # bind-mounts (./backups, ./static) for named volumes so pr-N/backups and

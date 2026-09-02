@@ -16,8 +16,12 @@ JWT_SECRET_KEY = os.environ.get("TOKEN_HASH_SECRET")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 2
 
-# Internal API key. When set, exposes POST /v1/internal/mint-token, which accepts an email + the key and returns a fresh access token
+# Shared secret for the /v1/internal/* routes (token minting, user seeding).
 INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
+# A key alone can't expose these auth-bypassing routes in prod: .env.template ships one.
+INTERNAL_API_ENABLED = bool(INTERNAL_API_KEY) and (
+    not IS_PROD or os.environ.get("INTERNAL_API_ENABLED", "false").lower() == "true"
+)
 
 # Minimum length requirement for user passwords
 PASSWORD_MIN_LENGTH = 8

@@ -6,7 +6,8 @@
 # localStorage. Used by Claude Code for auth-gated UI checks without going
 # through the login form.
 #
-# Requires INTERNAL_API_KEY to be set in .env (the route is unregistered
+# Requires INTERNAL_API_KEY in .env, and INTERNAL_API_ENABLED=true in prod
+# (the route is unregistered
 # otherwise — see app/backend/src/controllers/internal.py).
 #
 # Usage:
