@@ -2,15 +2,9 @@
 x-traefik-common: &traefik-common
     container_name: ${COMPOSE_PROJECT_NAME}-traefik
     image: traefik:v2.9
-    command:
-        - "--log.level=DEBUG"
-        - "--api.insecure=true"
-        - "--entrypoints.default.address=:${PUBLIC_PORT}"
-        - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-        - "--certificatesresolvers.letsencrypt.acme.email=${ADMIN_EMAIL}"
-        - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-        - "--providers.file.directory=/configuration/"
-        - "--providers.file.watch=true"
+    # No `command` here: Traefik reads static config from flags alone once any flag
+    # is set, and a YAML merge key can't append to a sequence, so each profile
+    # spells out its own list below.
     volumes:
         - "/var/run/docker.sock:/var/run/docker.sock:ro"
         - ./services/traefik/dynamic.core.yml:/configuration/dynamic.core.yml:ro
@@ -91,6 +85,15 @@ services:
     # Traefik reverse proxy (dev)
     traefik-dev:
         <<: *traefik-common
+        command:
+            - "--log.level=DEBUG"
+            - "--api.insecure=true"
+            - "--entrypoints.default.address=:${PUBLIC_PORT}"
+            - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+            - "--certificatesresolvers.letsencrypt.acme.email=${ADMIN_EMAIL}"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+            - "--providers.file.directory=/configuration/"
+            - "--providers.file.watch=true"
         ports:
             - "${PUBLIC_PORT}:${PUBLIC_PORT}"
             - "127.0.0.1:${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
@@ -103,6 +106,16 @@ services:
     # Traefik reverse proxy (prod)
     traefik-prod:
         <<: *traefik-common
+        # No dashboard. INFO rather than Traefik's ERROR default, so prod and
+        # preview log dumps stay readable.
+        command:
+            - "--log.level=INFO"
+            - "--entrypoints.default.address=:${PUBLIC_PORT}"
+            - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+            - "--certificatesresolvers.letsencrypt.acme.email=${ADMIN_EMAIL}"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+            - "--providers.file.directory=/configuration/"
+            - "--providers.file.watch=true"
         ports:
             # Bind all interfaces by default. Set PUBLIC_BIND_HOST=127.0.0.1 when a
             # host reverse proxy fronts the stack, so the public can't bypass it.
