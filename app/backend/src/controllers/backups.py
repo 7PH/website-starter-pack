@@ -4,9 +4,12 @@
 Backup controller for database backup management.
 """
 
+import gzip
 import os
 import re
+import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -96,13 +99,21 @@ def run_backup(tag: BackupTag | None = None) -> BackupInfo:
     filepath = BACKUP_DIR / f"db_backup_{timestamp}{suffix}.sql.gz"
 
     env, db_host, db_user, db_name = _pg_env()
-    cmd = f"pg_dump -h {db_host} -U {db_user} {db_name} | gzip > {filepath}"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
-    if result.returncode != 0:
+    with gzip.open(filepath, "wb") as dst, tempfile.TemporaryFile() as errfile:
+        proc = subprocess.Popen(
+            ["pg_dump", "-h", db_host, "-U", db_user, db_name],
+            stdout=subprocess.PIPE, stderr=errfile, env=env,
+        )
+        shutil.copyfileobj(proc.stdout, dst)
+        proc.stdout.close()
+        returncode = proc.wait()
+        errfile.seek(0)
+        stderr = errfile.read().decode(errors="replace")
+    if returncode != 0:
         filepath.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Backup failed: {result.stderr}",
+            detail=f"Backup failed: {stderr}",
         )
 
     cleanup_old_backups()
@@ -141,12 +152,20 @@ def run_restore(filepath: Path) -> None:
             detail=f"Failed to drop tables: {result.stderr}",
         )
 
-    cmd = f"gunzip -c {filepath} | psql -h {db_host} -U {db_user} -d {db_name}"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
-    if result.returncode != 0:
+    with gzip.open(filepath, "rb") as src, tempfile.TemporaryFile() as errfile:
+        proc = subprocess.Popen(
+            ["psql", "-h", db_host, "-U", db_user, "-d", db_name],
+            stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=errfile, env=env,
+        )
+        shutil.copyfileobj(src, proc.stdin)
+        proc.stdin.close()
+        returncode = proc.wait()
+        errfile.seek(0)
+        stderr = errfile.read().decode(errors="replace")
+    if returncode != 0:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Restore failed: {result.stderr}",
+            detail=f"Restore failed: {stderr}",
         )
 
 
