@@ -23,6 +23,7 @@
             "logoutSuccess": "Vous avez été déconnecté",
             "registerSuccess": "Compte créé avec succès",
             "passwordResetSent": "Email de réinitialisation envoyé",
+            "passwordResetSentDescription": "Le lien est valable 4 heures.",
             "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
             "invalidCredentials": "Email ou mot de passe invalide",
             "passwordTooShort": "Le mot de passe doit contenir au moins {minLength} caractères",

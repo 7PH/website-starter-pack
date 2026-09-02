@@ -88,7 +88,7 @@ export function useAccountActions() {
             // Ignore errors - always show success to prevent email enumeration
         }
 
-        showSuccess(t('core.auth.passwordResetSent'));
+        showSuccess(t('core.auth.passwordResetSent'), t('core.auth.passwordResetSentDescription'));
         return true;
     }
 

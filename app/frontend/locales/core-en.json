@@ -23,6 +23,7 @@
             "logoutSuccess": "You have been logged out",
             "registerSuccess": "Account created successfully",
             "passwordResetSent": "Password reset email sent",
+            "passwordResetSentDescription": "The link is valid for 4 hours.",
             "passwordResetSuccess": "Password reset successfully",
             "invalidCredentials": "Invalid email or password",
             "passwordTooShort": "Password must be at least {minLength} characters",
