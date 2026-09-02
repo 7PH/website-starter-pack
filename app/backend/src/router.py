@@ -34,7 +34,7 @@ router_v1 = APIRouter(prefix="/v1")
 router_v1.include_router(healthcheck.router, tags=["Healthcheck"])  # Also available versioned for frontend
 router_v1.include_router(config.router, tags=["Config"])
 router_v1.include_router(users.router, tags=["Users"])
-router_v1.include_router(auth.router, tags=["Auth"])
+router_v1.include_router(auth.router, tags=["Authentication"])
 if STRIPE_ENABLED:
     router_v1.include_router(stripe.router, tags=["Stripe"])
 if ORGANIZATIONS_ENABLED:
