@@ -6,7 +6,6 @@ x-traefik-common: &traefik-common
     # is set, and a YAML merge key can't append to a sequence, so each profile
     # spells out its own list below.
     volumes:
-        - "/var/run/docker.sock:/var/run/docker.sock:ro"
         - ./services/traefik/dynamic.core.yml:/configuration/dynamic.core.yml:ro
         - ./services/traefik/dynamic.yml:/configuration/dynamic.yml:ro
         - "letsencrypt_traefik:/letsencrypt:rw"
