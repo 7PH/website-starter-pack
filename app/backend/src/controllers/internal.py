@@ -31,7 +31,10 @@ class MintTokenRequest(BaseModel):
 
 def _require_internal_key(x_internal_api_key: str = Header(default="")) -> None:
     # Constant-time compare; both branches reject when no server key is set.
-    if not INTERNAL_API_KEY or not hmac.compare_digest(x_internal_api_key, INTERNAL_API_KEY):
+    # Compare bytes: compare_digest raises TypeError on non-ASCII str.
+    if not INTERNAL_API_KEY or not hmac.compare_digest(
+        x_internal_api_key.encode("utf-8"), INTERNAL_API_KEY.encode("utf-8")
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal API key")
 
 
