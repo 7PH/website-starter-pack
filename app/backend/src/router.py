@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from .constants import (
-    INTERNAL_API_KEY,
+    INTERNAL_API_ENABLED,
     MANAGED_ACCOUNTS_ENABLED,
     ORG_INVITATIONS_ENABLED,
     ORGANIZATIONS_ENABLED,
@@ -46,7 +46,7 @@ router_v1.include_router(backups.router, tags=["Backups"])
 router_v1.include_router(db_health.router, tags=["Database Health"])
 if MANAGED_ACCOUNTS_ENABLED:
     router_v1.include_router(managed_account_groups.router, tags=["Managed Accounts"])
-if INTERNAL_API_KEY:
+if INTERNAL_API_ENABLED:
     router_v1.include_router(internal.router, tags=["Internal"])
 router_v1.include_router(app_router)
 
