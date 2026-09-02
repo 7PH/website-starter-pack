@@ -286,9 +286,9 @@ services:
             - dev
             - debug
         environment:
-            DATABASE_URL: postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:-umami}@umami-db:5432/${UMAMI_DB_NAME:-umami}
+            DATABASE_URL: postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env (see .env.template)}@umami-db:5432/${UMAMI_DB_NAME:-umami}
             DATABASE_TYPE: postgresql
-            APP_SECRET: ${UMAMI_APP_SECRET:-change-me-in-production}
+            APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in .env (see .env.template)}
             TRACKER_SCRIPT_NAME: analytics
             DISABLE_TELEMETRY: "1"
         depends_on:
@@ -310,7 +310,7 @@ services:
         environment:
             POSTGRES_DB: ${UMAMI_DB_NAME:-umami}
             POSTGRES_USER: ${UMAMI_DB_USER:-umami}
-            POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami}
+            POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env (see .env.template)}
         volumes:
             - ./services/umami/data:/var/lib/postgresql/data:rw
         healthcheck:
