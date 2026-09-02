@@ -117,6 +117,12 @@ async def handle_google_callback(
     user = get_user_by_email(session, email)
 
     if user:
+        # Only link to an account that already proved this address.
+        if not user.email_confirmed:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An unverified account already uses this email. Confirm it first, then sign in with Google.",
+            )
         # Existing user - log them in
         log_event(
             session,
