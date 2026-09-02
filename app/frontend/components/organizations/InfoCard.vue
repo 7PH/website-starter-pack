@@ -13,15 +13,15 @@ const props = defineProps<{
 // Use defineModel for two-way binding of form fields
 const formName = defineModel<string>('formName', { required: true });
 const formEmail = defineModel<string>('formEmail', { required: true });
-const formDescription = defineModel<string | null>('formDescription');
-const formPhone = defineModel<string | null>('formPhone');
-const formTaxNumber = defineModel<string | null>('formTaxNumber');
-const formAddressLine1 = defineModel<string | null>('formAddressLine1');
-const formAddressLine2 = defineModel<string | null>('formAddressLine2');
-const formCity = defineModel<string | null>('formCity');
-const formState = defineModel<string | null>('formState');
-const formPostalCode = defineModel<string | null>('formPostalCode');
-const formCountry = defineModel<string | null>('formCountry');
+const formDescription = defineModel<string>('formDescription');
+const formPhone = defineModel<string>('formPhone');
+const formTaxNumber = defineModel<string>('formTaxNumber');
+const formAddressLine1 = defineModel<string>('formAddressLine1');
+const formAddressLine2 = defineModel<string>('formAddressLine2');
+const formCity = defineModel<string>('formCity');
+const formState = defineModel<string>('formState');
+const formPostalCode = defineModel<string>('formPostalCode');
+const formCountry = defineModel<string>('formCountry');
 const formCustomData = defineModel<OrganizationCustomData>('formCustomData', { required: true });
 
 const emit = defineEmits<{

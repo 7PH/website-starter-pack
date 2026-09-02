@@ -1,6 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import type { DropdownMenuItem } from '@nuxt/ui';
 import { useOrganizationInvitations } from '~/composables/organizations/useOrganizationInvitations';
 import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
 import { formatDate } from '~/utils/formatters';
@@ -74,7 +75,7 @@ function getMember(row: { original: unknown }): OrganizationMemberRead {
 }
 
 function buildActions(member: OrganizationMemberRead) {
-    const items = [];
+    const items: DropdownMenuItem[] = [];
     const isOnlyOwner = member.is_admin && ownerCount.value === 1;
     const premiumBlocked = !member.has_premium_seat && !props.canAddPremium;
 
