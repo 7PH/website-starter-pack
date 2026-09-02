@@ -14,7 +14,7 @@ from ..constants import JWT_ALGORITHM, JWT_SECRET_KEY, PUBLIC_URL
 
 # Token expiration constants
 EMAIL_VERIFICATION_EXPIRE_DAYS = 10
-PASSWORD_RESET_EXPIRE_DAYS = 7
+PASSWORD_RESET_EXPIRE_HOURS = 4
 EMAIL_CHANGE_EXPIRE_DAYS = 2
 ACCOUNT_DELETION_EXPIRE_MINUTES = 60
 
@@ -35,7 +35,7 @@ def create_email_verification_token(user_id: int, email: str) -> str:
 def create_password_reset_token(user_id: int) -> str:
     return _encode_typed_token(
         {"type": "reset-password", "user_id": user_id},
-        timedelta(days=PASSWORD_RESET_EXPIRE_DAYS),
+        timedelta(hours=PASSWORD_RESET_EXPIRE_HOURS),
     )
 
 
