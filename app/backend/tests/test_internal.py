@@ -45,6 +45,13 @@ class TestRequireInternalKey:
             _require_internal_key(x_internal_api_key="wrong")
         assert exc.value.status_code == 401
 
+    def test_rejects_non_ascii_header(self, monkeypatch):
+        """Non-ASCII caller key → 401, not a TypeError bubbling up as a 500."""
+        monkeypatch.setattr(internal, "INTERNAL_API_KEY", "real-key")
+        with pytest.raises(HTTPException) as exc:
+            _require_internal_key(x_internal_api_key="clé")
+        assert exc.value.status_code == 401
+
     def test_accepts_when_match(self, monkeypatch):
         monkeypatch.setattr(internal, "INTERNAL_API_KEY", "real-key")
         # No exception = pass.
