@@ -41,13 +41,14 @@ if ORGANIZATIONS_ENABLED:
     router_v1.include_router(organizations.router, tags=["Organizations"])
     if ORG_INVITATIONS_ENABLED:
         router_v1.include_router(invitations.router, tags=["Organization Invitations"])
-router_v1.include_router(admin.router, tags=["Admin"])
-router_v1.include_router(backups.router, tags=["Backups"])
-router_v1.include_router(db_health.router, tags=["Database Health"])
+# Admin surface: kept out of the public OpenAPI schema, /api/docs stays open.
+router_v1.include_router(admin.router, tags=["Admin"], include_in_schema=False)
+router_v1.include_router(backups.router, tags=["Backups"], include_in_schema=False)
+router_v1.include_router(db_health.router, tags=["Database Health"], include_in_schema=False)
 if MANAGED_ACCOUNTS_ENABLED:
     router_v1.include_router(managed_account_groups.router, tags=["Managed Accounts"])
 if INTERNAL_API_ENABLED:
-    router_v1.include_router(internal.router, tags=["Internal"])
+    router_v1.include_router(internal.router, tags=["Internal"], include_in_schema=False)
 router_v1.include_router(app_router)
 
 # Main router combines all versions
