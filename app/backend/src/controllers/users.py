@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
+from ..constants import IS_PROD, JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
 from ..crud.event_logs import log_event
 from ..crud.users import (
     create_user,
@@ -404,12 +404,11 @@ def request_account_deletion(
         )
     except Exception as exc:
         # In dev (no Mailgun) every send fails — log the URL so the dev can
-        # complete the flow manually. In prod this also gives an admin a way
-        # to honor the deletion if the email service is briefly down.
+        # complete the flow manually. Never in prod: it carries a bearer token.
         logger.warning(
             "Account deletion email send failed for user_id=%s. Confirmation URL: %s",
             user.id,
-            confirmation_url,
+            "<redacted>" if IS_PROD else confirmation_url,
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
