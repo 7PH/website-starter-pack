@@ -7,7 +7,7 @@ app/backend/migrations/README.md
 app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
 app/backend/migrations/2026-04-26-v2.1.0-managed-accounts.sql
 app/backend/migrations/2026-05-16-v3.7.0-perf-indexes.sql
-app/backend/migrations/2026-09-03-vNEXT-add-user-username.sql
+app/backend/migrations/2026-09-03-v5.0.0-add-user-username.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
