@@ -14,6 +14,7 @@ const { showSuccess, showError } = useToastHelpers();
 const modal = useModalStore();
 const userDisplay = useUserDisplay();
 const { impersonate } = useAdminImpersonation();
+const backendConfig = useBackendConfig();
 
 const userId = computed(() => Number(route.params.id));
 
@@ -38,6 +39,7 @@ const form = ref({
     first_name: '',
     last_name: '',
     display_name: '',
+    username: '',
     email: '',
     is_admin: false,
     is_premium: false,
@@ -66,6 +68,7 @@ function formFromUser(u: AdminUserRead) {
         first_name: u.first_name ?? '',
         last_name: u.last_name ?? '',
         display_name: u.display_name ?? '',
+        username: u.username ?? '',
         email: u.email ?? '',
         is_admin: u.is_admin ?? false,
         is_premium: u.is_premium ?? false,
@@ -230,6 +233,13 @@ async function deleteUser() {
                             >
                                 <UInput v-model="form.display_name" />
                             </UFormField>
+                            <UFormField
+                                v-if="backendConfig.config?.usernames_enabled"
+                                label="Username"
+                                hint="Public handle. 2-32 characters: letters, numbers, _ - [ ]. Must be unique."
+                            >
+                                <UInput v-model="form.username" />
+                            </UFormField>
                             <UFormField label="Email">
                                 <UInput v-model="form.email" type="email" />
                             </UFormField>
@@ -263,6 +273,10 @@ async function deleteUser() {
                             <div class="info-item">
                                 <span class="info-label">Display Name</span>
                                 <span class="info-value">{{ user.display_name ?? '—' }}</span>
+                            </div>
+                            <div v-if="backendConfig.config?.usernames_enabled" class="info-item">
+                                <span class="info-label">Username</span>
+                                <span class="info-value">{{ user.username ?? '—' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Name</span>

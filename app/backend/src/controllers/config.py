@@ -5,6 +5,7 @@
 from fastapi import APIRouter, status
 
 from .. import constants
+from ..helpers.username import USERNAME_PATTERN
 from ..schemas.config_ext import BackendConfig, build_extra
 
 router = APIRouter()
@@ -24,6 +25,8 @@ def get_config() -> BackendConfig:
         organizations_enabled=constants.ORGANIZATIONS_ENABLED,
         org_invitations_enabled=constants.ORG_INVITATIONS_ENABLED,
         managed_accounts_enabled=constants.MANAGED_ACCOUNTS_ENABLED,
+        usernames_enabled=constants.USERNAMES_ENABLED,
+        username_pattern=USERNAME_PATTERN.pattern,
         llm_enabled=constants.LLM_ENABLED,
         org_self_service_subscriptions=constants.ORG_SELF_SERVICE_SUBSCRIPTIONS,
         org_self_service_creation=constants.ORG_SELF_SERVICE_CREATION,

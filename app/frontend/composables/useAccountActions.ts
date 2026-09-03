@@ -20,6 +20,8 @@ export function useAccountActions() {
         successKey: string,
         errorKey = 'core.errors.generic',
         onSuccess?: (result: T) => void,
+        // Status -> i18n key, for codes with one unambiguous cause on that endpoint.
+        statusKeys?: Record<number, string>,
     ): Promise<boolean> {
         try {
             const result = await op();
@@ -27,7 +29,12 @@ export function useAccountActions() {
             onSuccess?.(result);
             return true;
         } catch (error) {
-            showError(error, errorKey);
+            const mapped = statusKeys?.[getErrorStatus(error) ?? 0];
+            if (mapped) {
+                showError(new Error(t(mapped)), mapped);
+            } else {
+                showError(error, errorKey);
+            }
             return false;
         }
     }
@@ -37,14 +44,19 @@ export function useAccountActions() {
     // ============================================
 
     /**
-     * Login with email and password.
+     * Login with an identifier (email, or username when usernames are enabled).
      */
-    async function login(email: string, password: string): Promise<boolean> {
+    async function login(identifier: string, password: string): Promise<boolean> {
+        const usernamesEnabled = useBackendConfig().config?.usernames_enabled === true;
+        const invalidKey = usernamesEnabled ? 'core.auth.invalidCredentialsUsername' : 'core.auth.invalidCredentials';
         return withToast(
-            () => usersApi.login(email, password),
+            () => usersApi.login(identifier, password),
             'core.auth.loginSuccess',
-            'core.auth.invalidCredentials',
+            invalidKey,
             (data) => auth.saveUserToken(data),
+            // The server's detail would otherwise win over the fallback key and
+            // reach the user in English.
+            { 401: invalidKey },
         );
     }
 
@@ -57,6 +69,7 @@ export function useAccountActions() {
         firstName: string,
         lastName: string,
         customData?: UserCustomData,
+        username?: string,
     ): Promise<boolean> {
         return withToast(
             () =>
@@ -66,6 +79,7 @@ export function useAccountActions() {
                     first_name: firstName,
                     last_name: lastName,
                     custom_data: customData,
+                    ...(username ? { username } : {}),
                 }),
             'core.auth.registerSuccess',
             'core.errors.generic',
@@ -74,6 +88,10 @@ export function useAccountActions() {
                 // Trigger email verification send (fire and forget)
                 sendVerificationEmail().catch(() => {});
             },
+            // A 409 here is either field, and the response can't say which, so the
+            // message names both. Without usernames it can only be the email, and
+            // the server's own wording is left alone.
+            username ? { 409: 'core.auth.signupConflict' } : undefined,
         );
     }
 
@@ -144,12 +162,25 @@ export function useAccountActions() {
     /**
      * Update user profile (first name, last name, optional custom_data).
      */
-    async function updateProfile(firstName: string, lastName: string, customData?: UserCustomData): Promise<boolean> {
+    async function updateProfile(
+        firstName: string,
+        lastName: string,
+        customData?: UserCustomData,
+        username?: string,
+    ): Promise<boolean> {
         return withToast(
-            () => usersApi.updateProfile({ first_name: firstName, last_name: lastName, custom_data: customData }),
+            () =>
+                usersApi.updateProfile({
+                    first_name: firstName,
+                    last_name: lastName,
+                    custom_data: customData,
+                    ...(username ? { username } : {}),
+                }),
             'core.account.profileSaved',
             'core.errors.generic',
             (updated) => auth.updateUser(updated),
+            // The only 409 here is a taken handle; email changes use another route.
+            { 409: 'core.auth.usernameTaken' },
         );
     }
 

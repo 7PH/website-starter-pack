@@ -89,6 +89,7 @@ export type Models =
 export type Message = string;
 export type Id = number;
 export type Email = string | null;
+export type Username = string | null;
 export type FirstName = string | null;
 export type LastName = string | null;
 export type DisplayName = string | null;
@@ -104,6 +105,7 @@ export type HasPremiumSeat = boolean;
 export type Organizations = UserOrganizationInfo[];
 export type DisplayLabel = string | null;
 export type Id1 = number;
+export type Username1 = string | null;
 export type FirstName1 = string | null;
 export type LastName1 = string | null;
 export type DisplayName1 = string | null;
@@ -113,10 +115,12 @@ export type Email1 = string;
 export type Password = string;
 export type FirstName2 = string;
 export type LastName2 = string;
+export type Username2 = string | null;
 export type NewEmail = string;
 export type Password1 = string;
 export type FirstName3 = string;
 export type LastName3 = string;
+export type Username3 = string | null;
 export type OldPassword = string;
 export type NewPassword = string;
 export type CreatedAt = string;
@@ -131,6 +135,7 @@ export type Token = string;
 export type Password2 = string | null;
 export type Id2 = number;
 export type Email3 = string | null;
+export type Username4 = string | null;
 export type FirstName4 = string | null;
 export type LastName4 = string | null;
 export type DisplayName2 = string | null;
@@ -143,6 +148,7 @@ export type CreatedAt1 = string | null;
 export type DeletedAt = string | null;
 export type Organizations1 = UserOrganizationInfo[];
 export type DisplayLabel2 = string | null;
+export type Username5 = string | null;
 export type FirstName5 = string | null;
 export type LastName5 = string | null;
 export type DisplayName3 = string | null;
@@ -384,6 +390,8 @@ export type StripeEnabled = boolean;
 export type OrganizationsEnabled = boolean;
 export type OrgInvitationsEnabled = boolean;
 export type ManagedAccountsEnabled = boolean;
+export type UsernamesEnabled = boolean;
+export type UsernamePattern = string;
 export type LlmEnabled = boolean;
 export type OrgSelfServiceSubscriptions = boolean;
 export type OrgSelfServiceCreation = boolean;
@@ -448,6 +456,7 @@ export interface AuthMessageResponse {
 export interface UserRead {
   id: Id;
   email?: Email;
+  username?: Username;
   first_name?: FirstName;
   last_name?: LastName;
   display_name?: DisplayName;
@@ -482,6 +491,7 @@ export interface Extra {
 }
 export interface UserPreviewRead {
   id: Id1;
+  username?: Username1;
   first_name?: FirstName1;
   last_name?: LastName1;
   display_name?: DisplayName1;
@@ -498,6 +508,7 @@ export interface UserCreate {
   password: Password;
   first_name: FirstName2;
   last_name: LastName2;
+  username?: Username2;
   custom_data?: UserCustomDataWritable | null;
 }
 /**
@@ -516,6 +527,7 @@ export interface UserChangeEmail {
 export interface UserChangeInfo {
   first_name: FirstName3;
   last_name: LastName3;
+  username?: Username3;
   custom_data?: UserCustomDataWritable | null;
 }
 export interface UserChangePassword {
@@ -557,6 +569,7 @@ export interface AccountDeletionConfirm {
 export interface AdminUserRead {
   id: Id2;
   email?: Email3;
+  username?: Username4;
   first_name?: FirstName4;
   last_name?: LastName4;
   display_name?: DisplayName2;
@@ -575,6 +588,7 @@ export interface AdminUserRead {
  * Schema for admin updating a user.
  */
 export interface AdminUserUpdate {
+  username?: Username5;
   first_name?: FirstName5;
   last_name?: LastName5;
   display_name?: DisplayName3;
@@ -1081,6 +1095,8 @@ export interface BackendConfig {
   organizations_enabled: OrganizationsEnabled;
   org_invitations_enabled: OrgInvitationsEnabled;
   managed_accounts_enabled: ManagedAccountsEnabled;
+  usernames_enabled: UsernamesEnabled;
+  username_pattern: UsernamePattern;
   llm_enabled: LlmEnabled;
   org_self_service_subscriptions: OrgSelfServiceSubscriptions;
   org_self_service_creation: OrgSelfServiceCreation;

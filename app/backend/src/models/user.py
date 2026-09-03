@@ -15,6 +15,10 @@ class UserBase(Base):
     # Nullable: access-code users have no email (kids/kiosks/shared devices).
     # Postgres allows multiple NULLs under a UNIQUE constraint natively.
     email = Column(String, unique=True, nullable=True)
+    # Nullable: access-code users, OAuth signups and email-only apps never set it.
+    # Uniqueness comes from the index below, not unique=True, which would let
+    # "Bob" and "bob" coexist.
+    username = Column(String(32), nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     email_confirmed = Column(Boolean, default=False)
@@ -60,6 +64,12 @@ class UserBase(Base):
         ),
         # Partial index: Stripe webhooks resolve users by stripe_id on every event.
         Index("idx_users_stripe_id", "stripe_id", postgresql_where=text("stripe_id IS NOT NULL")),
+        Index(
+            "idx_users_username_lower",
+            func.lower(username),
+            unique=True,
+            postgresql_where=text("username IS NOT NULL"),
+        ),
     )
 
     # This table is used for polymorphic inheritance

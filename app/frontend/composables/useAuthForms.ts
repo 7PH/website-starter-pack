@@ -8,16 +8,21 @@ export function useAuthForms() {
     const { t } = useI18n();
     const backendConfig = useBackendConfig();
     const minPasswordLength = computed(() => backendConfig.config?.password_min_length ?? 8);
+    const usernamesEnabled = computed(() => backendConfig.config?.usernames_enabled === true);
+
+    const { validateUsername } = useUsernameRules();
 
     // Form data
     const loginForm = reactive({
-        email: '',
+        // An email, or a username when usernames are enabled.
+        identifier: '',
         password: '',
         rememberMe: false,
     });
 
     const signupForm = reactive({
         email: '',
+        username: '',
         password: '',
         confirmPassword: '',
         firstName: '',
@@ -65,8 +70,8 @@ export function useAuthForms() {
     // Validation functions
     function validateLogin(): boolean {
         errors.value = {};
-        if (!loginForm.email) {
-            errors.value.email = t('core.validation.required');
+        if (!loginForm.identifier) {
+            errors.value.identifier = t('core.validation.required');
         }
         if (!loginForm.password) {
             errors.value.password = t('core.validation.required');
@@ -78,6 +83,10 @@ export function useAuthForms() {
         errors.value = {};
         if (!signupForm.email) {
             errors.value.email = t('core.validation.required');
+        }
+        if (usernamesEnabled.value) {
+            const usernameError = validateUsername(signupForm.username);
+            if (usernameError) errors.value.username = usernameError;
         }
         if (!signupForm.firstName) {
             errors.value.firstName = t('core.validation.required');
@@ -119,11 +128,12 @@ export function useAuthForms() {
 
     // Reset all forms to initial state
     function resetForms() {
-        loginForm.email = '';
+        loginForm.identifier = '';
         loginForm.password = '';
         loginForm.rememberMe = false;
 
         signupForm.email = '';
+        signupForm.username = '';
         signupForm.password = '';
         signupForm.confirmPassword = '';
         signupForm.firstName = '';
@@ -147,7 +157,7 @@ export function useAuthForms() {
 
     // Pre-fill email across forms
     function setEmail(email: string) {
-        loginForm.email = email;
+        loginForm.identifier = email;
         signupForm.email = email;
         forgotPasswordForm.email = email;
     }
@@ -163,6 +173,7 @@ export function useAuthForms() {
         passwordVisibility,
 
         // State
+        usernamesEnabled,
         isLoading,
         errors,
         withLoading,

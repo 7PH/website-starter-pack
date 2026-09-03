@@ -13,15 +13,16 @@ export async function signup(data: UserCreate): Promise<UserTokenUpdate> {
 }
 
 /**
- * Login with email and password.
+ * Login with an identifier (email, or username when usernames are enabled).
  * Uses OAuth2 form format as expected by FastAPI.
  */
-export async function login(email: string, password: string): Promise<UserTokenUpdate> {
+export async function login(identifier: string, password: string): Promise<UserTokenUpdate> {
     const basepath = useRuntimeConfig().public.apiBase;
 
-    // FastAPI OAuth2 expects x-www-form-urlencoded format
+    // FastAPI OAuth2 expects x-www-form-urlencoded; its "username" field carries
+    // whatever identifier the user typed.
     const formData = new URLSearchParams();
-    formData.append('username', email);
+    formData.append('username', identifier);
     formData.append('password', password);
 
     const response = await fetch(basepath + '/users/login', {
@@ -32,7 +33,7 @@ export async function login(email: string, password: string): Promise<UserTokenU
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.detail || 'Invalid credentials');
+        throw withStatus(new Error(error.detail || 'Invalid credentials'), response.status);
     }
 
     return response.json();

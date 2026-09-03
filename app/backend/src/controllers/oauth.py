@@ -136,6 +136,8 @@ async def handle_google_callback(
         # Generate a random password (user won't use it, but field is required)
         random_password = secrets.token_urlsafe(32)
 
+        # No username: only the password signup form collects one. NULL is a
+        # legal state, and the user can pick a handle later on /account.
         user = UserBase(
             email=email,
             hashed_password=hash_password(random_password),

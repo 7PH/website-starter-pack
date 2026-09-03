@@ -85,10 +85,13 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
                 try {
                     errorData = await response.json();
                 } catch {
-                    throw new Error(response.statusText ?? 'An error occurred');
+                    throw withStatus(new Error(response.statusText ?? 'An error occurred'), response.status);
                 }
 
-                throw new Error(errorData.detail ?? response.statusText ?? 'An error occurred');
+                throw withStatus(
+                    new Error(errorData.detail ?? response.statusText ?? 'An error occurred'),
+                    response.status,
+                );
             }
 
             // Only parse JSON if there's content
