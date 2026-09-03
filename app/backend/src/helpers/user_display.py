@@ -7,12 +7,18 @@ both backend code and exposed to the frontend as `display_label` on UserRead /
 UserPreviewRead / AdminUserRead.
 """
 
+from ..constants import USERNAMES_ENABLED
+
 
 def display_for(user) -> str | None:
     """Return a human-friendly label, or None if the caller should i18n a fallback.
 
     Ladder:
-        display_name → first_name + last_name → email → None
+        display_name → username → first_name + last_name → email → None
+
+    `display_name` stays on top: it's the deliberate override, so an app that
+    sets both gets the one it set on purpose. The username rung applies only
+    when USERNAMES_ENABLED.
 
     Returns None for `auth_method='deleted'` so callers can render a localized
     "Deleted user" string instead of leaking the anonymized state.
@@ -23,6 +29,13 @@ def display_for(user) -> str | None:
     name = getattr(user, "display_name", None)
     if name:
         return name
+
+    # Flag-gated: an app that already had its own username column keeps the
+    # labels it renders today until it opts in.
+    if USERNAMES_ENABLED:
+        username = getattr(user, "username", None)
+        if username:
+            return username
 
     first = getattr(user, "first_name", None)
     last = getattr(user, "last_name", None)

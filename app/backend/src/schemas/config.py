@@ -28,6 +28,10 @@ class CoreBackendConfig(BaseModel):
     organizations_enabled: bool
     org_invitations_enabled: bool
     managed_accounts_enabled: bool
+    usernames_enabled: bool
+
+    # Served so the client validates against one definition instead of a copy.
+    username_pattern: str
     llm_enabled: bool
     org_self_service_subscriptions: bool
     org_self_service_creation: bool

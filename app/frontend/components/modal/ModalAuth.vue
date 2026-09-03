@@ -23,6 +23,7 @@ const { isOpen, options, close } = useStoreModal<AuthModalOptions>(MODAL_NAME);
 const mode = ref<AuthModalMode>('login');
 
 const {
+    usernamesEnabled,
     loginForm,
     signupForm,
     forgotPasswordForm,
@@ -50,7 +51,7 @@ watch(isOpen, (open) => {
 
         // Pre-fill email if provided
         if (opts?.email) {
-            loginForm.email = opts.email;
+            loginForm.identifier = opts.email;
             signupForm.email = opts.email;
             forgotPasswordForm.email = opts.email;
         }
@@ -92,7 +93,7 @@ function onAuthSuccess() {
 
 async function handleLogin() {
     if (!validateLogin()) return;
-    if (await withLoading(() => accountActions.login(loginForm.email, loginForm.password))) {
+    if (await withLoading(() => accountActions.login(loginForm.identifier, loginForm.password))) {
         onAuthSuccess();
     }
 }
@@ -106,6 +107,7 @@ async function handleSignup() {
             signupForm.firstName,
             signupForm.lastName,
             signupForm.customData,
+            usernamesEnabled.value ? signupForm.username.trim() : undefined,
         ),
     );
     if (success) onAuthSuccess();
@@ -172,13 +174,16 @@ function switchMode(newMode: AuthModalMode) {
 
                 <!-- Login Form -->
                 <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
-                    <UFormField :label="t('core.auth.email')" :error="errors.email">
+                    <UFormField
+                        :label="usernamesEnabled ? t('core.auth.usernameOrEmail') : t('core.auth.email')"
+                        :error="errors.identifier"
+                    >
                         <UInput
-                            v-model="loginForm.email"
-                            type="email"
-                            autocomplete="email"
-                            :placeholder="t('core.auth.email')"
-                            :color="errors.email ? 'error' : undefined"
+                            v-model="loginForm.identifier"
+                            :type="usernamesEnabled ? 'text' : 'email'"
+                            :autocomplete="usernamesEnabled ? 'username' : 'email'"
+                            :placeholder="usernamesEnabled ? t('core.auth.usernameOrEmail') : t('core.auth.email')"
+                            :color="errors.identifier ? 'error' : undefined"
                             class="w-full"
                         />
                     </UFormField>
@@ -260,6 +265,22 @@ function switchMode(newMode: AuthModalMode) {
                             />
                         </UFormField>
                     </div>
+
+                    <UFormField
+                        v-if="usernamesEnabled"
+                        :label="t('core.auth.username')"
+                        :error="errors.username"
+                        :help="t('core.auth.usernameHelp')"
+                    >
+                        <UInput
+                            v-model="signupForm.username"
+                            type="text"
+                            autocomplete="username"
+                            :placeholder="t('core.auth.username')"
+                            :color="errors.username ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
 
                     <UFormField :label="t('core.auth.email')" :error="errors.email">
                         <UInput

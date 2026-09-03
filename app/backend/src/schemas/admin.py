@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ..constants import USERNAMES_ENABLED
 from ..helpers.user_display import display_for
 from .event_log import EventLogRead
 from .organization import UserOrganizationInfo
@@ -17,6 +18,7 @@ from .user_ext import UserCustomData
 class AdminUserUpdate(BaseModel):
     """Schema for admin updating a user."""
 
+    username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
@@ -33,6 +35,7 @@ class AdminUserRead(BaseModel):
     # Nullable: access-code users have no email/name; deleted users have
     # everything cleared. Admin UI uses display_label as the visible label.
     email: str | None = None
+    username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
@@ -59,6 +62,8 @@ class AdminUserRead(BaseModel):
 
     @model_validator(mode="after")
     def _populate_display_label(self) -> "AdminUserRead":
+        if not USERNAMES_ENABLED:
+            self.username = None
         self.display_label = display_for(self)
         return self
 

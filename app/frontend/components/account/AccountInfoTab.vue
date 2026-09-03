@@ -3,6 +3,9 @@
 const auth = useAuth();
 const accountActions = useAccountActions();
 const { t } = useI18n();
+const backendConfig = useBackendConfig();
+const usernamesEnabled = computed(() => backendConfig.config?.usernames_enabled === true);
+const { validateUsername } = useUsernameRules();
 
 // Loading states
 const isProfileLoading = ref(false);
@@ -19,6 +22,7 @@ const showEmailPassword = ref(false);
 const profileForm = reactive({
     firstName: auth.user?.first_name || '',
     lastName: auth.user?.last_name || '',
+    username: auth.user?.username || '',
     customData: (auth.user?.custom_data ?? {}) as UserCustomData,
 });
 
@@ -36,6 +40,7 @@ watch(
         if (user) {
             profileForm.firstName = user.first_name ?? '';
             profileForm.lastName = user.last_name ?? '';
+            profileForm.username = user.username ?? '';
             profileForm.customData = (user.custom_data ?? {}) as UserCustomData;
         }
     },
@@ -50,6 +55,18 @@ function validateProfile(): boolean {
     }
     if (!profileForm.lastName.trim()) {
         profileErrors.value.lastName = t('core.validation.required');
+    }
+    // Blank is only "leave it alone" for users who never got a handle (OAuth and
+    // access-code signups). Once you have one you can rename it but not remove
+    // it, so blanking the field is an error rather than a silent no-op.
+    if (usernamesEnabled.value) {
+        const blank = !profileForm.username.trim();
+        if (blank && auth.user?.username) {
+            profileErrors.value.username = t('core.validation.required');
+        } else if (!blank) {
+            const usernameError = validateUsername(profileForm.username);
+            if (usernameError) profileErrors.value.username = usernameError;
+        }
     }
     return Object.keys(profileErrors.value).length === 0;
 }
@@ -74,6 +91,7 @@ async function handleProfileSave() {
         profileForm.firstName.trim(),
         profileForm.lastName.trim(),
         profileForm.customData,
+        usernamesEnabled.value ? profileForm.username.trim() || undefined : undefined,
     );
     isProfileLoading.value = false;
 }
@@ -114,6 +132,20 @@ function cancelEmailChange() {
             </template>
 
             <form class="flex flex-col gap-4" @submit.prevent="handleProfileSave">
+                <UFormField
+                    v-if="usernamesEnabled"
+                    :label="t('core.auth.username')"
+                    :error="profileErrors.username"
+                    :help="t('core.auth.usernameHelp')"
+                >
+                    <UInput
+                        v-model="profileForm.username"
+                        autocomplete="username"
+                        :color="profileErrors.username ? 'error' : undefined"
+                        class="w-full"
+                    />
+                </UFormField>
+
                 <div class="flex gap-4">
                     <UFormField :label="t('core.auth.firstName')" :error="profileErrors.firstName" class="flex-1">
                         <UInput

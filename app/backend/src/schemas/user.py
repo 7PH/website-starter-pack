@@ -7,10 +7,26 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from ..constants import PASSWORD_MIN_LENGTH
+from ..constants import PASSWORD_MIN_LENGTH, USERNAMES_ENABLED
 from ..helpers.user_display import display_for
+from ..helpers.username import validate_username
 from .organization import UserOrganizationInfo
 from .user_ext import UserCustomData, UserCustomDataWritable, UserPreviewCustomData
+
+
+def require_email_shape(value: str) -> str:
+    """Reject anything without an '@' between two non-empty parts.
+
+    Deliberately laxer than EmailStr, which rejects addresses that work in
+    practice (admin@localhost). The point is the '@': usernames forbid it, and
+    that is the whole reason a handle can never collide with an address in the
+    shared login box.
+    """
+    email = value.strip()
+    local, sep, domain = email.partition("@")
+    if not (sep and local and domain):
+        raise ValueError("Not a valid email address")
+    return email
 
 
 class UserRead(BaseModel):
@@ -18,6 +34,7 @@ class UserRead(BaseModel):
     # Nullable on read schemas: access-code users have no email/name; deleted
     # users have everything cleared. Frontends fall back to display_label.
     email: str | None = None
+    username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
@@ -39,12 +56,17 @@ class UserRead(BaseModel):
 
     @model_validator(mode="after")
     def _populate_display_label(self) -> "UserRead":
+        # Mirror display_for's gating: with the feature off, an app that has its
+        # own username column must not start seeing it on the API.
+        if not USERNAMES_ENABLED:
+            self.username = None
         self.display_label = display_for(self)
         return self
 
 
 class UserPreviewRead(BaseModel):
     id: int
+    username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
@@ -64,6 +86,8 @@ class UserPreviewRead(BaseModel):
 
     @model_validator(mode="after")
     def _populate_display_label(self) -> "UserPreviewRead":
+        if not USERNAMES_ENABLED:
+            self.username = None
         self.display_label = display_for(self)
         return self
 
@@ -73,20 +97,41 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
+    # Required-ness is enforced in the controller; the schema can't read config.
+    username: str | None = None
     # Writable subset only: users must not self-set privileged custom_data.
     custom_data: UserCustomDataWritable | None = None
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return require_email_shape(v)
 
     @field_validator("last_name")
     @classmethod
     def to_uppercase(cls, v: str) -> str:
         return v.upper()
 
+    @field_validator("username")
+    @classmethod
+    def check_username(cls, v: str | None) -> str | None:
+        return validate_username(v) if v is not None else None
+
 
 class UserChangeInfo(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
+    # None means "leave unchanged". There is deliberately no way for a user to
+    # clear their own handle: it's their public identity and signup requires
+    # one. Admins can clear it (moderation) via AdminUserUpdate.
+    username: str | None = None
     # Writable subset only: users must not self-set privileged custom_data.
     custom_data: UserCustomDataWritable | None = None
+
+    @field_validator("username")
+    @classmethod
+    def check_username(cls, v: str | None) -> str | None:
+        return validate_username(v) if v is not None else None
 
 
 class UserChangePassword(BaseModel):
@@ -97,6 +142,11 @@ class UserChangePassword(BaseModel):
 class UserChangeEmail(BaseModel):
     new_email: str = Field(max_length=255)
     password: str = Field(max_length=128)
+
+    @field_validator("new_email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return require_email_shape(v)
 
 
 class EmailChangeConfirm(BaseModel):

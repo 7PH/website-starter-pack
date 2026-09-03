@@ -128,6 +128,18 @@
           "default": null,
           "title": "Email"
         },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        },
         "first_name": {
           "anyOf": [
             {
@@ -255,6 +267,18 @@
     "AdminUserUpdate": {
       "description": "Schema for admin updating a user.",
       "properties": {
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        },
         "first_name": {
           "anyOf": [
             {
@@ -398,6 +422,14 @@
           "title": "Managed Accounts Enabled",
           "type": "boolean"
         },
+        "usernames_enabled": {
+          "title": "Usernames Enabled",
+          "type": "boolean"
+        },
+        "username_pattern": {
+          "title": "Username Pattern",
+          "type": "string"
+        },
         "llm_enabled": {
           "title": "Llm Enabled",
           "type": "boolean"
@@ -430,6 +462,8 @@
         "organizations_enabled",
         "org_invitations_enabled",
         "managed_accounts_enabled",
+        "usernames_enabled",
+        "username_pattern",
         "llm_enabled",
         "org_self_service_subscriptions",
         "org_self_service_creation",
@@ -3050,6 +3084,18 @@
           "title": "Last Name",
           "type": "string"
         },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        },
         "custom_data": {
           "anyOf": [
             {
@@ -3114,6 +3160,18 @@
           "minLength": 1,
           "title": "Last Name",
           "type": "string"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
         },
         "custom_data": {
           "anyOf": [
@@ -3211,6 +3269,18 @@
           "title": "Id",
           "type": "integer"
         },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        },
         "first_name": {
           "anyOf": [
             {
@@ -3291,6 +3361,18 @@
           ],
           "default": null,
           "title": "Email"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
         },
         "first_name": {
           "anyOf": [

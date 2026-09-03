@@ -59,6 +59,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
     return UserRead(
         id=token_decoded["id"],
         email=data.get("email"),
+        username=data.get("username"),
         first_name=data.get("first_name"),
         last_name=data.get("last_name"),
         display_name=data.get("display_name"),
@@ -220,6 +221,7 @@ def build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
     user_read = UserRead(
         id=user.id,
         email=user.email,
+        username=user.username,
         first_name=user.first_name,
         last_name=user.last_name,
         display_name=user.display_name,
@@ -277,6 +279,7 @@ def create_access_token(
         "exp": int(exp.timestamp()),
         "data": {
             "email": effective_user.email,
+            "username": effective_user.username,
             "first_name": effective_user.first_name,
             "last_name": effective_user.last_name,
             "display_name": effective_user.display_name,

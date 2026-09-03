@@ -7,6 +7,7 @@ app/backend/migrations/README.md
 app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
 app/backend/migrations/2026-04-26-v2.1.0-managed-accounts.sql
 app/backend/migrations/2026-05-16-v3.7.0-perf-indexes.sql
+app/backend/migrations/2026-09-03-vNEXT-add-user-username.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -48,6 +49,7 @@ app/backend/src/helpers/security_headers.py
 app/backend/src/helpers/security_headers_ext.py:template
 app/backend/src/helpers/auth_app.py:template
 app/backend/src/helpers/user_display.py
+app/backend/src/helpers/username.py
 app/backend/src/helpers/access_codes.py
 app/backend/src/helpers/hooks.py
 app/backend/src/helpers/policies.py
@@ -104,6 +106,7 @@ app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 app/backend/tests/test_user_display.py
+app/backend/tests/test_username.py
 app/backend/tests/test_custom_data_privesc.py
 
 # Frontend - Docker & Tooling
@@ -148,6 +151,7 @@ app/frontend/composables/useAccountActions.ts
 app/frontend/composables/useToastHelpers.ts
 app/frontend/composables/useAppLocale.ts
 app/frontend/composables/useAuthForms.ts
+app/frontend/composables/useUsernameRules.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useTableState.ts
 app/frontend/composables/useScrollToBottom.ts

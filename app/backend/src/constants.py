@@ -48,6 +48,9 @@ MANAGED_ACCOUNT_GROUP_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNT_GROUP_M
 # Total managed accounts an owner can have across all their groups combined.
 MANAGED_ACCOUNTS_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNTS_MAX_PER_USER", "1000"))
 
+# Public handles, usable as a login identifier. Off = column stays NULL, no UI.
+USERNAMES_ENABLED = os.environ.get("USERNAMES_ENABLED", "false").lower() == "true"
+
 # LLM Integration
 LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")

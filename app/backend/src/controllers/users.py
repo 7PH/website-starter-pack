@@ -7,13 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import IS_PROD, JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, EventType
+from ..constants import IS_PROD, JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, USERNAMES_ENABLED, EventType
 from ..crud.event_logs import log_event
 from ..crud.users import (
     create_user,
     get_user_by_email,
     get_user_by_id,
+    get_user_by_username,
     is_email_taken,
+    is_username_taken,
     update_user,
 )
 from ..helpers.auth import (
@@ -44,6 +46,7 @@ from ..helpers.email import (
     swallow_email_errors,
 )
 from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
+from ..helpers.username import username_conflict_as_409
 from ..models.user import UserBase
 from ..schemas.user import (
     AuthMessageResponse,
@@ -68,6 +71,10 @@ REGISTER_RATE_LIMIT_PER_IP = 5  # max attempts per IP
 REGISTER_RATE_LIMIT_MINUTES = 15
 EMAIL_CHANGE_COOLDOWN_MINUTES = 5
 EMAIL_CHANGE_DAILY_LIMIT = 5
+# Renames free the old handle immediately, so an unthrottled loop lets someone
+# squat names or hand one to an accomplice.
+USERNAME_CHANGE_COOLDOWN_MINUTES = 5
+USERNAME_CHANGE_DAILY_LIMIT = 5
 ACCOUNT_DELETION_COOLDOWN_MINUTES = 5
 ACCOUNT_DELETION_DAILY_LIMIT = 5
 TOKEN_REFRESH_COOLDOWN_SECONDS = 300  # 5 minutes
@@ -93,18 +100,29 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
     if is_email_taken(session, user_create.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
+    # Ignored when disabled, so a stray field can't populate an unused column.
+    username = None
+    if USERNAMES_ENABLED:
+        if not user_create.username:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username is required")
+        if is_username_taken(session, user_create.username):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+        username = user_create.username
+
     custom_data: dict = {}
     if user_create.custom_data is not None:
         custom_data = user_create.custom_data.model_dump(exclude_none=True)
 
     user = UserBase(
         email=user_create.email,
+        username=username,
         hashed_password=hash_password(user_create.password),
         first_name=user_create.first_name,
         last_name=user_create.last_name,
         custom_data=custom_data,
     )
-    create_user(session, user)
+    with username_conflict_as_409(session):
+        create_user(session, user)
 
     setup_new_user_stripe(session, user)
 
@@ -134,17 +152,25 @@ def login_user(
         duration_minutes=LOGIN_RATE_LIMIT_MINUTES,
     )
 
-    # Lowercase the username (email in this case) for case-insensitive login
-    email = form_data.username.lower()
+    identifier = form_data.username.strip().lower()
     password = form_data.password
 
-    user = get_user_by_email(session, email)
+    # Email stays a silent fallback so people who type theirs still get in.
+    # The two can't collide because usernames forbid '@'.
+    user = None
+    if USERNAMES_ENABLED:
+        user = get_user_by_username(session, identifier)
+    user = user or get_user_by_email(session, identifier)
+
+    # Unchanged when disabled, so existing apps keep the message they ship today.
+    invalid_credentials = "Invalid credentials" if USERNAMES_ENABLED else "Invalid email or password"
+
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=invalid_credentials)
 
     hook = pre_login(session, user, password)
     if hook is False or (hook is None and not verify_password(password, user.hashed_password)):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=invalid_credentials)
 
     # Log the login event
     log_event(session, action=EventType.USER_LOGIN, user_id=user.id, request=request)
@@ -243,6 +269,17 @@ def update_me(
     if user_change_info.last_name is not None:
         user.last_name = user_change_info.last_name
 
+    if USERNAMES_ENABLED and user_change_info.username is not None and user_change_info.username != user.username:
+        ensure_user_cooldown_and_daily(
+            action="username-change",
+            user_id=user.id,
+            cooldown_minutes=USERNAME_CHANGE_COOLDOWN_MINUTES,
+            daily_quota=USERNAME_CHANGE_DAILY_LIMIT,
+        )
+        if is_username_taken(session, user_change_info.username, exclude_user_id=user.id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+        user.username = user_change_info.username
+
     if user_change_info.custom_data is not None:
         incoming = user_change_info.custom_data.model_dump(exclude_none=True)
         merged = {**(user.custom_data or {}), **incoming}
@@ -250,7 +287,8 @@ def update_me(
         # JSON-serializable for the JSONB write instead of becoming datetime objects.
         user.custom_data = UserCustomData(**merged).model_dump(mode="json", exclude_none=True)
 
-    update_user(session, user)
+    with username_conflict_as_409(session):
+        update_user(session, user)
 
     sync_existing_user_to_stripe(user)
 

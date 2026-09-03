@@ -10,12 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from ..constants import EventType
+from ..constants import USERNAMES_ENABLED, EventType
 from ..crud.event_logs import get_events, log_event
 from ..crud.organizations import get_user_organizations
-from ..crud.users import get_user_by_id, soft_delete_user, update_user
+from ..crud.users import get_user_by_id, is_username_taken, soft_delete_user, update_user
 from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id, get_user_or_404
 from ..helpers.db import get_session
+from ..helpers.username import UsernameError, username_conflict_as_409, validate_username
 from ..models.user import UserBase
 from ..schemas.admin import (
     AdminDashboardStats,
@@ -95,6 +96,7 @@ def list_users(
         search_pattern = f"%{search}%"
         clauses = [
             UserBase.email.ilike(search_pattern),
+            UserBase.username.ilike(search_pattern),
             UserBase.first_name.ilike(search_pattern),
             UserBase.last_name.ilike(search_pattern),
         ]
@@ -165,6 +167,22 @@ def update_user_by_admin(
         changes[field] = {"from": getattr(user, field), "to": new_value}
         setattr(user, field, new_value)
 
+    # "" clears the handle, matching how display_name behaves in the loop above.
+    # Normalized to None first so a blank field on a user who never had one is
+    # not recorded as a change on every save.
+    if USERNAMES_ENABLED and user_update.username is not None:
+        new_username = user_update.username.strip() or None
+        if new_username is not None:
+            try:
+                new_username = validate_username(new_username)
+            except UsernameError as exc:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username") from exc
+        if new_username != user.username:
+            if new_username is not None and is_username_taken(session, new_username, exclude_user_id=user.id):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+            changes["username"] = {"from": user.username, "to": new_username}
+            user.username = new_username
+
     if user_update.email is not None and user.email != user_update.email:
         changes["email"] = {"from": user.email, "to": user_update.email}
         user.email = user_update.email
@@ -180,7 +198,8 @@ def update_user_by_admin(
             changes["custom_data"] = {"from": user.custom_data or {}, "to": new_custom_data}
             user.custom_data = new_custom_data
 
-    update_user(session, user)
+    with username_conflict_as_409(session):
+        update_user(session, user)
 
     # Log the admin action
     log_event(
