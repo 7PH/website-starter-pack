@@ -27,6 +27,7 @@ http:
       service: backend
       middlewares:
         - api-strip-prefix
+        - compress-middleware
       {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
@@ -86,6 +87,11 @@ http:
       stripPrefix:
         prefixes:
           - "/api"
+
+    compress-middleware:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
 
     admin-auth-middleware:
       chain:
