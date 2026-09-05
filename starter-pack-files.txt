@@ -297,6 +297,8 @@ services/traefik/*.core.yml
 
 # Static media host
 services/static/nginx.conf
+services/static/ext/http/.gitkeep:template
+services/static/ext/server/.gitkeep:template
 
 # Scripts
 scripts/_core/*
