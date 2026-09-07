@@ -138,6 +138,13 @@
             "copyright": "All rights reserved."
         },
         "account": {
+            "tabs": {
+                "account": "Profile",
+                "password": "Password",
+                "organizations": "Organizations",
+                "billing": "Billing",
+                "privacy": "Privacy"
+            },
             "title": "Account Settings",
             "subtitle": "Manage your profile, password, and preferences",
             "save": "Save",
