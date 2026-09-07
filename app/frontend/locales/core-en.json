@@ -95,7 +95,8 @@
             "notFound": "Resource not found",
             "somethingWentWrong": "Something went wrong",
             "unexpectedError": "An unexpected error occurred",
-            "tryAgain": "Try again"
+            "tryAgain": "Try again",
+            "tooManyRequests": "Too many attempts, please try again in a few minutes"
         },
         "validation": {
             "required": "This field is required"
@@ -178,7 +179,8 @@
                 "new": "New password",
                 "confirm": "Confirm new password",
                 "change": "Change password",
-                "changeSuccess": "Password changed successfully"
+                "changeSuccess": "Password changed successfully",
+                "wrongCurrent": "Current password is incorrect"
             },
             "privacy": {
                 "deleteSection": {
