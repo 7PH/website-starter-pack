@@ -138,6 +138,13 @@
             "copyright": "Tous droits réservés."
         },
         "account": {
+            "tabs": {
+                "account": "Profil",
+                "password": "Mot de passe",
+                "organizations": "Organisations",
+                "billing": "Facturation",
+                "privacy": "Confidentialité"
+            },
             "title": "Paramètres du compte",
             "subtitle": "Gérez votre profil, mot de passe et préférences",
             "save": "Enregistrer",
