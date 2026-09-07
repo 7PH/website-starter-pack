@@ -3,6 +3,7 @@
 """Shared lifecycle wiring for module-level APScheduler instances."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import partial
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -13,6 +14,18 @@ from ..helpers.db import SessionLocal
 from ..helpers.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class _ScheduledJob:
+    scheduler: AsyncIOScheduler
+    func: Callable
+    cron: CronTrigger
+    job_id: str
+    log_name: str
+
+
+_REGISTERED: list[_ScheduledJob] = []
 
 
 def _run_once_per_cluster(lock_id: int, log_name: str, fn: Callable) -> None:
@@ -83,13 +96,22 @@ def register_cron_task(
     else:
         effective_job_func = job_func
 
-    @app.on_event("startup")
-    async def _start():
-        scheduler.add_job(effective_job_func, cron, id=job_id, replace_existing=True)
-        scheduler.start()
-        logger.info(f"{log_name} scheduler started")
+    # FastAPI ignores on_event handlers when the app sets `lifespan=`, so jobs are
+    # collected here and the lifespan starts them.
+    _REGISTERED.append(_ScheduledJob(scheduler, effective_job_func, cron, job_id, log_name))
 
-    @app.on_event("shutdown")
-    async def _stop():
-        scheduler.shutdown()
-        logger.info(f"{log_name} scheduler stopped")
+
+def start_scheduled_tasks() -> None:
+    """Start every scheduler registered so far. Called from main.py's lifespan."""
+    for job in _REGISTERED:
+        job.scheduler.add_job(job.func, job.cron, id=job.job_id, replace_existing=True)
+        if not job.scheduler.running:
+            job.scheduler.start()
+        logger.info(f"{job.log_name} scheduler started")
+
+
+def stop_scheduled_tasks() -> None:
+    for job in _REGISTERED:
+        if job.scheduler.running:
+            job.scheduler.shutdown()
+            logger.info(f"{job.log_name} scheduler stopped")

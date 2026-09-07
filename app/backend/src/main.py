@@ -18,6 +18,7 @@ from .helpers.stripe import init_stripe
 from .main_ext import extend_app
 from .router import router as api_router
 from .tasks import register_core_tasks
+from .tasks._scheduler import start_scheduled_tasks, stop_scheduled_tasks
 
 # Configure structured logging before app startup
 configure_logging()
@@ -30,7 +31,9 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     init_stripe()
     init_llm()
+    start_scheduled_tasks()
     yield
+    stop_scheduled_tasks()
     logger.info("Stopping app")
 
 
