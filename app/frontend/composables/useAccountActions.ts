@@ -14,6 +14,9 @@ export function useAccountActions() {
     const { t } = useI18n();
     const { showSuccess, showError } = useToastHelpers();
 
+    // Rate limiting is generic across endpoints, so its message doesn't need a per-call key.
+    const DEFAULT_STATUS_KEYS: Record<number, string> = { 429: 'core.errors.tooManyRequests' };
+
     /** Run an API call, toast success/error, return true on success. */
     async function withToast<T>(
         op: () => Promise<T>,
@@ -29,7 +32,7 @@ export function useAccountActions() {
             onSuccess?.(result);
             return true;
         } catch (error) {
-            const mapped = statusKeys?.[getErrorStatus(error) ?? 0];
+            const mapped = { ...DEFAULT_STATUS_KEYS, ...statusKeys }[getErrorStatus(error) ?? 0];
             if (mapped) {
                 showError(new Error(t(mapped)), mapped);
             } else {
@@ -201,6 +204,9 @@ export function useAccountActions() {
         return withToast(
             () => usersApi.changePassword({ old_password: oldPassword, new_password: newPassword }),
             'core.account.password.changeSuccess',
+            'core.errors.generic',
+            undefined,
+            { 401: 'core.account.password.wrongCurrent' },
         );
     }
 

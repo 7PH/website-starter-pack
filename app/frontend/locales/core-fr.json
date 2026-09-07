@@ -95,7 +95,8 @@
             "notFound": "Ressource non trouvée",
             "somethingWentWrong": "Une erreur est survenue",
             "unexpectedError": "Une erreur inattendue s'est produite",
-            "tryAgain": "Réessayer"
+            "tryAgain": "Réessayer",
+            "tooManyRequests": "Trop de tentatives, réessayez dans quelques minutes"
         },
         "validation": {
             "required": "Ce champ est requis"
@@ -171,7 +172,8 @@
                 "new": "Nouveau mot de passe",
                 "confirm": "Confirmer le nouveau mot de passe",
                 "change": "Changer le mot de passe",
-                "changeSuccess": "Mot de passe changé avec succès"
+                "changeSuccess": "Mot de passe changé avec succès",
+                "wrongCurrent": "Mot de passe actuel incorrect"
             },
             "privacy": {
                 "deleteSection": {
