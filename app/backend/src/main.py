@@ -104,10 +104,15 @@ async def custom_form_validation_error(request: Request, exc: RequestValidationE
         field_string = ".".join(filtered_loc)  # Format nested fields using dot-notation
         reformatted_message.append(f"{field_string}: {msg}")
 
+    joined = ", ".join(reformatted_message)
     return JSONResponse(
         content={
             "error": "Validation error",
-            "message": ", ".join(reformatted_message),  # User-friendly reformatted message
+            "message": joined,  # User-friendly reformatted message
+            # Same text under `detail` too: the HTTPException handler below uses `detail`, and
+            # useApi's apiFetch only reads that key — without this the message built above is
+            # thrown away and the user gets a generic "something went wrong".
+            "detail": joined,
         },
         status_code=400,
     )
