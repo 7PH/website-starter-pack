@@ -50,6 +50,15 @@ const activeTab = computed(() => {
 function onTabChange(key: string | number) {
     activeTabId.value = String(key);
 }
+
+// An unknown ?tab= renders the first tab anyway; drop it so the URL matches what is on screen.
+onMounted(() => {
+    const tabParam = route.query.tab as string | undefined;
+    if (tabParam && !tabs.value.some((t) => t.id === tabParam)) {
+        const { tab: _unknownTab, ...rest } = route.query;
+        router.replace({ query: rest });
+    }
+});
 </script>
 
 <template>
