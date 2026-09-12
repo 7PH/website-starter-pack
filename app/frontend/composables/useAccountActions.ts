@@ -150,12 +150,12 @@ export function useAccountActions() {
     }
 
     /**
-     * Logout and clear session.
+     * Logout and clear session. `redirectTo` keeps the user where they are on a public page.
      */
-    function logout(): void {
+    function logout(redirectTo: string = '/'): void {
         auth.logout();
         showSuccess(t('core.auth.logoutSuccess'));
-        navigateTo('/');
+        navigateTo(redirectTo);
     }
 
     // ============================================

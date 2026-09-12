@@ -16,6 +16,7 @@ interface AuthModalOptions extends ModalOptions {
 const MODAL_NAME = 'auth';
 
 const auth = useAuth();
+const route = useRoute();
 const { t } = useI18n();
 const accountActions = useAccountActions();
 const { isOpen, options, close } = useStoreModal<AuthModalOptions>(MODAL_NAME);
@@ -76,7 +77,7 @@ const title = computed(() => {
 });
 
 function handleLogout() {
-    accountActions.logout();
+    accountActions.logout(route.meta.auth ? '/' : route.fullPath);
     close(false);
 }
 
