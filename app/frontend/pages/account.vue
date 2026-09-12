@@ -72,7 +72,14 @@ onMounted(() => {
 
         <ClientOnly>
             <!-- Tab Navigation -->
-            <UTabs :items="tabItems" :model-value="activeTabId" class="mb-6" @update:model-value="onTabChange" />
+            <!-- Triggers size to their label and the strip scrolls: an even split clips each one to an initial on a phone. -->
+            <UTabs
+                :items="tabItems"
+                :model-value="activeTabId"
+                class="mb-6"
+                :ui="{ list: 'overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                @update:model-value="onTabChange"
+            />
 
             <!-- Tab Content -->
             <component :is="activeTab?.component" v-if="activeTab" />
