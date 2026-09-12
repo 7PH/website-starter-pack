@@ -4,6 +4,7 @@
 import { useMainNavExtensions } from '~/config/main-nav-ext';
 
 const auth = useAuth();
+const route = useRoute();
 const navExtensions = useMainNavExtensions();
 const accountActions = useAccountActions();
 const { t } = useI18n();
@@ -83,7 +84,8 @@ const settingsMenuItems = computed(() => [
 ]);
 
 function onSelectLogout() {
-    accountActions.logout();
+    // Logging out on a public page should not also navigate the user off it.
+    accountActions.logout(route.meta.auth ? '/' : route.fullPath);
 }
 </script>
 
