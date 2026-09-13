@@ -136,9 +136,13 @@ export const useAuth = defineStore('auth', {
                     },
                 });
                 this.saveUserToken(freshToken);
-            } catch {
-                // Token invalid or expired - logout
-                this.logout();
+            } catch (error) {
+                // Only a 401 means the token is dead. Network errors and 5xx must not log out:
+                // logout() wipes localStorage, so one blip would force a real re-login.
+                const status = (error as { response?: { status?: number } })?.response?.status;
+                if (status === 401) {
+                    this.logout();
+                }
             }
         },
     },
