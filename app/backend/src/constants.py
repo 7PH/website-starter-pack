@@ -14,7 +14,8 @@ PUBLIC_URL = os.environ.get("PUBLIC_URL", "")
 # JWT details
 JWT_SECRET_KEY = os.environ.get("TOKEN_HASH_SECRET")
 JWT_ALGORITHM = "HS256"
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 2
+# Sliding: every page load extends it. No refresh token, so this is the whole session length.
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30
 
 # Shared secret for the /v1/internal/* routes (token minting, user seeding).
 INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
