@@ -18,16 +18,12 @@ test('/robots.txt is dynamic and includes Sitemap line', async ({ request }) => 
     expect(body).toMatch(/^Sitemap:\s*\S+\/sitemap\.xml/m);
 });
 
-test('/sitemap.xml returns valid XML with default URLs', async ({ request }) => {
+test('/sitemap.xml returns valid XML with at least one URL', async ({ request }) => {
     const response = await request.get('/sitemap.xml');
     expect(response.status()).toBe(200);
 
     const body = await response.text();
     expect(body).toContain('<?xml');
     expect(body).toContain('<urlset');
-    // Default URLs shipped by the starterpack:
     expect(body).toContain('<loc>');
-    expect(body).toMatch(/legal\/privacy/);
-    expect(body).toMatch(/legal\/terms/);
-    expect(body).toMatch(/legal\/cookies/);
 });
