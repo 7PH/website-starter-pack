@@ -234,3 +234,18 @@ def send_email_change_email(to_email: str, username: str, confirmation_link: str
             f"If you didn't request this change, you can ignore this email.\n"
         ),
     )
+
+
+def send_conversation_reply_email(to_email: str, username: str, conversation_id: int) -> bool:
+    conversation_link = f"{PUBLIC_URL}/messages/{conversation_id}"
+    return _send_templated_email(
+        to_email=to_email,
+        subject="New reply to your message",
+        template_basename="conversation_reply",
+        context={"username": username, "conversation_link": conversation_link},
+        text_fallback=(
+            f"Hello {username},\n\n"
+            f"The team replied to your message. Read it here:\n"
+            f"{conversation_link}\n"
+        ),
+    )

@@ -1,0 +1,5 @@
+Hello {{ username }}!
+
+The team replied to your message. Read the reply here:
+
+{{ conversation_link }}

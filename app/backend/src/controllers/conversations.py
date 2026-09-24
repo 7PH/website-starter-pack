@@ -33,6 +33,7 @@ from ..helpers.account import assert_min_account_age
 from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_current_user
 from ..helpers.bug_report import strip_url_query_in_body
 from ..helpers.db import get_session
+from ..helpers.email import send_conversation_reply_email, swallow_email_errors
 from ..helpers.ratelimit import ensure_rate_limit
 from ..models.conversation import ConversationBase, MessageBase
 from ..schemas.conversation import (
@@ -509,6 +510,13 @@ def admin_send_message(
         request=request,
     )
 
-    # TODO: Send email notification to user about admin reply
+    recipient = conversation.created_by
+    if recipient and recipient.email and recipient.deleted_at is None:
+        with swallow_email_errors():
+            send_conversation_reply_email(
+                to_email=recipient.email,
+                username=recipient.first_name or "",
+                conversation_id=conversation_id,
+            )
 
     return _message_to_read(message)
