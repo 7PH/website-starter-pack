@@ -90,7 +90,7 @@ app/backend/src/crud/organization_invitations.py
 app/backend/src/crud/organizations.py
 app/backend/src/crud/users.py
 app/backend/src/tasks/*
-app/backend/src/templates/*
+app/backend/src/templates
 app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
