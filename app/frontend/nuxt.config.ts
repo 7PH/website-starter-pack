@@ -76,9 +76,6 @@ export default defineNuxtConfig({
     },
 
     app: {
-        head: {
-            title: process.env.NUXT_PUBLIC_APP_NAME || 'My App',
-        },
         pageTransition: { name: 'page', mode: 'out-in' },
     },
 
