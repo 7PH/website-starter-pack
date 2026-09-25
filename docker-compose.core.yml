@@ -105,6 +105,7 @@ services:
     # Traefik reverse proxy (prod)
     traefik-prod:
         <<: *traefik-common
+        restart: unless-stopped
         # No dashboard. INFO rather than Traefik's ERROR default, so prod and
         # preview log dumps stay readable.
         command:
@@ -129,6 +130,7 @@ services:
     
     # Static file server
     static:
+        restart: unless-stopped
         container_name: ${COMPOSE_PROJECT_NAME}-static
         image: nginx:1.26-alpine3.20-perl
         volumes:
@@ -144,6 +146,7 @@ services:
 
     # PostgreSQL database
     db:
+        restart: unless-stopped
         container_name: ${COMPOSE_PROJECT_NAME}-db
         image: postgres:15.10-alpine3.20
         environment:
@@ -164,6 +167,7 @@ services:
     # Redis — rate-limit store (mandatory). Ephemeral: no persistence, since
     # rate-limit counters are short-lived and expire via key TTLs.
     redis:
+        restart: unless-stopped
         container_name: ${COMPOSE_PROJECT_NAME}-redis
         image: redis:7.4-alpine
         command: ["redis-server", "--save", "", "--appendonly", "no"]
@@ -212,6 +216,7 @@ services:
     # remains PID 1 (no `sh -c` wrapper) and receives SIGTERM cleanly.
     backend-prod:
         <<: *backend-common
+        restart: unless-stopped
         command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--root-path", "/api", "--workers", "${BACKEND_WORKERS:-1}", "--no-server-header"]
         environment:
             MODE: PRODUCTION
@@ -245,6 +250,7 @@ services:
     # Frontend for production (Nuxt)
     frontend-prod-node:
         <<: *frontend-common
+        restart: unless-stopped
         container_name: ${COMPOSE_PROJECT_NAME}-frontend-node
         build:
             context: ./app/frontend
@@ -261,6 +267,7 @@ services:
             - backend-prod
 
     frontend-prod-nginx:
+        restart: unless-stopped
         container_name: ${COMPOSE_PROJECT_NAME}-frontend
         build:
             context: ./app/frontend
