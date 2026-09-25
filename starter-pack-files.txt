@@ -277,6 +277,7 @@ app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
 app/frontend/pages/admin/users/[id].vue
 app/frontend/plugins/backend-config.ts
+app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts
 app/frontend/server/routes/robots.txt.ts
 app/frontend/server/plugins/strip-headers.ts
