@@ -11,7 +11,8 @@ WORKDIR /app
 COPY . .
 
 RUN npm install
-RUN npm run build
+# Nitro's server bundling outgrows Node's ~2 GB default heap on larger sub-apps; scoped to the build only.
+RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
 FROM node:20-alpine3.20 AS running-stage
 
