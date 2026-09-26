@@ -24,11 +24,29 @@ const selectedId = ref<number | null>(null);
 const code = ref('');
 const isSigningIn = ref(false);
 
+// A personal link (e.g. a printed QR code) carries `#a=<managed account id>&code=<code>`.
+// It lives in the fragment so the code never reaches the server or its logs.
+function personalLink(): { id: number; code: string } | null {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const id = Number(params.get('a'));
+    const personalCode = params.get('code');
+    return id && personalCode ? { id, code: personalCode } : null;
+}
+
 async function load() {
     isLoading.value = true;
     notFound.value = false;
     try {
         payload.value = await api.get<PublicPickerPayload>(`/c/${token.value}`);
+        const link = personalLink();
+        if (link && payload.value.members.some((m) => m.managed_account_id === link.id)) {
+            // Drop the code from the address bar and history before signing in.
+            history.replaceState(history.state, '', window.location.pathname + window.location.search);
+            selectedId.value = link.id;
+            code.value = link.code;
+            signIn();
+            return;
+        }
         // Pre-select the last name this browser used, if any.
         const remembered = pickerLink.read();
         if (remembered?.token === token.value && remembered.lastAccountId) {
