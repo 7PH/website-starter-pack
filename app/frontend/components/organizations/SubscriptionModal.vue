@@ -1,8 +1,6 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-import { formatInterval, formatPrice } from '~/utils/formatters';
-
 defineProps<{
     open: boolean;
     plans: OrganizationPlan[];
@@ -16,6 +14,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { formatPrice, formatInterval } = usePriceFormat();
 </script>
 
 <template>

@@ -1,13 +1,14 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-import { formatDate, formatInterval, formatPrice } from '~/utils/formatters';
+import { formatDate } from '~/utils/formatters';
 
 const props = defineProps<{
     orgId: number;
 }>();
 
 const { t } = useI18n();
+const { formatPrice, formatInterval } = usePriceFormat();
 const api = useApi();
 const modal = useModalStore();
 const { showSuccess, showError } = useToastHelpers();

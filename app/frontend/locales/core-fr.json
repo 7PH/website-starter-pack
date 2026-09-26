@@ -126,7 +126,13 @@
             "subscriptionCancelingDescription": "Votre abonnement se termine le {date}. Vous conserverez l'accès premium jusqu'à cette date.",
             "subscribeToPlan": "Souscrire à un plan",
             "selectPlan": "Choisir",
-            "noPlanAvailable": "Aucun plan disponible"
+            "noPlanAvailable": "Aucun plan disponible",
+            "interval": {
+                "day": "/ jour",
+                "week": "/ semaine",
+                "month": "/ mois",
+                "year": "/ an"
+            }
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",

@@ -136,6 +136,7 @@ app/frontend/stores/useBackendConfig.ts
 app/frontend/stores/useModal.ts
 
 app/frontend/composables/useApi.ts
+app/frontend/composables/usePriceFormat.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useNativeBridge.ts
 app/frontend/composables/useStripe.ts

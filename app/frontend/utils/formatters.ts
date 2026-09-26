@@ -64,8 +64,8 @@ export function formatInterval(interval: string): string {
  * Format a price amount with currency.
  * Amount is expected to be in cents (smallest currency unit).
  */
-export function formatPrice(amount: number, currency: string): string {
-    return new Intl.NumberFormat('en-US', {
+export function formatPrice(amount: number, currency: string, locale: string = 'en-US'): string {
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: currency.toUpperCase(),
     }).format(amount / 100);

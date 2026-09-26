@@ -126,7 +126,13 @@
             "subscriptionCancelingDescription": "Your subscription will end on {date}. You'll keep premium access until then.",
             "subscribeToPlan": "Subscribe to a Plan",
             "selectPlan": "Select",
-            "noPlanAvailable": "No subscription plans available"
+            "noPlanAvailable": "No subscription plans available",
+            "interval": {
+                "day": "/day",
+                "week": "/wk",
+                "month": "/mo",
+                "year": "/yr"
+            }
         },
         "legal": {
             "lastUpdated": "Last updated",
