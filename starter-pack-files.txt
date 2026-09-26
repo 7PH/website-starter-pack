@@ -180,6 +180,7 @@ app/frontend/utils/admin-filters.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
+app/frontend/utils/name-import.ts
 app/frontend/utils/markdown.ts
 app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
@@ -294,6 +295,7 @@ app/frontend/tests/markdown.test.ts
 app/frontend/tests/schema.test.ts
 app/frontend/tests/useCanonical.test.ts
 app/frontend/tests/useBreadcrumb.test.ts
+app/frontend/tests/name-import.test.ts
 
 # Traefik
 services/traefik/*.core.yml

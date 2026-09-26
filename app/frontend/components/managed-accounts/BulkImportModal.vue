@@ -6,7 +6,8 @@
  *
  * The owner pastes one name per line; the modal auto-detects the delimiter
  * (comma, semicolon, tab, space) and shows a live preview. A "Last name first"
- * toggle swaps order before composing the display name as `"First LASTNAME"`.
+ * toggle swaps order before composing the display name as `"First LASTNAME"`; it
+ * turns on by itself when the list reads like "MARTIN Alice".
  *
  * Submission posts to `/me/managed-account-groups/:id/managed-accounts/bulk`,
  * which silently dedupes against existing names in the group.
@@ -40,6 +41,7 @@ const csvText = ref('');
 const lastNameFirst = ref(false);
 const submitting = ref(false);
 const userOverrodeDelimiter = ref(false);
+const userOverrodeOrder = ref(false);
 const selectedDelimiter = ref<Delimiter>(',');
 
 const delimiterOptions = computed<{ label: string; value: Delimiter }[]>(() => [
@@ -66,6 +68,9 @@ watch(csvText, (text) => {
     if (!userOverrodeDelimiter.value && text.trim()) {
         selectedDelimiter.value = detectDelimiter(text);
     }
+    if (!userOverrodeOrder.value && text.trim()) {
+        lastNameFirst.value = detectLastNameFirst(text.split('\n'), selectedDelimiter.value);
+    }
 });
 
 // Reset state every time the modal re-opens.
@@ -74,6 +79,7 @@ watch(isOpen, (open) => {
         csvText.value = '';
         lastNameFirst.value = false;
         userOverrodeDelimiter.value = false;
+        userOverrodeOrder.value = false;
         selectedDelimiter.value = ',';
     }
 });
@@ -97,9 +103,7 @@ const preview = computed<PreviewRow[]>(() => {
         .map((line) => line.trim())
         .filter(Boolean)
         .map((line) => {
-            const parts = delim === ' ' ? line.split(/\s+/, 2) : line.split(delim, 2);
-            let first = (parts[0] ?? '').trim();
-            let last = (parts[1] ?? '').trim();
+            let [first, last] = splitNameLine(line, delim);
             if (lastNameFirst.value) [first, last] = [last, first];
             // Normalize: title-case first, uppercase last (matches the domatex convention).
             const niceFirst = first.charAt(0).toUpperCase() + first.slice(1);
@@ -170,7 +174,11 @@ async function submit() {
                                 @update:model-value="onDelimiterChange"
                             />
                         </UFormField>
-                        <UCheckbox v-model="lastNameFirst" :label="t('core.managed_accounts.import.lastNameFirst')" />
+                        <UCheckbox
+                            v-model="lastNameFirst"
+                            :label="t('core.managed_accounts.import.lastNameFirst')"
+                            @update:model-value="userOverrodeOrder = true"
+                        />
                     </div>
 
                     <div v-if="preview.length > 0" class="preview-table">
