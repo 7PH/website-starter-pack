@@ -27,4 +27,10 @@ describe('splitNameLine', () => {
         expect(splitNameLine('  MARTIN   Alice ', ' ')).toEqual(['MARTIN', 'Alice']);
         expect(splitNameLine('Martin, Alice', ',')).toEqual(['Martin', 'Alice']);
     });
+
+    it('keeps compound names whole around the ALL-CAPS surname', () => {
+        expect(splitNameLine('DE LA TOUR Hugo', ' ')).toEqual(['DE LA TOUR', 'Hugo']);
+        expect(splitNameLine('Jean Pierre MARTIN', ' ')).toEqual(['Jean Pierre', 'MARTIN']);
+        expect(splitNameLine('Marie Anne Dupont', ' ')).toEqual(['Marie', 'Anne Dupont']);
+    });
 });
