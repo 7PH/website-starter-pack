@@ -12,6 +12,9 @@ const { t } = useI18n();
 type AuthMode = 'login' | 'signup' | 'forgot-password';
 const initialMode = (route.query.mode as AuthMode) || 'login';
 const mode = ref<AuthMode>(initialMode);
+// Mirror the mode in the URL so a reload, the back button and the layout all see the same form.
+const router = useRouter();
+watch(mode, (m) => router.replace({ query: { ...route.query, mode: m } }));
 
 onMounted(() => {
     if (auth.isLoggedIn) redirectAfterAuth();
