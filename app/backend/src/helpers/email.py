@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import requests
-from jinja2 import Environment, FileSystemLoader, Template, TemplateNotFound
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader, Template, TemplateNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +39,15 @@ MAILGUN_API_BASEURL = f"https://api.eu.mailgun.net/v3/{MAILGUN_DOMAIN}"
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "")
 APP_NAME = os.environ.get("APP_NAME", "App")
 
-# Initialize Jinja2 template environment
-_template_dir = Path(__file__).parent.parent / "templates" / "email"
+# Initialize Jinja2 template environment. `templates/email/` is synced from the starterpack, so apps
+# translate or rebrand a template by putting a file of the same name in the app-owned `templates_app/email/`.
+_src_dir = Path(__file__).parent.parent
+_template_dirs = [d for d in (_src_dir / "templates_app" / "email", _src_dir / "templates" / "email") if d.exists()]
 _template_env: Environment | None = None
 
-if _template_dir.exists():
+if _template_dirs:
     _template_env = Environment(
-        loader=FileSystemLoader(str(_template_dir)),
+        loader=ChoiceLoader([FileSystemLoader(str(d)) for d in _template_dirs]),
         autoescape=True,
     )
 
@@ -129,11 +131,13 @@ def _send_templated_email(
     text_fallback: str | None,
     raise_on_error: bool = True,
 ) -> bool:
-    """Render the templated HTML+text bodies and send. Falls back to ``text_fallback`` text-only.
+    """Render the templated subject and HTML+text bodies and send. Falls back to ``text_fallback`` text-only.
 
     If ``text_fallback`` is None and the template is missing, raises — for emails
     where shipping a plain-text default would be wrong (e.g. account deletion).
     """
+    # An optional `<name>.subject` template (usually app-owned) overrides the built-in English subject.
+    subject = (_render_template(f"{template_basename}.subject", **context) or "").strip() or subject
     html_body = _render_template(f"{template_basename}.html", **context)
     text_body = _render_template(f"{template_basename}.txt", **context)
     if text_body is None:
