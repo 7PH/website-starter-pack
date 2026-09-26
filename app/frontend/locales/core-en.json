@@ -132,7 +132,11 @@
                 "week": "/wk",
                 "month": "/mo",
                 "year": "/yr"
-            }
+            },
+            "subscriptionSuccess": "Welcome to Premium",
+            "subscriptionSuccessDescription": "Your subscription is active.",
+            "subscriptionCanceled": "Checkout canceled",
+            "subscriptionCanceledDescription": "You have not been charged."
         },
         "legal": {
             "lastUpdated": "Last updated",

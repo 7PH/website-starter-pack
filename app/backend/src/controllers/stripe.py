@@ -148,8 +148,9 @@ def create_user_checkout(
     public_url = PUBLIC_URL or validate_redirect_url(origin) or ""
     if not public_url:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid origin for redirect")
-    success_url = f"{public_url}/account?subscription=success"
-    cancel_url = f"{public_url}/account?subscription=canceled"
+    # Land on the billing tab: it reports the outcome and re-syncs premium from Stripe.
+    success_url = f"{public_url}/account?tab=billing&subscription=success"
+    cancel_url = f"{public_url}/account?tab=billing&subscription=canceled"
 
     url = stripe_helper.create_checkout_session(
         stripe_customer_id=db_user.stripe_id,

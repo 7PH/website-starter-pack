@@ -3,6 +3,9 @@
 import { PREMIUM_SOURCE, useOrganizationStatus } from '~/composables/organizations/useOrganizationStatus';
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const { showSuccess, showWarning } = useToastHelpers();
 const stripe = useStripe();
 const config = useRuntimeConfig();
 const { isPremium, loading, refresh, cancelAtPeriodEnd, expiresAt } = stripe;
@@ -20,7 +23,21 @@ const formattedExpiresAt = computed(() => {
     return `${year}/${month}/${day}`;
 });
 
-onMounted(() => refresh());
+// Stripe Checkout returns here with ?subscription=success|canceled. refresh() re-syncs premium from Stripe
+// (and the token), so the nav updates without waiting for the webhook or a reload.
+onMounted(() => {
+    const outcome = route.query.subscription;
+    if (outcome === 'success') {
+        showSuccess(t('core.billing.subscriptionSuccess'), t('core.billing.subscriptionSuccessDescription'));
+    } else if (outcome === 'canceled') {
+        showWarning(t('core.billing.subscriptionCanceled'), t('core.billing.subscriptionCanceledDescription'));
+    }
+    if (outcome) {
+        const { subscription: _outcome, ...rest } = route.query;
+        router.replace({ query: rest });
+    }
+    refresh();
+});
 
 const {
     showSubscribeModal,

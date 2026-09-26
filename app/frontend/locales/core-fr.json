@@ -132,7 +132,11 @@
                 "week": "/ semaine",
                 "month": "/ mois",
                 "year": "/ an"
-            }
+            },
+            "subscriptionSuccess": "Bienvenue dans Premium",
+            "subscriptionSuccessDescription": "Votre abonnement est actif.",
+            "subscriptionCanceled": "Paiement annulé",
+            "subscriptionCanceledDescription": "Aucun montant n'a été débité."
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",
