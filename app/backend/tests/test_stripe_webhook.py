@@ -200,3 +200,16 @@ class TestSubscriptionChangedEvent:
         assert len(captured) == 1
         assert captured[0].user is None
         assert captured[0].organization is None
+
+
+def test_checkout_drops_the_cached_subscription_status():
+    """Returning from Checkout must not read the pre-checkout "not premium" from the 30s cache."""
+    from src.helpers import stripe as stripe_helper
+
+    stripe_helper._subscription_status_cache["cus_USER"] = (0.0, {"is_premium": False})
+    with (
+        patch.object(stripe_helper, "STRIPE_ENABLED", True),
+        patch.object(stripe_helper.stripe.checkout.Session, "create", return_value=MagicMock(url="https://pay")),
+    ):
+        stripe_helper.create_checkout_session("cus_USER", "price_1", "https://ok", "https://ko")
+    assert "cus_USER" not in stripe_helper._subscription_status_cache

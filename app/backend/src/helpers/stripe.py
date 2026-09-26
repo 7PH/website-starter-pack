@@ -352,6 +352,8 @@ def create_checkout_session(
             success_url=success_url,
             cancel_url=cancel_url,
         )
+        # The customer's status is about to change: don't serve a cached "not premium" when they return.
+        invalidate_subscription_cache(stripe_customer_id)
         return session.url
 
     except stripe.error.StripeError as e:
