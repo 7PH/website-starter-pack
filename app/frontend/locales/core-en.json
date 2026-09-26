@@ -143,7 +143,8 @@
             "backToHome": "Back to home",
             "terms": "Terms of Service",
             "privacy": "Privacy Policy",
-            "cookies": "Cookie Policy"
+            "cookies": "Cookie Policy",
+            "title": "Legal"
         },
         "footer": {
             "copyright": "All rights reserved."

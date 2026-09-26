@@ -105,9 +105,16 @@ function onSelectLogout() {
                     <UIcon name="i-lucide-home" />
                 </NuxtLink>
                 <ClientOnly>
-                    <NuxtLink v-for="item in navExtensions" :key="item.to" :to="item.to" class="nav-link">
+                    <!-- Icon only on phones, so the nav stays on one line. -->
+                    <NuxtLink
+                        v-for="item in navExtensions"
+                        :key="item.to"
+                        :to="item.to"
+                        :aria-label="item.label"
+                        class="nav-link"
+                    >
                         <UIcon :name="item.icon" />
-                        <span>{{ item.label }}</span>
+                        <span class="max-sm:hidden whitespace-nowrap">{{ item.label }}</span>
                     </NuxtLink>
                 </ClientOnly>
             </nav>
