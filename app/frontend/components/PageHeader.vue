@@ -142,18 +142,23 @@ function onSelectLogout() {
                             :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                         >
                             <UIcon name="i-lucide-star" />
-                            <span>{{ isPremium ? t('core.billing.premium') : t('core.billing.upgrade') }}</span>
+                            <!-- Icons only on phones, so the header never overflows. -->
+                            <span class="max-sm:hidden">{{
+                                isPremium ? t('core.billing.premium') : t('core.billing.upgrade')
+                            }}</span>
                         </NuxtLink>
 
                         <!-- User dropdown -->
                         <UDropdownMenu :items="userMenuItems">
                             <UButton
                                 :label="displayLabel"
+                                :aria-label="displayLabel"
                                 icon="i-lucide-user"
                                 color="neutral"
                                 variant="ghost"
                                 size="sm"
                                 trailing-icon="i-lucide-chevron-down"
+                                :ui="{ label: 'max-sm:hidden' }"
                             />
                         </UDropdownMenu>
 
