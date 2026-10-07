@@ -73,6 +73,14 @@ watchEffect(() => {
 
 const selected = computed(() => payload.value?.members.find((m) => m.managed_account_id === selectedId.value) ?? null);
 
+// Inline under the field: a corner toast fades before a pupil reads it, and the backend detail is English.
+const codeError = ref('');
+const CODE_ERROR_KEYS: Record<number, string> = {
+    401: 'core.managed_accounts.signInFailed',
+    429: 'core.errors.tooManyRequests',
+};
+watch(code, () => (codeError.value = ''));
+
 async function signIn() {
     if (!selectedId.value || !code.value.trim()) return;
     isSigningIn.value = true;
@@ -83,7 +91,9 @@ async function signIn() {
         });
         await router.push('/');
     } catch (error) {
-        showError(error, 'core.managed_accounts.signInFailed');
+        const key = CODE_ERROR_KEYS[getErrorStatus(error) ?? 0];
+        if (key) codeError.value = t(key);
+        else showError(error, 'core.managed_accounts.signInFailed');
     } finally {
         isSigningIn.value = false;
     }
@@ -153,7 +163,7 @@ function back() {
                         {{ t('core.managed_accounts.notMe') }}
                     </UButton>
                 </div>
-                <UFormField :label="t('core.managed_accounts.code')" class="w-full">
+                <UFormField :label="t('core.managed_accounts.code')" :error="codeError || undefined" class="w-full">
                     <UInput
                         v-model="code"
                         autofocus
