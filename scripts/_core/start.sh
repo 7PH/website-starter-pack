@@ -18,5 +18,7 @@ fi
 HEALTHCHECK_URL="${PUBLIC_URL:-http://localhost}/api/v1/healthcheck"
 
 docker compose --profile prod up -d --build
+# The backend code is bind-mounted, not baked into its image, so `up --build` leaves a code-only change running the old code
+docker compose --profile prod restart backend-prod
 bash "$SCRIPT_DIR/wait-for-services.sh" --url "$HEALTHCHECK_URL" --timeout 60
 bash "$SCRIPT_DIR/print-dev-banner.sh" --mode prod
