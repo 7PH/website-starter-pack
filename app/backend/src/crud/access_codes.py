@@ -47,6 +47,12 @@ def issue_code(
     return code
 
 
+def normalize_code(code: str) -> str:
+    """Read a typed code the Crockford way: any case, O as 0, I and L as 1, spaces and dashes ignored."""
+    code = code.upper().translate(str.maketrans("OIL", "011"))
+    return "".join(c for c in code if c not in " -")
+
+
 def resolve_code(session: Session, user_id: int, code: str) -> UserBase | None:
     """Look up a code scoped to the given managed-account ``user_id``. Returns
     the user row when the code is active and not expired, else ``None``.
@@ -54,6 +60,7 @@ def resolve_code(session: Session, user_id: int, code: str) -> UserBase | None:
     Scoping by ``user_id`` is what allows two different managers to issue the
     same code string to their own students without collision.
     """
+    code = normalize_code(code)
     now = datetime.now(UTC)
     row = session.execute(
         select(AccessCodeBase, UserBase)

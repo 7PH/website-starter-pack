@@ -16,6 +16,7 @@ import pytest
 from fastapi import HTTPException
 
 from src.controllers.auth import sign_in_with_code
+from src.crud.access_codes import normalize_code
 from src.helpers.hooks import AccessCodeResolution, _reset_hooks_for_tests, on
 from src.models.user import UserBase
 from src.schemas.user import SignInWithCodeRequest
@@ -146,3 +147,11 @@ class TestSignInWithCode:
                 body=_body(account_id=99, code="OK"),
             )
         assert exc.value.status_code == 401
+
+
+@pytest.mark.parametrize(
+    ("typed", "expected"),
+    [("289zz", "289ZZ"), ("289ZZ", "289ZZ"), (" 28 9-zz ", "289ZZ"), ("z0o1l", "Z0011"), ("ZOIL1", "Z0111")],
+)
+def test_normalize_code_accepts_how_students_type(typed, expected):
+    assert normalize_code(typed) == expected

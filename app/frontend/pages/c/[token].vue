@@ -158,6 +158,8 @@ function back() {
                         v-model="code"
                         autofocus
                         autocomplete="off"
+                        autocapitalize="characters"
+                        spellcheck="false"
                         :placeholder="t('core.managed_accounts.codePlaceholder')"
                         size="lg"
                         class="w-full"
