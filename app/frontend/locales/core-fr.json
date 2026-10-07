@@ -197,7 +197,8 @@
                 "deleteSection": {
                     "title": "Supprimer le compte",
                     "description": "Supprime définitivement votre compte et anonymise vos données personnelles. Cette action est irréversible.",
-                    "button": "Supprimer mon compte"
+                    "button": "Supprimer mon compte",
+                    "subscriptionNotice": "Votre abonnement sera résilié immédiatement, sans remboursement de la période en cours."
                 },
                 "requestModal": {
                     "title": "Supprimer votre compte",

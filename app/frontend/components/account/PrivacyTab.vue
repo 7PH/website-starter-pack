@@ -3,6 +3,7 @@
 import { requestAccountDeletion } from '~/utils/api/users';
 
 const { t } = useI18n();
+const auth = useAuth();
 const { showSuccess, showErrorWithTitle } = useToastHelpers();
 
 const isModalOpen = ref(false);
@@ -38,6 +39,15 @@ async function sendDeletionEmail() {
                 </p>
             </div>
         </template>
+
+        <UAlert
+            v-if="auth.user?.has_personal_subscription"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-credit-card"
+            :description="t('core.account.privacy.deleteSection.subscriptionNotice')"
+            class="mb-4"
+        />
 
         <div class="flex justify-end">
             <UButton

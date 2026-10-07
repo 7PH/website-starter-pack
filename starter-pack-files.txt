@@ -110,6 +110,7 @@ app/backend/tests/test_user_display.py
 app/backend/tests/test_username.py
 app/backend/tests/test_conversation_reply_email.py
 app/backend/tests/test_custom_data_privesc.py
+app/backend/tests/test_soft_delete_user.py
 
 # Frontend - Docker & Tooling
 app/frontend/Dockerfile.dev

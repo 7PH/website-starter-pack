@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from ..helpers.stripe import delete_customer
 from ..models.organization import UserOrganizationBase
 from ..models.user import UserBase
 
@@ -98,6 +99,13 @@ def soft_delete_user(session: Session, user: UserBase) -> None:
     The 'deleted' branch of users_auth_integrity has no column requirements,
     so nulling everything is accepted by the CHECK constraint.
     """
+    # Otherwise the subscription keeps billing an account nobody can log into, and a new
+    # signup with the same email would take over the orphaned customer.
+    if user.stripe_id:
+        delete_customer(user.stripe_id)
+        user.stripe_id = None
+        user.has_personal_subscription = False
+        user.is_premium = False
     user.deleted_at = datetime.now(UTC)
     user.auth_method = "deleted"
     user.email = None

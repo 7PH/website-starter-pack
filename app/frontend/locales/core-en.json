@@ -197,7 +197,8 @@
                 "deleteSection": {
                     "title": "Delete account",
                     "description": "Permanently delete your account and anonymize your personal data. This cannot be undone.",
-                    "button": "Delete my account"
+                    "button": "Delete my account",
+                    "subscriptionNotice": "Your subscription will be cancelled immediately, with no refund for the current period."
                 },
                 "requestModal": {
                     "title": "Delete your account",

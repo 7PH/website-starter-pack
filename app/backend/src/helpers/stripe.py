@@ -264,6 +264,22 @@ def create_subscription(
         return None
 
 
+def delete_customer(stripe_customer_id: str) -> None:
+    """Delete a Stripe customer. Stripe cancels its subscriptions at once, with no refund."""
+    if not STRIPE_ENABLED or not stripe_customer_id:
+        return
+
+    try:
+        stripe.Customer.delete(stripe_customer_id)
+    except stripe.error.InvalidRequestError as e:
+        if e.code != "resource_missing":
+            logger.error(f"Stripe customer delete error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to sync with payment provider") from e
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe customer delete error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to sync with payment provider") from e
+
+
 def has_active_subscription(stripe_customer_id: str) -> bool:
     """
     Check if a customer has any active subscription.
