@@ -1,10 +1,11 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
 const { t } = useI18n();
+const { uiLocale } = useAppLocale();
 </script>
 
 <template>
-    <UApp>
+    <UApp :locale="uiLocale">
         <div class="min-h-screen flex">
             <!-- Left panel - Branding (hidden on mobile) -->
             <div class="auth-brand-panel">

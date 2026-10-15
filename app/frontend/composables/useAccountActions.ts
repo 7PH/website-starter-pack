@@ -92,9 +92,8 @@ export function useAccountActions() {
                 sendVerificationEmail().catch(() => {});
             },
             // A 409 here is either field, and the response can't say which, so the
-            // message names both. Without usernames it can only be the email, and
-            // the server's own wording is left alone.
-            username ? { 409: 'core.auth.signupConflict' } : undefined,
+            // message names both. Without usernames it can only be the email.
+            { 409: username ? 'core.auth.signupConflict' : 'core.auth.emailTaken' },
         );
     }
 

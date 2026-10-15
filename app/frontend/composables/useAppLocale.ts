@@ -1,5 +1,7 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+import { en, fr } from '@nuxt/ui/locale';
+
 export type AvailableLocale = 'fr' | 'en';
 
 /**
@@ -26,10 +28,14 @@ export function useAppLocale() {
 
     const currentLocale = computed(() => availableLocales.value.find((l) => l.code === locale.value));
 
+    // Nuxt UI's own labels (Close, Show password, Increment…) follow the app locale.
+    const uiLocale = computed(() => ({ fr, en })[locale.value as AvailableLocale] ?? en);
+
     return {
         locale, // Current locale code (ref)
         currentLocale, // Current locale object { code, name }
         availableLocales, // All locales [{ code, name }, ...]
         setLocale, // Function to switch locale
+        uiLocale, // Nuxt UI locale for <UApp :locale>
     };
 }

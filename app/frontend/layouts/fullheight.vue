@@ -12,11 +12,12 @@ const showFooter = computed(() => !route.meta.hideFooter);
 
 const PageHeader = useOverridable('PageHeader', PageHeaderDefault);
 const PageFooter = useOverridable('PageFooter', PageFooterDefault);
+const { uiLocale } = useAppLocale();
 </script>
 
 <template>
     <UiPageWrapper>
-        <UApp class="flex flex-col flex-1 min-h-0">
+        <UApp :locale="uiLocale" class="flex flex-col flex-1 min-h-0">
             <ImpersonationBanner />
             <component :is="PageHeader" />
             <main class="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden">
