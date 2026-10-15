@@ -15,6 +15,7 @@
             "usernameOrEmail": "Username or email",
             "usernameHelp": "2-32 characters. Letters, numbers, and _ - [ ]",
             "usernameInvalid": "Use 2-32 characters: letters, numbers, or _ - [ ]",
+            "emailTaken": "An account already exists with that email",
             "usernameTaken": "That username is already taken",
             "signupConflict": "That email or username is already taken",
             "invalidCredentialsUsername": "Invalid username or password",

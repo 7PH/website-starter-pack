@@ -101,7 +101,7 @@ function onSelectLogout() {
         <div class="header-content page-box">
             <!-- Left: Navigation -->
             <nav class="nav-links">
-                <NuxtLink to="/" class="nav-icon-link" aria-label="Home">
+                <NuxtLink to="/" class="nav-icon-link" :aria-label="t('core.common.home')">
                     <UIcon name="i-lucide-home" />
                 </NuxtLink>
                 <ClientOnly>
