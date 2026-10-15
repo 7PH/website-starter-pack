@@ -37,7 +37,7 @@ from ..helpers.email import (
     swallow_email_errors,
 )
 from ..helpers.hooks import AccessCodeResolution, fire, has_handlers
-from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
+from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip, is_rate_limited
 from ..schemas.user import (
     AccountDeletionConfirm,
     AccountDeletionInfo,
@@ -389,6 +389,14 @@ def sign_in_with_code(
         duration_minutes=60 * 24,
     )
 
+    # Bucket failure cooldowns per (IP, account_id) instead of IP alone so
+    # one user typo'ing on a school NAT doesn't lock out the rest, and so
+    # an attacker can't fan out across many accounts from a single IP.
+    fail_key = f"{client_ip}:{body.managed_account_id}"
+    # Checked before the code, or a locked-out guesser still gets in with the right one.
+    if is_rate_limited("auth-code-fail", AUTH_CODE_FAILURE_THRESHOLD, fail_key, AUTH_CODE_FAILURE_COOLDOWN_MINUTES):
+        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
     event = fire(
         session,
         AccessCodeResolution(
@@ -399,14 +407,10 @@ def sign_in_with_code(
     )
     user = event.user
     if user is None:
-        # Bucket failure cooldowns per (IP, account_id) instead of IP alone so
-        # one user typo'ing on a school NAT doesn't lock out the rest, and so
-        # an attacker can't fan out across many accounts from a single IP.
-        bucket_key = f"{client_ip}:{body.managed_account_id}"
         ensure_rate_limit(
             action="auth-code-fail",
             quota=AUTH_CODE_FAILURE_THRESHOLD,
-            key=bucket_key,
+            key=fail_key,
             duration_minutes=AUTH_CODE_FAILURE_COOLDOWN_MINUTES,
         )
         # Log a hash of the code, never the code itself.
