@@ -435,13 +435,10 @@ def _parse_subscription(sub) -> dict:
                     seats = 0
             break
 
-    # Check if subscription is scheduled to cancel
-    cancel_at_period_end = getattr(sub, "cancel_at_period_end", False) or False
-
-    # Get expiry date when subscription is canceling
-    expires_at = None
-    if cancel_at_period_end and sub.cancel_at:
-        expires_at = datetime.fromtimestamp(sub.cancel_at).isoformat()
+    # The customer portal sets cancel_at and leaves cancel_at_period_end false on recent API versions.
+    cancel_at = getattr(sub, "cancel_at", None)
+    cancel_at_period_end = bool(getattr(sub, "cancel_at_period_end", False) or cancel_at)
+    expires_at = datetime.fromtimestamp(cancel_at).isoformat() if cancel_at else None
 
     return {
         "is_premium": is_premium,

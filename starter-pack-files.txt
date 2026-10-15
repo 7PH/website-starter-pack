@@ -104,6 +104,7 @@ app/backend/tests/test_internal.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_stripe_webhook.py
+app/backend/tests/test_stripe_cancel.py
 app/backend/tests/test_file_upload.py
 app/backend/tests/test_sanitize.py
 app/backend/tests/test_user_display.py
