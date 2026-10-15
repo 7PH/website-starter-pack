@@ -30,6 +30,13 @@ def reset_hooks():
     _reset_hooks_for_tests()
 
 
+@pytest.fixture(autouse=True)
+def no_lockout():
+    """No Redis in unit tests: the failure lockout starts clear unless a test says otherwise."""
+    with patch("src.controllers.auth.is_rate_limited", return_value=False) as limited:
+        yield limited
+
+
 def _resolve_with(fn):
     """Register an AccessCodeResolution handler that delegates to ``fn``.
 
@@ -147,6 +154,18 @@ class TestSignInWithCode:
                 body=_body(account_id=99, code="OK"),
             )
         assert exc.value.status_code == 401
+
+    def test_locked_out_pair_rejects_the_right_code(self, reset_hooks, no_lockout):
+        """During the failure cooldown even the right code is refused, so guessing gains nothing."""
+        no_lockout.return_value = True
+        resolver = MagicMock(return_value=_stub_user())
+        _resolve_with(resolver)
+
+        with patch("src.controllers.auth.ensure_rate_limit"), pytest.raises(HTTPException) as exc:
+            sign_in_with_code(request=_stub_request(), session=MagicMock(), body=_body(code="OK"))
+
+        assert exc.value.status_code == 429
+        resolver.assert_not_called()
 
 
 @pytest.mark.parametrize(
