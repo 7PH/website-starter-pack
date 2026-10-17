@@ -46,15 +46,15 @@ class TestDisplayFor:
         assert display_for(user) == "Étoile"
 
     def test_display_name_outranks_username(self, usernames_on):
-        assert display_for(_user(display_name="Étoile", username="risibank")) == "Étoile"
+        assert display_for(_user(display_name="Étoile", username="johndoe")) == "Étoile"
 
     def test_username_outranks_the_real_name(self, usernames_on):
-        user = _user(username="risibank", first_name="Alice", last_name="Doe", email="a@b.c")
-        assert display_for(user) == "risibank"
+        user = _user(username="johndoe", first_name="Alice", last_name="Doe", email="a@b.c")
+        assert display_for(user) == "johndoe"
 
     def test_username_ignored_when_the_feature_is_off(self, usernames_off):
         """Apps with a pre-existing username column keep the labels they render today."""
-        user = _user(username="risibank", first_name="Alice", last_name="Doe")
+        user = _user(username="johndoe", first_name="Alice", last_name="Doe")
         assert display_for(user) == "Alice Doe"
 
     def test_full_name_when_no_display_name(self):
