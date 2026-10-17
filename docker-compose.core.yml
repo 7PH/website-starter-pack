@@ -255,8 +255,14 @@ services:
         build:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-node
-            args:
+            # Read by nuxt.config.ts at build time, so they must be build args, not just runtime env.
+            args: &frontend-build-args
                 SITEMAP_ENABLED: ${SITEMAP_ENABLED:-true}
+                PUBLIC_URL: ${PUBLIC_URL}
+                NUXT_PUBLIC_APP_NAME: ${APP_NAME}
+                NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+                NUXT_PUBLIC_UMAMI_ENABLED: ${NUXT_PUBLIC_UMAMI_ENABLED:-false}
+                UMAMI_SUBDOMAIN: ${UMAMI_SUBDOMAIN:-analytics}
         networks:
             web:
                 aliases:
@@ -273,8 +279,7 @@ services:
             context: ./app/frontend
             dockerfile: Dockerfile.prod-nginx
             # Must match frontend-prod-node, or the two builds' _nuxt hashes diverge.
-            args:
-                SITEMAP_ENABLED: ${SITEMAP_ENABLED:-true}
+            args: *frontend-build-args
         profiles:
             - prod
         depends_on:

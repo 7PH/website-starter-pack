@@ -1,10 +1,20 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 FROM node:20-alpine3.20 AS build-stage
 
-# Build-time feature flags read by nuxt.config.ts (process.env). Populated from
+# Build-time values read by nuxt.config.ts (process.env). Populated from
 # compose build.args; values originate in .env. Must be set BEFORE npm run build.
 ARG SITEMAP_ENABLED=true
-ENV SITEMAP_ENABLED=${SITEMAP_ENABLED}
+ARG PUBLIC_URL
+ARG NUXT_PUBLIC_APP_NAME
+ARG NUXT_PUBLIC_DEFAULT_LOCALE
+ARG NUXT_PUBLIC_UMAMI_ENABLED
+ARG UMAMI_SUBDOMAIN
+ENV SITEMAP_ENABLED=${SITEMAP_ENABLED} \
+    PUBLIC_URL=${PUBLIC_URL} \
+    NUXT_PUBLIC_APP_NAME=${NUXT_PUBLIC_APP_NAME} \
+    NUXT_PUBLIC_DEFAULT_LOCALE=${NUXT_PUBLIC_DEFAULT_LOCALE} \
+    NUXT_PUBLIC_UMAMI_ENABLED=${NUXT_PUBLIC_UMAMI_ENABLED} \
+    UMAMI_SUBDOMAIN=${UMAMI_SUBDOMAIN}
 
 WORKDIR /app
 
