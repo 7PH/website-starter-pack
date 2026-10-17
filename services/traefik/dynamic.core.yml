@@ -50,7 +50,17 @@ http:
       entryPoints: default
       service: umami
       middlewares:
-        - admin-auth-middleware
+        - basic-auth-middleware
+      {{ if eq (env "USE_TLS") "true" }}
+      tls:
+        certResolver: letsencrypt
+      {{ end }}
+
+    # No basic auth: visitors load the tracker, and the dashboard's own Bearer header would override it
+    umami-public:
+      rule: "Host(`{{env "UMAMI_SUBDOMAIN"}}.{{env "PUBLIC_WEBSITE_HOST"}}`) && (PathPrefix(`/api/`) || Path(`/script.js`))"
+      entryPoints: default
+      service: umami
       {{ if eq (env "USE_TLS") "true" }}
       tls:
         certResolver: letsencrypt
