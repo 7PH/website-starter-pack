@@ -64,6 +64,9 @@ Files with `⚠️ STARTERPACK CORE — DO NOT MODIFY` header are synced from st
 - Manifest: `starter-pack-files.txt`
 - Sync: `bash scripts/_core/core-update.sh`
 
+### Public repo
+The starterpack repo is public. Never name a sub-app (name, domain, repo, paths, data) in anything that goes to it: code, tests, comments, commits, PRs, issues. Describe the case generically, eg "a sub-app with ~400k pages".
+
 ### Component Overrides
 Sub-apps can replace core components via `config/component-overrides.ts`. Override components must match original props/events. Use `useOverridable()` to add new override points.
 

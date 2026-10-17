@@ -38,12 +38,12 @@ describe('buildCourseSchema', () => {
         const out = buildCourseSchema({
             name: 'Music Theory 101',
             description: 'Read music in 4 weeks.',
-            provider: 'Doremia',
+            provider: 'Acme Music',
         });
         expect(out['@context']).toBe('https://schema.org');
         expect(out['@type']).toBe('Course');
         expect(out.name).toBe('Music Theory 101');
-        expect(out.provider).toEqual({ '@type': 'Organization', name: 'Doremia' });
+        expect(out.provider).toEqual({ '@type': 'Organization', name: 'Acme Music' });
         expect(out.isAccessibleForFree).toBe(true); // default
     });
 
@@ -81,7 +81,7 @@ describe('buildProductSchema', () => {
 describe('buildLocalBusinessSchema', () => {
     it('emits LocalBusiness with optional geo', () => {
         const out = buildLocalBusinessSchema({
-            name: 'Doremia HQ',
+            name: 'Acme Music HQ',
             address: '1 rue de la Musique, Paris',
             geo: { latitude: 48.8566, longitude: 2.3522 },
         });

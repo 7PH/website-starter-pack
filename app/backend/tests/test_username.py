@@ -35,13 +35,13 @@ def usernames_off(monkeypatch):
 
 class TestValidateUsername:
     def test_accepts_the_allowed_charset(self):
-        assert validate_username("risi_bank-42") == "risi_bank-42"
+        assert validate_username("john_doe-42") == "john_doe-42"
 
     def test_preserves_case(self):
-        assert validate_username("RisiBank") == "RisiBank"
+        assert validate_username("JohnDoe") == "JohnDoe"
 
     def test_trims_surrounding_whitespace(self):
-        assert validate_username("  risibank  ") == "risibank"
+        assert validate_username("  johndoe  ") == "johndoe"
 
     @pytest.mark.parametrize("value", ["a", "x" * 33, "has space", "accént", "dot.dot", "sla/sh"])
     def test_rejects_bad_shapes(self, value):
@@ -68,7 +68,7 @@ class TestEmailShape:
     """Usernames forbid '@'; requiring it on the email side is what makes that
     a real separation rather than a convention."""
 
-    @pytest.mark.parametrize("value", ["collide", "risibank", "@nolocal.com", "nodomain@", "  ", ""])
+    @pytest.mark.parametrize("value", ["collide", "johndoe", "@nolocal.com", "nodomain@", "  ", ""])
     def test_rejects_addresses_that_could_collide_with_a_handle(self, value):
         with pytest.raises(ValueError):
             require_email_shape(value)
@@ -87,16 +87,16 @@ class TestEmailShape:
 class TestIsUsernameTaken:
     def test_free_when_nobody_holds_it(self):
         with patch("src.crud.users.get_user_by_username", return_value=None):
-            assert is_username_taken(MagicMock(), "risibank") is False
+            assert is_username_taken(MagicMock(), "johndoe") is False
 
     def test_taken_when_another_user_holds_it(self):
         with patch("src.crud.users.get_user_by_username", return_value=SimpleNamespace(id=2)):
-            assert is_username_taken(MagicMock(), "risibank", exclude_user_id=1) is True
+            assert is_username_taken(MagicMock(), "johndoe", exclude_user_id=1) is True
 
     def test_own_handle_is_not_taken_against_itself(self):
         """A capitalization-only rename must not 409 on the user's own row."""
         with patch("src.crud.users.get_user_by_username", return_value=SimpleNamespace(id=1)):
-            assert is_username_taken(MagicMock(), "RisiBank", exclude_user_id=1) is False
+            assert is_username_taken(MagicMock(), "JohnDoe", exclude_user_id=1) is False
 
 
 class TestPublicSchemaPrivacy:
@@ -104,7 +104,7 @@ class TestPublicSchemaPrivacy:
         preview = UserPreviewRead.model_validate(
             SimpleNamespace(
                 id=1,
-                username="risibank",
+                username="johndoe",
                 first_name="Alice",
                 last_name="Doe",
                 display_name=None,
@@ -112,15 +112,15 @@ class TestPublicSchemaPrivacy:
                 custom_data={},
             )
         )
-        assert preview.username == "risibank"
-        assert preview.display_label == "risibank"
+        assert preview.username == "johndoe"
+        assert preview.display_label == "johndoe"
 
     def test_username_hidden_from_the_api_when_the_feature_is_off(self, usernames_off):
         """Matches display_for's gating: a pre-existing column stays invisible."""
         preview = UserPreviewRead.model_validate(
             SimpleNamespace(
                 id=1,
-                username="risibank",
+                username="johndoe",
                 first_name="Alice",
                 last_name="Doe",
                 display_name=None,
