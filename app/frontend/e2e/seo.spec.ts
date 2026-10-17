@@ -18,12 +18,13 @@ test('/robots.txt is dynamic and includes Sitemap line', async ({ request }) => 
     expect(body).toMatch(/^Sitemap:\s*\S+\/sitemap\.xml/m);
 });
 
-test('/sitemap.xml returns valid XML with at least one URL', async ({ request }) => {
+test('/sitemap.xml returns a valid urlset or sitemap index with at least one URL', async ({ request }) => {
     const response = await request.get('/sitemap.xml');
     expect(response.status()).toBe(200);
 
     const body = await response.text();
     expect(body).toContain('<?xml');
-    expect(body).toContain('<urlset');
+    // Apps may either serve an urlset or sitemapindex
+    expect(body).toMatch(/<(urlset|sitemapindex)\b/);
     expect(body).toContain('<loc>');
 });
