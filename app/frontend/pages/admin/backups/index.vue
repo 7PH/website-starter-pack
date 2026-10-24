@@ -119,6 +119,9 @@ function cancelRestore() {
 }
 
 const restoreConfirmMatch = computed(() => restoreConfirmInput.value === backupToRestore.value);
+const restoreHasMedia = computed(
+    () => !!backupsData.value?.items.find((b) => b.filename === backupToRestore.value)?.media_filename,
+);
 
 async function executeRestore() {
     if (!backupToRestore.value || !restoreConfirmMatch.value) return;
@@ -178,6 +181,7 @@ async function executeRestore() {
                                     color="warning"
                                     variant="ghost"
                                     size="xs"
+                                    aria-label="Restore"
                                     :loading="restoring === row.original.filename"
                                     @click="confirmRestore(row.original.filename)"
                                 />
@@ -188,7 +192,21 @@ async function executeRestore() {
                                     color="neutral"
                                     variant="ghost"
                                     size="xs"
+                                    aria-label="Download"
                                     @click="downloadBackup(row.original.filename)"
+                                />
+                            </UTooltip>
+                            <UTooltip
+                                v-if="row.original.media_filename"
+                                :text="`Download CMS photos (${formatSize(row.original.media_size ?? 0)})`"
+                            >
+                                <UButton
+                                    icon="i-lucide-images"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    :aria-label="`Download CMS photos (${formatSize(row.original.media_size ?? 0)})`"
+                                    @click="downloadBackup(row.original.media_filename)"
                                 />
                             </UTooltip>
                             <UTooltip text="Delete">
@@ -197,6 +215,7 @@ async function executeRestore() {
                                     color="error"
                                     variant="ghost"
                                     size="xs"
+                                    aria-label="Delete"
                                     :loading="deleting === row.original.filename"
                                     @click="confirmDelete(row.original.filename)"
                                 />
@@ -255,11 +274,14 @@ async function executeRestore() {
                         <div class="restore-warning">
                             <p class="restore-warning-text">
                                 This will <strong>drop all existing tables</strong> and replace the database with the
-                                contents of this backup. This action is destructive and cannot be undone.
+                                contents of this backup.
                             </p>
                             <p class="filename-text">{{ backupToRestore }}</p>
                             <p class="restore-safety-note">
-                                A safety backup of the current database will be created automatically before restoring.
+                                A safety backup of the current data is made first, so you can go back.
+                            </p>
+                            <p v-if="restoreHasMedia" class="restore-safety-note">
+                                The CMS photos saved with this backup will replace the current ones.
                             </p>
                         </div>
                         <template #footer>

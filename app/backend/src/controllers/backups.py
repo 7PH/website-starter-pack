@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import tarfile
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +17,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 
+from ..constants import CMS_ENABLED
 from ..helpers.auth import get_current_admin
 from ..helpers.logging import get_logger
 from ..schemas.backup import BackupInfo, BackupListResponse, BackupTag, RestoreRequest
@@ -26,6 +28,10 @@ logger = get_logger(__name__)
 
 BACKUP_DIR = Path("/app/backups")
 MAX_BACKUPS = 7
+# CMS uploads only (CMS_ENABLED), never the whole static dir: some apps keep many GB there.
+CMS_MEDIA_DIR = Path("/app/static/cms")
+DB_PREFIX = "db_backup_"
+MEDIA_PREFIX = "cms_media_"
 
 # Filename format: db_backup_YYYY-MM-DD_HH-MM-SS[_tag].sql.gz
 BACKUP_FILENAME_RE = re.compile(r"^db_backup_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(?:_([a-z]+))?.sql.gz$")
@@ -49,13 +55,23 @@ def parse_backup_comment(filename: str) -> str | None:
     return TAG_COMMENTS[tag]
 
 
+def media_path(db_filename: str) -> Path:
+    """Media archive paired with a DB backup: same timestamp and tag, different prefix."""
+    stem = db_filename.removeprefix(DB_PREFIX).removesuffix(".sql.gz")
+    return BACKUP_DIR / f"{MEDIA_PREFIX}{stem}.tar.gz"
+
+
 def _backup_info(filepath: Path) -> BackupInfo:
     stat = filepath.stat()
+    media = media_path(filepath.name)
+    media_size = media.stat().st_size if CMS_ENABLED and media.exists() else None
     return BackupInfo(
         filename=filepath.name,
         size=stat.st_size,
         created_at=datetime.fromtimestamp(stat.st_mtime),
         comment=parse_backup_comment(filepath.name),
+        media_filename=media.name if media_size is not None else None,
+        media_size=media_size,
     )
 
 
@@ -81,17 +97,20 @@ def get_backup_files() -> list[BackupInfo]:
     return sorted(backups, key=lambda b: b.created_at, reverse=True)
 
 
-def cleanup_old_backups() -> None:
-    """Remove backups exceeding MAX_BACKUPS retention."""
+def cleanup_old_backups(keep: str | None = None) -> None:
+    """Remove backups exceeding MAX_BACKUPS retention, never the `keep` filename (a backup being restored)."""
     backups = get_backup_files()
     for old_backup in backups[MAX_BACKUPS:]:
+        if old_backup.filename == keep:
+            continue
         filepath = BACKUP_DIR / old_backup.filename
         filepath.unlink(missing_ok=True)
+        media_path(old_backup.filename).unlink(missing_ok=True)
         logger.info(f"Removed old backup: {old_backup.filename}")
 
 
-def run_backup(tag: BackupTag | None = None) -> BackupInfo:
-    """Execute the backup and return the new backup info."""
+def run_backup(tag: BackupTag | None = None, keep: str | None = None) -> BackupInfo:
+    """Execute the backup and return the new backup info. `keep` is spared by retention."""
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -102,7 +121,9 @@ def run_backup(tag: BackupTag | None = None) -> BackupInfo:
     with gzip.open(filepath, "wb") as dst, tempfile.TemporaryFile() as errfile:
         proc = subprocess.Popen(
             ["pg_dump", "-h", db_host, "-U", db_user, db_name],
-            stdout=subprocess.PIPE, stderr=errfile, env=env,
+            stdout=subprocess.PIPE,
+            stderr=errfile,
+            env=env,
         )
         shutil.copyfileobj(proc.stdout, dst)
         proc.stdout.close()
@@ -116,13 +137,67 @@ def run_backup(tag: BackupTag | None = None) -> BackupInfo:
             detail=f"Backup failed: {stderr}",
         )
 
-    cleanup_old_backups()
+    # After the dump: an upload in between leaves an unused folder, never a page pointing at a missing photo.
+    if CMS_ENABLED:
+        backup_media(media_path(filepath.name))
+
+    cleanup_old_backups(keep=keep)
     return _backup_info(filepath)
 
 
-def validate_backup_filename(filename: str) -> Path:
-    """Validate filename and return resolved path, or raise 400/404."""
-    if "/" in filename or "\\" in filename or not filename.startswith("db_backup_"):
+def backup_media(dest: Path) -> None:
+    """Archive the CMS media folder. Written under a temp name so a failed run never pairs a half archive."""
+    part = dest.with_name(dest.name + ".part")
+    try:
+        with tarfile.open(part, "w:gz") as tar:
+            # An empty archive still pairs, so restoring it empties the folder to match the DB.
+            if CMS_MEDIA_DIR.exists():
+                tar.add(CMS_MEDIA_DIR, arcname=".")
+        part.rename(dest)
+    except OSError as e:
+        # Keep the DB backup: a media problem must not cost the nightly DB backup.
+        part.unlink(missing_ok=True)
+        logger.error(f"CMS media backup failed: {e}")
+
+
+def extract_media(archive: Path) -> Path:
+    """Extract a media archive into a work dir next to the media folder and return it. Raises 500 if unreadable."""
+    CMS_MEDIA_DIR.parent.mkdir(parents=True, exist_ok=True)
+    # Same filesystem as the target, so the renames in swap_media are atomic (a /tmp dir may be another mount).
+    work = Path(tempfile.mkdtemp(dir=CMS_MEDIA_DIR.parent, prefix=".cms-restore-"))
+    try:
+        with tarfile.open(archive, "r:gz") as tar:
+            tar.extractall(work / "new", filter="data")
+        (work / "new").mkdir(exist_ok=True)
+    except (OSError, tarfile.TarError) as e:
+        shutil.rmtree(work, ignore_errors=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"CMS media archive unreadable: {e}",
+        ) from e
+    return work
+
+
+def swap_media(work: Path) -> None:
+    """Put the extracted media in place of the current folder, then drop the old one."""
+    old_dir = work / "old"
+    if CMS_MEDIA_DIR.exists():
+        CMS_MEDIA_DIR.rename(old_dir)
+    try:
+        (work / "new").rename(CMS_MEDIA_DIR)
+    except OSError:
+        # Work dir is kept: if the rollback below fails too, it holds the only copy of the current photos.
+        logger.error(f"CMS media swap failed, work dir left in place: {work}")
+        if old_dir.exists() and not CMS_MEDIA_DIR.exists():
+            old_dir.rename(CMS_MEDIA_DIR)
+        raise
+    shutil.rmtree(work, ignore_errors=True)
+
+
+def validate_backup_filename(filename: str, allow_media: bool = False) -> Path:
+    """Validate filename and return resolved path, or raise 400/404. Media archives are only accepted where asked."""
+    prefixes = (DB_PREFIX, MEDIA_PREFIX) if allow_media and CMS_ENABLED else (DB_PREFIX,)
+    if "/" in filename or "\\" in filename or not filename.startswith(prefixes):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid filename")
 
     filepath = BACKUP_DIR / filename
@@ -135,6 +210,16 @@ def validate_backup_filename(filename: str) -> Path:
 def run_restore(filepath: Path) -> None:
     """Drop all public tables and restore from a gzipped backup."""
     env, db_host, db_user, db_name = _pg_env()
+    # Read the whole dump before dropping anything: a missing or corrupt file must not leave an empty DB.
+    try:
+        with gzip.open(filepath, "rb") as src:
+            while src.read(1024 * 1024):
+                pass
+    except (OSError, EOFError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Backup file unreadable: {e}",
+        ) from e
 
     drop_sql = (
         "DO $$ DECLARE r RECORD; BEGIN "
@@ -144,7 +229,9 @@ def run_restore(filepath: Path) -> None:
     )
     result = subprocess.run(
         ["psql", "-h", db_host, "-U", db_user, "-d", db_name, "-c", drop_sql],
-        capture_output=True, text=True, env=env,
+        capture_output=True,
+        text=True,
+        env=env,
     )
     if result.returncode != 0:
         raise HTTPException(
@@ -155,7 +242,10 @@ def run_restore(filepath: Path) -> None:
     with gzip.open(filepath, "rb") as src, tempfile.TemporaryFile() as errfile:
         proc = subprocess.Popen(
             ["psql", "-h", db_host, "-U", db_user, "-d", db_name],
-            stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=errfile, env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=errfile,
+            env=env,
         )
         shutil.copyfileobj(src, proc.stdin)
         proc.stdin.close()
@@ -197,8 +287,8 @@ def get_backup(
     filename: str,
     admin: UserRead = Depends(get_current_admin),
 ):
-    """Download a backup file."""
-    filepath = validate_backup_filename(filename)
+    """Download a backup file (DB dump or CMS media archive)."""
+    filepath = validate_backup_filename(filename, allow_media=True)
 
     return FileResponse(
         path=filepath,
@@ -216,6 +306,7 @@ def delete_backup(
     filepath = validate_backup_filename(filename)
 
     filepath.unlink()
+    media_path(filename).unlink(missing_ok=True)
     logger.info(f"Backup deleted by admin {admin.id}: {filename}")
 
 
@@ -237,11 +328,27 @@ def restore_backup(
 
     # Create pre-restore safety backup
     logger.info(f"Creating pre-restore backup before restoring {filename} (admin {admin.id})")
-    safety_backup = run_backup(tag=BackupTag.prerestore)
+    safety_backup = run_backup(tag=BackupTag.prerestore, keep=filename)
+    if CMS_ENABLED and safety_backup.media_filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not save the current CMS photos, restore aborted",
+        )
+
+    # Extracted before touching the DB, so a corrupt archive aborts the whole restore.
+    media = media_path(filename)
+    media_work = extract_media(media) if CMS_ENABLED and media.exists() else None
 
     # Restore
     logger.info(f"Restoring database from {filename} (admin {admin.id})")
-    run_restore(filepath)
+    try:
+        run_restore(filepath)
+    except Exception:
+        if media_work:
+            shutil.rmtree(media_work, ignore_errors=True)
+        raise
+    if media_work:
+        swap_media(media_work)
     logger.info(f"Database restored from {filename} (admin {admin.id}, safety backup: {safety_backup.filename})")
 
     return safety_backup

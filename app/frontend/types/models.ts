@@ -189,6 +189,8 @@ export type Filename = string;
 export type Size = number;
 export type CreatedAt3 = string;
 export type BackupComment = string | null;
+export type MediaFilename = string | null;
+export type MediaSize = number | null;
 export type Items2 = BackupInfo[];
 export type Total2 = number;
 export type Url = string;
@@ -670,6 +672,8 @@ export interface BackupInfo {
   size: Size;
   created_at: CreatedAt3;
   comment?: BackupComment;
+  media_filename?: MediaFilename;
+  media_size?: MediaSize;
 }
 /**
  * Response for backup list endpoint.

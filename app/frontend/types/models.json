@@ -505,6 +505,30 @@
           ],
           "default": null,
           "title": "BackupComment"
+        },
+        "media_filename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Filename"
+        },
+        "media_size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Size"
         }
       },
       "required": [

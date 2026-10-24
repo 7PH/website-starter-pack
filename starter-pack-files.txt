@@ -99,6 +99,7 @@ app/backend/src/templates
 app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
+app/backend/tests/test_backups.py
 app/backend/tests/test_cms_editors.py
 app/backend/tests/test_admin_billing.py
 app/backend/tests/test_auth_code.py
