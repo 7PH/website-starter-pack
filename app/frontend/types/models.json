@@ -426,6 +426,10 @@
           "title": "Usernames Enabled",
           "type": "boolean"
         },
+        "cms_enabled": {
+          "title": "Cms Enabled",
+          "type": "boolean"
+        },
         "username_pattern": {
           "title": "Username Pattern",
           "type": "string"
@@ -463,6 +467,7 @@
         "org_invitations_enabled",
         "managed_accounts_enabled",
         "usernames_enabled",
+        "cms_enabled",
         "username_pattern",
         "llm_enabled",
         "org_self_service_subscriptions",
