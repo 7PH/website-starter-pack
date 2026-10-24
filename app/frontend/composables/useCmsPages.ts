@@ -30,3 +30,13 @@ export function useCmsPosts(options: { offset?: number; limit?: number } = {}) {
     const { offset = 0, limit = 10 } = options;
     return useCmsFetch<CmsPostListResponse>(`cms-posts-${offset}-${limit}`, '/cms/posts', { offset, limit });
 }
+
+/** Published pages of one template (eg every service), in the order the editor set. */
+export function useCmsPageList(template: string, options: { offset?: number; limit?: number } = {}) {
+    const { offset = 0, limit = 50 } = options;
+    return useCmsFetch<CmsPageListResponse>(`cms-pages-${template}-${offset}-${limit}`, '/cms/pages', {
+        template,
+        offset,
+        limit,
+    });
+}

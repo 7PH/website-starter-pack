@@ -1035,6 +1035,45 @@
       "title": "CmsPageListItem",
       "type": "object"
     },
+    "CmsPageListResponse": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/CmsPageRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total"
+      ],
+      "title": "CmsPageListResponse",
+      "type": "object"
+    },
+    "CmsPageOrder": {
+      "description": "Free page ids in their new order.",
+      "properties": {
+        "ids": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 500,
+          "title": "Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ids"
+      ],
+      "title": "CmsPageOrder",
+      "type": "object"
+    },
     "CmsPageRead": {
       "description": "A page as the public site sees it: defaults merged, photos expanded, SEO filled.",
       "properties": {
@@ -4676,6 +4715,12 @@
     },
     {
       "$ref": "#/$defs/CmsPostListResponse"
+    },
+    {
+      "$ref": "#/$defs/CmsPageListResponse"
+    },
+    {
+      "$ref": "#/$defs/CmsPageOrder"
     },
     {
       "$ref": "#/$defs/CmsPageCreate"

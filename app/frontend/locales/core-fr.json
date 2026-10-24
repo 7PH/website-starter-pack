@@ -699,7 +699,9 @@
                 "sourceHelp": "Autorisé : titres, paragraphes, gras, italique, listes, citations, liens et photos de la bibliothèque. Le reste (scripts, styles, couleurs, vidéos intégrées) est retiré à l'enregistrement."
             },
             "previewUnsaved": "Aperçu avec vos modifications non enregistrées.",
-            "open": "Ouvrir"
+            "open": "Ouvrir",
+            "moveUp": "Monter",
+            "moveDown": "Descendre"
         },
         "inline": {
             "title": "Modification rapide",

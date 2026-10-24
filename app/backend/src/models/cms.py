@@ -61,6 +61,8 @@ class CmsPageBase(Base):
     seo_title = Column(String(200), nullable=False, server_default="")
     seo_description = Column(String(300), nullable=False, server_default="")
     cover_media_id = Column(Integer, ForeignKey("cms_media.id", ondelete="SET NULL"), nullable=True)
+    # Order she gives free pages of a same template (eg her services), lowest first.
+    position = Column(Integer, nullable=False, server_default=text("0"))
     published_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

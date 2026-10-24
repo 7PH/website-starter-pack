@@ -26,6 +26,53 @@ const freeTemplates = computed(() =>
         .map((tpl) => ({ value: tpl.name, label: cmsLabel(tpl.label, locale.value) })),
 );
 
+// One section per free template, pages in the order she set (it drives lists like "every service").
+const groups = computed(() => {
+    const pages = data.value?.pages ?? [];
+    return [...new Set(pages.map((p) => p.template))].map((name) => ({
+        name,
+        pages: pages.filter((p) => p.template === name),
+    }));
+});
+
+async function saveOrder(template: string) {
+    const ids = (data.value?.pages ?? []).filter((p) => p.template === template).map((p) => p.id);
+    try {
+        await api.put('/cms/admin/pages/order', { ids });
+    } catch (error) {
+        showError(error, 'core.errors.generic');
+        await refreshNuxtData('cms-admin-pages');
+    }
+}
+
+// Moves a page to another one's place within its template, in the local list (saved by the caller).
+function place(page: CmsPageListItem, target: CmsPageListItem) {
+    if (!data.value || page.template !== target.template || page.id === target.id) return false;
+    const pages = [...data.value.pages];
+    const from = pages.findIndex((p) => p.id === page.id);
+    const to = pages.findIndex((p) => p.id === target.id);
+    if (from < 0 || to < 0) return false;
+    pages.splice(to, 0, pages.splice(from, 1)[0]!);
+    data.value = { ...data.value, pages };
+    return true;
+}
+
+function move(pages: CmsPageListItem[], index: number, delta: number) {
+    if (place(pages[index]!, pages[index + delta]!)) saveOrder(pages[index]!.template);
+}
+
+// Drag and drop for mouse users. The arrows stay for touch screens and keyboards, which native drag doesn't serve.
+const dragged = shallowRef<CmsPageListItem | null>(null);
+const dragMoved = ref(false);
+function onDragEnter(target: CmsPageListItem) {
+    if (dragged.value && place(dragged.value, target)) dragMoved.value = true;
+}
+function onDragEnd() {
+    if (dragged.value && dragMoved.value) saveOrder(dragged.value.template);
+    dragged.value = null;
+    dragMoved.value = false;
+}
+
 const createOpen = ref(false);
 const creating = ref(false);
 const newPage = ref({ title: '', template: 'default' });
@@ -93,17 +140,43 @@ async function create() {
                     </UCard>
                 </section>
 
-                <section class="flex flex-col gap-3">
+                <section v-if="!groups.length" class="flex flex-col gap-3">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('cms.pages.free') }}</h2>
+                    <UCard>
+                        <p class="py-4 text-center text-gray-500 dark:text-gray-400">{{ t('cms.pages.empty') }}</p>
+                    </UCard>
+                </section>
+                <section v-for="group in groups" :key="group.name" class="flex flex-col gap-3">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {{
+                            groups.length > 1 || freeTemplates.length > 1
+                                ? templateLabel(group.name) || group.name
+                                : t('cms.pages.free')
+                        }}
+                    </h2>
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <p v-if="!data.pages.length" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                            {{ t('cms.pages.empty') }}
-                        </p>
-                        <ul v-else class="divide-y divide-gray-200 dark:divide-gray-800">
-                            <li v-for="page in data.pages" :key="page.id">
+                        <ul class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <li
+                                v-for="(page, index) in group.pages"
+                                :key="page.id"
+                                class="flex items-center"
+                                :class="{ 'opacity-50': dragged?.id === page.id }"
+                                :draggable="group.pages.length > 1"
+                                @dragstart="dragged = page"
+                                @dragenter="onDragEnter(page)"
+                                @dragover.prevent
+                                @dragend="onDragEnd"
+                            >
+                                <UIcon
+                                    v-if="group.pages.length > 1"
+                                    name="i-lucide-grip-vertical"
+                                    class="ml-2 shrink-0 cursor-grab text-gray-400"
+                                    :aria-hidden="true"
+                                />
                                 <NuxtLink
+                                    draggable="false"
                                     :to="`/admin/cms/pages/${page.id}`"
-                                    class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                    class="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                 >
                                     <span class="flex flex-col min-w-0">
                                         <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -111,9 +184,6 @@ async function create() {
                                         </span>
                                         <span class="text-sm text-gray-500 dark:text-gray-400 truncate">
                                             /{{ page.slug }}
-                                            <template v-if="freeTemplates.length > 1">
-                                                · {{ templateLabel(page.template) }}
-                                            </template>
                                         </span>
                                     </span>
                                     <span class="flex items-center gap-2">
@@ -137,6 +207,26 @@ async function create() {
                                         </span>
                                     </span>
                                 </NuxtLink>
+                                <div v-if="group.pages.length > 1" class="flex flex-col pr-2">
+                                    <UButton
+                                        icon="i-lucide-chevron-up"
+                                        :aria-label="t('cms.pages.moveUp')"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        :disabled="index === 0"
+                                        @click="move(group.pages, index, -1)"
+                                    />
+                                    <UButton
+                                        icon="i-lucide-chevron-down"
+                                        :aria-label="t('cms.pages.moveDown')"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        :disabled="index === group.pages.length - 1"
+                                        @click="move(group.pages, index, 1)"
+                                    />
+                                </div>
                             </li>
                         </ul>
                     </UCard>
