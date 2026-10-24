@@ -700,6 +700,16 @@
             },
             "previewUnsaved": "Aperçu avec vos modifications non enregistrées.",
             "open": "Ouvrir"
+        },
+        "inline": {
+            "title": "Modification rapide",
+            "edit": "Modifier",
+            "editPage": "Modifier cette page",
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "saved": "Modifié",
+            "fullEditor": "Ouvrir l'éditeur complet",
+            "unknownField": "Cette partie ne se modifie pas ici. Utilisez l'éditeur complet."
         }
     }
 }

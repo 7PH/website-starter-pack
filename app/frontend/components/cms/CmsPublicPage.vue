@@ -34,5 +34,8 @@ useCanonical();
 </script>
 
 <template>
-    <component :is="PageContent" v-if="page" :page="page" />
+    <div v-if="page">
+        <component :is="PageContent" :page="page" />
+        <CmsPageEditButton :page="page" />
+    </div>
 </template>

@@ -292,12 +292,15 @@ app/frontend/composables/organizations/useOrganizationQuotaDisplay.ts
 app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
+app/frontend/components/cms/CmsEditable.vue
 app/frontend/components/cms/CmsFocalPicker.vue
+app/frontend/components/cms/CmsInlineEditModal.vue
 app/frontend/components/cms/CmsImage.vue
 app/frontend/components/cms/CmsMediaDetails.vue
 app/frontend/components/cms/CmsMediaDropzone.vue
 app/frontend/components/cms/CmsMediaGrid.vue
 app/frontend/components/cms/CmsMediaPicker.vue
+app/frontend/components/cms/CmsPageEditButton.vue
 app/frontend/components/cms/CmsField.vue
 app/frontend/components/cms/CmsImageInput.vue
 app/frontend/components/cms/CmsPageContent.vue
