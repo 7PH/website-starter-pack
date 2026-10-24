@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS cms_pages (
     seo_title VARCHAR(200) NOT NULL DEFAULT '',
     seo_description VARCHAR(300) NOT NULL DEFAULT '',
     cover_media_id INTEGER REFERENCES cms_media(id) ON DELETE SET NULL,
+    position INTEGER NOT NULL DEFAULT 0,
     published_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

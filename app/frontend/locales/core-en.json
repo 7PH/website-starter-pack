@@ -699,7 +699,9 @@
                 "sourceHelp": "Allowed: headings, paragraphs, bold, italic, lists, quotes, links and photos from the library. Anything else (scripts, styles, colors, embeds) is removed when saving."
             },
             "previewUnsaved": "Preview with your unsaved changes.",
-            "open": "Open"
+            "open": "Open",
+            "moveUp": "Move up",
+            "moveDown": "Move down"
         },
         "inline": {
             "title": "Quick edit",

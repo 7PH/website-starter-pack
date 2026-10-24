@@ -112,7 +112,7 @@ def add_media(session: Session) -> CmsMediaBase:
 
 def add_page(session: Session, slug: str, published: bool = True, show_in_blog: bool = False, **kw) -> CmsPageBase:
     page = CmsPageBase(
-        template="post",
+        template=kw.pop("template", "post"),
         slug=slug,
         title=slug.title(),
         fields=kw.pop("fields", {}),
@@ -401,6 +401,25 @@ class TestFreePages:
         assert "<script>" not in preview["fields"]["body"]
         assert editor.get(f"/cms/admin/pages/{page.id}").json()["title"] != "Draft title"
 
+    def test_new_pages_go_last_in_their_template(self, editor, session):
+        add_page(session, "a", position=5)
+        assert editor.post("/cms/admin/pages", json={"template": "post", "title": "B"}).json()["id"]
+        assert session.query(CmsPageBase).filter_by(slug="b").one().position == 6
+
+    def test_reorder_and_list_by_template(self, editor, session):
+        a, b = add_page(session, "a"), add_page(session, "b")
+        add_page(session, "draft", published=False)
+        add_page(session, "other", template="default")
+        edited_at = b.updated_at
+        assert editor.put("/cms/admin/pages/order", json={"ids": [b.id, a.id, 999]}).status_code == 204
+        session.refresh(b)
+        assert b.updated_at == edited_at
+        listed = editor.get("/cms/pages", params={"template": "post"}).json()
+        assert [p["slug"] for p in listed["items"]] == ["b", "a"]
+        assert listed["total"] == 2
+        admin_order = [p["slug"] for p in editor.get("/cms/admin/pages").json()["pages"]]
+        assert admin_order.index("b") < admin_order.index("a")
+
     def test_fixed_pages_are_not_reachable_as_free_pages(self, editor, session):
         session.add(CmsPageBase(template="home", fixed_key="home", title="", fields={}))
         session.commit()
@@ -448,6 +467,7 @@ EDITOR_ROUTES = [
     ("get", "/cms/admin/pages/1"),
     ("patch", "/cms/admin/pages/1"),
     ("post", "/cms/admin/pages/1/preview"),
+    ("put", "/cms/admin/pages/order"),
     ("delete", "/cms/admin/pages/1"),
     ("get", "/cms/admin/fixed/home"),
     ("patch", "/cms/admin/fixed/home"),
@@ -456,7 +476,7 @@ EDITOR_ROUTES = [
 
 class TestPermissions:
     def test_every_editor_route_is_covered(self):
-        public = {"/cms/pages/by-slug/{slug}", "/cms/fixed/{key}", "/cms/posts", "/cms/sitemap"}
+        public = {"/cms/pages", "/cms/pages/by-slug/{slug}", "/cms/fixed/{key}", "/cms/posts", "/cms/sitemap"}
         paths = {(m.lower(), r.path) for r in cms_pages.router.routes for m in r.methods if r.path not in public}
         templated = {(m, p.replace("1", "{page_id}").replace("home", "{key}")) for m, p in EDITOR_ROUTES}
         assert paths == templated
@@ -472,7 +492,7 @@ class TestPermissions:
     @pytest.mark.parametrize(("method", "path"), EDITOR_ROUTES)
     def test_editor_gets_through(self, editor, session, method, path):
         add_page(session, "a")
-        assert editor.request(method, path, json={"template": "post", "title": "x"}).status_code < 400
+        assert editor.request(method, path, json={"template": "post", "title": "x", "ids": []}).status_code < 400
 
     @pytest.mark.parametrize("path", ["/cms/pages/by-slug/a", "/cms/fixed/home", "/cms/posts", "/cms/sitemap"])
     def test_public_routes_need_no_login(self, client, session, path):

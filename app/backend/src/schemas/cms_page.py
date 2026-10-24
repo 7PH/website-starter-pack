@@ -64,6 +64,17 @@ class CmsPageSummary(BaseModel):
     published_at: datetime | None
 
 
+class CmsPageListResponse(BaseModel):
+    items: list[CmsPageRead]
+    total: int
+
+
+class CmsPageOrder(BaseModel):
+    """Free page ids in their new order."""
+
+    ids: list[int] = Field(max_length=500)
+
+
 class CmsPostListResponse(BaseModel):
     items: list[CmsPageSummary]
     total: int

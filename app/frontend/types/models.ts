@@ -86,6 +86,8 @@ export type Models =
   | CmsPageAdminRead
   | CmsPageSummary
   | CmsPostListResponse
+  | CmsPageListResponse
+  | CmsPageOrder
   | CmsPageCreate
   | CmsPageUpdate
   | CmsPageListItem
@@ -457,6 +459,12 @@ export type SeoDescription2 = string;
 export type PublishedAt2 = string | null;
 export type Items7 = CmsPageSummary[];
 export type Total6 = number;
+export type Items8 = CmsPageRead[];
+export type Total7 = number;
+/**
+ * @maxItems 500
+ */
+export type Ids = number[];
 export type Template2 = string;
 export type Title4 = string;
 export type Title5 = string | null;
@@ -540,13 +548,13 @@ export type CreatedAt13 = string | null;
 export type UpdatedAt5 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
-export type Items8 = ConversationRead[];
-export type Total7 = number;
+export type Items9 = ConversationRead[];
+export type Total8 = number;
 export type Limit2 = number;
 export type Offset2 = number;
 export type Content2 = string;
-export type Items9 = MessageRead[];
-export type Total8 = number;
+export type Items10 = MessageRead[];
+export type Total9 = number;
 export type Limit3 = number;
 export type Offset3 = number;
 export type HasMore = boolean;
@@ -1325,6 +1333,16 @@ export interface CmsPostListResponse {
   items: Items7;
   total: Total6;
 }
+export interface CmsPageListResponse {
+  items: Items8;
+  total: Total7;
+}
+/**
+ * Free page ids in their new order.
+ */
+export interface CmsPageOrder {
+  ids: Ids;
+}
 export interface CmsPageCreate {
   template: Template2;
   title: Title4;
@@ -1455,8 +1473,8 @@ export interface ConversationDetail {
  * Paginated response for conversation list.
  */
 export interface ConversationListResponse {
-  items: Items8;
-  total: Total7;
+  items: Items9;
+  total: Total8;
   limit: Limit2;
   offset: Offset2;
 }
@@ -1470,8 +1488,8 @@ export interface MessageCreate {
  * Paginated response for messages in a conversation.
  */
 export interface MessageListResponse {
-  items: Items9;
-  total: Total8;
+  items: Items10;
+  total: Total9;
   limit: Limit3;
   offset: Offset3;
   has_more: HasMore;

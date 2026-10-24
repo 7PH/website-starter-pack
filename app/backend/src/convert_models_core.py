@@ -47,6 +47,8 @@ from .schemas.cms_page import (
     CmsPageAdminRead,
     CmsPageCreate,
     CmsPageListItem,
+    CmsPageListResponse,
+    CmsPageOrder,
     CmsPageRead,
     CmsPageSummary,
     CmsPageUpdate,
@@ -202,12 +204,15 @@ CoreModels = (
     | CmsMediaListResponse
     | CmsMediaUpdate
     | CmsMediaUsage
+    # CMS page models
     | CmsTemplateField
     | CmsTemplateRead
     | CmsPageRead
     | CmsPageAdminRead
     | CmsPageSummary
     | CmsPostListResponse
+    | CmsPageListResponse
+    | CmsPageOrder
     | CmsPageCreate
     | CmsPageUpdate
     | CmsPageListItem

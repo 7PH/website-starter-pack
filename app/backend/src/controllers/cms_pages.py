@@ -3,6 +3,7 @@
 """CMS pages (CMS_ENABLED): public reads, and editing for admins and editors."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..helpers.cms_auth import get_current_cms_editor
@@ -16,6 +17,8 @@ from ..schemas.cms_page import (
     CmsPageAdminRead,
     CmsPageCreate,
     CmsPageListItem,
+    CmsPageListResponse,
+    CmsPageOrder,
     CmsPageRead,
     CmsPageUpdate,
     CmsPostListResponse,
@@ -72,6 +75,19 @@ def get_fixed_page(key: str, session: Session = Depends(get_session)):
     return page_to_read(session, _fixed_page(session, key))
 
 
+@router.get("/pages", response_model=CmsPageListResponse)
+def list_pages_by_template(
+    template: str,
+    session: Session = Depends(get_session),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+):
+    """Published pages of one template (eg every service), in the order the editor set."""
+    query = _published_pages(session).filter(CmsPageBase.template == template)
+    pages = query.order_by(CmsPageBase.position, CmsPageBase.id).offset(offset).limit(limit).all()
+    return CmsPageListResponse(items=[page_to_read(session, p) for p in pages], total=query.count())
+
+
 @router.get("/posts", response_model=CmsPostListResponse)
 def list_posts(
     session: Session = Depends(get_session),
@@ -111,12 +127,16 @@ def list_templates(editor: UserRead = Depends(get_current_cms_editor)):
 
 @router.get("/admin/pages", response_model=CmsAdminPagesResponse)
 def list_pages(session: Session = Depends(get_session), editor: UserRead = Depends(get_current_cms_editor)):
-    """Fixed pages (one per fixed template, saved or not) then free pages, last edited first."""
+    """Fixed pages (one per fixed template, saved or not) then free pages, by template in the order the editor set."""
     saved = dict(
         session.query(CmsPageBase.fixed_key, CmsPageBase.updated_at).filter(CmsPageBase.fixed_key.isnot(None)).all()
     )
     fixed = [CmsFixedPageItem(key=key, updated_at=saved.get(key)) for key, t in get_templates().items() if t.fixed]
-    pages = session.query(CmsPageBase).filter(CmsPageBase.slug.isnot(None)).order_by(CmsPageBase.updated_at.desc())
+    pages = (
+        session.query(CmsPageBase)
+        .filter(CmsPageBase.slug.isnot(None))
+        .order_by(CmsPageBase.template, CmsPageBase.position, CmsPageBase.id)
+    )
     return CmsAdminPagesResponse(
         fixed=fixed, pages=[CmsPageListItem.model_validate(p, from_attributes=True) for p in pages]
     )
@@ -131,8 +151,30 @@ def create_page(
     template = get_templates().get(data.template)
     if not template or template.fixed:
         raise HTTPException(status_code=422, detail="Unknown page template")
-    page = CmsPageBase(template=data.template, slug=unique_slug(session, data.title), title="", fields={})
+    last = session.query(func.max(CmsPageBase.position)).filter(CmsPageBase.template == data.template).scalar()
+    page = CmsPageBase(
+        template=data.template,
+        slug=unique_slug(session, data.title),
+        title="",
+        fields={},
+        position=(last or 0) + 1,
+    )
     return _save(session, page, CmsPageUpdate(title=data.title))
+
+
+@router.put("/admin/pages/order", status_code=status.HTTP_204_NO_CONTENT)
+def reorder_pages(
+    data: CmsPageOrder,
+    session: Session = Depends(get_session),
+    editor: UserRead = Depends(get_current_cms_editor),
+):
+    for position, page_id in enumerate(data.ids):
+        # Setting updated_at to itself skips its onupdate: reordering isn't editing (it feeds the sitemap's lastmod).
+        session.query(CmsPageBase).filter(CmsPageBase.id == page_id, CmsPageBase.slug.isnot(None)).update(
+            {CmsPageBase.position: position, CmsPageBase.updated_at: CmsPageBase.updated_at}, synchronize_session=False
+        )
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/admin/pages/{page_id}", response_model=CmsPageAdminRead)
