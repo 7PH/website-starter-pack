@@ -7,6 +7,8 @@ import { PROJECT_ADMIN_NAV } from '~/config/admin-nav-ext';
 
 const route = useRoute();
 const config = useRuntimeConfig();
+const { t } = useI18n();
+const { isEditorOnly } = useCmsAccess();
 
 // Merge core and project nav items, add dynamic items, sorted by order
 const navItems = computed(() => {
@@ -34,8 +36,10 @@ const navItems = computed(() => {
         });
     }
 
+    // CMS editors reach admin pages without being admin: they only get the items flagged for them.
     return items
         .filter((item) => !item.condition || item.condition())
+        .filter((item) => !isEditorOnly.value || item.editorAccess)
         .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 });
 
@@ -68,7 +72,7 @@ function isActive(to: string | undefined): boolean {
             <!-- Internal link -->
             <NuxtLink v-else :key="item.to" :to="item.to" class="subnav-btn" :class="{ active: isActive(item.to) }">
                 <UIcon :name="item.icon" />
-                <span>{{ item.label }}</span>
+                <span>{{ item.labelKey ? t(item.labelKey) : item.label }}</span>
             </NuxtLink>
         </template>
     </nav>

@@ -44,6 +44,13 @@ const {
     { watch: [searchDebounced, isAdminFilter, isPremiumFilter, deletedFilter, page], server: false },
 );
 
+// One extra request for the whole list, only in CMS mode.
+const { data: cmsEditors } = await useAsyncData<CmsEditorRead[]>('admin-cms-editors', () => api.get('/cms/editors'), {
+    server: false,
+    immediate: isCmsEnabled(),
+});
+const cmsEditorIds = computed(() => new Set(cmsEditors.value?.map((e) => e.user_id)));
+
 const totalPages = computed(() => Math.ceil((usersData.value?.total ?? 0) / limit.value));
 
 // Table columns configuration
@@ -147,6 +154,12 @@ async function deleteUser(user: AdminUserRead) {
                             <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
                             <UBadge v-if="row.original.is_admin" label="Admin" color="info" />
                             <UBadge v-if="row.original.is_premium" label="Premium" color="warning" />
+                            <UBadge
+                                v-if="cmsEditorIds.has(row.original.id)"
+                                label="Editor"
+                                color="info"
+                                variant="soft"
+                            />
                             <template v-if="authBadge(row.original.auth_method)">
                                 <UBadge
                                     :label="authBadge(row.original.auth_method)!.label"

@@ -13,6 +13,7 @@ const { locale, availableLocales, setLocale } = useAppLocale();
 const { isDark, toggle: toggleColorMode } = useColorModeToggle();
 const userDisplay = useUserDisplay();
 const config = useRuntimeConfig();
+const { canEdit: canEditSite } = useCmsAccess();
 const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
 
 const displayLabel = computed(() => userDisplay.label(auth.user));
@@ -60,6 +61,9 @@ const userMenuItems = computed(() => [
             : [{ label: t('core.account.title'), icon: 'i-lucide-settings', to: '/account' }]),
         ...(auth.user?.is_admin
             ? [{ label: t('core.admin.title'), icon: 'i-lucide-shield', to: '/admin/users', color: 'error' as const }]
+            : []),
+        ...(canEditSite.value
+            ? [{ label: t('cms.nav.editSite'), icon: 'i-lucide-pencil', to: '/admin/cms/pages' }]
             : []),
     ],
     [{ label: t('core.auth.logout'), icon: 'i-lucide-log-out', onSelect: onSelectLogout }],

@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .constants import (
+    CMS_ENABLED,
     INTERNAL_API_ENABLED,
     MANAGED_ACCOUNTS_ENABLED,
     ORG_INVITATIONS_ENABLED,
@@ -13,6 +14,7 @@ from .controllers import (
     admin,
     auth,
     backups,
+    cms_editors,
     config,
     db_health,
     healthcheck,
@@ -47,6 +49,8 @@ router_v1.include_router(backups.router, tags=["Backups"], include_in_schema=Fal
 router_v1.include_router(db_health.router, tags=["Database Health"], include_in_schema=False)
 if MANAGED_ACCOUNTS_ENABLED:
     router_v1.include_router(managed_account_groups.router, tags=["Managed Accounts"])
+if CMS_ENABLED:
+    router_v1.include_router(cms_editors.router, tags=["CMS"])
 if INTERNAL_API_ENABLED:
     router_v1.include_router(internal.router, tags=["Internal"], include_in_schema=False)
 router_v1.include_router(app_router)

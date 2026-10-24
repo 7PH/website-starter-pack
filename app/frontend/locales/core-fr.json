@@ -564,5 +564,14 @@
                 "importEmpty": "Collez des noms ci-dessus pour prévisualiser."
             }
         }
+    },
+    "cms": {
+        "nav": {
+            "subtitle": "Modifiez vos pages et vos photos",
+            "editSite": "Modifier le site",
+            "pages": "Pages",
+            "media": "Photos",
+            "adminOnly": "Cette page est réservée aux administrateurs."
+        }
     }
 }

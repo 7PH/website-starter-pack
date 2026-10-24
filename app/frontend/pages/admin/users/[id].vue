@@ -17,6 +17,7 @@ const { impersonate } = useAdminImpersonation();
 const backendConfig = useBackendConfig();
 
 const userId = computed(() => Number(route.params.id));
+const cmsEnabled = isCmsEnabled();
 
 // Fetch user data
 const {
@@ -33,6 +34,15 @@ const { data: eventsData, pending: eventsPending } = await useAsyncData<EventLog
     () => api.get(`/admin/users/${userId.value}/events`),
     { server: false },
 );
+
+// CMS editors, fetched only in CMS mode
+const { data: cmsEditors, refresh: refreshCmsEditors } = await useAsyncData<CmsEditorRead[]>(
+    'admin-cms-editors',
+    () => api.get('/cms/editors'),
+    { server: false, immediate: cmsEnabled },
+);
+const isCmsEditor = computed(() => !!cmsEditors.value?.some((e) => e.user_id === userId.value));
+const savingCmsEditor = ref(false);
 
 // Form state
 const form = ref({
@@ -101,6 +111,20 @@ async function saveChanges() {
 function cancelEdit() {
     if (user.value) form.value = formFromUser(user.value);
     isEditing.value = false;
+}
+
+async function setCmsEditor(value: boolean) {
+    savingCmsEditor.value = true;
+    try {
+        const path = `/cms/editors/${userId.value}`;
+        await (value ? api.put(path, null) : api.delete(path));
+        await refreshCmsEditors();
+        showSuccess(value ? 'Can now edit the site' : 'Can no longer edit the site');
+    } catch (error) {
+        showError(error, 'core.errors.generic');
+    } finally {
+        savingCmsEditor.value = false;
+    }
 }
 
 function impersonateUser() {
@@ -295,6 +319,18 @@ async function deleteUser() {
                             <div v-if="user.deleted_at" class="info-item">
                                 <span class="info-label">Deleted</span>
                                 <span class="info-value deleted-value">{{ formatDateTime(user.deleted_at) }}</span>
+                            </div>
+                            <div v-if="cmsEnabled" class="info-item">
+                                <span class="info-label">CMS editor</span>
+                                <USwitch
+                                    :model-value="user.is_admin || isCmsEditor"
+                                    :disabled="user.is_admin || !!user.deleted_at"
+                                    :loading="savingCmsEditor"
+                                    :label="
+                                        user.is_admin ? 'Admins can always edit the site' : 'Can edit pages and photos'
+                                    "
+                                    @update:model-value="setCmsEditor"
+                                />
                             </div>
                             <UsersMetadataDisplay :custom-data="(user.custom_data ?? {}) as UserCustomData" />
                         </div>

@@ -551,6 +551,52 @@
       "title": "BillingPortalResponse",
       "type": "object"
     },
+    "CmsEditorRead": {
+      "description": "A user with CMS editor rights.",
+      "properties": {
+        "user_id": {
+          "title": "User Id",
+          "type": "integer"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Email"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "email",
+        "created_at"
+      ],
+      "title": "CmsEditorRead",
+      "type": "object"
+    },
+    "CmsMeRead": {
+      "description": "CMS rights of the current user. Admins are always editors.",
+      "properties": {
+        "is_editor": {
+          "title": "Is Editor",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "is_editor"
+      ],
+      "title": "CmsMeRead",
+      "type": "object"
+    },
     "ConversationCreate": {
       "description": "Schema for creating a new support conversation.",
       "properties": {
@@ -3743,6 +3789,12 @@
     },
     {
       "$ref": "#/$defs/PublicPickerPayload"
+    },
+    {
+      "$ref": "#/$defs/CmsMeRead"
+    },
+    {
+      "$ref": "#/$defs/CmsEditorRead"
     },
     {
       "$ref": "#/$defs/BackendConfig"
