@@ -35,6 +35,12 @@ from .schemas.cms_editor import (
     CmsEditorRead,
     CmsMeRead,
 )
+from .schemas.cms_media import (
+    CmsMediaListResponse,
+    CmsMediaRead,
+    CmsMediaUpdate,
+    CmsMediaUsage,
+)
 from .schemas.db_health import (
     DatabaseHealthResponse,
     IndexStats,
@@ -178,4 +184,8 @@ CoreModels = (
     # CMS models
     | CmsMeRead
     | CmsEditorRead
+    | CmsMediaRead
+    | CmsMediaListResponse
+    | CmsMediaUpdate
+    | CmsMediaUsage
 )

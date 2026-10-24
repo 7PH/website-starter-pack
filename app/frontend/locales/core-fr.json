@@ -572,6 +572,48 @@
             "pages": "Pages",
             "media": "Photos",
             "adminOnly": "Cette page est réservée aux administrateurs."
+        },
+        "media": {
+            "title": "Photos",
+            "subtitle": "Ajoutez vos photos ici, puis utilisez-les dans vos pages.",
+            "count": "Aucune photo | {n} photo | {n} photos",
+            "dropTitle": "Déposez vos photos ici",
+            "dropOr": "ou",
+            "choose": "Choisir des photos",
+            "dropHint": "JPEG, PNG ou WebP, 15 Mo maximum par photo. Vous pouvez en choisir plusieurs à la fois.",
+            "processing": "Préparation…",
+            "dismiss": "Fermer",
+            "empty": "Aucune photo pour l'instant. Ajoutez vos premières photos ci-dessus.",
+            "loadMore": "Afficher plus",
+            "noAlt": "Sans description",
+            "details": "Détails de la photo",
+            "alt": "Description",
+            "altHelp": "Décrivez la photo en quelques mots, par exemple « Salon avec un canapé près de la fenêtre ». Elle est lue à voix haute aux personnes aveugles et aide Google.",
+            "focal": "Sujet principal",
+            "focalHelp": "Cliquez sur la partie la plus importante de la photo. Elle restera visible quand la photo sera recadrée.",
+            "previewSquare": "Carré",
+            "previewWide": "Large",
+            "info": "{width} × {height} px, ajoutée le {date}",
+            "save": "Enregistrer",
+            "saved": "Modifications enregistrées",
+            "delete": "Supprimer",
+            "deleteTitle": "Supprimer cette photo ?",
+            "deleteMessage": "Elle sera retirée définitivement de la bibliothèque.",
+            "deleted": "Photo supprimée",
+            "inUseTitle": "Cette photo est encore utilisée",
+            "inUse": "Retirez-la d'abord de ces pages :",
+            "pickerTitle": "Choisir une photo",
+            "errors": {
+                "tooBig": "Cette photo est trop lourde (15 Mo maximum).",
+                "wrongType": "Ce type de fichier n'est pas accepté. Utilisez JPEG, PNG ou WebP.",
+                "unreadable": "Impossible de lire cette photo. Elle est peut-être abîmée ou trop grande.",
+                "generic": "L'envoi a échoué. Réessayez.",
+                "tooManyPixels": "Cette photo est trop grande (plus de 40 mégapixels).",
+                "sessionExpired": "Votre session a expiré. Reconnectez-vous."
+            },
+            "unsavedTitle": "Enregistrer les modifications de cette photo ?",
+            "unsavedMessage": "Vous avez modifié la description ou le sujet principal de cette photo.",
+            "discard": "Ne pas enregistrer"
         }
     }
 }

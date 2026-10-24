@@ -572,6 +572,48 @@
             "pages": "Pages",
             "media": "Photos",
             "adminOnly": "This page is for administrators only."
+        },
+        "media": {
+            "title": "Photos",
+            "subtitle": "Add your photos here, then use them in your pages.",
+            "count": "No photos | {n} photo | {n} photos",
+            "dropTitle": "Drop your photos here",
+            "dropOr": "or",
+            "choose": "Choose photos",
+            "dropHint": "JPEG, PNG or WebP, up to 15 MB each. You can pick several at once.",
+            "processing": "Preparing…",
+            "dismiss": "Dismiss",
+            "empty": "No photos yet. Add your first ones above.",
+            "loadMore": "Show more",
+            "noAlt": "No description",
+            "details": "Photo details",
+            "alt": "Description",
+            "altHelp": "Describe the photo in a few words, for example \"Living room with a sofa by the window\". It is read aloud to blind visitors and helps Google.",
+            "focal": "Main subject",
+            "focalHelp": "Click on the most important part of the photo. It stays visible when the photo is cropped.",
+            "previewSquare": "Square",
+            "previewWide": "Wide",
+            "info": "{width} × {height} px, added on {date}",
+            "save": "Save",
+            "saved": "Changes saved",
+            "delete": "Delete",
+            "deleteTitle": "Delete this photo?",
+            "deleteMessage": "It will be removed from the library for good.",
+            "deleted": "Photo deleted",
+            "inUseTitle": "This photo is still in use",
+            "inUse": "Remove it from these pages first:",
+            "pickerTitle": "Choose a photo",
+            "errors": {
+                "tooBig": "This photo is too big (15 MB max).",
+                "wrongType": "This file type is not supported. Use JPEG, PNG or WebP.",
+                "unreadable": "This photo could not be read. It may be damaged or too large.",
+                "generic": "Upload failed. Please try again.",
+                "tooManyPixels": "This photo is too large (more than 40 megapixels).",
+                "sessionExpired": "Your session has expired. Please log in again."
+            },
+            "unsavedTitle": "Save the changes to this photo?",
+            "unsavedMessage": "You changed the description or the main subject of this photo.",
+            "discard": "Don't save"
         }
     }
 }

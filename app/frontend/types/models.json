@@ -621,6 +621,170 @@
       "title": "CmsMeRead",
       "type": "object"
     },
+    "CmsMediaListResponse": {
+      "description": "Page of the photo library, newest first.",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/CmsMediaRead"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total"
+      ],
+      "title": "CmsMediaListResponse",
+      "type": "object"
+    },
+    "CmsMediaRead": {
+      "description": "An uploaded photo with the absolute URL of each generated width.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "original_name": {
+          "title": "Original Name",
+          "type": "string"
+        },
+        "alt": {
+          "title": "Alt",
+          "type": "string"
+        },
+        "width": {
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "focal_x": {
+          "title": "Focal X",
+          "type": "number"
+        },
+        "focal_y": {
+          "title": "Focal Y",
+          "type": "number"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "urls": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Urls",
+          "type": "object"
+        },
+        "src": {
+          "title": "Src",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "original_name",
+        "alt",
+        "width",
+        "height",
+        "focal_x",
+        "focal_y",
+        "created_at",
+        "urls",
+        "src"
+      ],
+      "title": "CmsMediaRead",
+      "type": "object"
+    },
+    "CmsMediaUpdate": {
+      "description": "Editable fields of a photo. Omitted fields are left unchanged.",
+      "properties": {
+        "alt": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alt"
+        },
+        "focal_x": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Focal X"
+        },
+        "focal_y": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Focal Y"
+        }
+      },
+      "title": "CmsMediaUpdate",
+      "type": "object"
+    },
+    "CmsMediaUsage": {
+      "description": "A page showing a photo, listed when deleting that photo is refused (409).",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "fixed_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed Key"
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ],
+      "title": "CmsMediaUsage",
+      "type": "object"
+    },
     "ConversationCreate": {
       "description": "Schema for creating a new support conversation.",
       "properties": {
@@ -3819,6 +3983,18 @@
     },
     {
       "$ref": "#/$defs/CmsEditorRead"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaRead"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaListResponse"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaUpdate"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaUsage"
     },
     {
       "$ref": "#/$defs/BackendConfig"
