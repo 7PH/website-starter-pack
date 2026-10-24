@@ -3,7 +3,12 @@
 HTML sanitization utilities using bleach.
 """
 
+import re
+from collections.abc import Callable
+from functools import partial
+
 import bleach
+from bleach.html5lib_shim import Filter
 
 # Safe tags for basic text formatting
 BASIC_TAGS = [
@@ -43,6 +48,13 @@ IMAGE_ATTRIBUTES = {
 
 # Allowed URL schemes for links
 ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+
+# CMS rich text: what the page editor can produce, nothing more.
+RICH_TEXT_TAGS = ["h2", "h3", "p", "br", "strong", "em", "a", "ul", "ol", "li", "blockquote", "img"]
+RICH_TEXT_ATTRIBUTES = {"a": ["href"], "img": ["src", "alt"], "ol": ["start"]}
+
+# Maps an <img> src to the attributes to set on it (src, srcset...), or None to drop the image.
+type ImageResolver = Callable[[str], dict[str, str] | None]
 
 
 def sanitize_html(html: str, allow_images: bool = False) -> str:
@@ -100,3 +112,39 @@ def strip_all_tags(html: str) -> str:
         return ""
 
     return bleach.clean(html, tags=[], strip=True)
+
+
+class _ImageFilter(Filter):
+    """Keeps only images the resolver accepts and sets the attributes it returns."""
+
+    def __init__(self, source, resolve_image: ImageResolver):
+        super().__init__(source)
+        self.resolve_image = resolve_image
+
+    def __iter__(self):
+        for token in super().__iter__():
+            if token.get("name") == "img" and token["type"] in ("StartTag", "EmptyTag"):
+                attributes = self.resolve_image(token["data"].get((None, "src"), ""))
+                if attributes is None:
+                    continue
+                token["data"].update({(None, name): value for name, value in attributes.items()})
+            yield token
+
+
+# Stripping keeps a removed tag's text, which for these is code, not content. Bleach still cleans everything after.
+_CODE_BLOCKS = re.compile(r"<(script|style)\b[^>]*>.*?(</\1\s*>|$)", re.IGNORECASE | re.DOTALL)
+
+
+def sanitize_rich_text(html: str, resolve_image: ImageResolver) -> str:
+    """Sanitize CMS rich text: editor tags only, safe links, images only from the media library."""
+    if not html:
+        return ""
+
+    cleaner = bleach.Cleaner(
+        tags=RICH_TEXT_TAGS,
+        attributes=RICH_TEXT_ATTRIBUTES,
+        protocols=ALLOWED_PROTOCOLS,
+        strip=True,
+        filters=[partial(_ImageFilter, resolve_image=resolve_image)],
+    )
+    return cleaner.clean(_CODE_BLOCKS.sub("", html))

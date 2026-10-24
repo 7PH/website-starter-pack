@@ -41,6 +41,20 @@ from .schemas.cms_media import (
     CmsMediaUpdate,
     CmsMediaUsage,
 )
+from .schemas.cms_page import (
+    CmsAdminPagesResponse,
+    CmsFixedPageItem,
+    CmsPageAdminRead,
+    CmsPageCreate,
+    CmsPageListItem,
+    CmsPageRead,
+    CmsPageSummary,
+    CmsPageUpdate,
+    CmsPostListResponse,
+    CmsSitemapEntry,
+    CmsTemplateField,
+    CmsTemplateRead,
+)
 from .schemas.db_health import (
     DatabaseHealthResponse,
     IndexStats,
@@ -188,4 +202,16 @@ CoreModels = (
     | CmsMediaListResponse
     | CmsMediaUpdate
     | CmsMediaUsage
+    | CmsTemplateField
+    | CmsTemplateRead
+    | CmsPageRead
+    | CmsPageAdminRead
+    | CmsPageSummary
+    | CmsPostListResponse
+    | CmsPageCreate
+    | CmsPageUpdate
+    | CmsPageListItem
+    | CmsFixedPageItem
+    | CmsAdminPagesResponse
+    | CmsSitemapEntry
 )

@@ -14,6 +14,7 @@ app/backend/src/main.py
 app/backend/src/main_ext.py:template
 app/backend/src/constants.py
 app/backend/src/constants_ext.py:template
+app/backend/src/cms_templates_ext.py:template
 app/backend/src/router.py
 app/backend/src/controllers/__init__.py
 app/backend/src/controllers/admin.py
@@ -21,6 +22,7 @@ app/backend/src/controllers/auth.py
 app/backend/src/controllers/backups.py
 app/backend/src/controllers/cms_editors.py
 app/backend/src/controllers/cms_media.py
+app/backend/src/controllers/cms_pages.py
 app/backend/src/controllers/config.py
 app/backend/src/controllers/db_health.py
 app/backend/src/controllers/healthcheck.py
@@ -36,6 +38,8 @@ app/backend/src/helpers/account_deletion.py
 app/backend/src/helpers/auth.py
 app/backend/src/helpers/cms_auth.py
 app/backend/src/helpers/cms_media.py
+app/backend/src/helpers/cms_pages.py
+app/backend/src/helpers/cms_templates.py
 app/backend/src/helpers/auth_tokens.py
 app/backend/src/helpers/db.py
 app/backend/src/helpers/email.py
@@ -73,6 +77,7 @@ app/backend/src/schemas/backup.py
 app/backend/src/schemas/cms_editor.py
 app/backend/src/schemas/cms_media.py
 app/backend/src/schemas/base.py
+app/backend/src/schemas/cms_page.py
 app/backend/src/schemas/config.py
 app/backend/src/schemas/config_ext.py:template
 app/backend/src/schemas/conversation.py
@@ -123,6 +128,7 @@ app/backend/tests/test_username.py
 app/backend/tests/test_conversation_reply_email.py
 app/backend/tests/test_custom_data_privesc.py
 app/backend/tests/test_soft_delete_user.py
+app/backend/tests/test_cms_pages.py
 
 # Frontend - Docker & Tooling
 app/frontend/Dockerfile.dev
@@ -160,6 +166,7 @@ app/frontend/composables/schema.ts
 app/frontend/composables/useBreadcrumb.ts
 app/frontend/composables/useCanonical.ts
 app/frontend/composables/useCmsAccess.ts
+app/frontend/composables/useCmsPages.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
@@ -199,6 +206,7 @@ app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
 app/frontend/utils/name-import.ts
 app/frontend/utils/markdown.ts
+app/frontend/utils/cms.ts
 app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
 app/frontend/components/ui/ModalHeader.vue
@@ -290,6 +298,13 @@ app/frontend/components/cms/CmsMediaDetails.vue
 app/frontend/components/cms/CmsMediaDropzone.vue
 app/frontend/components/cms/CmsMediaGrid.vue
 app/frontend/components/cms/CmsMediaPicker.vue
+app/frontend/components/cms/CmsField.vue
+app/frontend/components/cms/CmsImageInput.vue
+app/frontend/components/cms/CmsPageContent.vue
+app/frontend/components/cms/CmsPageEditor.vue
+app/frontend/components/cms/CmsPublicPage.vue
+app/frontend/components/cms/CmsRichText.vue
+app/frontend/components/cms/CmsRichTextEditor.vue
 app/frontend/components/managed-accounts/BulkImportModal.vue
 app/frontend/pages/admin/backups/index.vue
 app/frontend/pages/admin/config/index.vue
@@ -302,12 +317,17 @@ app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
 app/frontend/pages/admin/users/[id].vue
 app/frontend/pages/admin/cms/media/index.vue
+app/frontend/pages/admin/cms/pages/index.vue
+app/frontend/pages/admin/cms/pages/[id].vue
+app/frontend/pages/admin/cms/fixed/[key].vue
+app/frontend/pages/admin/cms/preview/[id].vue
 app/frontend/plugins/backend-config.ts
 app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts
 app/frontend/plugins/cms-access.client.ts
 app/frontend/server/routes/robots.txt.ts
 app/frontend/server/plugins/strip-headers.ts
+app/frontend/server/cms-sitemap.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 app/frontend/playwright.config.ts
@@ -319,6 +339,7 @@ app/frontend/tests/i18n-alignment.test.ts
 app/frontend/tests/markdown.test.ts
 app/frontend/tests/schema.test.ts
 app/frontend/tests/useCanonical.test.ts
+app/frontend/tests/cms.test.ts
 app/frontend/tests/useBreadcrumb.test.ts
 app/frontend/tests/name-import.test.ts
 

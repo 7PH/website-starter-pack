@@ -1,5 +1,6 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { ROUTE_RULES_EXT } from './config/route-rules-ext';
 import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
@@ -14,6 +15,11 @@ const IS_MOBILE_APP = process.env.MOBILE_APP === '1';
 // route. High-scale apps (precomputed XML, cron-driven indexing) can flip this off
 // and serve /sitemap.xml their own way — via public/, a server route, or upstream Nginx.
 const SITEMAP_ENABLED = process.env.SITEMAP_ENABLED !== 'false';
+
+// CMS mode: public route for free pages and their sitemap entries (see `hooks`).
+// Off = nothing registered, so a sub-app keeps its own catch-all page.
+const CMS_ENABLED = process.env.CMS_ENABLED === 'true';
+const localPath = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 // Content-Security-Policy, built from env so each app's media + analytics
 // origins are allowed. Override or remove it in config/security-headers.ts
@@ -74,6 +80,28 @@ export default defineNuxtConfig({
         '/verify-email': { ssr: false },
         '/reset-password': { ssr: false },
     },
+
+    hooks: CMS_ENABLED
+        ? {
+              // Catch-alls rank last in vue-router, so every app route wins over a CMS page.
+              'pages:extend'(pages) {
+                  if (pages.some((page) => /^\/:\w+\(\.\*\)\*$/.test(page.path))) {
+                      console.warn(
+                          "[cms] CMS pages are unreachable: your app's catch-all route wins. Render CMS pages from it with useCmsPage(slug).",
+                      );
+                      return;
+                  }
+                  pages.push({
+                      name: 'cms-page',
+                      path: '/:slug(.*)*',
+                      file: localPath('./components/cms/CmsPublicPage.vue'),
+                  });
+              },
+              'nitro:config'(nitroConfig) {
+                  nitroConfig.plugins = [...(nitroConfig.plugins ?? []), localPath('./server/cms-sitemap.ts')];
+              },
+          }
+        : {},
 
     app: {
         pageTransition: { name: 'page', mode: 'out-in' },
