@@ -700,6 +700,16 @@
             },
             "previewUnsaved": "Preview with your unsaved changes.",
             "open": "Open"
+        },
+        "inline": {
+            "title": "Quick edit",
+            "edit": "Edit",
+            "editPage": "Edit this page",
+            "save": "Save",
+            "cancel": "Cancel",
+            "saved": "Saved",
+            "fullEditor": "Open the full editor",
+            "unknownField": "This part can't be edited here. Use the full editor."
         }
     }
 }
