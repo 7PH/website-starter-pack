@@ -20,6 +20,7 @@ app/backend/src/controllers/admin.py
 app/backend/src/controllers/auth.py
 app/backend/src/controllers/backups.py
 app/backend/src/controllers/cms_editors.py
+app/backend/src/controllers/cms_media.py
 app/backend/src/controllers/config.py
 app/backend/src/controllers/db_health.py
 app/backend/src/controllers/healthcheck.py
@@ -34,6 +35,7 @@ app/backend/src/controllers/managed_account_groups.py
 app/backend/src/helpers/account_deletion.py
 app/backend/src/helpers/auth.py
 app/backend/src/helpers/cms_auth.py
+app/backend/src/helpers/cms_media.py
 app/backend/src/helpers/auth_tokens.py
 app/backend/src/helpers/db.py
 app/backend/src/helpers/email.py
@@ -69,6 +71,7 @@ app/backend/src/schemas/__init__.py
 app/backend/src/schemas/admin.py
 app/backend/src/schemas/backup.py
 app/backend/src/schemas/cms_editor.py
+app/backend/src/schemas/cms_media.py
 app/backend/src/schemas/base.py
 app/backend/src/schemas/config.py
 app/backend/src/schemas/config_ext.py:template
@@ -113,6 +116,7 @@ app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_stripe_cancel.py
 app/backend/tests/test_file_upload.py
+app/backend/tests/test_cms_media.py
 app/backend/tests/test_sanitize.py
 app/backend/tests/test_user_display.py
 app/backend/tests/test_username.py
@@ -145,6 +149,7 @@ app/frontend/stores/useBackendConfig.ts
 app/frontend/stores/useModal.ts
 
 app/frontend/composables/useApi.ts
+app/frontend/composables/useCmsMedia.ts
 app/frontend/composables/usePriceFormat.ts
 app/frontend/composables/useAnalytics.ts
 app/frontend/composables/useNativeBridge.ts
@@ -279,6 +284,12 @@ app/frontend/composables/organizations/useOrganizationQuotaDisplay.ts
 app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
+app/frontend/components/cms/CmsFocalPicker.vue
+app/frontend/components/cms/CmsImage.vue
+app/frontend/components/cms/CmsMediaDetails.vue
+app/frontend/components/cms/CmsMediaDropzone.vue
+app/frontend/components/cms/CmsMediaGrid.vue
+app/frontend/components/cms/CmsMediaPicker.vue
 app/frontend/components/managed-accounts/BulkImportModal.vue
 app/frontend/pages/admin/backups/index.vue
 app/frontend/pages/admin/config/index.vue
@@ -290,6 +301,7 @@ app/frontend/pages/admin/organizations/index.vue
 app/frontend/pages/admin/organizations/[id].vue
 app/frontend/pages/admin/users/index.vue
 app/frontend/pages/admin/users/[id].vue
+app/frontend/pages/admin/cms/media/index.vue
 app/frontend/plugins/backend-config.ts
 app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts

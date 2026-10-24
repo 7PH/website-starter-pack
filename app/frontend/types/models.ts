@@ -76,6 +76,10 @@ export type Models =
   | PublicPickerPayload
   | CmsMeRead
   | CmsEditorRead
+  | CmsMediaRead
+  | CmsMediaListResponse
+  | CmsMediaUpdate
+  | CmsMediaUsage
   | BackendConfig
   | ConversationCreate
   | ConversationRead
@@ -388,6 +392,23 @@ export type IsEditor = boolean;
 export type UserId3 = number;
 export type Email13 = string | null;
 export type CreatedAt9 = string;
+export type Id9 = number;
+export type OriginalName = string;
+export type Alt = string;
+export type Width = number;
+export type Height = number;
+export type FocalX = number;
+export type FocalY = number;
+export type CreatedAt10 = string;
+export type Src = string;
+export type Items6 = CmsMediaRead[];
+export type Total5 = number;
+export type Alt1 = string | null;
+export type FocalX1 = number | null;
+export type FocalY1 = number | null;
+export type Id10 = number;
+export type Title = string;
+export type FixedKey = string | null;
 export type PasswordMinLength = number;
 export type OrgMaxPerUser = number;
 export type OrgMaxMembers = number;
@@ -414,44 +435,44 @@ export type Content = string;
  * Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
  */
 export type CoreConversationSubtype = "bug_report" | "feature_request";
-export type Id9 = number;
+export type Id11 = number;
 export type Type2 = string;
 export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id10 = number;
+export type Id12 = number;
 export type Email14 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt10 = string | null;
+export type CreatedAt11 = string | null;
 export type UpdatedAt = string | null;
 export type UnreadCount = number;
-export type Id11 = number;
+export type Id13 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt11 = string | null;
-export type Id12 = number;
+export type CreatedAt12 = string | null;
+export type Id14 = number;
 export type Type3 = string;
 export type Subtype1 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt12 = string | null;
+export type CreatedAt13 = string | null;
 export type UpdatedAt1 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
-export type Items6 = ConversationRead[];
-export type Total5 = number;
+export type Items7 = ConversationRead[];
+export type Total6 = number;
 export type Limit2 = number;
 export type Offset2 = number;
 export type Content2 = string;
-export type Items7 = MessageRead[];
-export type Total6 = number;
+export type Items8 = MessageRead[];
+export type Total7 = number;
 export type Limit3 = number;
 export type Offset3 = number;
 export type HasMore = boolean;
@@ -1109,6 +1130,47 @@ export interface CmsEditorRead {
   email: Email13;
   created_at: CreatedAt9;
 }
+/**
+ * An uploaded photo with the absolute URL of each generated width.
+ */
+export interface CmsMediaRead {
+  id: Id9;
+  original_name: OriginalName;
+  alt: Alt;
+  width: Width;
+  height: Height;
+  focal_x: FocalX;
+  focal_y: FocalY;
+  created_at: CreatedAt10;
+  urls: Urls;
+  src: Src;
+}
+export interface Urls {
+  [k: string]: string;
+}
+/**
+ * Page of the photo library, newest first.
+ */
+export interface CmsMediaListResponse {
+  items: Items6;
+  total: Total5;
+}
+/**
+ * Editable fields of a photo. Omitted fields are left unchanged.
+ */
+export interface CmsMediaUpdate {
+  alt?: Alt1;
+  focal_x?: FocalX1;
+  focal_y?: FocalY1;
+}
+/**
+ * A page showing a photo, listed when deleting that photo is refused (409).
+ */
+export interface CmsMediaUsage {
+  id: Id10;
+  title: Title;
+  fixed_key?: FixedKey;
+}
 export interface BackendConfig {
   password_min_length: PasswordMinLength;
   org_max_per_user: OrgMaxPerUser;
@@ -1141,7 +1203,7 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id9;
+  id: Id11;
   type: Type2;
   subtype?: Subtype;
   subject?: Subject1;
@@ -1149,7 +1211,7 @@ export interface ConversationRead {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt10;
+  created_at?: CreatedAt11;
   updated_at?: UpdatedAt;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -1158,7 +1220,7 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id10;
+  id: Id12;
   email: Email14;
   first_name: FirstName7;
   last_name: LastName7;
@@ -1167,19 +1229,19 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id11;
+  id: Id13;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt11;
+  created_at?: CreatedAt12;
 }
 /**
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id12;
+  id: Id14;
   type: Type3;
   subtype?: Subtype1;
   subject?: Subject2;
@@ -1187,7 +1249,7 @@ export interface ConversationDetail {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt12;
+  created_at?: CreatedAt13;
   updated_at?: UpdatedAt1;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
@@ -1197,8 +1259,8 @@ export interface ConversationDetail {
  * Paginated response for conversation list.
  */
 export interface ConversationListResponse {
-  items: Items6;
-  total: Total5;
+  items: Items7;
+  total: Total6;
   limit: Limit2;
   offset: Offset2;
 }
@@ -1212,8 +1274,8 @@ export interface MessageCreate {
  * Paginated response for messages in a conversation.
  */
 export interface MessageListResponse {
-  items: Items7;
-  total: Total6;
+  items: Items8;
+  total: Total7;
   limit: Limit3;
   offset: Offset3;
   has_more: HasMore;

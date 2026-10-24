@@ -39,6 +39,7 @@ ruff>=0.8.0
 
 # File handling & sanitization
 python-magic==0.4.27
+Pillow>=11
 bleach==6.1.0
 
 # Testing
