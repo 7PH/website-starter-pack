@@ -20,7 +20,7 @@ const SITEMAP_ENABLED = process.env.SITEMAP_ENABLED !== 'false';
 // (set to ''); per-route exceptions (e.g. /embed needing `frame-ancestors *`)
 // go in config/route-rules-ext.ts at a path more specific than '/**'.
 const IS_DEV = process.env.NODE_ENV !== 'production';
-const STATIC_ORIGIN = PUBLIC_URL ? PUBLIC_URL.replace('://', '://static.') : '';
+const STATIC_ORIGIN = process.env.STATIC_ORIGIN || (PUBLIC_URL ? PUBLIC_URL.replace('://', '://static.') : '');
 const UMAMI_ORIGIN =
     process.env.NUXT_PUBLIC_UMAMI_ENABLED === 'true' && PUBLIC_URL
         ? PUBLIC_URL.replace('://', `://${process.env.UMAMI_SUBDOMAIN || 'analytics'}.`)
@@ -104,6 +104,7 @@ export default defineNuxtConfig({
             orgSelfServiceSubscriptions: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_SUBSCRIPTIONS - allow org admins to subscribe
             orgSelfServiceCreation: true, // NUXT_PUBLIC_ORG_SELF_SERVICE_CREATION - allow users to create orgs
             orgInvitationsEnabled: false, // NUXT_PUBLIC_ORG_INVITATIONS_ENABLED - use email invitations instead of direct-add
+            cmsEnabled: false, // NUXT_PUBLIC_CMS_ENABLED - CMS mode (editor role, media library, pages)
             adminerUrl: '', // NUXT_PUBLIC_ADMINER_URL - external URL to Adminer
             // Umami Analytics (optional)
             umamiEnabled: false, // NUXT_PUBLIC_UMAMI_ENABLED

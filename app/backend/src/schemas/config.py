@@ -29,6 +29,7 @@ class CoreBackendConfig(BaseModel):
     org_invitations_enabled: bool
     managed_accounts_enabled: bool
     usernames_enabled: bool
+    cms_enabled: bool
 
     # Served so the client validates against one definition instead of a copy.
     username_pattern: str

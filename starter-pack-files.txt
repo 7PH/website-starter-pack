@@ -8,6 +8,7 @@ app/backend/migrations/2026-04-21-v1.4.0-baseline.sql
 app/backend/migrations/2026-04-26-v2.1.0-managed-accounts.sql
 app/backend/migrations/2026-05-16-v3.7.0-perf-indexes.sql
 app/backend/migrations/2026-09-03-v5.0.0-add-user-username.sql
+app/backend/migrations/2026-10-24-vNEXT-cms.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -31,6 +32,7 @@ app/backend/src/controllers/conversations.py
 app/backend/src/controllers/managed_account_groups.py
 app/backend/src/helpers/account_deletion.py
 app/backend/src/helpers/auth.py
+app/backend/src/helpers/cms_auth.py
 app/backend/src/helpers/auth_tokens.py
 app/backend/src/helpers/db.py
 app/backend/src/helpers/email.py
@@ -56,6 +58,7 @@ app/backend/src/helpers/policies.py
 app/backend/src/helpers/redirects.py
 app/backend/src/models/__init__.py
 app/backend/src/models/access_code.py
+app/backend/src/models/cms.py
 app/backend/src/models/conversation.py
 app/backend/src/models/event_log.py
 app/backend/src/models/managed_account_group.py

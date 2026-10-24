@@ -52,6 +52,9 @@ MANAGED_ACCOUNTS_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNTS_MAX_PER_USE
 # Public handles, usable as a login identifier. Off = column stays NULL, no UI.
 USERNAMES_ENABLED = os.environ.get("USERNAMES_ENABLED", "false").lower() == "true"
 
+# CMS mode: editor role, media library and pages built from templates. Off = routes, menus and backup extras are not registered.
+CMS_ENABLED = os.environ.get("CMS_ENABLED", "false").lower() == "true"
+
 # LLM Integration
 LLM_ENABLED = os.environ.get("LLM_ENABLED", "false").lower() == "true"
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")

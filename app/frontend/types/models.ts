@@ -391,6 +391,7 @@ export type OrganizationsEnabled = boolean;
 export type OrgInvitationsEnabled = boolean;
 export type ManagedAccountsEnabled = boolean;
 export type UsernamesEnabled = boolean;
+export type CmsEnabled = boolean;
 export type UsernamePattern = string;
 export type LlmEnabled = boolean;
 export type OrgSelfServiceSubscriptions = boolean;
@@ -1096,6 +1097,7 @@ export interface BackendConfig {
   org_invitations_enabled: OrgInvitationsEnabled;
   managed_accounts_enabled: ManagedAccountsEnabled;
   usernames_enabled: UsernamesEnabled;
+  cms_enabled: CmsEnabled;
   username_pattern: UsernamePattern;
   llm_enabled: LlmEnabled;
   org_self_service_subscriptions: OrgSelfServiceSubscriptions;

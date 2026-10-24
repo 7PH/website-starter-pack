@@ -62,6 +62,7 @@ jobs:
           COMPOSE_PROJECT_NAME=$PROJECT
           PUBLIC_WEBSITE_HOST=$HOST
           PUBLIC_URL=https://$HOST
+          STATIC_ORIGIN=https://static-$HOST
           PUBLIC_PORT=80
           EOF
 

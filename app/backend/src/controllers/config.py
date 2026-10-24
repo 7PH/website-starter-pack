@@ -26,6 +26,7 @@ def get_config() -> BackendConfig:
         org_invitations_enabled=constants.ORG_INVITATIONS_ENABLED,
         managed_accounts_enabled=constants.MANAGED_ACCOUNTS_ENABLED,
         usernames_enabled=constants.USERNAMES_ENABLED,
+        cms_enabled=constants.CMS_ENABLED,
         username_pattern=USERNAME_PATTERN.pattern,
         llm_enabled=constants.LLM_ENABLED,
         org_self_service_subscriptions=constants.ORG_SELF_SERVICE_SUBSCRIPTIONS,
