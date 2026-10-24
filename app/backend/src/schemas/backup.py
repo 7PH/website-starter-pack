@@ -23,6 +23,9 @@ class BackupInfo(BaseModel):
     size: int  # bytes
     created_at: datetime
     comment: str | None = Field(default=None, json_schema_extra={"title": "BackupComment"})
+    # CMS media archive taken with this DB backup (CMS_ENABLED), None when there is none.
+    media_filename: str | None = None
+    media_size: int | None = None  # bytes
 
 
 class BackupListResponse(BaseModel):
