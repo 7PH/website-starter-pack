@@ -80,6 +80,18 @@ export type Models =
   | CmsMediaListResponse
   | CmsMediaUpdate
   | CmsMediaUsage
+  | CmsTemplateField
+  | CmsTemplateRead
+  | CmsPageRead
+  | CmsPageAdminRead
+  | CmsPageSummary
+  | CmsPostListResponse
+  | CmsPageCreate
+  | CmsPageUpdate
+  | CmsPageListItem
+  | CmsFixedPageItem
+  | CmsAdminPagesResponse
+  | CmsSitemapEntry
   | BackendConfig
   | ConversationCreate
   | ConversationRead
@@ -409,6 +421,68 @@ export type FocalY1 = number | null;
 export type Id10 = number;
 export type Title = string;
 export type FixedKey = string | null;
+export type Name10 = string;
+export type Type2 = "text" | "textarea" | "richtext" | "image";
+export type Default = string | null;
+export type IsRequired = boolean;
+export type Max = number | null;
+export type Name11 = string;
+export type Fixed = boolean;
+export type Fields = CmsTemplateField[];
+export type Id11 = number | null;
+export type Template = string;
+export type FixedKey1 = string | null;
+export type Slug = string | null;
+export type Title1 = string;
+export type SeoTitle = string;
+export type SeoDescription = string;
+export type PublishedAt = string | null;
+export type UpdatedAt = string | null;
+export type Id12 = number | null;
+export type Template1 = string;
+export type FixedKey2 = string | null;
+export type Slug1 = string | null;
+export type Title2 = string;
+export type SeoTitle1 = string;
+export type SeoDescription1 = string;
+export type PublishedAt1 = string | null;
+export type UpdatedAt1 = string | null;
+export type Published = boolean;
+export type ShowInBlog = boolean;
+export type SeoDescriptionAuto = string;
+export type Id13 = number;
+export type Slug2 = string;
+export type Title3 = string;
+export type SeoDescription2 = string;
+export type PublishedAt2 = string | null;
+export type Items7 = CmsPageSummary[];
+export type Total6 = number;
+export type Template2 = string;
+export type Title4 = string;
+export type Title5 = string | null;
+export type Slug3 = string | null;
+export type Fields3 = {
+  [k: string]: unknown;
+} | null;
+export type Published1 = boolean | null;
+export type ShowInBlog1 = boolean | null;
+export type SeoTitle2 = string | null;
+export type SeoDescription3 = string | null;
+export type CoverMediaId = number | null;
+export type Id14 = number;
+export type Template3 = string;
+export type Slug4 = string;
+export type Title6 = string;
+export type Published2 = boolean;
+export type ShowInBlog2 = boolean;
+export type PublishedAt3 = string | null;
+export type UpdatedAt2 = string;
+export type Key = string;
+export type UpdatedAt3 = string | null;
+export type Fixed1 = CmsFixedPageItem[];
+export type Pages = CmsPageListItem[];
+export type Loc = string;
+export type Lastmod = string;
 export type PasswordMinLength = number;
 export type OrgMaxPerUser = number;
 export type OrgMaxMembers = number;
@@ -435,44 +509,44 @@ export type Content = string;
  * Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
  */
 export type CoreConversationSubtype = "bug_report" | "feature_request";
-export type Id11 = number;
-export type Type2 = string;
+export type Id15 = number;
+export type Type3 = string;
 export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id12 = number;
+export type Id16 = number;
 export type Email14 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
 export type CreatedAt11 = string | null;
-export type UpdatedAt = string | null;
+export type UpdatedAt4 = string | null;
 export type UnreadCount = number;
-export type Id13 = number;
+export type Id17 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
 export type CreatedAt12 = string | null;
-export type Id14 = number;
-export type Type3 = string;
+export type Id18 = number;
+export type Type4 = string;
 export type Subtype1 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
 export type CreatedAt13 = string | null;
-export type UpdatedAt1 = string | null;
+export type UpdatedAt5 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
-export type Items7 = ConversationRead[];
-export type Total6 = number;
+export type Items8 = ConversationRead[];
+export type Total7 = number;
 export type Limit2 = number;
 export type Offset2 = number;
 export type Content2 = string;
-export type Items8 = MessageRead[];
-export type Total7 = number;
+export type Items9 = MessageRead[];
+export type Total8 = number;
 export type Limit3 = number;
 export type Offset3 = number;
 export type HasMore = boolean;
@@ -1171,6 +1245,128 @@ export interface CmsMediaUsage {
   title: Title;
   fixed_key?: FixedKey;
 }
+export interface CmsTemplateField {
+  name: Name10;
+  type: Type2;
+  label: Label;
+  help: Help;
+  default: Default;
+  required: IsRequired;
+  max: Max;
+}
+export interface Label {
+  [k: string]: string;
+}
+export interface Help {
+  [k: string]: string;
+}
+export interface CmsTemplateRead {
+  name: Name11;
+  label: Label1;
+  fixed: Fixed;
+  fields: Fields;
+}
+export interface Label1 {
+  [k: string]: string;
+}
+/**
+ * A page as the public site sees it: defaults merged, photos expanded, SEO filled.
+ */
+export interface CmsPageRead {
+  id: Id11;
+  template: Template;
+  fixed_key: FixedKey1;
+  slug: Slug;
+  title: Title1;
+  fields: Fields1;
+  seo_title: SeoTitle;
+  seo_description: SeoDescription;
+  cover: CmsMediaRead | null;
+  published_at: PublishedAt;
+  updated_at: UpdatedAt;
+}
+export interface Fields1 {
+  [k: string]: unknown;
+}
+/**
+ * A page in the editor. Here seo_title and seo_description are what the editor typed, empty = automatic (title, seo_description_auto).
+ */
+export interface CmsPageAdminRead {
+  id: Id12;
+  template: Template1;
+  fixed_key: FixedKey2;
+  slug: Slug1;
+  title: Title2;
+  fields: Fields2;
+  seo_title: SeoTitle1;
+  seo_description: SeoDescription1;
+  cover: CmsMediaRead | null;
+  published_at: PublishedAt1;
+  updated_at: UpdatedAt1;
+  published: Published;
+  show_in_blog: ShowInBlog;
+  seo_description_auto: SeoDescriptionAuto;
+}
+export interface Fields2 {
+  [k: string]: unknown;
+}
+/**
+ * A page in a list of posts: no fields, the description doubles as an excerpt.
+ */
+export interface CmsPageSummary {
+  id: Id13;
+  slug: Slug2;
+  title: Title3;
+  seo_description: SeoDescription2;
+  cover: CmsMediaRead | null;
+  published_at: PublishedAt2;
+}
+export interface CmsPostListResponse {
+  items: Items7;
+  total: Total6;
+}
+export interface CmsPageCreate {
+  template: Template2;
+  title: Title4;
+}
+/**
+ * Partial update. Slug, published and show_in_blog are ignored on fixed pages.
+ */
+export interface CmsPageUpdate {
+  title?: Title5;
+  slug?: Slug3;
+  fields?: Fields3;
+  published?: Published1;
+  show_in_blog?: ShowInBlog1;
+  seo_title?: SeoTitle2;
+  seo_description?: SeoDescription3;
+  cover_media_id?: CoverMediaId;
+}
+export interface CmsPageListItem {
+  id: Id14;
+  template: Template3;
+  slug: Slug4;
+  title: Title6;
+  published: Published2;
+  show_in_blog: ShowInBlog2;
+  published_at: PublishedAt3;
+  updated_at: UpdatedAt2;
+}
+export interface CmsFixedPageItem {
+  key: Key;
+  updated_at: UpdatedAt3;
+}
+export interface CmsAdminPagesResponse {
+  fixed: Fixed1;
+  pages: Pages;
+}
+/**
+ * Shaped as a @nuxtjs/sitemap source entry so the frontend can use the endpoint as is.
+ */
+export interface CmsSitemapEntry {
+  loc: Loc;
+  lastmod: Lastmod;
+}
 export interface BackendConfig {
   password_min_length: PasswordMinLength;
   org_max_per_user: OrgMaxPerUser;
@@ -1203,8 +1399,8 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id11;
-  type: Type2;
+  id: Id15;
+  type: Type3;
   subtype?: Subtype;
   subject?: Subject1;
   created_by_id?: CreatedById;
@@ -1212,7 +1408,7 @@ export interface ConversationRead {
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
   created_at?: CreatedAt11;
-  updated_at?: UpdatedAt;
+  updated_at?: UpdatedAt4;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
 }
@@ -1220,7 +1416,7 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id12;
+  id: Id16;
   email: Email14;
   first_name: FirstName7;
   last_name: LastName7;
@@ -1229,7 +1425,7 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id13;
+  id: Id17;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
@@ -1241,8 +1437,8 @@ export interface MessageRead {
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id14;
-  type: Type3;
+  id: Id18;
+  type: Type4;
   subtype?: Subtype1;
   subject?: Subject2;
   created_by_id?: CreatedById1;
@@ -1250,7 +1446,7 @@ export interface ConversationDetail {
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
   created_at?: CreatedAt13;
-  updated_at?: UpdatedAt1;
+  updated_at?: UpdatedAt5;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
   messages?: Messages;
@@ -1259,8 +1455,8 @@ export interface ConversationDetail {
  * Paginated response for conversation list.
  */
 export interface ConversationListResponse {
-  items: Items7;
-  total: Total6;
+  items: Items8;
+  total: Total7;
   limit: Limit2;
   offset: Offset2;
 }
@@ -1274,8 +1470,8 @@ export interface MessageCreate {
  * Paginated response for messages in a conversation.
  */
 export interface MessageListResponse {
-  items: Items8;
-  total: Total7;
+  items: Items9;
+  total: Total8;
   limit: Limit3;
   offset: Offset3;
   has_more: HasMore;

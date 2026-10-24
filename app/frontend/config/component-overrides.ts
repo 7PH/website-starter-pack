@@ -11,6 +11,7 @@ import type { Component } from 'vue';
  * - 'OrganizationsPageActions' - Custom actions header on organizations list page
  * - 'OrganizationsSubscriptionModal' - Custom billing/subscription UI
  * - 'MessagesPageActions' - Custom actions header on messages list page
+ * - 'CmsPageContent' - Look of a free CMS page (CMS_ENABLED). Prop: `page: CmsPageRead`.
  * - 'ModalAuth' - Custom authentication flow
  * - 'Breadcrumb' - Custom breadcrumb visual.
  *     IMPORTANT: your replacement MUST call `useBreadcrumb(items)` first thing

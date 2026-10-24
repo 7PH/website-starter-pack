@@ -16,6 +16,7 @@ from .controllers import (
     backups,
     cms_editors,
     cms_media,
+    cms_pages,
     config,
     db_health,
     healthcheck,
@@ -53,6 +54,7 @@ if MANAGED_ACCOUNTS_ENABLED:
 if CMS_ENABLED:
     router_v1.include_router(cms_editors.router, tags=["CMS"])
     router_v1.include_router(cms_media.router, tags=["CMS"])
+    router_v1.include_router(cms_pages.router, tags=["CMS"])
 if INTERNAL_API_ENABLED:
     router_v1.include_router(internal.router, tags=["Internal"], include_in_schema=False)
 router_v1.include_router(app_router)
