@@ -65,6 +65,27 @@ declare module '~/composables/useNativeBridge' {
 
 Methods added this way are typed everywhere `useNativeBridge()` is called. Core does not call them — only app code does.
 
+## CMS mode (content sites)
+
+For sites a non-technical client edits herself (brochure sites, small businesses). Off by default.
+
+1. Set `CMS_ENABLED=true` in `.env` and rebuild the frontend (the public page route is added at build time).
+2. Declare your templates in `app/backend/src/cms_templates_ext.py` (see the example in that file).
+3. In the admin user page, turn your client into a **CMS editor**. She then sees only **Pages** and **Photos** in the admin, plus a "Modifier le site" link in her menu.
+
+What you get:
+
+- **Photos** (`/admin/cms/media`): upload (JPEG, PNG, WebP, 15 MB, 40 MP max), turned into WebP at 480/960/1600/2400 px, metadata stripped, with alt text and a focal point. Files live in `static/cms/` and are served by the static host (override the origin with `STATIC_ORIGIN`).
+- **Pages** (`/admin/cms/pages`):
+  - **Fixed templates** (`fixed=True`, eg `home`, `site`) have one page each. Read them in your own pages with `useCmsFixed('home')`. Fields she never filled return their `default`.
+  - **Free templates** (core ships `default`: one rich text body) have any number of pages, served at `/<slug>` with SSR, SEO tags and sitemap entries. Your own routes always win over CMS slugs. If your app has its own catch-all page (`pages/[...slug].vue`), the CMS route is not added (the build logs a warning): render CMS pages from your catch-all with `useCmsPage(slug)`. Addresses can't start with `api` (routed to the backend).
+  - List the pages of one template in the order she sets (drag and drop in the pages list, arrows on touch screens) with `useCmsPageList('service')`, eg for a grid of services. List posts with `useCmsPosts()`, render rich text with `<CmsRichText :html>` and photos with `<CmsImage :media>`. Restyle free pages by overriding `CmsPageContent` in `config/component-overrides.ts`.
+  - The editor has a Visual/HTML toggle and a live preview of unsaved changes. Addresses `admin*` and core routes are refused too.
+- **Quick edit on the page itself**: wrap any part of your pages in `<CmsEditable :page="home" field="tagline">…</CmsEditable>`. People who can edit get a pencil opening a modal for that field, and the page refreshes in place. Add `<CmsPageEditButton :page="home" />` for a shortcut to the full editor (free pages get it automatically). Visitors' HTML is unchanged.
+- **Backups** also archive `static/cms/` next to each database dump, and restore both.
+
+Adding a field to a template needs no migration. The `cms_*` tables are created in every app, even with the flag off (they stay empty).
+
 ## Running
 
 For running in production, run `npm start`

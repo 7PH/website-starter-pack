@@ -76,6 +76,11 @@ Sub-apps can replace core components via `config/component-overrides.ts`. Overri
 ### Email templates
 `app/backend/src/templates/email/` is synced from the starterpack. To translate or rebrand an email, put a file with the same name in the app-owned `app/backend/src/templates_app/email/`; it wins over the core one. Add `<name>.subject` there to override the subject line (Jinja, same context as the body).
 
+### CMS mode
+`CMS_ENABLED` (off by default, also read at frontend build time): a site its client edits. Guide in README "CMS mode".
+- In an app: templates go in `cms_templates_ext.py`, page looks in a `CmsPageContent` override. Never add a top-level dynamic page (`pages/[slug].vue`, `pages/[...slug].vue`): it shadows CMS pages.
+- In core: CMS admin screens are client-facing, so unlike other admin pages they're translated (`cms.*` keys). With the flag off, nothing may change for existing apps.
+
 ### Migrations
 Manual SQL in `app/backend/migrations/`. Name new migrations `YYYY-MM-DD-vNEXT-description.sql` — the release skill rewrites `vNEXT` to the target version at release time. Use `IF NOT EXISTS`. Define indexes in both models and migrations.
 
