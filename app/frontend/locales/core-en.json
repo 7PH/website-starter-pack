@@ -564,5 +564,14 @@
                 "importEmpty": "Paste names above to preview."
             }
         }
+    },
+    "cms": {
+        "nav": {
+            "subtitle": "Change your pages and photos",
+            "editSite": "Edit site",
+            "pages": "Pages",
+            "media": "Photos",
+            "adminOnly": "This page is for administrators only."
+        }
     }
 }

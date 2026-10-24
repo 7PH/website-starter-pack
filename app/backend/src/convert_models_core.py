@@ -31,6 +31,10 @@ from .schemas.backup import (
     BackupInfo,
     BackupListResponse,
 )
+from .schemas.cms_editor import (
+    CmsEditorRead,
+    CmsMeRead,
+)
 from .schemas.db_health import (
     DatabaseHealthResponse,
     IndexStats,
@@ -171,4 +175,7 @@ CoreModels = (
     | ManagedAccountBulkCreated
     | PublicPickerEntry
     | PublicPickerPayload
+    # CMS models
+    | CmsMeRead
+    | CmsEditorRead
 )

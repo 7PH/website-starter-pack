@@ -8,6 +8,8 @@
 export interface AdminNavItem {
     /** Display label */
     label: string;
+    /** i18n key, wins over label when set (for screens CMS editors use) */
+    labelKey?: string;
     /** Icon name (e.g., 'i-lucide-users') */
     icon: string;
     /** Route path (for internal links) */
@@ -20,6 +22,8 @@ export interface AdminNavItem {
     order?: number;
     /** Optional condition function - item hidden if returns false */
     condition?: () => boolean;
+    /** Also shown to CMS editors, who only see these items */
+    editorAccess?: boolean;
 }
 
 /**
@@ -27,6 +31,24 @@ export interface AdminNavItem {
  * These are managed by the starterpack.
  */
 export const CORE_ADMIN_NAV: AdminNavItem[] = [
+    {
+        label: 'Pages',
+        labelKey: 'cms.nav.pages',
+        icon: 'i-lucide-file-text',
+        to: '/admin/cms/pages',
+        order: 5,
+        condition: isCmsEnabled,
+        editorAccess: true,
+    },
+    {
+        label: 'Photos',
+        labelKey: 'cms.nav.media',
+        icon: 'i-lucide-image',
+        to: '/admin/cms/media',
+        order: 6,
+        condition: isCmsEnabled,
+        editorAccess: true,
+    },
     {
         label: 'Users',
         icon: 'i-lucide-users',

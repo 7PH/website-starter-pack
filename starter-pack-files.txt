@@ -19,6 +19,7 @@ app/backend/src/controllers/__init__.py
 app/backend/src/controllers/admin.py
 app/backend/src/controllers/auth.py
 app/backend/src/controllers/backups.py
+app/backend/src/controllers/cms_editors.py
 app/backend/src/controllers/config.py
 app/backend/src/controllers/db_health.py
 app/backend/src/controllers/healthcheck.py
@@ -67,6 +68,7 @@ app/backend/src/models/user.py
 app/backend/src/schemas/__init__.py
 app/backend/src/schemas/admin.py
 app/backend/src/schemas/backup.py
+app/backend/src/schemas/cms_editor.py
 app/backend/src/schemas/base.py
 app/backend/src/schemas/config.py
 app/backend/src/schemas/config_ext.py:template
@@ -97,6 +99,7 @@ app/backend/src/templates
 app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
+app/backend/tests/test_cms_editors.py
 app/backend/tests/test_admin_billing.py
 app/backend/tests/test_auth_code.py
 app/backend/tests/test_config.py
@@ -150,6 +153,7 @@ app/frontend/composables/usePremiumStatus.ts
 app/frontend/composables/schema.ts
 app/frontend/composables/useBreadcrumb.ts
 app/frontend/composables/useCanonical.ts
+app/frontend/composables/useCmsAccess.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
@@ -173,6 +177,7 @@ app/frontend/composables/useUserDisplay.ts
 app/frontend/composables/useOverridable.ts
 app/frontend/middleware/auth.ts
 app/frontend/middleware/admin.ts
+app/frontend/middleware/cms.ts
 app/frontend/middleware/managed-accounts-enabled.ts
 app/frontend/middleware/nonmanaged-only.ts
 app/frontend/types/modal.ts
@@ -287,6 +292,7 @@ app/frontend/pages/admin/users/[id].vue
 app/frontend/plugins/backend-config.ts
 app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts
+app/frontend/plugins/cms-access.client.ts
 app/frontend/server/routes/robots.txt.ts
 app/frontend/server/plugins/strip-headers.ts
 app/frontend/locales/core-en.json

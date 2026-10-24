@@ -74,6 +74,8 @@ export type Models =
   | ManagedAccountBulkCreated
   | PublicPickerEntry
   | PublicPickerPayload
+  | CmsMeRead
+  | CmsEditorRead
   | BackendConfig
   | ConversationCreate
   | ConversationRead
@@ -380,6 +382,10 @@ export type ManagedAccountId = number;
 export type DisplayName7 = string | null;
 export type GroupName = string;
 export type Members1 = PublicPickerEntry[];
+export type IsEditor = boolean;
+export type UserId3 = number;
+export type Email13 = string | null;
+export type CreatedAt9 = string;
 export type PasswordMinLength = number;
 export type OrgMaxPerUser = number;
 export type OrgMaxMembers = number;
@@ -412,12 +418,12 @@ export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
 export type Id10 = number;
-export type Email13 = string;
+export type Email14 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt9 = string | null;
+export type CreatedAt10 = string | null;
 export type UpdatedAt = string | null;
 export type UnreadCount = number;
 export type Id11 = number;
@@ -425,7 +431,7 @@ export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt10 = string | null;
+export type CreatedAt11 = string | null;
 export type Id12 = number;
 export type Type3 = string;
 export type Subtype1 = string | null;
@@ -433,7 +439,7 @@ export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt11 = string | null;
+export type CreatedAt12 = string | null;
 export type UpdatedAt1 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
@@ -1085,6 +1091,20 @@ export interface PublicPickerPayload {
   group_name: GroupName;
   members: Members1;
 }
+/**
+ * CMS rights of the current user. Admins are always editors.
+ */
+export interface CmsMeRead {
+  is_editor: IsEditor;
+}
+/**
+ * A user with CMS editor rights.
+ */
+export interface CmsEditorRead {
+  user_id: UserId3;
+  email: Email13;
+  created_at: CreatedAt9;
+}
 export interface BackendConfig {
   password_min_length: PasswordMinLength;
   org_max_per_user: OrgMaxPerUser;
@@ -1125,7 +1145,7 @@ export interface ConversationRead {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt9;
+  created_at?: CreatedAt10;
   updated_at?: UpdatedAt;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -1135,7 +1155,7 @@ export interface ConversationRead {
  */
 export interface ConversationUserPreview {
   id: Id10;
-  email: Email13;
+  email: Email14;
   first_name: FirstName7;
   last_name: LastName7;
 }
@@ -1149,7 +1169,7 @@ export interface MessageRead {
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt10;
+  created_at?: CreatedAt11;
 }
 /**
  * Schema for conversation with messages.
@@ -1163,7 +1183,7 @@ export interface ConversationDetail {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt11;
+  created_at?: CreatedAt12;
   updated_at?: UpdatedAt1;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
