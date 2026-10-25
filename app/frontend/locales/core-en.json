@@ -563,6 +563,12 @@
                 "importFailed": "Couldn't import accounts.",
                 "importEmpty": "Paste names above to preview."
             }
+        },
+        "errorPage": {
+            "notFoundTitle": "Page not found",
+            "notFoundMessage": "This page doesn't exist or has moved.",
+            "title": "Something went wrong",
+            "message": "The page couldn't be loaded. Please try again in a moment."
         }
     },
     "cms": {

@@ -21,7 +21,8 @@ const { uiLocale } = useAppLocale();
             <ImpersonationBanner />
             <component :is="PageHeader" />
             <main class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-                <NuxtPage />
+                <!-- error.vue fills the slot, routes get the page. -->
+                <slot><NuxtPage /></slot>
             </main>
             <component :is="PageFooter" v-if="showFooter" />
 
