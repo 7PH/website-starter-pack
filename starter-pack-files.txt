@@ -144,6 +144,7 @@ app/frontend/package.core.json
 app/frontend/package.app.json:template
 app/frontend/nuxt.config.ts
 app/frontend/app.config.ts
+app/frontend/error.vue:template
 app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
 app/frontend/layouts/fullheight.vue

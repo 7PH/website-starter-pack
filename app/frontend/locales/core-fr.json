@@ -563,6 +563,12 @@
                 "importFailed": "Impossible d'importer les comptes.",
                 "importEmpty": "Collez des noms ci-dessus pour prévisualiser."
             }
+        },
+        "errorPage": {
+            "notFoundTitle": "Page introuvable",
+            "notFoundMessage": "Cette page n'existe pas ou a été déplacée.",
+            "title": "Une erreur est survenue",
+            "message": "La page n'a pas pu s'afficher. Réessayez dans quelques instants."
         }
     },
     "cms": {
