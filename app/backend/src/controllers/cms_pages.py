@@ -2,12 +2,14 @@
 
 """CMS pages (CMS_ENABLED): public reads, and editing for admins and editors."""
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..helpers.cms_auth import get_current_cms_editor
-from ..helpers.cms_pages import apply_update, new_fixed_page, page_to_read, pages_to_summaries, save_page, unique_slug
+from ..helpers.cms_pages import apply_update, new_fixed_page, page_to_read, pages_to_read, save_page, unique_slug
 from ..helpers.cms_templates import get_templates
 from ..helpers.db import get_session
 from ..models.cms import CmsPageBase
@@ -21,7 +23,6 @@ from ..schemas.cms_page import (
     CmsPageOrder,
     CmsPageRead,
     CmsPageUpdate,
-    CmsPostListResponse,
     CmsSitemapEntry,
     CmsTemplateField,
     CmsTemplateRead,
@@ -81,23 +82,17 @@ def list_pages_by_template(
     session: Session = Depends(get_session),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
+    order: Literal["position", "published_at"] = "position",
 ):
-    """Published pages of one template (eg every service), in the order the editor set."""
+    """Published pages of one template (eg every service), in the order the editor set, or newest first (eg a blog)."""
     query = _published_pages(session).filter(CmsPageBase.template == template)
-    pages = query.order_by(CmsPageBase.position, CmsPageBase.id).offset(offset).limit(limit).all()
-    return CmsPageListResponse(items=[page_to_read(session, p) for p in pages], total=query.count())
-
-
-@router.get("/posts", response_model=CmsPostListResponse)
-def list_posts(
-    session: Session = Depends(get_session),
-    offset: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=50),
-):
-    """Published pages shown in the blog, newest first."""
-    query = _published_pages(session).filter(CmsPageBase.show_in_blog.is_(True))
-    pages = query.order_by(CmsPageBase.published_at.desc(), CmsPageBase.id.desc()).offset(offset).limit(limit).all()
-    return CmsPostListResponse(items=pages_to_summaries(session, pages), total=query.count())
+    if order == "published_at":
+        query = query.order_by(CmsPageBase.published_at.desc(), CmsPageBase.id.desc())
+    else:
+        query = query.order_by(CmsPageBase.position, CmsPageBase.id)
+    return CmsPageListResponse(
+        items=pages_to_read(session, query.offset(offset).limit(limit).all()), total=query.count()
+    )
 
 
 @router.get("/sitemap", response_model=list[CmsSitemapEntry])

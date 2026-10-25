@@ -1,20 +1,21 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script lang="ts" setup>
 // Quick edit of one field of a CMS page, from the page itself. Saves only that field; the page's data reloads in place.
+import { cmsLabel, isEmptyField } from '~/utils/cms';
+
 const props = defineProps<{ page: CmsPageRead; field: string }>();
 const open = defineModel<boolean>('open', { required: true });
 
 const { t, locale } = useI18n();
 const api = useApi();
-const { showSuccess, showError } = useToastHelpers();
+const { showSuccess, showWarning } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 
 const isFixed = props.page.fixed_key != null;
 const endpoint = isFixed
     ? `/cms/admin/fixed/${encodeURIComponent(props.page.fixed_key!)}`
     : `/cms/admin/pages/${props.page.id}`;
 const editorUrl = isFixed ? `/admin/cms/fixed/${props.page.fixed_key}` : `/admin/cms/pages/${props.page.id}`;
-// Same keys as useCmsFixed / useCmsPage, so the page refreshes without a reload.
-const dataKey = isFixed ? `cms-fixed-${props.page.fixed_key}` : `cms-page-${props.page.slug}`;
 
 const [{ data: current, pending }, { data: templates }] = await Promise.all([
     useAsyncData(`cms-inline-${endpoint}`, () => api.get<CmsPageAdminRead>(endpoint), { server: false }),
@@ -62,7 +63,9 @@ watch(
 const saving = ref(false);
 async function save() {
     const field = fieldDef.value;
-    if (!field) return;
+    if (!field || !current.value) return;
+    if (field.required && isEmptyField(field, value.value))
+        return showWarning(t('cms.pages.required', { field: cmsLabel(field.label, locale.value) }));
     const media = (value.value as CmsMediaRead | null) ?? null;
     const body =
         ownField?.name === 'title'
@@ -76,13 +79,13 @@ async function save() {
                 };
     saving.value = true;
     try {
-        await api.patch(endpoint, body);
-        clearNuxtData(`cms-inline-${endpoint}`);
-        await refreshNuxtData(dataKey);
+        await api.patch(endpoint, { ...body, updated_at: current.value.updated_at });
+        // Lists and blocks built from CMS data (useCmsPageList...) may show this field too. Also reloads this modal's copy.
+        await refreshNuxtData();
         showSuccess(t('cms.inline.saved'));
         open.value = false;
     } catch (e) {
-        showError(e, 'core.errors.generic');
+        showCmsError(e, { fields: [field], onReload: () => refreshNuxtData() });
     } finally {
         saving.value = false;
     }
@@ -109,7 +112,7 @@ async function save() {
                         :label="t('cms.inline.save')"
                         icon="i-lucide-check"
                         :loading="saving"
-                        :disabled="!fieldDef"
+                        :disabled="!fieldDef || !current"
                         @click="save"
                     />
                 </div>

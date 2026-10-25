@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .cms_media import CmsMediaRead
+from .cms_media import CmsMediaPublic, CmsMediaRead
 
 
 class CmsTemplateField(BaseModel):
@@ -40,28 +40,20 @@ class CmsPageRead(BaseModel):
     fields: dict[str, Any]
     seo_title: str
     seo_description: str
-    cover: CmsMediaRead | None
+    # Image fields inside `fields` have the same shape.
+    cover: CmsMediaPublic | None
     published_at: datetime | None
+    # Send it back on save: a page saved elsewhere since then is refused (409 changed_elsewhere).
     updated_at: datetime | None
 
 
 class CmsPageAdminRead(CmsPageRead):
     """A page in the editor. Here seo_title and seo_description are what the editor typed, empty = automatic (title, seo_description_auto)."""
 
-    published: bool
-    show_in_blog: bool
-    seo_description_auto: str
-
-
-class CmsPageSummary(BaseModel):
-    """A page in a list of posts: no fields, the description doubles as an excerpt."""
-
-    id: int
-    slug: str
-    title: str
-    seo_description: str
+    # Image fields inside `fields` have the same shape.
     cover: CmsMediaRead | None
-    published_at: datetime | None
+    published: bool
+    seo_description_auto: str
 
 
 class CmsPageListResponse(BaseModel):
@@ -75,24 +67,22 @@ class CmsPageOrder(BaseModel):
     ids: list[int] = Field(max_length=500)
 
 
-class CmsPostListResponse(BaseModel):
-    items: list[CmsPageSummary]
-    total: int
-
-
 class CmsPageCreate(BaseModel):
     template: str
     title: str = Field(min_length=1, max_length=200)
 
 
 class CmsPageUpdate(BaseModel):
-    """Partial update. Slug, published and show_in_blog are ignored on fixed pages."""
+    """Partial update. Slug, published and published_at are ignored on fixed pages."""
 
     title: str | None = Field(None, max_length=200)
     slug: str | None = Field(None, max_length=200)
     fields: dict[str, Any] | None = None
     published: bool | None = None
-    show_in_blog: bool | None = None
+    # Imports only: the editor lets publishing set it.
+    published_at: datetime | None = None
+    # The page's updated_at when the client loaded it (None for a fixed page never saved). Omit to skip the check.
+    updated_at: datetime | None = None
     seo_title: str | None = Field(None, max_length=200)
     seo_description: str | None = Field(None, max_length=300)
     cover_media_id: int | None = None
@@ -104,7 +94,6 @@ class CmsPageListItem(BaseModel):
     slug: str
     title: str
     published: bool
-    show_in_blog: bool
     published_at: datetime | None
     updated_at: datetime
 

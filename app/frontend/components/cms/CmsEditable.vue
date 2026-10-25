@@ -2,17 +2,25 @@
 <script lang="ts" setup>
 // Wraps a piece of a CMS page so people who can edit it get a pencil opening a quick-edit modal. Visitors get the slot only.
 // `field` is a template field name, or 'title' for the title of a free page.
-defineProps<{ page: CmsPageRead | null | undefined; field: string }>();
+// For an empty field, pass `addLabel` instead of a slot: editors get an add button, visitors nothing at all.
+defineProps<{ page: CmsPageRead | null | undefined; field: string; addLabel?: string }>();
 
 const { t } = useI18n();
-const { canEdit } = useCmsAccess();
+const canEdit = useCmsEditInPlace();
 const open = ref(false);
 </script>
 
 <template>
-    <div class="relative group/cms">
+    <!-- Client only: edit rights are known in the browser, and visitors' HTML must stay untouched. Empty fallbacks: no placeholder <span> either. -->
+    <ClientOnly v-if="addLabel">
+        <div v-if="canEdit && page">
+            <UButton :label="addLabel" icon="i-lucide-plus" color="neutral" variant="outline" @click="open = true" />
+            <LazyCmsInlineEditModal v-if="open" v-model:open="open" :page="page" :field="field" />
+        </div>
+        <template #fallback />
+    </ClientOnly>
+    <div v-else class="relative group/cms">
         <slot />
-        <!-- Client only: edit rights are known in the browser, and visitors' HTML must stay untouched. -->
         <ClientOnly>
             <template v-if="canEdit && page">
                 <div
@@ -28,6 +36,7 @@ const open = ref(false);
                 />
                 <LazyCmsInlineEditModal v-if="open" v-model:open="open" :page="page" :field="field" />
             </template>
+            <template #fallback />
         </ClientOnly>
     </div>
 </template>

@@ -85,9 +85,10 @@ export default defineNuxtConfig({
         ? {
               // Catch-alls rank last in vue-router, so every app route wins over a CMS page.
               'pages:extend'(pages) {
-                  if (pages.some((page) => /^\/:\w+\(\.\*\)\*$/.test(page.path))) {
+                  // A top-level param route (pages/[slug].vue, pages/[...slug].vue) would take every address first.
+                  if (pages.some((page) => /^\/:[^/]+$/.test(page.path))) {
                       console.warn(
-                          "[cms] CMS pages are unreachable: your app's catch-all route wins. Render CMS pages from it with useCmsPage(slug).",
+                          "[cms] CMS pages are unreachable: your app's top-level dynamic route wins. Render CMS pages from it with useCmsPage(slug).",
                       );
                       return;
                   }
@@ -99,6 +100,10 @@ export default defineNuxtConfig({
               },
               'nitro:config'(nitroConfig) {
                   nitroConfig.plugins = [...(nitroConfig.plugins ?? []), localPath('./server/cms-sitemap.ts')];
+                  nitroConfig.handlers = [
+                      ...(nitroConfig.handlers ?? []),
+                      { middleware: true, handler: localPath('./server/cms-trailing-slash.ts') },
+                  ];
               },
           }
         : {},

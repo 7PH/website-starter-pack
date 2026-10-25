@@ -693,16 +693,12 @@
       "title": "CmsMediaListResponse",
       "type": "object"
     },
-    "CmsMediaRead": {
-      "description": "An uploaded photo with the absolute URL of each generated width.",
+    "CmsMediaPublic": {
+      "description": "A photo as public pages show it, with the absolute URL of each generated width.",
       "properties": {
         "id": {
           "title": "Id",
           "type": "integer"
-        },
-        "original_name": {
-          "title": "Original Name",
-          "type": "string"
         },
         "alt": {
           "title": "Alt",
@@ -724,11 +720,6 @@
           "title": "Focal Y",
           "type": "number"
         },
-        "created_at": {
-          "format": "date-time",
-          "title": "Created At",
-          "type": "string"
-        },
         "urls": {
           "additionalProperties": {
             "type": "string"
@@ -743,15 +734,76 @@
       },
       "required": [
         "id",
-        "original_name",
         "alt",
         "width",
         "height",
         "focal_x",
         "focal_y",
-        "created_at",
         "urls",
         "src"
+      ],
+      "title": "CmsMediaPublic",
+      "type": "object"
+    },
+    "CmsMediaRead": {
+      "description": "A photo in the library, as editors see it.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "alt": {
+          "title": "Alt",
+          "type": "string"
+        },
+        "width": {
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "focal_x": {
+          "title": "Focal X",
+          "type": "number"
+        },
+        "focal_y": {
+          "title": "Focal Y",
+          "type": "number"
+        },
+        "urls": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Urls",
+          "type": "object"
+        },
+        "src": {
+          "title": "Src",
+          "type": "string"
+        },
+        "original_name": {
+          "title": "Original Name",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "alt",
+        "width",
+        "height",
+        "focal_x",
+        "focal_y",
+        "urls",
+        "src",
+        "original_name",
+        "created_at"
       ],
       "title": "CmsMediaRead",
       "type": "object"
@@ -930,10 +982,6 @@
           "title": "Published",
           "type": "boolean"
         },
-        "show_in_blog": {
-          "title": "Show In Blog",
-          "type": "boolean"
-        },
         "seo_description_auto": {
           "title": "Seo Description Auto",
           "type": "string"
@@ -952,7 +1000,6 @@
         "published_at",
         "updated_at",
         "published",
-        "show_in_blog",
         "seo_description_auto"
       ],
       "title": "CmsPageAdminRead",
@@ -1000,10 +1047,6 @@
           "title": "Published",
           "type": "boolean"
         },
-        "show_in_blog": {
-          "title": "Show In Blog",
-          "type": "boolean"
-        },
         "published_at": {
           "anyOf": [
             {
@@ -1028,7 +1071,6 @@
         "slug",
         "title",
         "published",
-        "show_in_blog",
         "published_at",
         "updated_at"
       ],
@@ -1134,7 +1176,7 @@
         "cover": {
           "anyOf": [
             {
-              "$ref": "#/$defs/CmsMediaRead"
+              "$ref": "#/$defs/CmsMediaPublic"
             },
             {
               "type": "null"
@@ -1182,61 +1224,8 @@
       "title": "CmsPageRead",
       "type": "object"
     },
-    "CmsPageSummary": {
-      "description": "A page in a list of posts: no fields, the description doubles as an excerpt.",
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "integer"
-        },
-        "slug": {
-          "title": "Slug",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "seo_description": {
-          "title": "Seo Description",
-          "type": "string"
-        },
-        "cover": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/CmsMediaRead"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "published_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Published At"
-        }
-      },
-      "required": [
-        "id",
-        "slug",
-        "title",
-        "seo_description",
-        "cover",
-        "published_at"
-      ],
-      "title": "CmsPageSummary",
-      "type": "object"
-    },
     "CmsPageUpdate": {
-      "description": "Partial update. Slug, published and show_in_blog are ignored on fixed pages.",
+      "description": "Partial update. Slug, published and published_at are ignored on fixed pages.",
       "properties": {
         "title": {
           "anyOf": [
@@ -1289,17 +1278,31 @@
           "default": null,
           "title": "Published"
         },
-        "show_in_blog": {
+        "published_at": {
           "anyOf": [
             {
-              "type": "boolean"
+              "format": "date-time",
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "title": "Show In Blog"
+          "title": "Published At"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
         },
         "seo_title": {
           "anyOf": [
@@ -1341,27 +1344,6 @@
         }
       },
       "title": "CmsPageUpdate",
-      "type": "object"
-    },
-    "CmsPostListResponse": {
-      "properties": {
-        "items": {
-          "items": {
-            "$ref": "#/$defs/CmsPageSummary"
-          },
-          "title": "Items",
-          "type": "array"
-        },
-        "total": {
-          "title": "Total",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "items",
-        "total"
-      ],
-      "title": "CmsPostListResponse",
       "type": "object"
     },
     "CmsSitemapEntry": {
@@ -4687,6 +4669,9 @@
       "$ref": "#/$defs/CmsEditorRead"
     },
     {
+      "$ref": "#/$defs/CmsMediaPublic"
+    },
+    {
       "$ref": "#/$defs/CmsMediaRead"
     },
     {
@@ -4709,12 +4694,6 @@
     },
     {
       "$ref": "#/$defs/CmsPageAdminRead"
-    },
-    {
-      "$ref": "#/$defs/CmsPageSummary"
-    },
-    {
-      "$ref": "#/$defs/CmsPostListResponse"
     },
     {
       "$ref": "#/$defs/CmsPageListResponse"

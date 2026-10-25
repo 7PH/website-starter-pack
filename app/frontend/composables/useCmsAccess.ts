@@ -51,3 +51,10 @@ export function useCmsAccess() {
 
     return { canEdit, isEditorOnly, refresh, ensureLoaded };
 }
+
+/** Edit controls shown on the page itself (pencils, edit buttons). None in the admin: the preview there shows the editor's unsaved changes, a quick edit would save over them. */
+export function useCmsEditInPlace() {
+    const { canEdit } = useCmsAccess();
+    const route = useRoute();
+    return computed(() => canEdit.value && !route.path.startsWith('/admin'));
+}

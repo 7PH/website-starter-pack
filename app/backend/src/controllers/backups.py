@@ -58,7 +58,7 @@ def parse_backup_comment(filename: str) -> str | None:
 def media_path(db_filename: str) -> Path:
     """Media archive paired with a DB backup: same timestamp and tag, different prefix."""
     stem = db_filename.removeprefix(DB_PREFIX).removesuffix(".sql.gz")
-    return BACKUP_DIR / f"{MEDIA_PREFIX}{stem}.tar.gz"
+    return BACKUP_DIR / f"{MEDIA_PREFIX}{stem}.tar"
 
 
 def _backup_info(filepath: Path) -> BackupInfo:
@@ -149,7 +149,8 @@ def backup_media(dest: Path) -> None:
     """Archive the CMS media folder. Written under a temp name so a failed run never pairs a half archive."""
     part = dest.with_name(dest.name + ".part")
     try:
-        with tarfile.open(part, "w:gz") as tar:
+        # Plain tar: WebP files don't compress, gzip would only cost CPU.
+        with tarfile.open(part, "w") as tar:
             # An empty archive still pairs, so restoring it empties the folder to match the DB.
             if CMS_MEDIA_DIR.exists():
                 tar.add(CMS_MEDIA_DIR, arcname=".")
@@ -166,7 +167,7 @@ def extract_media(archive: Path) -> Path:
     # Same filesystem as the target, so the renames in swap_media are atomic (a /tmp dir may be another mount).
     work = Path(tempfile.mkdtemp(dir=CMS_MEDIA_DIR.parent, prefix=".cms-restore-"))
     try:
-        with tarfile.open(archive, "r:gz") as tar:
+        with tarfile.open(archive, "r") as tar:
             tar.extractall(work / "new", filter="data")
         (work / "new").mkdir(exist_ok=True)
     except (OSError, tarfile.TarError) as e:
@@ -293,7 +294,7 @@ def get_backup(
     return FileResponse(
         path=filepath,
         filename=filename,
-        media_type="application/gzip",
+        media_type="application/x-tar" if filename.endswith(".tar") else "application/gzip",
     )
 
 

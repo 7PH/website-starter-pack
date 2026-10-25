@@ -8,9 +8,10 @@ CREATE TABLE IF NOT EXISTS cms_editors (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Files live in static/cms/media/<id>/<width>.webp. The original upload is not kept.
+-- Files live in static/cms/media/<id>-<token>/<width>.webp. The original upload is not kept.
 CREATE TABLE IF NOT EXISTS cms_media (
     id SERIAL PRIMARY KEY,
+    token VARCHAR(16) NOT NULL,
     original_name VARCHAR(255) NOT NULL,
     alt VARCHAR(300) NOT NULL DEFAULT '',
     width INTEGER NOT NULL,
@@ -30,7 +31,6 @@ CREATE TABLE IF NOT EXISTS cms_pages (
     title VARCHAR(200) NOT NULL DEFAULT '',
     fields JSONB NOT NULL DEFAULT '{}'::jsonb,
     published BOOLEAN NOT NULL DEFAULT false,
-    show_in_blog BOOLEAN NOT NULL DEFAULT false,
     seo_title VARCHAR(200) NOT NULL DEFAULT '',
     seo_description VARCHAR(300) NOT NULL DEFAULT '',
     cover_media_id INTEGER REFERENCES cms_media(id) ON DELETE SET NULL,

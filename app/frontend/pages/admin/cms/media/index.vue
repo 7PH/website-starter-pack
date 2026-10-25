@@ -6,7 +6,7 @@ definePageMeta({
 });
 
 const { t } = useI18n();
-const { showError } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 const { items, total, loading, hasMore, load, add, replace, remove } = useCmsMediaLibrary();
 
 const selected = ref<CmsMediaRead | null>(null);
@@ -45,7 +45,7 @@ const panelOpen = computed({
 });
 
 function loadMore(reset = false) {
-    load(reset).catch((error) => showError(error, 'core.errors.generic'));
+    load(reset).catch((error) => showCmsError(error));
 }
 
 onMounted(() => loadMore(true));

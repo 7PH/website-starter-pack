@@ -3,6 +3,8 @@
 // Default look of a free page: title, cover, body, each with a quick-edit pencil for editors. Override 'CmsPageContent' to render your own templates.
 const props = defineProps<{ page: CmsPageRead }>();
 
+const { t } = useI18n();
+
 const body = computed(() => (typeof props.page.fields.body === 'string' ? props.page.fields.body : ''));
 </script>
 
@@ -11,15 +13,15 @@ const body = computed(() => (typeof props.page.fields.body === 'string' ? props.
         <CmsEditable :page="page" field="title" class="mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">{{ page.title }}</h1>
         </CmsEditable>
-        <CmsEditable :page="page" field="cover" class="mb-8">
+        <CmsEditable v-if="page.cover" :page="page" field="cover">
             <CmsImage
-                v-if="page.cover"
                 :media="page.cover"
                 sizes="(min-width: 768px) 768px, 100vw"
-                class="w-full aspect-video object-cover rounded-xl"
+                class="mb-8 w-full aspect-video object-cover rounded-xl"
                 eager
             />
         </CmsEditable>
+        <CmsEditable v-else :page="page" field="cover" :add-label="t('cms.inline.addCover')" class="mb-8" />
         <CmsEditable :page="page" field="body">
             <CmsRichText :html="body" />
         </CmsEditable>

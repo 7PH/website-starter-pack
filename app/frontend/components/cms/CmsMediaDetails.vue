@@ -8,7 +8,8 @@ const emit = defineEmits<{ updated: [media: CmsMediaRead]; deleted: [id: number]
 const { t, locale } = useI18n();
 const api = useApi();
 const modal = useModalStore();
-const { showSuccess, showError } = useToastHelpers();
+const { showSuccess } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 
 const ALT_MAX = 300;
 const alt = ref('');
@@ -53,7 +54,7 @@ async function save(): Promise<boolean> {
         showSuccess(t('cms.media.saved'));
         return true;
     } catch (error) {
-        showError(error, 'core.errors.generic');
+        showCmsError(error);
         return false;
     } finally {
         saving.value = false;
@@ -81,7 +82,7 @@ async function remove() {
         emit('deleted', props.media.id);
         showSuccess(t('cms.media.deleted'));
     } catch (error) {
-        showError(error, 'core.errors.generic');
+        showCmsError(error);
     } finally {
         deleting.value = false;
     }

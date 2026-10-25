@@ -58,7 +58,7 @@ def _make_db_backup(backup_dir, stamp: str, mtime: int, media: bool = False) -> 
     (backup_dir / name).write_bytes(gzip.compress(b"db", mtime=0))
     os.utime(backup_dir / name, (mtime, mtime))
     if media:
-        (backup_dir / f"cms_media_{stamp}_automatic.tar.gz").write_bytes(b"media")
+        (backup_dir / f"cms_media_{stamp}_automatic.tar").write_bytes(b"media")
     return name
 
 
@@ -87,7 +87,7 @@ class TestFlagOff:
         backup_dir, _ = dirs
         _make_db_backup(backup_dir, "2026-01-01_04-00-00", 1000, media=True)
         with pytest.raises(HTTPException) as exc:
-            backups.get_backup("cms_media_2026-01-01_04-00-00_automatic.tar.gz", admin=ADMIN)
+            backups.get_backup("cms_media_2026-01-01_04-00-00_automatic.tar", admin=ADMIN)
         assert exc.value.status_code == 400
 
     def test_restore_leaves_media_alone(self, dirs, cms_off):
@@ -139,7 +139,7 @@ class TestFlagOn:
         backup_dir, _ = dirs
         info = backups.run_backup(tag=BackupTag.manual)
         stamp = info.filename.removeprefix("db_backup_").removesuffix(".sql.gz")
-        assert info.media_filename == f"cms_media_{stamp}.tar.gz"
+        assert info.media_filename == f"cms_media_{stamp}.tar"
         assert info.media_size == (backup_dir / info.media_filename).stat().st_size
         with tarfile.open(backup_dir / info.media_filename) as tar:
             assert tar.extractfile("./media/1/480.webp").read() == b"photo"
@@ -161,7 +161,7 @@ class TestFlagOn:
         _make_db_backup(backup_dir, "2026-01-01_04-00-00", 1000, media=True)
         _make_db_backup(backup_dir, "2026-01-02_04-00-00", 2000)
         items = backups.list_backups(admin=ADMIN).items
-        assert [i.media_filename for i in items] == [None, "cms_media_2026-01-01_04-00-00_automatic.tar.gz"]
+        assert [i.media_filename for i in items] == [None, "cms_media_2026-01-01_04-00-00_automatic.tar"]
 
     def test_retention_deletes_pairs(self, dirs, cms_on, monkeypatch):
         backup_dir, _ = dirs
@@ -170,7 +170,7 @@ class TestFlagOn:
         _make_db_backup(backup_dir, "2026-01-02_04-00-00", 2000, media=True)
         backups.cleanup_old_backups()
         assert sorted(p.name for p in backup_dir.iterdir()) == [
-            "cms_media_2026-01-02_04-00-00_automatic.tar.gz",
+            "cms_media_2026-01-02_04-00-00_automatic.tar",
             "db_backup_2026-01-02_04-00-00_automatic.sql.gz",
         ]
 
@@ -183,8 +183,9 @@ class TestFlagOn:
     def test_media_archive_downloadable_but_not_deletable_or_restorable(self, dirs, cms_on):
         backup_dir, _ = dirs
         _make_db_backup(backup_dir, "2026-01-01_04-00-00", 1000, media=True)
-        media_name = "cms_media_2026-01-01_04-00-00_automatic.tar.gz"
-        assert backups.get_backup(media_name, admin=ADMIN).path == backup_dir / media_name
+        media_name = "cms_media_2026-01-01_04-00-00_automatic.tar"
+        response = backups.get_backup(media_name, admin=ADMIN)
+        assert (response.path, response.media_type) == (backup_dir / media_name, "application/x-tar")
         with pytest.raises(HTTPException):
             backups.delete_backup(media_name, admin=ADMIN)
         with pytest.raises(HTTPException):

@@ -23,11 +23,13 @@ class CmsEditorBase(Base):
 
 
 class CmsMediaBase(Base):
-    """An uploaded image. Files live in static/cms/media/<id>/, one WebP per width."""
+    """An uploaded image. Files live in static/cms/media/<id>-<token>/, one WebP per width."""
 
     __tablename__ = "cms_media"
 
     id = Column(Integer, primary_key=True)
+    # Random part of the folder name: photos of draft pages can't be found by trying ids.
+    token = Column(String(16), nullable=False)
     original_name = Column(String(255), nullable=False)
     alt = Column(String(300), nullable=False, server_default="")
     width = Column(Integer, nullable=False)
@@ -57,11 +59,10 @@ class CmsPageBase(Base):
     title = Column(String(200), nullable=False, server_default="")
     fields = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     published = Column(Boolean, nullable=False, server_default=text("false"))
-    show_in_blog = Column(Boolean, nullable=False, server_default=text("false"))
     seo_title = Column(String(200), nullable=False, server_default="")
     seo_description = Column(String(300), nullable=False, server_default="")
     cover_media_id = Column(Integer, ForeignKey("cms_media.id", ondelete="SET NULL"), nullable=True)
-    # Order she gives free pages of a same template (eg her services), lowest first.
+    # Order the editor gives free pages of a same template (eg a list of services), lowest first.
     position = Column(Integer, nullable=False, server_default=text("0"))
     published_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

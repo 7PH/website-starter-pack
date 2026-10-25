@@ -47,7 +47,7 @@ def textarea(
 
 
 def richtext(label: Localized, default: str = "", help: Localized | None = None, required: bool = False) -> Field:
-    """Formatted text (headings, bold, lists, links, photos). Stored as sanitized HTML."""
+    """Formatted text (headings, bold, lists, links, photos). Stored as ``{"html": <sanitized HTML>}``."""
     return Field("richtext", label, help or {}, default, required)
 
 

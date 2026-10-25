@@ -4,7 +4,7 @@
 const props = defineProps<{ page: CmsPageRead | null | undefined }>();
 
 const { t } = useI18n();
-const { canEdit } = useCmsAccess();
+const canEdit = useCmsEditInPlace();
 const editorUrl = computed(() => {
     if (!props.page) return null;
     return props.page.fixed_key != null
@@ -22,5 +22,6 @@ const editorUrl = computed(() => {
             icon="i-lucide-pencil"
             class="fixed bottom-16 left-4 z-40 rounded-full shadow-lg"
         />
+        <template #fallback />
     </ClientOnly>
 </template>

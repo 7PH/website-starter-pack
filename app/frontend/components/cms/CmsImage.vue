@@ -4,7 +4,7 @@
 /** Responsive <img> for a library photo. Crops (object-fit: cover from the caller's class) keep the focal point in frame. */
 const props = withDefaults(
     defineProps<{
-        media: CmsMediaRead;
+        media: CmsMediaPublic;
         sizes?: string;
         alt?: string;
         eager?: boolean;

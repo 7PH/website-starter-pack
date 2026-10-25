@@ -1,7 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script lang="ts" setup>
 // Editor for one page, free or fixed. `endpoint` is the admin URL of the page, used for both reading and saving.
-import { autoSlug, cmsDraftKey, cmsLabel, hasReservedPrefix, slugify } from '~/utils/cms';
+import { autoSlug, cmsDraftKey, cmsLabel, hasReservedPrefix, isEmptyField, isShadowedSlug, slugify } from '~/utils/cms';
 import { getErrorStatus } from '~/utils/errors';
 
 const props = defineProps<{ endpoint: string }>();
@@ -14,7 +14,6 @@ interface PageForm {
     title: string;
     slug: string;
     published: boolean;
-    show_in_blog: boolean;
     seo_title: string;
     seo_description: string;
     cover: CmsMediaRead | null;
@@ -25,9 +24,10 @@ const { t, locale } = useI18n();
 const api = useApi();
 const router = useRouter();
 const modal = useModalStore();
-const { showSuccess, showWarning, showError } = useToastHelpers();
+const { showSuccess, showWarning } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 
-const [{ data: page, pending, error }, { data: templates }] = await Promise.all([
+const [{ data: page, pending, error, refresh }, { data: templates }] = await Promise.all([
     // A 404 resolves to null, so "this page doesn't exist anymore" is told apart from other failures.
     useAsyncData<CmsPageAdminRead | null>(
         `cms-admin-${props.endpoint}`,
@@ -56,7 +56,6 @@ function emptyForm(): PageForm {
         title: '',
         slug: '',
         published: false,
-        show_in_blog: false,
         seo_title: '',
         seo_description: '',
         cover: null,
@@ -72,7 +71,6 @@ watch(
             title: p.title,
             slug: p.slug ?? '',
             published: p.published,
-            show_in_blog: p.show_in_blog,
             seo_title: p.seo_title,
             seo_description: p.seo_description,
             cover: p.cover,
@@ -97,18 +95,16 @@ watch(
 
 const origin = useRequestURL().origin;
 const pageUrl = computed(() => `${origin}/${slugify(form.value.slug)}`);
-// An app page with the same address would always win over this one.
 // A site route with the same address would always win over this page.
-function isShadowed(slug: string): boolean {
-    return router.hasRoute('cms-page') && !!slug && router.resolve(`/${slug}`).name !== 'cms-page';
-}
-// Moved off blocked addresses like the backend does ("Login" -> "page-login").
+const routePaths = router.getRoutes().map((route) => route.path);
+const isBlocked = (slug: string) => hasReservedPrefix(slug) || isShadowedSlug(slug, routePaths);
+// Moved off blocked addresses like the backend does ("Login" -> "page-login"). Kept as is when that's blocked too: the warning tells why.
 function titleSlug(title: string): string {
     const slug = autoSlug(title);
-    return hasReservedPrefix(slug) || isShadowed(slug) ? `page-${slug}` : slug;
+    return isBlocked(slug) && !isBlocked(`page-${slug}`) ? `page-${slug}` : slug;
 }
 const slugReserved = computed(() => hasReservedPrefix(slugify(form.value.slug)));
-const slugShadowed = computed(() => isShadowed(slugify(form.value.slug)));
+const slugShadowed = computed(() => isShadowedSlug(slugify(form.value.slug), routePaths));
 
 const previewUrl = computed(() => (page.value && !isFixed.value ? `/admin/cms/preview/${page.value.id}` : null));
 // The saved address, so "Open" never leads to an address that isn't online yet.
@@ -138,13 +134,6 @@ function clearDraft() {
 useEventListener('pagehide', clearDraft);
 onBeforeUnmount(clearDraft);
 
-function isEmpty(field: CmsTemplateField, value: unknown): boolean {
-    if (field.type === 'image') return !value;
-    const text = typeof value === 'string' ? value : '';
-    if (field.type === 'richtext') return !text.replace(/<[^>]*>/g, '').trim() && !text.includes('<img');
-    return !text.trim();
-}
-
 function payload(): CmsPageUpdate {
     const f = form.value;
     const fields = Object.fromEntries(
@@ -161,14 +150,13 @@ function payload(): CmsPageUpdate {
         title: f.title,
         slug: slugify(f.slug),
         published: f.published,
-        show_in_blog: f.show_in_blog,
         cover_media_id: f.cover?.id ?? null,
     };
 }
 
 async function save() {
     const missing = template.value?.fields.find(
-        (field) => field.required && isEmpty(field, form.value.fields[field.name]),
+        (field) => field.required && isEmptyField(field, form.value.fields[field.name]),
     );
     if (missing) return showWarning(t('cms.pages.required', { field: cmsLabel(missing.label, locale.value) }));
     if (!isFixed.value && !form.value.title.trim()) return showWarning(t('cms.pages.titleRequired'));
@@ -177,11 +165,14 @@ async function save() {
 
     saving.value = true;
     try {
-        page.value = await api.patch<CmsPageAdminRead>(props.endpoint, payload());
+        // updated_at as loaded: the server refuses the save if the page changed since (another tab, a quick edit).
+        page.value = await api.patch<CmsPageAdminRead>(props.endpoint, {
+            ...payload(),
+            updated_at: page.value?.updated_at,
+        });
         showSuccess(t('cms.pages.saved'));
     } catch (e) {
-        if (getErrorStatus(e) === 409) showWarning(isFixed.value ? t('cms.pages.conflict') : t('cms.pages.slugTaken'));
-        else showError(e, 'core.errors.generic');
+        showCmsError(e, { fields: template.value?.fields, onReload: refresh });
     } finally {
         saving.value = false;
     }
@@ -201,7 +192,7 @@ async function remove() {
         showSuccess(t('cms.pages.delete.done'));
         await router.push('/admin/cms/pages');
     } catch (e) {
-        showError(e, 'core.errors.generic');
+        showCmsError(e);
     }
 }
 </script>
@@ -345,18 +336,11 @@ async function remove() {
 
                 <div v-if="!isFixed" class="flex flex-col gap-6">
                     <UCard>
-                        <div class="flex flex-col gap-4">
-                            <USwitch
-                                v-model="form.published"
-                                :label="t('cms.pages.published')"
-                                :description="form.published ? t('cms.pages.publishedOn') : t('cms.pages.publishedOff')"
-                            />
-                            <USwitch
-                                v-model="form.show_in_blog"
-                                :label="t('cms.pages.showInBlog')"
-                                :description="t('cms.pages.showInBlogHelp')"
-                            />
-                        </div>
+                        <USwitch
+                            v-model="form.published"
+                            :label="t('cms.pages.published')"
+                            :description="form.published ? t('cms.pages.publishedOn') : t('cms.pages.publishedOff')"
+                        />
                     </UCard>
                     <UCard>
                         <UFormField :label="t('cms.pages.cover')" :description="t('cms.pages.coverHelp')">

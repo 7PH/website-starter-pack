@@ -629,8 +629,7 @@
             "neverEdited": "Never edited",
             "status": {
                 "published": "Online",
-                "draft": "Draft",
-                "inBlog": "In the blog"
+                "draft": "Draft"
             },
             "backToList": "All pages",
             "notFound": "This page doesn't exist anymore.",
@@ -642,15 +641,17 @@
             "slugHelp": "Letters, numbers and dashes. If you change it, links to the old address stop working.",
             "slugRequired": "Please give the page an address.",
             "slugTaken": "Another page already uses this address. Please choose another one.",
-            "conflict": "This page was just saved somewhere else. Reload the page and try again.",
+            "changedElsewhere": "This page was changed somewhere else in the meantime.",
+            "changedElsewhereHelp": "Reload it to get the latest version. Your unsaved changes will be lost, so copy them first if you need them.",
+            "reload": "Reload",
             "slugShadowed": "This address is already used by the site, this page would never show. Please choose another one.",
             "slugReserved": "This address is reserved by the site. Please choose another one.",
             "required": "Please fill in \"{field}\".",
+            "tooLong": "\"{field}\" is too long. Please shorten it.",
+            "tooManyPhotos": "\"{field}\" has too many photos. Remove a few.",
             "published": "Online",
             "publishedOn": "Everyone can see this page.",
             "publishedOff": "Draft: the page is not visible on the site.",
-            "showInBlog": "Show in the blog",
-            "showInBlogHelp": "The post appears in your site's list of posts, if it has one.",
             "cover": "Cover photo",
             "coverHelp": "Shown at the top of the page and when someone shares it.",
             "save": "Save",
@@ -711,7 +712,11 @@
             "cancel": "Cancel",
             "saved": "Saved",
             "fullEditor": "Open the full editor",
-            "unknownField": "This part can't be edited here. Use the full editor."
+            "unknownField": "This part can't be edited here. Use the full editor.",
+            "addCover": "Add a cover photo"
+        },
+        "errors": {
+            "generic": "Something went wrong. Check your connection and try again."
         }
     }
 }
