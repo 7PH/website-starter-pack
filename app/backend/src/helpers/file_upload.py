@@ -57,9 +57,7 @@ async def save_uploaded_file(
     # Validate MIME type using magic bytes (not extension)
     detected_type = magic.from_buffer(content, mime=True)
     if detected_type not in allowed_types:
-        raise FileValidationError(
-            f"File type '{detected_type}' not allowed. Allowed types: {', '.join(allowed_types)}"
-        )
+        raise FileValidationError(f"File type '{detected_type}' not allowed. Allowed types: {', '.join(allowed_types)}")
 
     # Generate safe filename with UUID
     original_ext = _get_extension_for_mime(detected_type, file.filename)
@@ -74,13 +72,7 @@ async def save_uploaded_file(
     with open(file_path, "wb") as f:
         f.write(content)
 
-    logger.info(
-        "File uploaded",
-        filename=safe_filename,
-        mime_type=detected_type,
-        size_bytes=len(content),
-        subdirectory=subdirectory,
-    )
+    logger.info(f"File uploaded: {subdirectory}/{safe_filename} ({detected_type}, {len(content)} bytes)")
 
     # Return public URL path
     return f"/static/{subdirectory}/{safe_filename}"
@@ -140,7 +132,7 @@ async def delete_uploaded_file(url_path: str) -> bool:
 
     if file_path.exists():
         file_path.unlink()
-        logger.info("File deleted", path=url_path)
+        logger.info(f"File deleted: {url_path}")
         return True
 
     return False
