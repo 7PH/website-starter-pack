@@ -1,7 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-import { formatDate } from '~/utils/formatters';
+import { formatDate, initials } from '~/utils/formatters';
 import { useOrganizationMembers, useOrganizationQuota } from '~/composables/organizations/useOrganizationMembers';
 import { useOrganizationSubscription } from '~/composables/organizations/useOrganizationSubscription';
 import { useOrganizationForm } from '~/composables/organizations/useOrganizationForm';
@@ -220,14 +220,17 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="org-detail">
-        <NuxtLink :to="backLink" class="back-link">
+    <div class="flex flex-col gap-4.5">
+        <NuxtLink
+            :to="backLink"
+            class="flex items-center gap-1.5 self-start text-[13px] font-bold text-muted hover:text-highlighted"
+        >
             <UIcon name="i-lucide-arrow-left" />
             {{ backLinkText }}
         </NuxtLink>
 
-        <div v-if="orgPending || !isAuthReady" class="loading">
-            <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary-500" />
+        <div v-if="orgPending || !isAuthReady" class="flex justify-center py-12">
+            <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary" />
         </div>
 
         <template v-else-if="!isAdminView && (orgError || !isMember)">
@@ -251,46 +254,71 @@ onMounted(() => {
         </template>
 
         <template v-else>
-            <!-- Header -->
-            <div class="page-header">
-                <div class="header-info">
-                    <h1 class="page-title">{{ org.name }}</h1>
-                    <span class="org-email">
-                        <span class="org-email-label">{{ t('core.organizations.contactEmail') }}:</span>
-                        {{ org.email }}
+            <div class="flex flex-wrap items-center gap-4">
+                <span
+                    class="flex size-13 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-lg font-extrabold text-primary-700 md:size-15 dark:bg-primary-500/20 dark:text-primary-300"
+                >
+                    {{ initials(org.name) }}
+                </span>
+                <div class="flex min-w-45 flex-1 flex-col gap-1">
+                    <h1 class="text-[22px] font-extrabold tracking-[-0.01em] text-highlighted md:text-[26px]">
+                        {{ org.name }}
+                    </h1>
+                    <span class="text-sm text-muted">
+                        {{ t('core.organizations.contactEmail') }}: {{ org.email }}
                     </span>
-                    <div class="badges">
+                    <div class="mt-1 flex flex-wrap gap-1.5">
                         <UBadge
                             v-if="isAdminView && org.deleted_at"
                             :label="t('core.organizations.deleted')"
                             color="error"
+                            variant="soft"
+                            class="rounded-full"
                         />
                         <UBadge
                             :label="isOwner ? t('core.organizations.admin') : t('core.organizations.member')"
                             :color="isOwner ? 'info' : 'neutral'"
+                            variant="soft"
+                            class="rounded-full"
                         />
-                        <UBadge v-if="org.stripe_premium" :label="t('core.organizations.premium')" color="warning" />
-                        <UBadge v-else-if="!isAdminView" :label="t('core.organizations.free')" color="neutral" />
+                        <UBadge
+                            v-if="org.stripe_premium"
+                            :label="t('core.organizations.premium')"
+                            color="warning"
+                            variant="soft"
+                            class="rounded-full"
+                        />
+                        <UBadge
+                            v-else-if="!isAdminView"
+                            :label="t('core.organizations.free')"
+                            color="neutral"
+                            variant="soft"
+                            class="rounded-full"
+                        />
                         <UBadge
                             v-if="isAdminView && isOverQuota"
                             :label="t('core.organizations.overQuota')"
                             color="error"
+                            variant="soft"
+                            class="rounded-full"
                         />
                     </div>
                 </div>
-                <div v-if="isAdminView && !org.deleted_at" class="header-actions">
+                <div v-if="isAdminView && !org.deleted_at" class="flex flex-wrap gap-2">
                     <UButton
                         v-if="org.stripe_dashboard_url"
                         :to="org.stripe_dashboard_url"
                         target="_blank"
                         :label="t('core.organizations.openInStripe')"
                         icon="i-lucide-external-link"
+                        size="lg"
                         color="neutral"
                         variant="outline"
                     />
                     <UButton
                         :label="t('core.organizations.contactAdmins')"
                         icon="i-lucide-message-square-plus"
+                        size="lg"
                         color="neutral"
                         variant="outline"
                         @click="showContactModal = true"
@@ -305,11 +333,15 @@ onMounted(() => {
                 icon="i-lucide-trash-2"
                 :title="t('core.organizations.deletedAlert')"
                 :description="t('core.organizations.deletedAlertDescription', { date: formatDate(org.deleted_at) })"
-                class="mb-6"
             />
 
-            <!-- Tabs -->
-            <UTabs :items="availableTabs" :model-value="activeTab" class="mb-6" @update:model-value="onTabChange" />
+            <UTabs
+                :items="availableTabs"
+                :model-value="activeTab"
+                variant="link"
+                :content="false"
+                @update:model-value="onTabChange"
+            />
 
             <!-- Tab content -->
             <OrganizationsOverviewTab
@@ -350,7 +382,7 @@ onMounted(() => {
                 :org-id="orgId"
             />
 
-            <div v-else-if="activeTab === 'settings' && isOwner" class="settings-tab">
+            <div v-else-if="activeTab === 'settings' && isOwner" class="flex flex-col gap-4">
                 <OrganizationsInfoCard
                     v-model:form-name="form.name"
                     v-model:form-email="form.email"
@@ -372,10 +404,11 @@ onMounted(() => {
                     @cancel-edit="cancelEdit"
                     @save="saveChanges"
                 />
-                <UCard v-if="isAdminView && !org.deleted_at" class="danger-zone">
-                    <template #header>
-                        <UiCardHeader :title="t('core.organizations.deleteTitle')" />
-                    </template>
+                <section
+                    v-if="isAdminView && !org.deleted_at"
+                    class="flex flex-col items-start gap-2.5 rounded-xl border border-error/30 px-4.5 py-3.5"
+                >
+                    <h2 class="text-[15px] font-extrabold text-error">{{ t('core.organizations.deleteTitle') }}</h2>
                     <UButton
                         :label="t('core.common.delete')"
                         icon="i-lucide-trash-2"
@@ -383,7 +416,7 @@ onMounted(() => {
                         variant="outline"
                         @click="deleteOrganization"
                     />
-                </UCard>
+                </section>
             </div>
         </template>
 
@@ -436,59 +469,3 @@ onMounted(() => {
         />
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-
-.org-detail {
-    @apply max-w-7xl mx-auto;
-}
-
-.back-link {
-    @apply inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 no-underline text-sm mb-4;
-}
-
-.back-link:hover {
-    @apply text-primary-500;
-}
-
-.loading {
-    @apply flex justify-center py-12;
-}
-
-.page-header {
-    @apply flex justify-between items-start mb-6 flex-wrap gap-4;
-}
-
-.header-info {
-    @apply flex flex-col gap-2;
-}
-
-.page-title {
-    @apply text-2xl font-semibold m-0 text-gray-900 dark:text-gray-100;
-}
-
-.org-email {
-    @apply text-gray-500 dark:text-gray-400 text-sm;
-}
-
-.org-email-label {
-    @apply font-medium text-gray-600 dark:text-gray-300;
-}
-
-.badges {
-    @apply flex gap-2 flex-wrap;
-}
-
-.header-actions {
-    @apply flex gap-2;
-}
-
-.settings-tab {
-    @apply flex flex-col gap-6;
-}
-
-.danger-zone {
-    @apply border-red-200 dark:border-red-900/40;
-}
-</style>

@@ -2,7 +2,8 @@
 
 <script lang="ts" setup>
 import * as conversationsApi from '~/utils/api/conversations';
-import { formatDate, formatTime, previewLabel } from '~/utils/formatters';
+import { formatDate, formatTime, initials, markdownSnippet, previewLabel } from '~/utils/formatters';
+import { useOpenConversationCount } from '~/config/admin-nav';
 import { CORE_CONVERSATION_SUBTYPES, type ConversationSubtypeValue } from '~/config/conversation-subtypes';
 import { PROJECT_CONVERSATION_SUBTYPES } from '~/config/conversation-subtypes-ext';
 
@@ -10,15 +11,19 @@ definePageMeta({
     middleware: ['admin'],
 });
 
-// Filters
-const includeClosed = ref(false);
+// The backend can list open conversations or all of them, not closed ones alone.
+const segment = ref('open');
+const SEGMENTS = [
+    { value: 'open', label: 'Open' },
+    { value: 'all', label: 'All' },
+];
 const allSubtypes = [...CORE_CONVERSATION_SUBTYPES, ...PROJECT_CONVERSATION_SUBTYPES];
 const subtypeFilter = ref<'all' | ConversationSubtypeValue>('all');
-const subtypeOptions = [{ value: 'all' as const, label: 'All' }, ...allSubtypes];
+const subtypeOptions = [{ value: 'all' as const, label: 'All types' }, ...allSubtypes];
 
 const { page, limit, offset } = useTableState({ defaultLimit: 50 });
 
-watch([includeClosed, subtypeFilter], () => {
+watch([segment, subtypeFilter], () => {
     page.value = 1;
 });
 
@@ -26,201 +31,105 @@ const { data: conversationsData, pending } = await useAsyncData<ConversationList
     'admin-conversations',
     () =>
         conversationsApi.adminGetConversations({
-            includeClosed: includeClosed.value,
+            includeClosed: segment.value === 'all',
             subtype: subtypeFilter.value !== 'all' ? subtypeFilter.value : undefined,
             limit: limit.value,
             offset: offset.value,
         }),
-    { watch: [includeClosed, subtypeFilter, page], server: false },
+    { watch: [segment, subtypeFilter, page], server: false },
 );
 
-const totalPages = computed(() => Math.ceil((conversationsData.value?.total ?? 0) / limit.value));
+// Keep the sidebar badge in sync with what the admin sees here.
+const openCount = useOpenConversationCount();
+watch(conversationsData, (data) => {
+    if (data && segment.value === 'open' && subtypeFilter.value === 'all') openCount.value = data.total;
+});
 
-// Table columns configuration
-const columns = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'subject', header: 'Subject' },
-    { accessorKey: 'created_by', header: 'From' },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'updated_at', header: 'Last Activity' },
-    { accessorKey: 'actions', header: 'Actions' },
-];
-
-function getUserDisplay(conversation: ConversationRead): string {
-    return previewLabel(conversation.created_by);
+function subtypeLabel(subtype: string | null | undefined): string {
+    return allSubtypes.find((s) => s.value === subtype)?.label ?? 'Contact';
 }
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader
+            title="Support messages"
+            :count="conversationsData?.total"
+            description="Conversations started from the contact and bug-report forms."
+        />
 
-        <div class="admin-messages">
-            <div class="page-header">
-                <h1 class="page-title">Support Messages</h1>
-                <span class="conversation-count">{{ conversationsData?.total ?? 0 }} total</span>
-            </div>
+        <AdminToolbar v-model:segment="segment" :segments="SEGMENTS">
+            <USelect
+                v-if="allSubtypes.length"
+                v-model="subtypeFilter"
+                :items="subtypeOptions"
+                value-key="value"
+                size="lg"
+                class="w-44"
+            />
+        </AdminToolbar>
 
-            <!-- Filters -->
-            <div class="filters">
-                <div v-if="allSubtypes.length" class="filter-item">
-                    <label class="filter-label">Subtype</label>
-                    <USelect v-model="subtypeFilter" :items="subtypeOptions" value-key="value" class="w-48" />
-                </div>
-                <div class="flex-1" />
-                <UCheckbox v-model="includeClosed" label="Show closed" />
-            </div>
-
-            <!-- Conversations Table -->
-            <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                <UTable :columns="columns" :data="conversationsData?.items ?? []" :loading="pending">
-                    <template #id-cell="{ row }">
-                        <NuxtLink :to="`/admin/messages/${row.original.id}`" class="conversation-link">
-                            #{{ row.original.id }}
-                        </NuxtLink>
-                    </template>
-
-                    <template #subject-cell="{ row }">
-                        <NuxtLink :to="`/admin/messages/${row.original.id}`" class="conversation-link">
-                            {{ row.original.subject || '(No subject)' }}
-                        </NuxtLink>
-                        <p v-if="row.original.last_message" class="message-preview">
-                            {{ row.original.last_message.content?.slice(0, 50)
-                            }}{{ row.original.last_message.content?.length > 50 ? '...' : '' }}
-                        </p>
-                    </template>
-
-                    <template #created_by-cell="{ row }">
-                        <div class="user-info">
-                            <span class="user-name">{{ getUserDisplay(row.original as ConversationRead) }}</span>
-                            <span v-if="row.original.created_by" class="user-email">{{
-                                row.original.created_by.email
-                            }}</span>
-                        </div>
-                    </template>
-
-                    <template #status-cell="{ row }">
-                        <div class="status-badges">
-                            <UBadge
-                                v-if="(row.original.unread_count ?? 0) > 0"
-                                :label="`${row.original.unread_count} unread`"
-                                color="primary"
-                            />
-                            <UBadge v-if="row.original.is_closed" label="Closed" color="neutral" />
-                            <UBadge v-else label="Open" color="success" />
-                        </div>
-                    </template>
-
-                    <template #updated_at-cell="{ row }">
-                        <div class="date-cell">
-                            <span>{{ formatDate(row.original.updated_at) }}</span>
-                            <span class="time">{{ formatTime(row.original.updated_at) }}</span>
-                        </div>
-                    </template>
-
-                    <template #actions-cell="{ row }">
-                        <div class="actions">
-                            <UTooltip text="View conversation">
-                                <NuxtLink :to="`/admin/messages/${row.original.id}`">
-                                    <UButton icon="i-lucide-message-square" color="neutral" variant="ghost" size="xs" />
-                                </NuxtLink>
-                            </UTooltip>
-                            <UTooltip v-if="row.original.created_by" text="View user">
-                                <NuxtLink :to="`/admin/users/${row.original.created_by.id}`">
-                                    <UButton icon="i-lucide-user" color="neutral" variant="ghost" size="xs" />
-                                </NuxtLink>
-                            </UTooltip>
-                        </div>
-                    </template>
-                </UTable>
-
-                <!-- Pagination -->
-                <div v-if="totalPages > 1" class="pagination-footer">
-                    <div class="pagination-info">
-                        Showing {{ (page - 1) * limit + 1 }}-{{
-                            Math.min(page * limit, conversationsData?.total ?? 0)
-                        }}
-                        of {{ conversationsData?.total ?? 0 }}
+        <AdminCard :class="{ 'opacity-60': pending }">
+            <NuxtLink
+                v-for="conversation in conversationsData?.items ?? []"
+                :key="conversation.id"
+                :to="`/admin/messages/${conversation.id}`"
+                class="flex items-start gap-3.5 px-4.5 py-3.5 hover:bg-elevated"
+            >
+                <span
+                    class="flex size-9 shrink-0 items-center justify-center rounded-full bg-elevated text-xs font-extrabold text-toned"
+                >
+                    {{ initials(previewLabel(conversation.created_by)) || '?' }}
+                </span>
+                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm font-extrabold text-highlighted">
+                            {{ previewLabel(conversation.created_by) }}
+                        </span>
+                        <UBadge
+                            :label="subtypeLabel(conversation.subtype)"
+                            :color="conversation.subtype === 'bug_report' ? 'error' : 'neutral'"
+                            variant="soft"
+                            class="rounded-full"
+                        />
+                        <UBadge
+                            v-if="conversation.unread_count"
+                            :label="`${conversation.unread_count} unread`"
+                            color="primary"
+                            variant="soft"
+                            class="rounded-full"
+                        />
+                        <UBadge
+                            v-if="conversation.is_closed"
+                            label="Closed"
+                            icon="i-lucide-lock"
+                            color="neutral"
+                            variant="soft"
+                            class="rounded-full"
+                        />
+                        <span class="flex-1" />
+                        <span class="text-xs text-dimmed">
+                            {{ formatDate(conversation.updated_at) }} · {{ formatTime(conversation.updated_at) }}
+                        </span>
                     </div>
-                    <UPagination v-model="page" :total="conversationsData?.total ?? 0" :items-per-page="limit" />
+                    <span class="text-sm font-semibold text-highlighted">
+                        {{ conversation.subject || '(No subject)' }}
+                    </span>
+                    <span v-if="conversation.last_message" class="truncate text-[13px] text-muted">
+                        {{ markdownSnippet(conversation.last_message.content) }}
+                    </span>
                 </div>
-            </UCard>
-        </div>
+            </NuxtLink>
+
+            <div
+                v-if="!conversationsData?.items.length"
+                class="flex flex-col items-center gap-2 px-4.5 py-10 text-sm text-muted"
+            >
+                <UIcon name="i-lucide-inbox" class="size-6.5 text-dimmed" />
+                {{ pending ? 'Loading…' : segment === 'open' ? 'No open conversations.' : 'No conversations yet.' }}
+            </div>
+
+            <AdminPagination v-model:page="page" :total="conversationsData?.total ?? 0" :limit="limit" />
+        </AdminCard>
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-
-.admin-messages {
-    @apply max-w-7xl mx-auto;
-}
-
-.page-header {
-    @apply flex items-baseline gap-4 mb-6;
-}
-
-.page-title {
-    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.conversation-count {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.filters {
-    @apply flex items-end gap-4 mb-4;
-}
-
-.filter-item {
-    @apply flex flex-col gap-1;
-}
-
-.filter-label {
-    @apply text-xs font-medium text-gray-500 dark:text-gray-400;
-}
-
-.conversation-link {
-    @apply text-primary-500 no-underline hover:underline;
-}
-
-.message-preview {
-    @apply text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs;
-}
-
-.user-info {
-    @apply flex flex-col;
-}
-
-.user-name {
-    @apply font-medium text-gray-900 dark:text-gray-100;
-}
-
-.user-email {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
-.status-badges {
-    @apply flex flex-wrap gap-1;
-}
-
-.date-cell {
-    @apply flex flex-col text-sm;
-}
-
-.date-cell .time {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
-.actions {
-    @apply flex gap-1;
-}
-
-.pagination-footer {
-    @apply flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700;
-}
-
-.pagination-info {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-</style>

@@ -571,7 +571,14 @@
             "editSite": "Edit site",
             "pages": "Pages",
             "media": "Photos",
-            "adminOnly": "This page is for administrators only."
+            "adminOnly": "This page is for administrators only.",
+            "content": "Content",
+            "filter": "Filter pages",
+            "noMatch": "No page matches “{query}”",
+            "collapse": "Collapse",
+            "expand": "Expand",
+            "menu": "Menu",
+            "close": "Close"
         },
         "media": {
             "title": "Photos",
@@ -613,7 +620,12 @@
             },
             "unsavedTitle": "Save the changes to this photo?",
             "unsavedMessage": "You changed the description or the main subject of this photo.",
-            "discard": "Don't save"
+            "discard": "Don't save",
+            "addAlt": "Add a description",
+            "missingAlt": "{n} photo has no description yet. It is read aloud to blind visitors and helps Google. | {n} photos have no description yet. It is read aloud to blind visitors and helps Google.",
+            "showMissing": "Show these photos",
+            "showAll": "Show all",
+            "dropHintShort": "JPEG, PNG, WebP · 15 MB max"
         },
         "pages": {
             "listTitle": "Pages",
@@ -622,7 +634,6 @@
             "create": "Create",
             "template": "Kind of page",
             "fixed": "Site pages",
-            "fixedHelp": "These pages are part of the site. You can change their content.",
             "free": "My pages and posts",
             "empty": "No pages yet. Create your first one with \"New page\".",
             "editedOn": "Edited on {date}",
@@ -702,7 +713,16 @@
             "previewUnsaved": "Preview with your unsaved changes.",
             "open": "Open",
             "moveUp": "Move up",
-            "moveDown": "Move down"
+            "moveDown": "Move down",
+            "listSubtitle": "The pages of your site. Click a page to change it.",
+            "edit": "Edit",
+            "viewOnSite": "View on the site",
+            "filter": {
+                "all": "All",
+                "published": "Online",
+                "drafts": "Drafts"
+            },
+            "noMatch": "No page here."
         },
         "inline": {
             "title": "Quick edit",

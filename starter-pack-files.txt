@@ -107,6 +107,7 @@ app/backend/src/templates
 app/backend/pytest.ini
 app/backend/tests/__init__.py
 app/backend/tests/conftest.py
+app/backend/tests/test_admin_events.py
 app/backend/tests/test_backups.py
 app/backend/tests/test_cms_editors.py
 app/backend/tests/test_admin_billing.py
@@ -147,6 +148,7 @@ app/frontend/assets/css/main.css
 app/frontend/layouts/default.vue
 app/frontend/layouts/fullheight.vue
 app/frontend/layouts/auth.vue
+app/frontend/layouts/admin.vue
 app/frontend/config/i18n.ts
 app/frontend/config/main-nav.ts
 app/frontend/config/security-headers.ts:template
@@ -166,6 +168,7 @@ app/frontend/composables/schema.ts
 app/frontend/composables/useBreadcrumb.ts
 app/frontend/composables/useCanonical.ts
 app/frontend/composables/useCmsAccess.ts
+app/frontend/composables/useAdminNav.ts
 app/frontend/composables/useCmsPages.ts
 app/frontend/composables/useCmsErrorToast.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
@@ -202,6 +205,7 @@ app/frontend/utils/api/users.ts
 app/frontend/utils/api/conversations.ts
 app/frontend/utils/api/invitations.ts
 app/frontend/utils/admin-filters.ts
+app/frontend/utils/admin-nav.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
@@ -293,6 +297,11 @@ app/frontend/composables/organizations/useOrganizationQuotaDisplay.ts
 app/frontend/components/admin/AdminSubnav.vue
 app/frontend/components/admin/ImpersonationBanner.vue
 app/frontend/components/admin/PageBanner.vue
+app/frontend/components/admin/AdminNav.vue
+app/frontend/components/admin/AdminPageHeader.vue
+app/frontend/components/admin/AdminToolbar.vue
+app/frontend/components/admin/AdminCard.vue
+app/frontend/components/admin/AdminPagination.vue
 app/frontend/components/cms/CmsEditable.vue
 app/frontend/components/cms/CmsFocalPicker.vue
 app/frontend/components/cms/CmsInlineEditModal.vue
@@ -301,6 +310,7 @@ app/frontend/components/cms/CmsMediaDetails.vue
 app/frontend/components/cms/CmsMediaDropzone.vue
 app/frontend/components/cms/CmsMediaGrid.vue
 app/frontend/components/cms/CmsMediaPicker.vue
+app/frontend/components/cms/CmsMediaUploadQueue.vue
 app/frontend/components/cms/CmsPageEditButton.vue
 app/frontend/components/cms/CmsField.vue
 app/frontend/components/cms/CmsImageInput.vue
@@ -346,6 +356,7 @@ app/frontend/tests/markdown.test.ts
 app/frontend/tests/schema.test.ts
 app/frontend/tests/useCanonical.test.ts
 app/frontend/tests/cms.test.ts
+app/frontend/tests/admin-nav.test.ts
 app/frontend/tests/useBreadcrumb.test.ts
 app/frontend/tests/name-import.test.ts
 

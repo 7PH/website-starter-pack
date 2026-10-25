@@ -9,13 +9,9 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
-
-        <OrganizationsDetail
-            :is-admin-view="true"
-            back-link="/admin/organizations"
-            :back-link-text="t('core.organizations.backToList')"
-        />
-    </div>
+    <OrganizationsDetail
+        :is-admin-view="true"
+        back-link="/admin/organizations"
+        :back-link-text="t('core.organizations.backToList')"
+    />
 </template>

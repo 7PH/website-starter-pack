@@ -70,3 +70,23 @@ export function formatPrice(amount: number, currency: string, locale: string = '
         currency: currency.toUpperCase(),
     }).format(amount / 100);
 }
+
+/**
+ * Up to two uppercase initials for an avatar: "Ada Lovelace" → "AL", "ada@x.io" → "A".
+ */
+export function initials(label: string | null | undefined): string {
+    // Skips symbols so fallbacks like "User #15" give "U1", not "U#".
+    const letters = (label ?? '').split(/\s+/).map((word) => word.match(/[\p{L}\p{N}]/u)?.[0]);
+    return letters.filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
+
+/**
+ * One-line plain text preview of a markdown message (links keep their text, markup is dropped).
+ */
+export function markdownSnippet(markdown: string | null | undefined): string {
+    return (markdown ?? '')
+        .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/[#>*_`~|]+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}

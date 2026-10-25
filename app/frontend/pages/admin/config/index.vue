@@ -6,195 +6,91 @@ definePageMeta({
 });
 
 const backendConfig = useBackendConfig();
+const query = ref('');
 
-// Keys declared in CoreBackendConfig (app/backend/src/schemas/config.py).
-// Anything else returned by /config is treated as a sub-app extension.
-const CORE_KEYS = new Set<string>([
-    'password_min_length',
-    'org_max_per_user',
-    'org_max_members',
-    'org_invitation_expiry_days',
-    'managed_account_group_max_per_user',
-    'managed_accounts_max_per_user',
-    'stripe_enabled',
-    'organizations_enabled',
-    'org_invitations_enabled',
-    'managed_accounts_enabled',
-    'llm_enabled',
-    'org_self_service_subscriptions',
-    'org_self_service_creation',
-    'llm_provider',
-    'llm_model',
-]);
-
-interface ConfigEntry {
-    key: string;
-    value: unknown;
-    type: string;
-}
-
-function partition(cfg: Record<string, unknown> | null): { core: ConfigEntry[]; extra: ConfigEntry[] } {
-    if (!cfg) return { core: [], extra: [] };
-    const core: ConfigEntry[] = [];
-    const extra: ConfigEntry[] = [];
-    for (const key of Object.keys(cfg).sort()) {
-        const entry: ConfigEntry = { key, value: cfg[key], type: typeof cfg[key] };
-        (CORE_KEYS.has(key) ? core : extra).push(entry);
-    }
-    return { core, extra };
-}
-
-const partitioned = computed(() => partition(backendConfig.config as Record<string, unknown> | null));
-
-const columns = [
-    { accessorKey: 'key', header: 'Key' },
-    { accessorKey: 'value', header: 'Value' },
-    { accessorKey: 'type', header: 'Type' },
+// First matching prefix wins; keys matching none go to "Other".
+const GROUPS: [prefix: string, label: string][] = [
+    ['llm_', 'AI / LLM'],
+    ['managed_', 'Managed accounts'],
+    ['org', 'Organizations'],
+    ['password_', 'Authentication'],
 ];
+
+const groups = computed(() => {
+    const cfg = (backendConfig.config ?? {}) as Record<string, unknown>;
+    const q = query.value.trim().toLowerCase();
+    const byLabel = new Map<string, { key: string; value: unknown }[]>();
+    for (const key of Object.keys(cfg).sort()) {
+        if (q && !key.toLowerCase().includes(q)) continue;
+        const label = GROUPS.find(([prefix]) => key.startsWith(prefix))?.[1] ?? 'Other';
+        byLabel.set(label, [...(byLabel.get(label) ?? []), { key, value: cfg[key] }]);
+    }
+    return [...GROUPS.map(([, label]) => label), 'Other']
+        .filter((label) => byLabel.has(label))
+        .map((label) => ({ label, rows: byLabel.get(label)! }));
+});
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
-
-        <div class="admin-config">
-            <div class="page-header">
-                <h1 class="page-title">Configuration</h1>
-                <span class="page-subtitle">Public config served by /api/v1/config — what the frontend sees.</span>
-            </div>
-
-            <UCard v-if="!backendConfig.config" class="error-card">
-                <div class="error-content">
-                    <UIcon name="i-lucide-alert-triangle" class="error-icon" />
-                    <span>Failed to load config from /api/v1/config.</span>
-                </div>
-            </UCard>
-
-            <template v-else>
-                <UCard class="config-section">
-                    <template #header>
-                        <h2 class="section-title">Core</h2>
-                    </template>
-                    <UTable :columns="columns" :data="partitioned.core" :ui="{ td: 'align-top' }">
-                        <template #key-cell="{ row }">
-                            <span class="key-cell">{{ row.original.key }}</span>
-                        </template>
-                        <template #value-cell="{ row }">
-                            <UBadge
-                                v-if="row.original.type === 'boolean'"
-                                :color="row.original.value ? 'success' : 'neutral'"
-                                :label="row.original.value ? 'Enabled' : 'Disabled'"
-                                variant="subtle"
-                            />
-                            <span v-else-if="row.original.value === ''" class="empty-value">(empty)</span>
-                            <span v-else-if="row.original.value === null || row.original.value === undefined">—</span>
-                            <span v-else class="number-value">{{ row.original.value }}</span>
-                        </template>
-                        <template #type-cell="{ row }">
-                            <span class="type-cell">{{ row.original.type }}</span>
-                        </template>
-                    </UTable>
-                </UCard>
-
-                <UCard class="config-section">
-                    <template #header>
-                        <h2 class="section-title">Sub-app extensions</h2>
-                    </template>
-                    <UTable
-                        v-if="partitioned.extra.length"
-                        :columns="columns"
-                        :data="partitioned.extra"
-                        :ui="{ td: 'align-top' }"
-                    >
-                        <template #key-cell="{ row }">
-                            <span class="key-cell">{{ row.original.key }}</span>
-                        </template>
-                        <template #value-cell="{ row }">
-                            <UBadge
-                                v-if="row.original.type === 'boolean'"
-                                :color="row.original.value ? 'success' : 'neutral'"
-                                :label="row.original.value ? 'Enabled' : 'Disabled'"
-                                variant="subtle"
-                            />
-                            <span v-else-if="row.original.value === ''" class="empty-value">(empty)</span>
-                            <span v-else-if="row.original.value === null || row.original.value === undefined">—</span>
-                            <span v-else class="number-value">{{ row.original.value }}</span>
-                        </template>
-                        <template #type-cell="{ row }">
-                            <span class="type-cell">{{ row.original.type }}</span>
-                        </template>
-                    </UTable>
-                    <div v-else class="empty-hint">
-                        No project-specific config. Add fields by editing
-                        <code>app/backend/src/schemas/config_ext.py</code> and returning them from
-                        <code>build_extra()</code>.
-                    </div>
-                </UCard>
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader title="Configuration">
+            <template #badges>
+                <UBadge icon="i-lucide-lock" label="Read-only" color="neutral" variant="soft" class="rounded-full" />
             </template>
-        </div>
+            <template #description>
+                Public config served by <code class="font-mono text-[13px]">/api/v1/config</code>, as the frontend sees
+                it.
+            </template>
+            <template #actions>
+                <UInput
+                    v-model="query"
+                    icon="i-lucide-search"
+                    size="lg"
+                    placeholder="Filter keys"
+                    class="w-full sm:w-60"
+                />
+            </template>
+        </AdminPageHeader>
+
+        <UAlert
+            v-if="!backendConfig.config"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-alert-triangle"
+            title="Failed to load config from /api/v1/config."
+        />
+
+        <AdminCard
+            v-for="group in groups"
+            :key="group.label"
+            :title="group.label"
+            :meta="`${group.rows.length} ${group.rows.length === 1 ? 'key' : 'keys'}`"
+        >
+            <div
+                v-for="row in group.rows"
+                :key="row.key"
+                class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4.5 py-2.5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_80px]"
+            >
+                <span class="font-mono text-[13px] [overflow-wrap:anywhere] text-highlighted">{{ row.key }}</span>
+                <span v-if="typeof row.value === 'boolean'" class="flex items-center gap-1.5 text-[13px] font-bold">
+                    <span class="size-2 rounded-full" :class="row.value ? 'bg-success' : 'bg-(--ui-text-dimmed)'" />
+                    <span :class="row.value ? 'text-highlighted' : 'text-muted'">{{ row.value ? 'On' : 'Off' }}</span>
+                </span>
+                <span v-else-if="row.value === '' || row.value == null" class="text-[13px] text-dimmed italic">
+                    {{ row.value === '' ? '(empty)' : 'Not set' }}
+                </span>
+                <span
+                    v-else
+                    class="w-fit rounded-[5px] bg-elevated px-1.5 py-px font-mono text-[13px] [overflow-wrap:anywhere] text-highlighted"
+                >
+                    {{ row.value }}
+                </span>
+                <span class="hidden text-right font-mono text-xs text-dimmed md:block">{{ typeof row.value }}</span>
+            </div>
+        </AdminCard>
+
+        <AdminCard v-if="backendConfig.config && !groups.length">
+            <p class="px-4.5 py-8 text-center text-sm text-muted">No key matches “{{ query }}”</p>
+        </AdminCard>
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-
-.admin-config {
-    @apply max-w-5xl mx-auto;
-}
-
-.page-header {
-    @apply flex flex-col gap-1 mb-6;
-}
-
-.page-title {
-    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.page-subtitle {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.section-title {
-    @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.config-section {
-    @apply mb-6;
-}
-
-.key-cell {
-    @apply font-mono text-sm text-gray-900 dark:text-gray-100;
-}
-
-.type-cell {
-    @apply font-mono text-xs text-gray-500 dark:text-gray-400;
-}
-
-.number-value {
-    @apply font-mono text-sm;
-}
-
-.empty-value {
-    @apply italic text-gray-500 dark:text-gray-400;
-}
-
-.empty-hint {
-    @apply text-sm text-gray-500 dark:text-gray-400 italic;
-}
-
-.empty-hint code {
-    @apply font-mono not-italic px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-xs;
-}
-
-.error-card {
-    @apply mb-6;
-}
-
-.error-content {
-    @apply flex items-center gap-2 text-error-600 dark:text-error-400;
-}
-
-.error-icon {
-    @apply w-5 h-5;
-}
-</style>

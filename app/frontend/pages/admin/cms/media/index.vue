@@ -9,6 +9,16 @@ const { t } = useI18n();
 const showCmsError = useCmsErrorToast();
 const { items, total, loading, hasMore, load, add, replace, remove } = useCmsMediaLibrary();
 
+const dropzone = useTemplateRef<{ pick: () => void }>('dropzone');
+
+// Counts loaded photos only: the library loads 60 at a time and the API has no filter on descriptions.
+const missingAlt = computed(() => items.value.filter((m) => !m.alt).length);
+const onlyMissing = ref(false);
+watch(missingAlt, (count) => {
+    if (!count) onlyMissing.value = false;
+});
+const shown = computed(() => (onlyMissing.value ? items.value.filter((m) => !m.alt) : items.value));
+
 const selected = ref<CmsMediaRead | null>(null);
 const details = ref<{ dirty: boolean; save: () => Promise<boolean> } | null>(null);
 // Leaving the page. Closing the panel or switching photo asks below instead, with a save option.
@@ -62,34 +72,45 @@ function onDeleted(id: number) {
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader :title="t('cms.media.title')" :count="total" :description="t('cms.media.subtitle')">
+            <template #actions>
+                <UButton :label="t('cms.media.choose')" icon="i-lucide-upload" size="lg" @click="dropzone?.pick()" />
+            </template>
+        </AdminPageHeader>
 
-        <div class="mx-auto flex max-w-7xl flex-col gap-6">
-            <div>
-                <div class="flex items-baseline gap-4">
-                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ t('cms.media.title') }}</h1>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('cms.media.count', total) }}</span>
-                </div>
-                <p class="mt-1 text-gray-600 dark:text-gray-400">{{ t('cms.media.subtitle') }}</p>
-            </div>
+        <UAlert
+            v-if="missingAlt"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-text-cursor-input"
+            :title="t('cms.media.missingAlt', missingAlt)"
+            orientation="horizontal"
+            :actions="[
+                {
+                    label: onlyMissing ? t('cms.media.showAll') : t('cms.media.showMissing'),
+                    color: 'warning',
+                    variant: 'outline',
+                    onClick: () => (onlyMissing = !onlyMissing),
+                },
+            ]"
+        />
 
-            <CmsMediaDropzone :compact="items.length > 0" @uploaded="add" />
+        <CmsMediaUploadQueue />
 
-            <CmsMediaGrid :items="items" @select="select" />
+        <CmsMediaGrid :items="shown" captions @select="select">
+            <CmsMediaDropzone ref="dropzone" tile @uploaded="add" />
+        </CmsMediaGrid>
 
-            <p v-if="!loading && !items.length" class="py-6 text-center text-gray-500">{{ t('cms.media.empty') }}</p>
-
-            <UButton
-                v-if="hasMore"
-                :label="t('cms.media.loadMore')"
-                :loading="loading"
-                color="neutral"
-                variant="outline"
-                class="self-center"
-                @click="loadMore()"
-            />
-        </div>
+        <UButton
+            v-if="hasMore"
+            :label="t('cms.media.loadMore')"
+            :loading="loading"
+            color="neutral"
+            variant="outline"
+            class="self-center"
+            @click="loadMore()"
+        />
 
         <USlideover v-model:open="panelOpen" :title="t('cms.media.details')">
             <template #body>
@@ -110,7 +131,7 @@ function onDeleted(id: number) {
             @update:open="(open: boolean) => !open && answerUnsaved('cancel')"
         >
             <template #body>
-                <p class="text-gray-600 dark:text-gray-400">{{ t('cms.media.unsavedMessage') }}</p>
+                <p class="text-muted">{{ t('cms.media.unsavedMessage') }}</p>
             </template>
             <template #footer>
                 <div class="flex w-full flex-wrap justify-end gap-3">

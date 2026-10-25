@@ -571,7 +571,14 @@
             "editSite": "Modifier le site",
             "pages": "Pages",
             "media": "Photos",
-            "adminOnly": "Cette page est réservée aux administrateurs."
+            "adminOnly": "Cette page est réservée aux administrateurs.",
+            "content": "Contenu",
+            "filter": "Filtrer les pages",
+            "noMatch": "Aucune page ne correspond à « {query} »",
+            "collapse": "Réduire",
+            "expand": "Déplier",
+            "menu": "Menu",
+            "close": "Fermer"
         },
         "media": {
             "title": "Photos",
@@ -613,7 +620,12 @@
             },
             "unsavedTitle": "Enregistrer les modifications de cette photo ?",
             "unsavedMessage": "Vous avez modifié la description ou le sujet principal de cette photo.",
-            "discard": "Ne pas enregistrer"
+            "discard": "Ne pas enregistrer",
+            "addAlt": "Ajouter une description",
+            "missingAlt": "{n} photo n'a pas encore de description. Elle est lue à voix haute aux personnes aveugles et aide Google. | {n} photos n'ont pas encore de description. Elle est lue à voix haute aux personnes aveugles et aide Google.",
+            "showMissing": "Voir les photos concernées",
+            "showAll": "Tout afficher",
+            "dropHintShort": "JPEG, PNG, WebP · 15 Mo max"
         },
         "pages": {
             "listTitle": "Pages",
@@ -622,7 +634,6 @@
             "create": "Créer",
             "template": "Type de page",
             "fixed": "Pages du site",
-            "fixedHelp": "Ces pages font partie du site. Vous pouvez modifier leur contenu.",
             "free": "Mes pages et articles",
             "empty": "Aucune page pour l'instant. Créez la première avec « Nouvelle page ».",
             "editedOn": "Modifiée le {date}",
@@ -702,7 +713,16 @@
             "previewUnsaved": "Aperçu avec vos modifications non enregistrées.",
             "open": "Ouvrir",
             "moveUp": "Monter",
-            "moveDown": "Descendre"
+            "moveDown": "Descendre",
+            "listSubtitle": "Les pages de votre site. Cliquez sur une page pour la modifier.",
+            "edit": "Modifier",
+            "viewOnSite": "Voir sur le site",
+            "filter": {
+                "all": "Toutes",
+                "published": "En ligne",
+                "drafts": "Brouillons"
+            },
+            "noMatch": "Aucune page ici."
         },
         "inline": {
             "title": "Modification rapide",

@@ -4,6 +4,7 @@
 Admin controller for user management, impersonation, and event logs.
 """
 
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -17,6 +18,7 @@ from ..crud.users import get_user_by_id, is_username_taken, soft_delete_user, up
 from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id, get_user_or_404
 from ..helpers.db import get_session
 from ..helpers.username import UsernameError, username_conflict_as_409, validate_username
+from ..models.cms import CmsEditorBase
 from ..models.user import UserBase
 from ..schemas.admin import (
     AdminDashboardStats,
@@ -78,6 +80,8 @@ def list_users(
     search: str | None = Query(None, max_length=100),
     is_admin: bool | None = None,
     is_premium: bool | None = None,
+    auth_method: str | None = Query(None, max_length=32),
+    cms_editor: bool | None = None,
     include_deleted: bool = False,
     only_deleted: bool = False,
     limit: int = Query(50, ge=1, le=500),
@@ -111,6 +115,13 @@ def list_users(
 
     if is_premium is not None:
         query = query.filter(UserBase.is_premium == is_premium)
+
+    if auth_method is not None:
+        query = query.filter(UserBase.auth_method == auth_method)
+
+    if cms_editor is not None:
+        editors = session.query(CmsEditorBase.user_id)
+        query = query.filter(UserBase.id.in_(editors) if cms_editor else UserBase.id.not_in(editors))
 
     total = query.count()
     users = query.order_by(UserBase.created_at.desc()).offset(offset).limit(limit).all()
@@ -350,6 +361,8 @@ def list_events(
     user_id: int | None = None,
     action: str | None = Query(None, max_length=100),
     action_prefix: str | None = Query(None, max_length=50),
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
@@ -358,6 +371,8 @@ def list_events(
         user_id=user_id,
         action=action,
         action_prefix=action_prefix,
+        from_date=from_date,
+        to_date=to_date,
     )
 
     events, total = get_events(session, filters=filters, limit=limit, offset=offset)

@@ -1,8 +1,6 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
-import { formatDateTime } from '~/utils/formatters';
-
 definePageMeta({
     middleware: ['admin'],
 });
@@ -20,13 +18,39 @@ const restoreStep = ref<0 | 1 | 2>(0); // 0=closed, 1=warning, 2=type-to-confirm
 const backupToRestore = ref<string | null>(null);
 const restoreConfirmInput = ref('');
 
-// Table columns
-const columns = [
-    { accessorKey: 'comment', header: 'Type' },
-    { accessorKey: 'size', header: 'Size' },
-    { accessorKey: 'created_at', header: 'Created' },
-    { accessorKey: 'actions', header: '' },
-];
+// Mirrors MAX_BACKUPS in the backend
+const MAX_BACKUPS = 7;
+
+// Keyed by the comment the backend derives from the filename tag
+const TYPES: Record<string, { label: string; icon: string; tile: string }> = {
+    'Pre-restore backup': {
+        label: 'Pre-restore snapshot',
+        icon: 'i-lucide-history',
+        tile: 'bg-warning/10 text-warning',
+    },
+    'Manual backup': {
+        label: 'Manual backup',
+        icon: 'i-lucide-hand',
+        tile: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+    },
+    'Automatic backup': { label: 'Automatic backup', icon: 'i-lucide-clock', tile: 'bg-elevated text-muted' },
+};
+
+function backupType(comment: string | null | undefined) {
+    return (
+        TYPES[comment ?? ''] ?? {
+            label: comment || 'Unlabeled backup',
+            icon: 'i-lucide-database',
+            tile: 'bg-elevated text-muted',
+        }
+    );
+}
+
+function formatCreated(dateStr: string): string {
+    const d = new Date(dateStr);
+    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${date} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+}
 
 const {
     data: backupsData,
@@ -143,270 +167,202 @@ async function executeRestore() {
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader
+            title="Backups"
+            :description="`Created automatically every day at 4:00 AM. The ${MAX_BACKUPS} most recent are kept.`"
+        >
+            <template #actions>
+                <UButton
+                    icon="i-lucide-plus"
+                    label="Create backup"
+                    size="lg"
+                    :loading="creating"
+                    @click="createBackup"
+                />
+            </template>
+        </AdminPageHeader>
 
-        <div class="admin-backups">
-            <div class="page-header">
-                <h1 class="page-title">Database Backups</h1>
-                <UButton icon="i-lucide-plus" label="Create Backup" :loading="creating" @click="createBackup" />
+        <div
+            v-if="backupsData"
+            class="flex flex-wrap items-center gap-3.5 rounded-xl border border-default bg-default px-4.5 py-3.5"
+        >
+            <div class="flex min-w-40 flex-1 flex-col gap-0.5">
+                <span class="text-[13px] text-muted">Latest backup</span>
+                <span class="text-[15px] font-extrabold text-highlighted">
+                    {{ backupsData.items[0] ? formatCreated(backupsData.items[0].created_at) : 'None yet' }}
+                </span>
             </div>
-
-            <!-- Backups Table -->
-            <UCard>
-                <UTable :columns="columns" :data="backupsData?.items ?? []" :loading="pending">
-                    <template #comment-cell="{ row }">
-                        <div class="type-cell">
-                            <span v-if="row.original.comment">{{ row.original.comment }}</span>
-                            <span v-else class="type-cell--empty">&mdash;</span>
-                            <UTooltip :text="row.original.filename">
-                                <UIcon name="i-lucide-info" class="type-cell-info" />
-                            </UTooltip>
-                        </div>
-                    </template>
-
-                    <template #size-cell="{ row }">
-                        {{ formatSize(row.original.size) }}
-                    </template>
-
-                    <template #created_at-cell="{ row }">
-                        {{ formatDateTime(row.original.created_at) }}
-                    </template>
-
-                    <template #actions-cell="{ row }">
-                        <div class="actions">
-                            <UTooltip text="Restore">
-                                <UButton
-                                    icon="i-lucide-database"
-                                    color="warning"
-                                    variant="ghost"
-                                    size="xs"
-                                    aria-label="Restore"
-                                    :loading="restoring === row.original.filename"
-                                    @click="confirmRestore(row.original.filename)"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Download">
-                                <UButton
-                                    icon="i-lucide-download"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                    aria-label="Download"
-                                    @click="downloadBackup(row.original.filename)"
-                                />
-                            </UTooltip>
-                            <UTooltip
-                                v-if="row.original.media_filename"
-                                :text="`Download CMS photos (${formatSize(row.original.media_size ?? 0)})`"
-                            >
-                                <UButton
-                                    icon="i-lucide-images"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                    :aria-label="`Download CMS photos (${formatSize(row.original.media_size ?? 0)})`"
-                                    @click="downloadBackup(row.original.media_filename)"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Delete">
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    color="error"
-                                    variant="ghost"
-                                    size="xs"
-                                    aria-label="Delete"
-                                    :loading="deleting === row.original.filename"
-                                    @click="confirmDelete(row.original.filename)"
-                                />
-                            </UTooltip>
-                        </div>
-                    </template>
-                </UTable>
-
-                <div class="table-footer">
-                    <span class="total-count">{{ backupsData?.total ?? 0 }} backups (max 7 retained)</span>
+            <div class="flex min-w-45 flex-col gap-1.5">
+                <span class="text-[13px] text-muted">
+                    Retention · {{ Math.min(backupsData.total, MAX_BACKUPS) }} of {{ MAX_BACKUPS }} slots used
+                </span>
+                <div class="flex gap-0.75">
+                    <span
+                        v-for="i in MAX_BACKUPS"
+                        :key="i"
+                        class="h-1.5 w-5.5 rounded-[3px]"
+                        :class="i <= backupsData.total ? 'bg-primary' : 'bg-elevated'"
+                    />
                 </div>
-            </UCard>
-
-            <div class="info-text">
-                <p>Backups are automatically created daily at 4:00 AM. Only the 7 most recent backups are retained.</p>
             </div>
+        </div>
 
-            <!-- Delete Confirmation Modal -->
-            <UModal v-model:open="showDeleteModal">
-                <template #content>
-                    <UCard>
-                        <template #header>
-                            <h3 class="modal-title">Delete Backup</h3>
-                        </template>
-                        <p>Are you sure you want to delete this backup?</p>
-                        <p class="filename-text">{{ backupToDelete }}</p>
-                        <template #footer>
-                            <div class="modal-actions">
-                                <UButton
-                                    label="Cancel"
-                                    color="neutral"
-                                    variant="outline"
-                                    @click="showDeleteModal = false"
-                                />
-                                <UButton label="Delete" color="error" :loading="!!deleting" @click="deleteBackup" />
-                            </div>
-                        </template>
-                    </UCard>
-                </template>
-            </UModal>
-
-            <!-- Restore Step 1: Warning -->
-            <UModal
-                :open="restoreStep === 1"
-                @update:open="
-                    (v: boolean) => {
-                        if (!v) cancelRestore();
-                    }
-                "
+        <AdminCard>
+            <div
+                v-for="b in backupsData?.items ?? []"
+                :key="b.filename"
+                class="flex flex-wrap items-center gap-3.5 px-4.5 py-3"
             >
-                <template #content>
-                    <UCard>
-                        <template #header>
-                            <h3 class="modal-title modal-title--danger">Restore Database</h3>
-                        </template>
-                        <div class="restore-warning">
-                            <p class="restore-warning-text">
-                                This will <strong>drop all existing tables</strong> and replace the database with the
-                                contents of this backup.
-                            </p>
-                            <p class="filename-text">{{ backupToRestore }}</p>
-                            <p class="restore-safety-note">
-                                A safety backup of the current data is made first, so you can go back.
-                            </p>
-                            <p v-if="restoreHasMedia" class="restore-safety-note">
-                                The CMS photos saved with this backup will replace the current ones.
-                            </p>
+                <span
+                    class="flex size-8.5 shrink-0 items-center justify-center rounded-[9px]"
+                    :class="backupType(b.comment).tile"
+                >
+                    <UIcon :name="backupType(b.comment).icon" class="size-4" />
+                </span>
+                <div class="flex min-w-40 flex-1 flex-col gap-px" :title="b.filename">
+                    <span class="text-sm font-bold text-highlighted">{{ backupType(b.comment).label }}</span>
+                    <span class="text-[13px] text-muted"
+                        >{{ formatCreated(b.created_at) }} · {{ formatSize(b.size) }}</span
+                    >
+                </div>
+                <div class="flex items-center gap-1">
+                    <UButton
+                        label="Restore"
+                        color="neutral"
+                        variant="outline"
+                        :loading="restoring === b.filename"
+                        @click="confirmRestore(b.filename)"
+                    />
+                    <UTooltip text="Download">
+                        <UButton
+                            icon="i-lucide-download"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Download"
+                            @click="downloadBackup(b.filename)"
+                        />
+                    </UTooltip>
+                    <UTooltip v-if="b.media_filename" :text="`Download CMS photos (${formatSize(b.media_size ?? 0)})`">
+                        <UButton
+                            icon="i-lucide-images"
+                            color="neutral"
+                            variant="ghost"
+                            :aria-label="`Download CMS photos (${formatSize(b.media_size ?? 0)})`"
+                            @click="downloadBackup(b.media_filename)"
+                        />
+                    </UTooltip>
+                    <UTooltip text="Delete">
+                        <UButton
+                            icon="i-lucide-trash-2"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Delete"
+                            class="hover:bg-error/10 hover:text-error"
+                            :loading="deleting === b.filename"
+                            @click="confirmDelete(b.filename)"
+                        />
+                    </UTooltip>
+                </div>
+            </div>
+            <p v-if="pending && !backupsData" class="px-4.5 py-8 text-center text-sm text-muted">Loading…</p>
+            <p v-else-if="!backupsData?.items.length" class="px-4.5 py-8 text-center text-sm text-muted">
+                No backups yet.
+            </p>
+        </AdminCard>
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="showDeleteModal">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <h3 class="text-lg font-semibold text-highlighted">Delete backup</h3>
+                    </template>
+                    <p>Are you sure you want to delete this backup?</p>
+                    <p class="mt-2 rounded bg-elevated px-2 py-1 font-mono text-sm">{{ backupToDelete }}</p>
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton
+                                label="Cancel"
+                                color="neutral"
+                                variant="outline"
+                                @click="showDeleteModal = false"
+                            />
+                            <UButton label="Delete" color="error" :loading="!!deleting" @click="deleteBackup" />
                         </div>
-                        <template #footer>
-                            <div class="modal-actions">
-                                <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
-                                <UButton label="Continue" color="error" @click="proceedToStep2" />
-                            </div>
-                        </template>
-                    </UCard>
-                </template>
-            </UModal>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
 
-            <!-- Restore Step 2: Type to confirm -->
-            <UModal
-                :open="restoreStep === 2"
-                @update:open="
-                    (v: boolean) => {
-                        if (!v) cancelRestore();
-                    }
-                "
-            >
-                <template #content>
-                    <UCard>
-                        <template #header>
-                            <h3 class="modal-title modal-title--danger">Confirm Restore</h3>
-                        </template>
-                        <div class="restore-confirm">
-                            <p>Type the backup filename to confirm:</p>
-                            <p class="filename-text">{{ backupToRestore }}</p>
-                            <UInput
-                                v-model="restoreConfirmInput"
-                                placeholder="Type filename here"
-                                class="restore-confirm-input"
+        <!-- Restore Step 1: Warning -->
+        <UModal
+            :open="restoreStep === 1"
+            @update:open="
+                (v: boolean) => {
+                    if (!v) cancelRestore();
+                }
+            "
+        >
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <h3 class="text-lg font-semibold text-error">Restore database</h3>
+                    </template>
+                    <p class="text-muted">
+                        This will <strong>drop all existing tables</strong> and replace the database with the contents
+                        of this backup.
+                    </p>
+                    <p class="mt-2 rounded bg-elevated px-2 py-1 font-mono text-sm">{{ backupToRestore }}</p>
+                    <p class="mt-3 text-sm text-muted italic">
+                        A safety backup of the current data is made first, so you can go back.
+                    </p>
+                    <p v-if="restoreHasMedia" class="mt-3 text-sm text-muted italic">
+                        The CMS photos saved with this backup will replace the current ones.
+                    </p>
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
+                            <UButton label="Continue" color="error" @click="proceedToStep2" />
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Restore Step 2: Type to confirm -->
+        <UModal
+            :open="restoreStep === 2"
+            @update:open="
+                (v: boolean) => {
+                    if (!v) cancelRestore();
+                }
+            "
+        >
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <h3 class="text-lg font-semibold text-error">Confirm restore</h3>
+                    </template>
+                    <div class="flex flex-col gap-3">
+                        <p>Type the backup filename to confirm:</p>
+                        <p class="rounded bg-elevated px-2 py-1 font-mono text-sm">{{ backupToRestore }}</p>
+                        <UInput v-model="restoreConfirmInput" placeholder="Type filename here" />
+                    </div>
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
+                            <UButton
+                                label="Restore"
+                                color="error"
+                                :disabled="!restoreConfirmMatch"
+                                :loading="!!restoring"
+                                @click="executeRestore"
                             />
                         </div>
-                        <template #footer>
-                            <div class="modal-actions">
-                                <UButton label="Cancel" color="neutral" variant="outline" @click="cancelRestore" />
-                                <UButton
-                                    label="Restore"
-                                    color="error"
-                                    :disabled="!restoreConfirmMatch"
-                                    :loading="!!restoring"
-                                    @click="executeRestore"
-                                />
-                            </div>
-                        </template>
-                    </UCard>
-                </template>
-            </UModal>
-        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-.admin-backups {
-    @apply max-w-4xl mx-auto;
-}
-
-.page-header {
-    @apply flex items-center justify-between mb-6;
-}
-
-.page-title {
-    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.actions {
-    @apply flex gap-1;
-}
-
-.table-footer {
-    @apply flex justify-end pt-4;
-}
-
-.total-count {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.info-text {
-    @apply mt-4 text-sm text-gray-500 dark:text-gray-400;
-}
-
-.modal-title {
-    @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.filename-text {
-    @apply mt-2 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded;
-}
-
-.modal-actions {
-    @apply flex justify-end gap-2;
-}
-
-.modal-title--danger {
-    @apply text-red-600 dark:text-red-400;
-}
-
-.restore-warning-text {
-    @apply text-gray-600 dark:text-gray-400;
-}
-
-.restore-safety-note {
-    @apply mt-3 text-sm text-gray-500 dark:text-gray-400 italic;
-}
-
-.restore-confirm {
-    @apply space-y-3;
-}
-
-.restore-confirm-input {
-    @apply mt-2;
-}
-
-.type-cell {
-    @apply flex items-center gap-1.5 text-sm;
-}
-
-.type-cell--empty {
-    @apply text-gray-400 dark:text-gray-600;
-}
-
-.type-cell-info {
-    @apply text-gray-400 dark:text-gray-500 size-3.5 shrink-0 cursor-help;
-}
-</style>

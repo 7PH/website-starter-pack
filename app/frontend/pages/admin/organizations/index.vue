@@ -1,27 +1,28 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { formatDate, initials } from '~/utils/formatters';
+import { yesNoToBool } from '~/utils/admin-filters';
+
 definePageMeta({
     middleware: ['admin'],
 });
 
-import { formatDate } from '~/utils/formatters';
-import { DELETED_FILTER_OPTIONS, YES_NO_FILTER_OPTIONS, yesNoToBool } from '~/utils/admin-filters';
-
-// Types from models.ts are declared globally
-
 const api = useApi();
 const { showSuccess, showError } = useToastHelpers();
-const modal = useModalStore();
 
-const { search, debouncedSearch: searchDebounced, page, limit, offset } = useTableState({ defaultLimit: 100 });
+const { search, debouncedSearch, page, limit, offset } = useTableState({ defaultLimit: 100 });
 
-// Filters
-const premiumFilter = ref('all');
-const deletedFilter = ref('hide');
+const planFilter = ref('all');
+const showDeleted = ref(false);
+const PLAN_OPTIONS = [
+    { label: 'Any plan', value: 'all' },
+    { label: 'Premium', value: 'yes' },
+    { label: 'Free', value: 'no' },
+];
 
 // useTableState resets page on debouncedSearch; reset on other filters too.
-watch([premiumFilter, deletedFilter], () => {
+watch([planFilter, showDeleted], () => {
     page.value = 1;
 });
 
@@ -33,35 +34,24 @@ const {
     'admin-organizations',
     () =>
         api.get('/organizations', {
-            search: searchDebounced.value || undefined,
-            stripe_premium: yesNoToBool(premiumFilter.value),
-            include_deleted: deletedFilter.value !== 'hide' ? true : undefined,
-            only_deleted: deletedFilter.value === 'only' ? true : undefined,
+            search: debouncedSearch.value || undefined,
+            stripe_premium: yesNoToBool(planFilter.value),
+            include_deleted: showDeleted.value || undefined,
             limit: limit.value,
             offset: offset.value,
         }),
-    { watch: [searchDebounced, premiumFilter, deletedFilter, page], server: false },
+    { watch: [debouncedSearch, planFilter, showDeleted, page], server: false },
 );
 
-const totalPages = computed(() => Math.ceil((orgsData.value?.total ?? 0) / limit.value));
-
-// Table columns configuration
-const columns = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'email', header: 'Email' },
-    { accessorKey: 'members', header: 'Members' },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'created_at', header: 'Created' },
-    { accessorKey: 'actions', header: 'Actions' },
-];
-
-// Type helper for table row access (UTable doesn't preserve generic types in slots)
-function getOrg(row: { original: unknown }): OrganizationRead {
-    return row.original as OrganizationRead;
+function seats(org: OrganizationRead) {
+    const used = org.premium_member_count ?? 0;
+    return {
+        used,
+        over: used > org.stripe_quota,
+        pct: org.stripe_quota ? Math.min(100, (used / org.stripe_quota) * 100) : 100,
+    };
 }
 
-// Create organization modal
 const showCreateModal = ref(false);
 const isCreating = ref(false);
 
@@ -79,222 +69,95 @@ async function createOrganization(formData: { name: string; email: string; descr
     }
 }
 
-async function deleteOrganization(org: OrganizationRead) {
-    const confirmed = await modal.open('confirm', {
-        title: 'Delete Organization',
-        message: `Are you sure you want to delete ${org.name}? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmColor: 'error',
-    });
-
-    if (!confirmed) return;
-
-    try {
-        await api.delete(`/organizations/${org.id}`);
-        showSuccess('Organization deleted', `${org.name} has been deleted`);
-        refresh();
-    } catch (error) {
-        showError(error, 'core.errors.generic');
-    }
-}
+const GRID = 'grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_100px_90px_24px]';
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader
+            title="Organizations"
+            :count="orgsData?.total"
+            description="Teams that share a subscription and premium seats."
+        >
+            <template #actions>
+                <UButton label="New organization" icon="i-lucide-plus" size="lg" @click="showCreateModal = true" />
+            </template>
+        </AdminPageHeader>
 
-        <div class="admin-orgs">
-            <div class="page-header">
-                <div class="header-left">
-                    <h1 class="page-title">Organizations</h1>
-                    <span class="org-count">{{ orgsData?.total ?? 0 }} total</span>
+        <AdminToolbar v-model:search="search" search-placeholder="Search by name or email">
+            <USelect v-model="planFilter" :items="PLAN_OPTIONS" size="lg" class="w-36" />
+            <UCheckbox v-model="showDeleted" label="Show deleted" />
+        </AdminToolbar>
+
+        <AdminCard :class="{ 'opacity-60': pending }">
+            <template #columns>
+                <div :class="GRID" class="gap-3">
+                    <span>Organization</span>
+                    <span class="text-right md:text-left">Members</span>
+                    <span class="hidden md:block">Plan</span>
+                    <span class="hidden md:block">Created</span>
                 </div>
-                <UButton label="Create Organization" icon="i-lucide-plus" @click="showCreateModal = true" />
-            </div>
+            </template>
 
-            <!-- Filters -->
-            <div class="filters">
-                <UInput
-                    v-model="search"
-                    placeholder="Search by name or email..."
-                    icon="i-lucide-search"
-                    class="search-input"
-                />
-                <div class="filter-item">
-                    <label class="filter-label">Premium</label>
-                    <USelect v-model="premiumFilter" :items="YES_NO_FILTER_OPTIONS" class="w-24" />
-                </div>
-                <div class="filter-item">
-                    <label class="filter-label">Deleted</label>
-                    <USelect v-model="deletedFilter" :items="DELETED_FILTER_OPTIONS" class="w-32" />
-                </div>
-            </div>
-
-            <!-- Organizations Table -->
-            <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                <UTable :columns="columns" :data="orgsData?.items ?? []" :loading="pending">
-                    <template #name-cell="{ row }">
-                        <NuxtLink :to="`/admin/organizations/${row.original.id}`" class="org-link">
-                            {{ row.original.name }}
-                        </NuxtLink>
-                    </template>
-
-                    <template #members-cell="{ row }">
-                        <div class="member-info">
-                            <span>{{ row.original.member_count }} members</span>
-                            <span
-                                v-if="
-                                    row.original.stripe_premium &&
-                                    (row.original.premium_member_count ?? 0) > row.original.stripe_quota
-                                "
-                                class="over-quota"
-                            >
-                                ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }}
-                                premium - over quota!)
-                            </span>
-                            <span v-else-if="row.original.stripe_premium" class="quota-info">
-                                ({{ row.original.premium_member_count ?? 0 }}/{{ row.original.stripe_quota }} premium)
-                            </span>
-                        </div>
-                    </template>
-
-                    <template #status-cell="{ row }">
-                        <div class="status-badges">
-                            <UBadge v-if="row.original.deleted_at" label="Deleted" color="error" />
-                            <UBadge v-if="row.original.stripe_premium" label="Premium" color="warning" />
-                            <UBadge
-                                v-if="
-                                    row.original.stripe_premium &&
-                                    (row.original.premium_member_count ?? 0) > row.original.stripe_quota
-                                "
-                                label="Over Quota"
-                                color="error"
-                            />
-                        </div>
-                    </template>
-
-                    <template #created_at-cell="{ row }">
-                        {{ formatDate(row.original.created_at) }}
-                    </template>
-
-                    <template #actions-cell="{ row }">
-                        <div v-if="!row.original.deleted_at" class="actions">
-                            <UTooltip text="Edit">
-                                <NuxtLink :to="`/admin/organizations/${row.original.id}`">
-                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
-                                </NuxtLink>
-                            </UTooltip>
-                            <UTooltip text="Delete">
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    color="error"
-                                    variant="ghost"
-                                    size="xs"
-                                    @click="deleteOrganization(getOrg(row))"
-                                />
-                            </UTooltip>
-                        </div>
-                        <NuxtLink v-else :to="`/admin/organizations/${row.original.id}`" class="view-link">
-                            View
-                        </NuxtLink>
-                    </template>
-                </UTable>
-
-                <!-- Pagination -->
-                <div v-if="totalPages > 1" class="pagination-footer">
-                    <div class="pagination-info">
-                        Showing {{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit, orgsData?.total ?? 0) }} of
-                        {{ orgsData?.total ?? 0 }}
+            <NuxtLink
+                v-for="org in orgsData?.items ?? []"
+                :key="org.id"
+                :to="`/admin/organizations/${org.id}`"
+                :class="GRID"
+                class="items-center gap-x-3 gap-y-2 px-4.5 py-3 hover:bg-elevated"
+            >
+                <div class="flex min-w-0 items-center gap-3">
+                    <span
+                        class="flex size-8.5 shrink-0 items-center justify-center rounded-[9px] bg-elevated text-xs font-extrabold text-toned"
+                    >
+                        {{ initials(org.name) }}
+                    </span>
+                    <div class="flex min-w-0 flex-col">
+                        <span class="truncate text-sm font-bold text-highlighted">{{ org.name }}</span>
+                        <span class="truncate text-[13px] text-muted">{{ org.email }}</span>
                     </div>
-                    <UPagination v-model="page" :total="orgsData?.total ?? 0" :items-per-page="limit" />
                 </div>
-            </UCard>
+                <div class="flex flex-col items-end gap-1 md:items-start">
+                    <span class="text-[13px] text-highlighted">
+                        {{ org.member_count }} {{ org.member_count === 1 ? 'member' : 'members' }}
+                    </span>
+                    <div v-if="org.stripe_premium" class="flex items-center gap-1.5">
+                        <span class="flex h-1.25 w-15 overflow-hidden rounded-full bg-elevated">
+                            <span
+                                :class="seats(org).over ? 'bg-error' : 'bg-warning'"
+                                :style="{ width: `${seats(org).pct}%` }"
+                            />
+                        </span>
+                        <span class="text-xs" :class="seats(org).over ? 'font-bold text-error' : 'text-muted'">
+                            {{ seats(org).used }} / {{ org.stripe_quota }} premium seats
+                        </span>
+                    </div>
+                </div>
+                <span class="hidden gap-1 md:flex md:flex-wrap">
+                    <UBadge v-if="org.deleted_at" label="Deleted" color="error" variant="soft" class="rounded-full" />
+                    <UBadge
+                        v-else
+                        :label="org.stripe_premium ? 'Premium' : 'Free'"
+                        :color="org.stripe_premium ? 'warning' : 'neutral'"
+                        variant="soft"
+                        class="rounded-full"
+                    />
+                </span>
+                <span class="hidden text-[13px] text-muted md:block">{{ formatDate(org.created_at) }}</span>
+                <UIcon name="i-lucide-chevron-right" class="hidden size-4 text-dimmed md:block" />
+            </NuxtLink>
 
-            <!-- Create Organization Modal -->
-            <OrganizationsCreateModal
-                v-model:open="showCreateModal"
-                :is-creating="isCreating"
-                @create="createOrganization"
-            />
-        </div>
+            <p v-if="!orgsData?.items.length" class="px-4.5 py-8 text-center text-sm text-muted">
+                {{ pending ? 'Loading…' : search ? `No organization matches “${search}”` : 'No organizations found' }}
+            </p>
+
+            <AdminPagination v-model:page="page" :total="orgsData?.total ?? 0" :limit="limit" />
+        </AdminCard>
+
+        <OrganizationsCreateModal
+            v-model:open="showCreateModal"
+            :is-creating="isCreating"
+            @create="createOrganization"
+        />
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-.admin-orgs {
-    @apply max-w-7xl mx-auto;
-}
-
-.page-header {
-    @apply flex items-center justify-between mb-6;
-}
-
-.header-left {
-    @apply flex items-baseline gap-4;
-}
-
-.page-title {
-    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.org-count {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-
-.filters {
-    @apply flex items-end gap-4 mb-4 flex-wrap relative z-10;
-}
-
-.search-input {
-    @apply w-64;
-}
-
-.filter-item {
-    @apply flex flex-col gap-1;
-}
-
-.filter-label {
-    @apply text-xs font-medium text-gray-500 dark:text-gray-400;
-}
-
-.org-link {
-    @apply text-primary-500 no-underline;
-}
-
-.org-link:hover {
-    @apply underline;
-}
-
-.member-info {
-    @apply flex flex-col gap-0.5 text-sm;
-}
-
-.quota-info {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
-.over-quota {
-    @apply text-xs text-red-600 dark:text-red-400 font-medium;
-}
-
-.actions {
-    @apply flex gap-1;
-}
-
-.status-badges {
-    @apply flex flex-wrap gap-1;
-}
-
-.view-link {
-    @apply text-sm text-gray-500 dark:text-gray-400 hover:underline;
-}
-
-.pagination-footer {
-    @apply flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700;
-}
-
-.pagination-info {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-}
-</style>

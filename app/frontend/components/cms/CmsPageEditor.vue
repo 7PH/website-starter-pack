@@ -198,17 +198,17 @@ async function remove() {
 </script>
 
 <template>
-    <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col gap-4.5">
         <NuxtLink
             to="/admin/cms/pages"
-            class="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:underline mb-4"
+            class="inline-flex items-center gap-1 self-start text-sm font-semibold text-muted hover:text-highlighted"
         >
             <UIcon name="i-lucide-arrow-left" />
             {{ t('cms.pages.backToList') }}
         </NuxtLink>
 
         <div v-if="pending" class="flex justify-center py-16">
-            <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary-500" />
+            <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary" />
         </div>
 
         <UAlert
@@ -220,9 +220,20 @@ async function remove() {
         />
 
         <form v-else class="flex flex-col gap-6" @submit.prevent="save">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ heading }}</h1>
-                <div class="flex gap-2">
+            <AdminPageHeader :title="heading" :description="isFixed ? undefined : `/${page.slug}`">
+                <template v-if="!isFixed" #badges>
+                    <UBadge
+                        :label="page.published ? t('cms.pages.status.published') : t('cms.pages.status.draft')"
+                        :color="page.published ? 'success' : 'neutral'"
+                        variant="soft"
+                        class="rounded-full"
+                    >
+                        <template #leading>
+                            <span class="size-1.5 rounded-full bg-current" />
+                        </template>
+                    </UBadge>
+                </template>
+                <template v-if="publicUrl || previewUrl" #actions>
                     <UButton
                         v-if="publicUrl"
                         :to="publicUrl"
@@ -231,6 +242,7 @@ async function remove() {
                         icon="i-lucide-external-link"
                         color="neutral"
                         variant="outline"
+                        size="lg"
                     />
                     <UButton
                         v-if="previewUrl"
@@ -240,9 +252,10 @@ async function remove() {
                         icon="i-lucide-eye"
                         color="neutral"
                         variant="outline"
+                        size="lg"
                     />
-                </div>
-            </div>
+                </template>
+            </AdminPageHeader>
 
             <div class="grid gap-6 lg:grid-cols-3">
                 <div class="flex flex-col gap-6 lg:col-span-2">
@@ -296,7 +309,7 @@ async function remove() {
                             />
                             <template #content>
                                 <div class="flex flex-col gap-4 pt-4">
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-muted">
                                         {{ t('cms.pages.seo.help') }}
                                     </p>
                                     <UFormField
@@ -360,9 +373,9 @@ async function remove() {
 
             <!-- Stays in reach on long pages. -->
             <div
-                class="sticky bottom-0 z-20 -mx-4 px-4 py-3 flex items-center justify-end gap-4 border-t border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur"
+                class="sticky bottom-0 z-20 -mx-4 flex items-center justify-end gap-4 border-t border-default bg-default/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8"
             >
-                <span class="text-sm" :class="isDirty ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'">
+                <span class="text-sm" :class="isDirty ? 'text-amber-600 dark:text-amber-400' : 'text-muted'">
                     {{ isDirty ? t('cms.pages.unsaved') : t('cms.pages.allSaved') }}
                 </span>
                 <UButton
