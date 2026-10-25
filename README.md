@@ -67,22 +67,24 @@ Methods added this way are typed everywhere `useNativeBridge()` is called. Core 
 
 ## CMS mode (content sites)
 
-For sites a non-technical client edits herself (brochure sites, small businesses). Off by default.
+For sites a non-technical client edits on their own (brochure sites, small businesses). Off by default.
 
 1. Set `CMS_ENABLED=true` in `.env` and rebuild the frontend (the public page route is added at build time).
 2. Declare your templates in `app/backend/src/cms_templates_ext.py` (see the example in that file).
-3. In the admin user page, turn your client into a **CMS editor**. She then sees only **Pages** and **Photos** in the admin, plus a "Modifier le site" link in her menu.
+3. In the admin user page, turn your client into a **CMS editor**. The editor then sees only **Pages** and **Photos** in the admin, plus an "Edit site" link in the user menu.
 
 What you get:
 
-- **Photos** (`/admin/cms/media`): upload (JPEG, PNG, WebP, 15 MB, 40 MP max), turned into WebP at 480/960/1600/2400 px, metadata stripped, with alt text and a focal point. Files live in `static/cms/` and are served by the static host (override the origin with `STATIC_ORIGIN`).
+- **Photos** (`/admin/cms/media`): upload (JPEG, PNG, WebP, 15 MB, 40 MP max), turned into WebP at 480/960/1600/2400 px, metadata stripped, with alt text and a focal point. Files live in `static/cms/media/<id>-<token>/` (the random token keeps photos of unpublished pages unguessable) and are served by the static host (override the origin with `STATIC_ORIGIN`).
 - **Pages** (`/admin/cms/pages`):
-  - **Fixed templates** (`fixed=True`, eg `home`, `site`) have one page each. Read them in your own pages with `useCmsFixed('home')`. Fields she never filled return their `default`.
-  - **Free templates** (core ships `default`: one rich text body) have any number of pages, served at `/<slug>` with SSR, SEO tags and sitemap entries. Your own routes always win over CMS slugs. If your app has its own catch-all page (`pages/[...slug].vue`), the CMS route is not added (the build logs a warning): render CMS pages from your catch-all with `useCmsPage(slug)`. Addresses can't start with `api` (routed to the backend).
-  - List the pages of one template in the order she sets (drag and drop in the pages list, arrows on touch screens) with `useCmsPageList('service')`, eg for a grid of services. List posts with `useCmsPosts()`, render rich text with `<CmsRichText :html>` and photos with `<CmsImage :media>`. Restyle free pages by overriding `CmsPageContent` in `config/component-overrides.ts`.
-  - The editor has a Visual/HTML toggle and a live preview of unsaved changes. Addresses `admin*` and core routes are refused too.
-- **Quick edit on the page itself**: wrap any part of your pages in `<CmsEditable :page="home" field="tagline">…</CmsEditable>`. People who can edit get a pencil opening a modal for that field, and the page refreshes in place. Add `<CmsPageEditButton :page="home" />` for a shortcut to the full editor (free pages get it automatically). Visitors' HTML is unchanged.
-- **Backups** also archive `static/cms/` next to each database dump, and restore both.
+  - **Fixed templates** (`fixed=True`, eg `home`, `site`) have one page each. Read them in your own pages with `useCmsFixed('home')`. Fields never filled return their `default`.
+  - **Free templates** (core ships `default`: one rich text body) have any number of pages, served at `/<slug>` with SSR, SEO tags and sitemap entries. Your own routes always win over CMS slugs. If your app has its own top-level dynamic page (`pages/[slug].vue`, `pages/[...slug].vue`), the CMS route is not added (the build logs a warning): render CMS pages from it with `useCmsPage(slug)`. Addresses can't start with `api` (routed to the backend). `/about/` redirects to `/about`.
+  - List the pages of one template in the order the editor sets (drag and drop in the pages list, arrows on touch screens) with `useCmsPageList('service')`, eg for a grid of services. For a blog, declare a `post` template and list it newest first with `useCmsPageList('post', { order: 'published_at' })`. Render rich text with `<CmsRichText :html>` and photos with `<CmsImage :media>`. Restyle free pages by overriding `CmsPageContent` in `config/component-overrides.ts`.
+  - The editor has a Visual/HTML toggle and a live preview of unsaved changes. Addresses `admin*` and core routes are refused too, and the editor warns before saving an address a site route would hide (`legal`, because of `/legal/privacy`). A save is refused when the page changed since it was loaded (another tab, a quick edit), so nothing gets overwritten silently.
+  - Import scripts can set `published_at` in the update payload to keep a post's original date.
+- **Quick edit on the page itself**: wrap any part of your pages in `<CmsEditable :page="home" field="tagline">…</CmsEditable>`. People who can edit get a pencil opening a modal for that field, and the page data refreshes in place. For an empty field, pass `add-label="…"` and no content: editors get an add button, visitors nothing. Add `<CmsPageEditButton :page="home" />` for a shortcut to the full editor (free pages get it automatically). Edit controls are rendered in the browser only: visitors' HTML just gets a plain `<div>` around each wrapped part.
+- **Backups** also archive `static/cms/` (`cms_media_<stamp>.tar`) next to each database dump, and restore both.
+- `<html lang>` follows the site's language.
 
 Adding a field to a template needs no migration. The `cms_*` tables are created in every app, even with the flag off (they stay empty).
 

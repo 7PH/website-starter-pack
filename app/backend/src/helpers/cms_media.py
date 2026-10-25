@@ -10,6 +10,7 @@ import io
 import os
 import re
 import shutil
+import threading
 from pathlib import Path, PureWindowsPath
 
 import magic
@@ -18,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..constants import PUBLIC_URL
 from ..models.cms import CmsMediaBase, CmsPageBase
-from ..schemas.cms_media import CmsMediaRead, CmsMediaUsage
+from ..schemas.cms_media import CmsMediaPublic, CmsMediaRead, CmsMediaUsage
 from . import file_upload
 from .logging import get_logger
 
@@ -33,6 +34,9 @@ WIDTHS = [480, 960, 1600, 2400]
 WEBP_MAX_SIDE = 16383
 WEBP_QUALITY = 80
 
+# Decoding a big photo takes a few hundred MB: a burst of uploads must not exhaust the server's memory.
+_PROCESSING = threading.Semaphore(2)
+
 # Magic MIME type → the only Pillow decoder allowed for it.
 ALLOWED_FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
 
@@ -41,28 +45,32 @@ ALLOWED_FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP
 STATIC_ORIGIN = os.environ.get("STATIC_ORIGIN") or PUBLIC_URL.replace("://", "://static.", 1)
 
 
-def media_dir(media_id: int) -> Path:
+def media_dir(media: CmsMediaBase) -> Path:
     # Read at call time so tests can patch file_upload.STATIC_DIR.
-    return file_upload.STATIC_DIR / "cms" / "media" / str(media_id)
+    return file_upload.STATIC_DIR / "cms" / "media" / f"{media.id}-{media.token}"
 
 
-def media_url(media_id: int, width: int) -> str:
-    return f"{STATIC_ORIGIN}/cms/media/{media_id}/{width}.webp"
+def media_url(media: CmsMediaBase, width: int) -> str:
+    return f"{STATIC_ORIGIN}/cms/media/{media.id}-{media.token}/{width}.webp"
 
 
-def media_to_read(media: CmsMediaBase) -> CmsMediaRead:
-    urls = {str(w): media_url(media.id, w) for w in media.sizes}
-    return CmsMediaRead(
+def media_to_public(media: CmsMediaBase) -> CmsMediaPublic:
+    urls = {str(w): media_url(media, w) for w in media.sizes}
+    return CmsMediaPublic(
         id=media.id,
-        original_name=media.original_name,
         alt=media.alt,
         width=media.width,
         height=media.height,
         focal_x=media.focal_x,
         focal_y=media.focal_y,
-        created_at=media.created_at,
         urls=urls,
-        src=media_url(media.id, max(media.sizes)) if media.sizes else "",
+        src=media_url(media, max(media.sizes)) if media.sizes else "",
+    )
+
+
+def media_to_read(media: CmsMediaBase) -> CmsMediaRead:
+    return CmsMediaRead(
+        **media_to_public(media).model_dump(), original_name=media.original_name, created_at=media.created_at
     )
 
 
@@ -104,58 +112,62 @@ def process_image(content: bytes) -> tuple[int, int, dict[int, bytes]]:
     if not pil_format:
         raise HTTPException(status_code=415, detail=f"Unsupported file type '{mime}'. Use JPEG, PNG or WebP")
 
-    try:
-        # Only the header is read here, so the pixel check runs before any decoding.
-        img = Image.open(io.BytesIO(content), formats=[pil_format])
-        if img.width * img.height > MAX_PIXELS:
-            raise HTTPException(status_code=422, detail=f"Image exceeds {MAX_PIXELS // 1_000_000} megapixels")
-        img.seek(0)  # Animated files: first frame only.
+    with _PROCESSING:
+        try:
+            # Only the header is read here, so the pixel check runs before any decoding.
+            img = Image.open(io.BytesIO(content), formats=[pil_format])
+            if img.width * img.height > MAX_PIXELS:
+                raise HTTPException(status_code=422, detail=f"Image exceeds {MAX_PIXELS // 1_000_000} megapixels")
+            img.seek(0)  # Animated files: first frame only.
 
-        # Shrink to the largest output size before the costly steps. The target is computed on the
-        # upright size (EXIF orientations 5-8 swap the sides) and also keeps the height encodable.
-        swapped = img.getexif().get(0x0112, 1) in (5, 6, 7, 8)
-        upright_w, upright_h = (img.height, img.width) if swapped else img.size
-        scale = min(1, max(WIDTHS) / upright_w, WEBP_MAX_SIDE / upright_h)
-        target = (max(1, round(img.width * scale)), max(1, round(img.height * scale)))
-        if pil_format == "JPEG":
-            img.draft(img.mode, target)  # The JPEG decoder skips detail at load: a fraction of the memory.
-        img.load()
-        if img.mode.startswith("I"):
-            # 16-bit grayscale: bring 0..65535 down to 0..255, a plain convert would clip it to white.
-            img = img.convert("I").point(lambda v: v / 256).convert("L")
-        if img.size != target:
-            img = img.resize(target, Image.LANCZOS, reducing_gap=3.0)
+            # Shrink to the largest output size before the costly steps. The target is computed on the
+            # upright size (EXIF orientations 5-8 swap the sides) and also keeps the height encodable.
+            swapped = img.getexif().get(0x0112, 1) in (5, 6, 7, 8)
+            upright_w, upright_h = (img.height, img.width) if swapped else img.size
+            scale = min(1, max(WIDTHS) / upright_w, WEBP_MAX_SIDE / upright_h)
+            target = (max(1, round(img.width * scale)), max(1, round(img.height * scale)))
+            if pil_format == "JPEG":
+                img.draft(img.mode, target)  # The JPEG decoder skips detail at load: a fraction of the memory.
+            img.load()
+            if img.mode.startswith("I"):
+                img = img.convert("I")  # Pillow can't shrink 16-bit modes by large factors.
+            if img.size != target:
+                if img.mode in ("1", "P"):
+                    # Pillow resizes these nearest-neighbour, which turns fine detail into noise.
+                    img = img.convert("RGBA" if img.has_transparency_data else "RGB")
+                img = img.resize(target, Image.LANCZOS, reducing_gap=3.0)
+            if img.mode == "I":
+                # 16-bit grayscale: bring 0..65535 down to 0..255, a plain convert would clip it to white.
+                img = img.point(lambda v: v / 256).convert("L")
 
-        img = ImageOps.exif_transpose(img)
-        img = _to_srgb(img, "RGBA" if img.has_transparency_data else "RGB")
-        width, height = img.size
-        files = {}
-        for w in [w for w in WIDTHS if w <= width] or [width]:
-            h = max(1, round(height * w / width))
-            resized = img.resize((w, h), Image.LANCZOS, reducing_gap=3.0) if w != width else img
-            buf = io.BytesIO()
-            # No exif/xmp/icc passed: Pillow's WebP encoder only writes what it's given.
-            resized.save(buf, "WEBP", quality=WEBP_QUALITY)
-            files[w] = buf.getvalue()
-    except HTTPException:
-        raise
-    except (OSError, SyntaxError, ValueError, Image.DecompressionBombError) as err:
-        raise HTTPException(status_code=400, detail="Could not read this image") from err
+            img = ImageOps.exif_transpose(img)
+            img = _to_srgb(img, "RGBA" if img.has_transparency_data else "RGB")
+            width, height = img.size
+            files = {}
+            for w in [w for w in WIDTHS if w <= width] or [width]:
+                h = max(1, round(height * w / width))
+                resized = img.resize((w, h), Image.LANCZOS, reducing_gap=3.0) if w != width else img
+                buf = io.BytesIO()
+                # No exif/xmp/icc passed: Pillow's WebP encoder only writes what it's given.
+                resized.save(buf, "WEBP", quality=WEBP_QUALITY)
+                files[w] = buf.getvalue()
+        except HTTPException:
+            raise
+        except (OSError, SyntaxError, ValueError, Image.DecompressionBombError) as err:
+            raise HTTPException(status_code=400, detail="Could not read this image") from err
     return width, height, files
 
 
-def write_media_files(media_id: int, files: dict[int, bytes]) -> None:
-    target = media_dir(media_id)
+def write_media_files(target: Path, files: dict[int, bytes]) -> None:
     target.mkdir(parents=True, exist_ok=True)
     for width, data in files.items():
         (target / f"{width}.webp").write_bytes(data)
 
 
-def delete_media_files(media_id: int) -> None:
-    target = media_dir(media_id)
+def delete_media_files(target: Path) -> None:
     shutil.rmtree(target, ignore_errors=True)
     if target.exists():
-        logger.warning(f"CMS media {media_id}: folder still on disk after delete: {target}")
+        logger.warning(f"CMS media folder still on disk after delete: {target}")
 
 
 _RICHTEXT_MEDIA_RE = re.compile(r'data-media-id="(\d+)"')

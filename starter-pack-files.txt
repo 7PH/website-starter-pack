@@ -167,6 +167,7 @@ app/frontend/composables/useBreadcrumb.ts
 app/frontend/composables/useCanonical.ts
 app/frontend/composables/useCmsAccess.ts
 app/frontend/composables/useCmsPages.ts
+app/frontend/composables/useCmsErrorToast.ts
 app/frontend/composables/useUnsavedChangesWarning.ts
 app/frontend/components/modal/ModalAuth.vue
 app/frontend/components/modal/ModalConfirm.vue
@@ -328,9 +329,11 @@ app/frontend/plugins/backend-config.ts
 app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts
 app/frontend/plugins/cms-access.client.ts
+app/frontend/plugins/cms-html-lang.ts
 app/frontend/server/routes/robots.txt.ts
 app/frontend/server/plugins/strip-headers.ts
 app/frontend/server/cms-sitemap.ts
+app/frontend/server/cms-trailing-slash.ts
 app/frontend/locales/core-en.json
 app/frontend/locales/core-fr.json
 app/frontend/playwright.config.ts

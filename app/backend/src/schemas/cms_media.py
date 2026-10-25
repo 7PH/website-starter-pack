@@ -7,21 +7,26 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class CmsMediaRead(BaseModel):
-    """An uploaded photo with the absolute URL of each generated width."""
+class CmsMediaPublic(BaseModel):
+    """A photo as public pages show it, with the absolute URL of each generated width."""
 
     id: int
-    original_name: str
     alt: str
     width: int
     height: int
     focal_x: float
     focal_y: float
-    created_at: datetime
     # Keys are widths as strings, eg {"480": "https://static.../480.webp"}.
     urls: dict[str, str]
     # URL of the largest width.
     src: str
+
+
+class CmsMediaRead(CmsMediaPublic):
+    """A photo in the library, as editors see it."""
+
+    original_name: str
+    created_at: datetime
 
 
 class CmsMediaListResponse(BaseModel):

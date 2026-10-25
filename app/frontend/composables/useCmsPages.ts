@@ -25,18 +25,19 @@ export function useCmsFixed(key: string) {
     return useCmsFetch<CmsPageRead>(`cms-fixed-${key}`, `/cms/fixed/${encodeURIComponent(key)}`);
 }
 
-/** Published pages marked "show in blog", newest first. */
-export function useCmsPosts(options: { offset?: number; limit?: number } = {}) {
-    const { offset = 0, limit = 10 } = options;
-    return useCmsFetch<CmsPostListResponse>(`cms-posts-${offset}-${limit}`, '/cms/posts', { offset, limit });
-}
-
-/** Published pages of one template (eg every service), in the order the editor set. */
-export function useCmsPageList(template: string, options: { offset?: number; limit?: number } = {}) {
-    const { offset = 0, limit = 50 } = options;
-    return useCmsFetch<CmsPageListResponse>(`cms-pages-${template}-${offset}-${limit}`, '/cms/pages', {
+/**
+ * Published pages of one template (eg every service), in the order the editor set.
+ * `order: 'published_at'` lists them newest first instead, eg posts for a blog.
+ */
+export function useCmsPageList(
+    template: string,
+    options: { offset?: number; limit?: number; order?: 'published_at' } = {},
+) {
+    const { offset = 0, limit = 50, order } = options;
+    return useCmsFetch<CmsPageListResponse>(`cms-pages-${template}-${offset}-${limit}-${order ?? ''}`, '/cms/pages', {
         template,
         offset,
         limit,
+        order,
     });
 }

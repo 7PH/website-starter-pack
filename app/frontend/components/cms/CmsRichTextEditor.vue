@@ -40,7 +40,8 @@ const editor = useEditor({
             horizontalRule: false,
             strike: false,
             underline: false,
-            link: { openOnClick: false, HTMLAttributes: { target: null, rel: null } },
+            // No autolink: it makes the link mark inclusive, so text typed right after a link would join it.
+            link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
         }),
         LibraryImage,
     ],
@@ -115,10 +116,20 @@ watch(linkOpen, (open) => {
 });
 
 function applyLink(value = linkUrl.value) {
+    const e = editor.value;
+    if (!e) return;
     const href = normalizeLink(value);
-    const chain = editor.value?.chain().focus().extendMarkRange('link');
-    if (!href) chain?.unsetLink().run();
-    else if (!chain?.setLink({ href }).run()) return showWarning(t('cms.pages.editor.linkInvalid'));
+    // Nothing selected, not in a link: insert the address itself as the link text.
+    if (href && e.state.selection.empty && !e.isActive('link')) {
+        e.chain()
+            .focus()
+            .insertContent({ type: 'text', text: value.trim(), marks: [{ type: 'link', attrs: { href } }] })
+            .run();
+    } else {
+        const chain = e.chain().focus().extendMarkRange('link');
+        if (!href) chain.unsetLink().run();
+        else if (!chain.setLink({ href }).run()) return showWarning(t('cms.pages.editor.linkInvalid'));
+    }
     linkOpen.value = false;
 }
 
@@ -143,8 +154,20 @@ function insertImage(media: CmsMediaRead) {
         ?.chain()
         .focus()
         .insertContent({ type: 'image', attrs: { src: inlineImageSrc(media), alt: media.alt, mediaId: media.id } })
+        // Inserted at the end of a paragraph, the image ends up selected and typing would replace it: move into the text after it.
+        .command(({ tr, commands }) => {
+            const { empty, $to } = tr.selection;
+            if (empty && $to.parent.isTextblock) return true;
+            return $to.nodeAfter?.isTextblock ? commands.setTextSelection($to.pos + 1) : commands.createParagraphNear();
+        })
         .run();
     pickerOpen.value = false;
+}
+
+// Closing the picker would give focus back to the toolbar button: keep it in the text, after the photo.
+function keepEditorFocus(event: Event) {
+    event.preventDefault();
+    editor.value?.commands.focus();
 }
 </script>
 
@@ -225,6 +248,10 @@ function insertImage(media: CmsMediaRead) {
         </div>
         <!-- The text scrolls inside the box, so the toolbar above it never leaves the screen on long content. -->
         <EditorContent v-show="!sourceMode" :editor="editor" class="max-h-[65vh] overflow-y-auto" />
-        <CmsMediaPicker v-model:open="pickerOpen" @select="insertImage" />
+        <CmsMediaPicker
+            v-model:open="pickerOpen"
+            :content="{ onCloseAutoFocus: keepEditorFocus }"
+            @select="insertImage"
+        />
     </div>
 </template>

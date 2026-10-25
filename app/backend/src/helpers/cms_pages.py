@@ -1,11 +1,11 @@
 # ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-"""CMS page logic (CMS_ENABLED): field validation on save, defaults and photos on read."""
+"""CMS page logic (CMS_ENABLED): field validation and sanitizing on save, defaults and photos on read."""
 
 import html
 import re
 import unicodedata
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
 
@@ -14,9 +14,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..models.cms import CmsMediaBase, CmsPageBase
-from ..schemas.cms_media import CmsMediaRead
-from ..schemas.cms_page import CmsPageAdminRead, CmsPageRead, CmsPageSummary, CmsPageUpdate
-from .cms_media import media_to_read
+from ..schemas.cms_media import CmsMediaPublic
+from ..schemas.cms_page import CmsPageAdminRead, CmsPageRead, CmsPageUpdate
+from .cms_media import media_ids_in_fields, media_to_public, media_to_read
 from .cms_templates import Field, Template, get_templates
 from .sanitize import sanitize_rich_text
 
@@ -26,11 +26,21 @@ MAX_SLUG_LENGTH = 200
 AUTO_SLUG_LENGTH = 80
 # Width of rich text on the public page (CmsRichText inside CmsPageContent).
 RICH_TEXT_IMAGE_SIZES = "(min-width: 768px) 736px, 100vw"
-# Far above any real page, only stops absurd payloads.
-MAX_RICH_TEXT_LENGTH = 500_000
+# Checked before sanitizing, so absurd payloads never reach bleach.
+MAX_RICH_TEXT_INPUT_LENGTH = 500_000
+# Stored size and photo count of one rich text field, far above any real page.
+MAX_RICH_TEXT_BYTES = 200_000
+MAX_RICH_TEXT_IMAGES = 100
 
-# Path of a generated media file: /cms/media/<id>/<width>.webp
-_MEDIA_PATH = re.compile(r"/cms/media/(\d+)/(\d+)\.webp$")
+# 409 details, mapped to messages by the frontend.
+SLUG_TAKEN = "slug_taken"
+CHANGED_ELSEWHERE = "changed_elsewhere"
+
+# Path of a generated media file: /cms/media/<id>-<token>/<width>.webp
+_MEDIA_PATH = re.compile(r"/cms/media/(\d+)-([\w-]+)/\d+\.webp$")
+# Stored rich text went through bleach: attribute values are always double-quoted, but may hold a raw ">".
+_IMG_TAG = re.compile(r'<img\b(?:[^">]|"[^"]*")*>')
+_ATTRIBUTE = re.compile(r'([\w-]+)="([^"]*)"')
 _BLOCK_END = re.compile(r"</(?:p|h2|h3|li|blockquote)>|<br\s*/?>")
 _TAG = re.compile(r"<[^>]+>")
 
@@ -64,9 +74,11 @@ def get_template(name: str) -> Template:
 
 
 def slugify(value: str) -> str:
-    """URL-safe slug: "L'été à Paris" -> "l-ete-a-paris"."""
+    """URL-safe slug: "L’été à Paris" -> "l-ete-a-paris"."""
     # NFKD has no decomposition for these, they would vanish.
     value = value.lower().replace("œ", "oe").replace("æ", "ae").replace("ß", "ss")
+    # Apostrophes separate words, else the typographic ones vanish too: "S’ancrer" would give "sancrer".
+    value = re.sub(r"[’‘ʼ´`']", " ", value)
     value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", "-", value)[:MAX_SLUG_LENGTH].strip("-")
 
@@ -128,26 +140,46 @@ def _media_exists(session: Session, media_id: Any) -> bool:
 
 
 def _image_resolver(session: Session):
-    """Accepts only images of our library, rewritten to their canonical URL."""
+    """Accepts only images of our library (id and token must match), stamped with their id for reads to render."""
 
     def resolve(src: str) -> dict[str, str] | None:
         match = _MEDIA_PATH.search(urlparse(src).path)
         media = match and session.get(CmsMediaBase, int(match[1]))
-        if not media:
+        if not media or media.token != match[2]:
             return None
-        read = media_to_read(media)
-        return {
-            "src": read.urls.get(match[2], read.src),
-            "srcset": ", ".join(f"{url} {width}w" for width, url in read.urls.items()),
-            "sizes": RICH_TEXT_IMAGE_SIZES,
-            "width": str(read.width),
-            "height": str(read.height),
-            "loading": "lazy",
-            "decoding": "async",
-            "data-media-id": str(media.id),
-        }
+        return {"src": media_to_public(media).src, "data-media-id": str(media.id)}
 
     return resolve
+
+
+def _stored_html(value: Any) -> str:
+    """HTML of a stored rich text value. Wrapped in a dict so it can't be mistaken for plain text saved under another field type."""
+    return value.get("html", "") if isinstance(value, dict) else ""
+
+
+def _text_to_html(text: str) -> str:
+    """Escaped paragraphs, one per block of lines."""
+    blocks = re.split(r"\n\s*\n", text.strip())
+    return "".join(f"<p>{html.escape(block.strip())}</p>".replace("\n", "<br>") for block in blocks if block.strip())
+
+
+def _render_images(value: str, media: dict[int, CmsMediaPublic]) -> str:
+    """Rich text images as responsive tags of their current photo, dropped when the photo is gone."""
+
+    def render(match: re.Match) -> str:
+        attributes = dict(_ATTRIBUTE.findall(match[0]))
+        media_id = attributes.get("data-media-id", "")
+        photo = media.get(int(media_id)) if media_id.isdigit() else None
+        if not photo:
+            return ""
+        srcset = ", ".join(f"{url} {width}w" for width, url in photo.urls.items())
+        # alt is kept as stored: bleach already escaped it.
+        return (
+            f'<img src="{photo.src}" srcset="{srcset}" sizes="{RICH_TEXT_IMAGE_SIZES}" alt="{attributes.get("alt", "")}"'
+            f' width="{photo.width}" height="{photo.height}" loading="lazy" decoding="async" data-media-id="{photo.id}">'
+        )
+
+    return _IMG_TAG.sub(render, value)
 
 
 def _clean_value(session: Session, name: str, field: Field, value: Any) -> Any:
@@ -162,9 +194,15 @@ def _clean_value(session: Session, name: str, field: Field, value: Any) -> Any:
     if not isinstance(value, str):
         raise _invalid(f"Field '{name}' must be text")
     if field.type == "richtext":
-        if len(value) > MAX_RICH_TEXT_LENGTH:
+        if len(value) > MAX_RICH_TEXT_INPUT_LENGTH:
             raise _invalid(f"Field '{name}' is too long")
-        return sanitize_rich_text(value, _image_resolver(session))
+        clean = sanitize_rich_text(value, _image_resolver(session))
+        if len(clean.encode()) > MAX_RICH_TEXT_BYTES:
+            raise _invalid(f"Field '{name}' is too long")
+        # Sanitized: any "<img" left is a tag, text "<" is escaped.
+        if clean.count("<img") > MAX_RICH_TEXT_IMAGES:
+            raise _invalid(f"Field '{name}' has too many photos")
+        return {"html": clean}
 
     value = " ".join(value.split()) if field.type == "text" else value.strip()
     if field.max is not None and len(value) > field.max:
@@ -176,7 +214,7 @@ def _is_empty(field: Field, value: Any) -> bool:
     if field.type == "image":
         return value is None
     if field.type == "richtext":
-        return not plain_text(value) and "<img" not in (value or "")
+        return not plain_text(_stored_html(value)) and "<img" not in _stored_html(value)
     return not value
 
 
@@ -184,14 +222,14 @@ def clean_fields(session: Session, template: Template, stored: dict, values: dic
     """Fields to store: sent values of declared fields, validated, over stored ones.
 
     Stored values of fields no longer in the template are kept, so removing a field (or a whole template) loses nothing.
+    Required is checked on sent fields only: a quick edit sends one field, the full editor sends them all.
     """
     fields = dict(stored)
     for name, value in values.items():
         if field := template.fields.get(name):
             fields[name] = _clean_value(session, name, field, value)
-    for name, field in template.fields.items():
-        if field.required and _is_empty(field, fields.get(name, field.default)):
-            raise _invalid(f"Field '{name}' is required")
+            if field.required and _is_empty(field, fields[name]):
+                raise _invalid(f"Field '{name}' is required")
     return fields
 
 
@@ -222,26 +260,45 @@ def apply_update(session: Session, page: CmsPageBase, data: CmsPageUpdate) -> No
             raise _invalid("This address is reserved by the site")
         clash = session.query(CmsPageBase.id).filter(CmsPageBase.slug == slug, CmsPageBase.id != page.id).first()
         if clash:
-            raise HTTPException(status_code=409, detail="Another page already uses this address")
+            raise HTTPException(status_code=409, detail=SLUG_TAKEN)
         page.slug = slug
-    if values.get("show_in_blog") is not None:
-        page.show_in_blog = values["show_in_blog"]
     if values.get("published") is not None:
         # Every (re)publication dates the page, so a post put back online sorts as new.
         if values["published"] and not page.published:
             page.published_at = datetime.now(UTC)
         page.published = values["published"]
+    if values.get("published_at") is not None:
+        # Sent by imports, to keep a post's original date.
+        page.published_at = values["published_at"]
+
+
+def _is_stale(sent: datetime | None, stored: datetime | None) -> bool:
+    if sent is None or stored is None:
+        return sent is not stored
+    try:
+        # A client that kept the date as a JS Date only has milliseconds left.
+        return abs(sent - stored) >= timedelta(milliseconds=1)
+    except TypeError:  # One naive, one aware.
+        return True
 
 
 def save_page(session: Session, page: CmsPageBase, data: CmsPageUpdate) -> None:
-    """Apply an editor's changes and commit. 409 when a concurrent save took the slug or created the fixed page."""
+    """Apply an editor's changes and commit.
+
+    409 changed_elsewhere when the page was saved since the editor loaded it (the `updated_at` sent), or a concurrent
+    save created the fixed page. 409 slug_taken when another page has the address.
+    """
+    if "updated_at" in data.model_fields_set and _is_stale(data.updated_at, page.updated_at):
+        raise HTTPException(status_code=409, detail=CHANGED_ELSEWHERE)
     apply_update(session, page, data)
+    # A free page's only unique index is its slug.
+    race_detail = CHANGED_ELSEWHERE if page.fixed_key is not None else SLUG_TAKEN
     session.add(page)
     try:
         session.commit()
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="This page or its address was just saved elsewhere") from error
+        raise HTTPException(status_code=409, detail=race_detail) from error
     session.refresh(page)
 
 
@@ -253,47 +310,46 @@ def new_fixed_page(key: str) -> CmsPageBase:
         title="",
         fields={},
         published=False,
-        show_in_blog=False,
         seo_title="",
         seo_description="",
     )
 
 
-def _media_map(session: Session, ids: set[int]) -> dict[int, CmsMediaRead]:
+def load_media(session: Session, pages: list[CmsPageBase], admin: bool = False) -> dict[int, CmsMediaPublic]:
+    """Every photo the pages show (cover, image fields, rich text), in one query."""
+    ids = set().union(*(media_ids_in_fields(p.fields or {}) for p in pages)) | {p.cover_media_id for p in pages}
+    ids.discard(None)
     if not ids:
         return {}
-    rows = session.query(CmsMediaBase).filter(CmsMediaBase.id.in_(ids)).all()
-    return {m.id: media_to_read(m) for m in rows}
+    to_schema = media_to_read if admin else media_to_public
+    return {m.id: to_schema(m) for m in session.query(CmsMediaBase).filter(CmsMediaBase.id.in_(ids))}
 
 
-def _image_ids(template: Template, fields: dict) -> set[int]:
-    return {
-        value["media_id"]
-        for name, field in template.fields.items()
-        if field.type == "image" and isinstance(value := fields.get(name), dict) and "media_id" in value
-    }
-
-
-def _read_fields(session: Session, template: Template, stored: dict, media: dict[int, CmsMediaRead]) -> dict[str, Any]:
-    """Every template field: stored value or default, photos expanded (None if gone)."""
+def _read_fields(template: Template, stored: dict, media: dict[int, CmsMediaPublic]) -> dict[str, Any]:
+    """Every template field: stored value or default, photos expanded (None or dropped if gone)."""
     fields: dict[str, Any] = {}
     for name, field in template.fields.items():
         value = stored.get(name, field.default)
         if field.type == "richtext":
-            # Also on read: the field may have held plain text (raw HTML included) before its type changed.
-            value = sanitize_rich_text(value, _image_resolver(session)) if isinstance(value, str) else ""
+            if name not in stored:
+                value = value or ""  # Code default: trusted.
+            elif isinstance(value, str):
+                value = _text_to_html(value)  # Saved while the field was plain text.
+            else:
+                value = _stored_html(value)
+            value = _render_images(value, media)
         elif field.type == "image":
-            found = media.get(value["media_id"]) if isinstance(value, dict) else None
+            found = media.get(value.get("media_id")) if isinstance(value, dict) else None
             value = found.model_dump(mode="json") if found else None
+        elif isinstance(value, dict):
+            value = plain_text(_stored_html(value))  # Saved while the field was rich text.
         fields[name] = value
     return fields
 
 
-def page_to_read(session: Session, page: CmsPageBase, admin: bool = False) -> CmsPageRead | CmsPageAdminRead:
+def _page_to_read(page: CmsPageBase, media: dict[int, CmsMediaPublic], admin: bool) -> CmsPageRead | CmsPageAdminRead:
     template = get_template(page.template)
-    stored = page.fields or {}
-    media = _media_map(session, _image_ids(template, stored) | ({page.cover_media_id} - {None}))
-    fields = _read_fields(session, template, stored, media)
+    fields = _read_fields(template, page.fields or {}, media)
     auto_description = auto_seo_description(template, fields)
     common = dict(
         id=page.id,
@@ -312,7 +368,6 @@ def page_to_read(session: Session, page: CmsPageBase, admin: bool = False) -> Cm
             seo_title=page.seo_title,
             seo_description=page.seo_description,
             published=page.published,
-            show_in_blog=page.show_in_blog,
             seo_description_auto=auto_description,
         )
     return CmsPageRead(
@@ -322,16 +377,11 @@ def page_to_read(session: Session, page: CmsPageBase, admin: bool = False) -> Cm
     )
 
 
-def pages_to_summaries(session: Session, pages: list[CmsPageBase]) -> list[CmsPageSummary]:
-    media = _media_map(session, {p.cover_media_id for p in pages} - {None})
-    return [
-        CmsPageSummary(
-            id=p.id,
-            slug=p.slug,
-            title=p.title,
-            seo_description=p.seo_description or auto_seo_description(get_template(p.template), p.fields or {}),
-            cover=media.get(p.cover_media_id),
-            published_at=p.published_at,
-        )
-        for p in pages
-    ]
+def pages_to_read(session: Session, pages: list[CmsPageBase], admin: bool = False) -> list[CmsPageRead]:
+    """Pages with their photos, loaded in one query whatever the number of pages. Admin reads get the editor's photo shape."""
+    media = load_media(session, pages, admin)
+    return [_page_to_read(page, media, admin) for page in pages]
+
+
+def page_to_read(session: Session, page: CmsPageBase, admin: bool = False) -> CmsPageRead | CmsPageAdminRead:
+    return pages_to_read(session, [page], admin)[0]

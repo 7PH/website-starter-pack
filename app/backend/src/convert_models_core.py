@@ -37,6 +37,7 @@ from .schemas.cms_editor import (
 )
 from .schemas.cms_media import (
     CmsMediaListResponse,
+    CmsMediaPublic,
     CmsMediaRead,
     CmsMediaUpdate,
     CmsMediaUsage,
@@ -50,9 +51,7 @@ from .schemas.cms_page import (
     CmsPageListResponse,
     CmsPageOrder,
     CmsPageRead,
-    CmsPageSummary,
     CmsPageUpdate,
-    CmsPostListResponse,
     CmsSitemapEntry,
     CmsTemplateField,
     CmsTemplateRead,
@@ -200,6 +199,7 @@ CoreModels = (
     # CMS models
     | CmsMeRead
     | CmsEditorRead
+    | CmsMediaPublic
     | CmsMediaRead
     | CmsMediaListResponse
     | CmsMediaUpdate
@@ -209,8 +209,6 @@ CoreModels = (
     | CmsTemplateRead
     | CmsPageRead
     | CmsPageAdminRead
-    | CmsPageSummary
-    | CmsPostListResponse
     | CmsPageListResponse
     | CmsPageOrder
     | CmsPageCreate

@@ -12,6 +12,9 @@ import io
 import logging
 import subprocess
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -80,6 +83,43 @@ class TestProcessImage:
         _, _, files = cms_media.process_image(_image_bytes(size=(100, 100), mode="I;16", fmt="PNG", color=32768))
         red, _, _ = _decode(files[100]).getpixel((50, 50))
         assert 110 < red < 145
+
+    def test_16_bit_is_shrunk_before_its_tones_are_rescaled(self, monkeypatch):
+        sizes, point = [], Image.Image.point
+        monkeypatch.setattr(Image.Image, "point", lambda img, *a, **k: sizes.append(img.size) or point(img, *a, **k))
+        # Wide enough that Pillow can't resize it in its 16-bit mode.
+        width, _, _ = cms_media.process_image(_image_bytes(size=(15000, 20), mode="I;16", fmt="PNG", color=32768))
+        assert width == 2400
+        assert sizes == [(2400, 3)]
+
+    def test_palette_image_is_smoothed_when_shrunk(self):
+        img = Image.new("P", (4800, 10))
+        img.putpalette([0, 0, 0, 255, 255, 255])
+        img.putdata([x % 2 for _ in range(10) for x in range(4800)])  # 1px black and white stripes
+        buf = io.BytesIO()
+        img.save(buf, "PNG")
+        _, _, files = cms_media.process_image(buf.getvalue())
+        red, _, _ = _decode(files[2400]).getpixel((1200, 2))
+        assert 100 < red < 155
+
+    def test_at_most_two_images_processed_at_once(self, monkeypatch):
+        running, peak, lock, to_srgb = 0, 0, threading.Lock(), cms_media._to_srgb
+
+        def slow_to_srgb(img, mode):
+            nonlocal running, peak
+            with lock:
+                running += 1
+                peak = max(peak, running)
+            time.sleep(0.05)
+            with lock:
+                running -= 1
+            return to_srgb(img, mode)
+
+        monkeypatch.setattr(cms_media, "_to_srgb", slow_to_srgb)
+        data = _image_bytes()
+        with ThreadPoolExecutor(4) as pool:
+            list(pool.map(lambda _: cms_media.process_image(data), range(4)))
+        assert peak == 2
 
     def test_strips_metadata(self):
         exif = Image.Exif()
@@ -175,10 +215,15 @@ class TestHelpers:
         media = _media(sizes=[480, 960])
         read = cms_media.media_to_read(media)
         assert read.urls == {
-            "480": "https://static.example.com/cms/media/7/480.webp",
-            "960": "https://static.example.com/cms/media/7/960.webp",
+            "480": "https://static.example.com/cms/media/7-tok/480.webp",
+            "960": "https://static.example.com/cms/media/7-tok/960.webp",
         }
-        assert read.src == "https://static.example.com/cms/media/7/960.webp"
+        assert read.src == "https://static.example.com/cms/media/7-tok/960.webp"
+
+    def test_public_shape_hides_library_details(self):
+        public = cms_media.media_to_public(_media()).model_dump()
+        assert "original_name" not in public and "created_at" not in public
+        assert cms_media.media_to_read(_media()).model_dump().items() > public.items()
 
     def test_media_ids_in_fields(self):
         fields = {
@@ -215,6 +260,7 @@ class TestHelpers:
 def _media(media_id=7, sizes=None) -> CmsMediaBase:
     return CmsMediaBase(
         id=media_id,
+        token="tok",
         original_name="photo.jpg",
         alt="",
         width=960,
@@ -323,7 +369,11 @@ class TestEndpoints:
         assert body["original_name"] == "IMG_1.jpg"
         assert body["alt"] == "A garden"
         assert list(body["urls"]) == ["480", "960"]
-        assert sorted(p.name for p in (temp_static_dir / "cms/media/42").iterdir()) == ["480.webp", "960.webp"]
+        (folder,) = (temp_static_dir / "cms/media").iterdir()
+        token = folder.name.removeprefix("42-")
+        assert len(token) == 12 and folder.name == f"42-{token}"
+        assert sorted(p.name for p in folder.iterdir()) == ["480.webp", "960.webp"]
+        assert body["src"].endswith(f"/cms/media/42-{token}/960.webp")
         session.commit.assert_called_once()
         assert "CMS media 42 uploaded" in caplog.text
 
@@ -349,28 +399,28 @@ class TestEndpoints:
 
     def test_delete_in_use_returns_409_with_titles(self, make_client, temp_static_dir):
         client, session = make_client("editor")
-        (temp_static_dir / "cms/media/7").mkdir(parents=True)
+        (temp_static_dir / "cms/media/7-tok").mkdir(parents=True)
         session.query.return_value.all.return_value = [(3, "Home", "home", 7, {}), (4, "About", None, None, {})]
         response = client.delete("/cms/media/7")
         assert response.status_code == 409
         assert response.json()["pages"] == [{"id": 3, "title": "Home", "fixed_key": "home"}]
         session.delete.assert_not_called()
-        assert (temp_static_dir / "cms/media/7").exists()
+        assert (temp_static_dir / "cms/media/7-tok").exists()
 
     def test_delete_warns_when_files_stay(self, make_client, temp_static_dir, caplog):
         caplog.set_level(logging.INFO)
         client, _ = make_client("editor")
-        (temp_static_dir / "cms/media/7").mkdir(parents=True)
+        (temp_static_dir / "cms/media/7-tok").mkdir(parents=True)
         with patch.object(controller, "pages_using_media", return_value=[]), patch("shutil.rmtree"):
             assert client.delete("/cms/media/7").status_code == 204
         assert "folder still on disk" in caplog.text
 
     def test_delete_removes_row_and_files(self, make_client, temp_static_dir):
         client, session = make_client("editor")
-        (temp_static_dir / "cms/media/7").mkdir(parents=True)
-        (temp_static_dir / "cms/media/7/480.webp").write_bytes(b"x")
+        (temp_static_dir / "cms/media/7-tok").mkdir(parents=True)
+        (temp_static_dir / "cms/media/7-tok/480.webp").write_bytes(b"x")
         with patch.object(controller, "pages_using_media", return_value=[]):
             response = client.delete("/cms/media/7")
         assert response.status_code == 204
         session.delete.assert_called_once()
-        assert not (temp_static_dir / "cms/media/7").exists()
+        assert not (temp_static_dir / "cms/media/7-tok").exists()

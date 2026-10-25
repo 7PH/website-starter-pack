@@ -76,6 +76,7 @@ export type Models =
   | PublicPickerPayload
   | CmsMeRead
   | CmsEditorRead
+  | CmsMediaPublic
   | CmsMediaRead
   | CmsMediaListResponse
   | CmsMediaUpdate
@@ -84,8 +85,6 @@ export type Models =
   | CmsTemplateRead
   | CmsPageRead
   | CmsPageAdminRead
-  | CmsPageSummary
-  | CmsPostListResponse
   | CmsPageListResponse
   | CmsPageOrder
   | CmsPageCreate
@@ -407,20 +406,27 @@ export type UserId3 = number;
 export type Email13 = string | null;
 export type CreatedAt9 = string;
 export type Id9 = number;
-export type OriginalName = string;
 export type Alt = string;
 export type Width = number;
 export type Height = number;
 export type FocalX = number;
 export type FocalY = number;
-export type CreatedAt10 = string;
 export type Src = string;
+export type Id10 = number;
+export type Alt1 = string;
+export type Width1 = number;
+export type Height1 = number;
+export type FocalX1 = number;
+export type FocalY1 = number;
+export type Src1 = string;
+export type OriginalName = string;
+export type CreatedAt10 = string;
 export type Items6 = CmsMediaRead[];
 export type Total5 = number;
-export type Alt1 = string | null;
-export type FocalX1 = number | null;
-export type FocalY1 = number | null;
-export type Id10 = number;
+export type Alt2 = string | null;
+export type FocalX2 = number | null;
+export type FocalY2 = number | null;
+export type Id11 = number;
 export type Title = string;
 export type FixedKey = string | null;
 export type Name10 = string;
@@ -431,7 +437,7 @@ export type Max = number | null;
 export type Name11 = string;
 export type Fixed = boolean;
 export type Fields = CmsTemplateField[];
-export type Id11 = number | null;
+export type Id12 = number | null;
 export type Template = string;
 export type FixedKey1 = string | null;
 export type Slug = string | null;
@@ -440,7 +446,7 @@ export type SeoTitle = string;
 export type SeoDescription = string;
 export type PublishedAt = string | null;
 export type UpdatedAt = string | null;
-export type Id12 = number | null;
+export type Id13 = number | null;
 export type Template1 = string;
 export type FixedKey2 = string | null;
 export type Slug1 = string | null;
@@ -450,43 +456,35 @@ export type SeoDescription1 = string;
 export type PublishedAt1 = string | null;
 export type UpdatedAt1 = string | null;
 export type Published = boolean;
-export type ShowInBlog = boolean;
 export type SeoDescriptionAuto = string;
-export type Id13 = number;
-export type Slug2 = string;
-export type Title3 = string;
-export type SeoDescription2 = string;
-export type PublishedAt2 = string | null;
-export type Items7 = CmsPageSummary[];
+export type Items7 = CmsPageRead[];
 export type Total6 = number;
-export type Items8 = CmsPageRead[];
-export type Total7 = number;
 /**
  * @maxItems 500
  */
 export type Ids = number[];
 export type Template2 = string;
-export type Title4 = string;
-export type Title5 = string | null;
-export type Slug3 = string | null;
+export type Title3 = string;
+export type Title4 = string | null;
+export type Slug2 = string | null;
 export type Fields3 = {
   [k: string]: unknown;
 } | null;
 export type Published1 = boolean | null;
-export type ShowInBlog1 = boolean | null;
+export type PublishedAt2 = string | null;
+export type UpdatedAt2 = string | null;
 export type SeoTitle2 = string | null;
-export type SeoDescription3 = string | null;
+export type SeoDescription2 = string | null;
 export type CoverMediaId = number | null;
 export type Id14 = number;
 export type Template3 = string;
-export type Slug4 = string;
-export type Title6 = string;
+export type Slug3 = string;
+export type Title5 = string;
 export type Published2 = boolean;
-export type ShowInBlog2 = boolean;
 export type PublishedAt3 = string | null;
-export type UpdatedAt2 = string;
+export type UpdatedAt3 = string;
 export type Key = string;
-export type UpdatedAt3 = string | null;
+export type UpdatedAt4 = string | null;
 export type Fixed1 = CmsFixedPageItem[];
 export type Pages = CmsPageListItem[];
 export type Loc = string;
@@ -529,7 +527,7 @@ export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
 export type CreatedAt11 = string | null;
-export type UpdatedAt4 = string | null;
+export type UpdatedAt5 = string | null;
 export type UnreadCount = number;
 export type Id17 = number;
 export type ConversationId = number;
@@ -545,16 +543,16 @@ export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
 export type CreatedAt13 = string | null;
-export type UpdatedAt5 = string | null;
+export type UpdatedAt6 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
-export type Items9 = ConversationRead[];
-export type Total8 = number;
+export type Items8 = ConversationRead[];
+export type Total7 = number;
 export type Limit2 = number;
 export type Offset2 = number;
 export type Content2 = string;
-export type Items10 = MessageRead[];
-export type Total9 = number;
+export type Items9 = MessageRead[];
+export type Total8 = number;
 export type Limit3 = number;
 export type Offset3 = number;
 export type HasMore = boolean;
@@ -1213,21 +1211,37 @@ export interface CmsEditorRead {
   created_at: CreatedAt9;
 }
 /**
- * An uploaded photo with the absolute URL of each generated width.
+ * A photo as public pages show it, with the absolute URL of each generated width.
  */
-export interface CmsMediaRead {
+export interface CmsMediaPublic {
   id: Id9;
-  original_name: OriginalName;
   alt: Alt;
   width: Width;
   height: Height;
   focal_x: FocalX;
   focal_y: FocalY;
-  created_at: CreatedAt10;
   urls: Urls;
   src: Src;
 }
 export interface Urls {
+  [k: string]: string;
+}
+/**
+ * A photo in the library, as editors see it.
+ */
+export interface CmsMediaRead {
+  id: Id10;
+  alt: Alt1;
+  width: Width1;
+  height: Height1;
+  focal_x: FocalX1;
+  focal_y: FocalY1;
+  urls: Urls1;
+  src: Src1;
+  original_name: OriginalName;
+  created_at: CreatedAt10;
+}
+export interface Urls1 {
   [k: string]: string;
 }
 /**
@@ -1241,15 +1255,15 @@ export interface CmsMediaListResponse {
  * Editable fields of a photo. Omitted fields are left unchanged.
  */
 export interface CmsMediaUpdate {
-  alt?: Alt1;
-  focal_x?: FocalX1;
-  focal_y?: FocalY1;
+  alt?: Alt2;
+  focal_x?: FocalX2;
+  focal_y?: FocalY2;
 }
 /**
  * A page showing a photo, listed when deleting that photo is refused (409).
  */
 export interface CmsMediaUsage {
-  id: Id10;
+  id: Id11;
   title: Title;
   fixed_key?: FixedKey;
 }
@@ -1281,7 +1295,7 @@ export interface Label1 {
  * A page as the public site sees it: defaults merged, photos expanded, SEO filled.
  */
 export interface CmsPageRead {
-  id: Id11;
+  id: Id12;
   template: Template;
   fixed_key: FixedKey1;
   slug: Slug;
@@ -1289,7 +1303,7 @@ export interface CmsPageRead {
   fields: Fields1;
   seo_title: SeoTitle;
   seo_description: SeoDescription;
-  cover: CmsMediaRead | null;
+  cover: CmsMediaPublic | null;
   published_at: PublishedAt;
   updated_at: UpdatedAt;
 }
@@ -1300,7 +1314,7 @@ export interface Fields1 {
  * A page in the editor. Here seo_title and seo_description are what the editor typed, empty = automatic (title, seo_description_auto).
  */
 export interface CmsPageAdminRead {
-  id: Id12;
+  id: Id13;
   template: Template1;
   fixed_key: FixedKey2;
   slug: Slug1;
@@ -1312,30 +1326,14 @@ export interface CmsPageAdminRead {
   published_at: PublishedAt1;
   updated_at: UpdatedAt1;
   published: Published;
-  show_in_blog: ShowInBlog;
   seo_description_auto: SeoDescriptionAuto;
 }
 export interface Fields2 {
   [k: string]: unknown;
 }
-/**
- * A page in a list of posts: no fields, the description doubles as an excerpt.
- */
-export interface CmsPageSummary {
-  id: Id13;
-  slug: Slug2;
-  title: Title3;
-  seo_description: SeoDescription2;
-  cover: CmsMediaRead | null;
-  published_at: PublishedAt2;
-}
-export interface CmsPostListResponse {
+export interface CmsPageListResponse {
   items: Items7;
   total: Total6;
-}
-export interface CmsPageListResponse {
-  items: Items8;
-  total: Total7;
 }
 /**
  * Free page ids in their new order.
@@ -1345,34 +1343,34 @@ export interface CmsPageOrder {
 }
 export interface CmsPageCreate {
   template: Template2;
-  title: Title4;
+  title: Title3;
 }
 /**
- * Partial update. Slug, published and show_in_blog are ignored on fixed pages.
+ * Partial update. Slug, published and published_at are ignored on fixed pages.
  */
 export interface CmsPageUpdate {
-  title?: Title5;
-  slug?: Slug3;
+  title?: Title4;
+  slug?: Slug2;
   fields?: Fields3;
   published?: Published1;
-  show_in_blog?: ShowInBlog1;
+  published_at?: PublishedAt2;
+  updated_at?: UpdatedAt2;
   seo_title?: SeoTitle2;
-  seo_description?: SeoDescription3;
+  seo_description?: SeoDescription2;
   cover_media_id?: CoverMediaId;
 }
 export interface CmsPageListItem {
   id: Id14;
   template: Template3;
-  slug: Slug4;
-  title: Title6;
+  slug: Slug3;
+  title: Title5;
   published: Published2;
-  show_in_blog: ShowInBlog2;
   published_at: PublishedAt3;
-  updated_at: UpdatedAt2;
+  updated_at: UpdatedAt3;
 }
 export interface CmsFixedPageItem {
   key: Key;
-  updated_at: UpdatedAt3;
+  updated_at: UpdatedAt4;
 }
 export interface CmsAdminPagesResponse {
   fixed: Fixed1;
@@ -1426,7 +1424,7 @@ export interface ConversationRead {
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
   created_at?: CreatedAt11;
-  updated_at?: UpdatedAt4;
+  updated_at?: UpdatedAt5;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
 }
@@ -1464,7 +1462,7 @@ export interface ConversationDetail {
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
   created_at?: CreatedAt13;
-  updated_at?: UpdatedAt5;
+  updated_at?: UpdatedAt6;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;
   messages?: Messages;
@@ -1473,8 +1471,8 @@ export interface ConversationDetail {
  * Paginated response for conversation list.
  */
 export interface ConversationListResponse {
-  items: Items9;
-  total: Total8;
+  items: Items8;
+  total: Total7;
   limit: Limit2;
   offset: Offset2;
 }
@@ -1488,8 +1486,8 @@ export interface MessageCreate {
  * Paginated response for messages in a conversation.
  */
 export interface MessageListResponse {
-  items: Items10;
-  total: Total9;
+  items: Items9;
+  total: Total8;
   limit: Limit3;
   offset: Offset3;
   has_more: HasMore;

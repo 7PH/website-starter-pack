@@ -9,14 +9,14 @@ definePageMeta({
 const { t, locale } = useI18n();
 const api = useApi();
 const router = useRouter();
-const { showError } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 
 const [{ data, pending }, { data: templates }] = await Promise.all([
     useAsyncData<CmsAdminPagesResponse>('cms-admin-pages', () => api.get('/cms/admin/pages'), { server: false }),
     useAsyncData<CmsTemplateRead[]>('cms-templates', () => api.get('/cms/templates'), { server: false }),
 ]);
 
-// The site's language, not the browser's: the client reads her admin in it.
+// The site's language, not the browser's: the editor reads the admin in it.
 const formatDate = (date: string) => new Date(date).toLocaleDateString(locale.value);
 const templateLabel = (name: string) =>
     cmsLabel(templates.value?.find((tpl) => tpl.name === name)?.label, locale.value);
@@ -26,7 +26,7 @@ const freeTemplates = computed(() =>
         .map((tpl) => ({ value: tpl.name, label: cmsLabel(tpl.label, locale.value) })),
 );
 
-// One section per free template, pages in the order she set (it drives lists like "every service").
+// One section per free template, pages in the order the editor set (it drives lists like "every service").
 const groups = computed(() => {
     const pages = data.value?.pages ?? [];
     return [...new Set(pages.map((p) => p.template))].map((name) => ({
@@ -40,7 +40,7 @@ async function saveOrder(template: string) {
     try {
         await api.put('/cms/admin/pages/order', { ids });
     } catch (error) {
-        showError(error, 'core.errors.generic');
+        showCmsError(error);
         await refreshNuxtData('cms-admin-pages');
     }
 }
@@ -88,7 +88,7 @@ async function create() {
         const page = await api.post<CmsPageAdminRead>('/cms/admin/pages', newPage.value);
         await router.push(`/admin/cms/pages/${page.id}`);
     } catch (error) {
-        showError(error, 'core.errors.generic');
+        showCmsError(error);
     } finally {
         creating.value = false;
     }
@@ -194,12 +194,6 @@ async function create() {
                                                     : t('cms.pages.status.draft')
                                             "
                                             :color="page.published ? 'success' : 'neutral'"
-                                            variant="subtle"
-                                        />
-                                        <UBadge
-                                            v-if="page.show_in_blog"
-                                            :label="t('cms.pages.status.inBlog')"
-                                            color="info"
                                             variant="subtle"
                                         />
                                         <span class="text-sm text-gray-500 dark:text-gray-400">

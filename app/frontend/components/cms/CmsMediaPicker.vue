@@ -6,14 +6,14 @@ const open = defineModel<boolean>('open', { default: false });
 const emit = defineEmits<{ select: [media: CmsMediaRead] }>();
 
 const { t } = useI18n();
-const { showError } = useToastHelpers();
+const showCmsError = useCmsErrorToast();
 const { items, loading, hasMore, load, add } = useCmsMediaLibrary();
 
 // Reload on every open: photos may have been added or deleted elsewhere since.
 watch(
     open,
     (isOpen) => {
-        if (isOpen) load(true).catch((error) => showError(error, 'core.errors.generic'));
+        if (isOpen) load(true).catch((error) => showCmsError(error));
     },
     { immediate: true },
 );

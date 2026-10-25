@@ -2,6 +2,8 @@
 
 """CMS photo library (CMS_ENABLED): upload, list, edit and delete photos. Editors and admins only."""
 
+import secrets
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -10,6 +12,7 @@ from ..helpers.cms_auth import get_current_cms_editor
 from ..helpers.cms_media import (
     MAX_UPLOAD_BYTES,
     delete_media_files,
+    media_dir,
     media_to_read,
     pages_using_media,
     process_image,
@@ -59,6 +62,7 @@ def upload_media(
     width, height, files = process_image(file.file.read(MAX_UPLOAD_BYTES + 1))
 
     media = CmsMediaBase(
+        token=secrets.token_urlsafe(9),
         original_name=safe_original_name(file.filename),
         alt=alt.strip(),
         width=width,
@@ -68,12 +72,13 @@ def upload_media(
     )
     session.add(media)
     session.flush()
+    folder = media_dir(media)
     try:
-        write_media_files(media.id, files)
+        write_media_files(folder, files)
         session.commit()
     except Exception:
         session.rollback()
-        delete_media_files(media.id)
+        delete_media_files(folder)
         raise
     session.refresh(media)
     logger.info(f"CMS media {media.id} uploaded by user {user.id} ({width}x{height})")
@@ -106,7 +111,8 @@ def delete_media(media_id: int, session: Session = Depends(get_session)):
             status_code=409,
             content={"detail": "Photo is used by pages", "pages": [p.model_dump() for p in pages]},
         )
+    folder = media_dir(media)
     session.delete(media)
     session.commit()
     # Files go after the commit: a failed commit must not leave a row pointing at nothing.
-    delete_media_files(media_id)
+    delete_media_files(folder)

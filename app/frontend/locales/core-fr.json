@@ -629,8 +629,7 @@
             "neverEdited": "Jamais modifiée",
             "status": {
                 "published": "En ligne",
-                "draft": "Brouillon",
-                "inBlog": "Dans le blog"
+                "draft": "Brouillon"
             },
             "backToList": "Toutes les pages",
             "notFound": "Cette page n'existe plus.",
@@ -642,15 +641,17 @@
             "slugHelp": "Lettres, chiffres et tirets. Si vous la changez, les liens vers l'ancienne adresse ne marcheront plus.",
             "slugRequired": "Merci de donner une adresse à la page.",
             "slugTaken": "Une autre page utilise déjà cette adresse. Merci d'en choisir une autre.",
-            "conflict": "Cette page vient d'être enregistrée ailleurs. Rechargez la page et réessayez.",
+            "changedElsewhere": "Cette page a été modifiée ailleurs entre-temps.",
+            "changedElsewhereHelp": "Rechargez-la pour avoir la dernière version. Vos modifications non enregistrées seront perdues : copiez-les d'abord si besoin.",
+            "reload": "Recharger",
             "slugShadowed": "Cette adresse est déjà utilisée par le site, cette page ne s'afficherait jamais. Merci d'en choisir une autre.",
             "slugReserved": "Cette adresse est réservée par le site. Merci d'en choisir une autre.",
             "required": "Merci de remplir « {field} ».",
+            "tooLong": "« {field} » est trop long. Merci de le raccourcir.",
+            "tooManyPhotos": "« {field} » contient trop de photos. Retirez-en quelques-unes.",
             "published": "En ligne",
             "publishedOn": "Tout le monde peut voir cette page.",
             "publishedOff": "Brouillon : la page n'est pas visible sur le site.",
-            "showInBlog": "Afficher dans le blog",
-            "showInBlogHelp": "L'article apparaît dans la liste des articles de votre site, si elle existe.",
             "cover": "Photo de couverture",
             "coverHelp": "Affichée en haut de la page et quand quelqu'un la partage.",
             "save": "Enregistrer",
@@ -711,7 +712,11 @@
             "cancel": "Annuler",
             "saved": "Modifié",
             "fullEditor": "Ouvrir l'éditeur complet",
-            "unknownField": "Cette partie ne se modifie pas ici. Utilisez l'éditeur complet."
+            "unknownField": "Cette partie ne se modifie pas ici. Utilisez l'éditeur complet.",
+            "addCover": "Ajouter une photo de couverture"
+        },
+        "errors": {
+            "generic": "Un problème est survenu. Vérifiez votre connexion et réessayez."
         }
     }
 }

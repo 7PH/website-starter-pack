@@ -1,5 +1,7 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
+import { getErrorStatus } from './errors';
+
 /** Same rules as the backend's slugify (helpers/cms_pages.py), so the address preview matches what gets saved. */
 export function slugify(value: string): string {
     return value
@@ -7,6 +9,7 @@ export function slugify(value: string): string {
         .replace(/œ/g, 'oe')
         .replace(/æ/g, 'ae')
         .replace(/ß/g, 'ss')
+        .replace(/[’‘ʼ´`']/g, ' ')
         .normalize('NFKD')
         .replace(/[^\x00-\x7f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
@@ -19,6 +22,14 @@ const RESERVED_SLUG_PREFIXES = ['api', 'admin'];
 
 export function hasReservedPrefix(slug: string): boolean {
     return RESERVED_SLUG_PREFIXES.some((prefix) => slug.startsWith(prefix));
+}
+
+/**
+ * Whether a site route hides the page at /<slug>: a route starts with that segment (/login, /legal/privacy, /c/:token).
+ * Top-level params (CMS route, app catch-all) take any address, so they don't count.
+ */
+export function isShadowedSlug(slug: string, routePaths: string[]): boolean {
+    return !!slug && routePaths.some((path) => path.split('/')[1] === slug);
 }
 
 /** Slug made from a title, like the backend's auto_slug: at most 80 characters, cut between words. */
@@ -35,11 +46,40 @@ export function cmsLabel(texts: Record<string, string> | undefined, locale: stri
     return texts[locale] ?? texts.en ?? Object.values(texts)[0] ?? '';
 }
 
-/** Typed links without a scheme ("www.mairie.fr") would become relative and 404: make them absolute, or mailto for an email. */
+/** Typed links without a scheme ("www.mairie.fr") would become relative and 404: make them absolute, mailto for an email, tel for a phone number. */
 export function normalizeLink(value: string): string {
     const href = value.trim();
     if (!href || /^([a-z][a-z0-9+.-]*:|\/|#)/i.test(href)) return href;
+    if (/^\+?[\d\s.()-]+$/.test(href) && href.replace(/\D/g, '').length >= 6)
+        return `tel:${href.replace(/[^\d+]/g, '')}`;
     return /^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(href) ? `mailto:${href}` : `https://${href}`;
+}
+
+/** Same rule as the backend's required check (helpers/cms_pages.py:_is_empty). */
+export function isEmptyField(field: CmsTemplateField, value: unknown): boolean {
+    if (field.type === 'image') return !value;
+    const text = typeof value === 'string' ? value : '';
+    if (field.type === 'richtext') return !text.replace(/<[^>]*>/g, '').trim() && !text.includes('<img');
+    return !text.trim();
+}
+
+/**
+ * i18n key for a failed CMS request: the API answers in English and editors may not read it.
+ * `field` is the template field name the error is about, for the caller to turn into its label.
+ */
+export function cmsErrorKey(error: unknown): { key: string; field?: string } {
+    const detail = error instanceof Error ? error.message : '';
+    if (detail === 'slug_taken') return { key: 'cms.pages.slugTaken' };
+    if (detail === 'changed_elsewhere') return { key: 'cms.pages.changedElsewhere' };
+    if (getErrorStatus(error) === 422) {
+        if (/reserved/i.test(detail)) return { key: 'cms.pages.slugReserved' };
+        if (detail === 'Title is required') return { key: 'cms.pages.titleRequired' };
+        const field = /^Field '([^']+)'/.exec(detail)?.[1];
+        if (field && /required/i.test(detail)) return { key: 'cms.pages.required', field };
+        if (field && /photos/i.test(detail)) return { key: 'cms.pages.tooManyPhotos', field };
+        if (field && /too (long|big)|longer than/i.test(detail)) return { key: 'cms.pages.tooLong', field };
+    }
+    return { key: 'cms.errors.generic' };
 }
 
 /** localStorage key holding the editor's unsaved changes, read by the preview tab. */
@@ -48,7 +88,7 @@ export function cmsDraftKey(pageId: number): string {
 }
 
 /** Largest generated width up to 1600px: enough for a photo inside text, lighter than the original. */
-export function inlineImageSrc(media: CmsMediaRead): string {
+export function inlineImageSrc(media: CmsMediaPublic): string {
     const widths = Object.keys(media.urls)
         .map(Number)
         .filter((w) => w <= 1600);
