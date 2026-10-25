@@ -8,8 +8,5 @@ const route = useRoute();
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
-        <CmsPageEditor :endpoint="`/cms/admin/fixed/${encodeURIComponent(String(route.params.key))}`" />
-    </div>
+    <CmsPageEditor :endpoint="`/cms/admin/fixed/${encodeURIComponent(String(route.params.key))}`" />
 </template>

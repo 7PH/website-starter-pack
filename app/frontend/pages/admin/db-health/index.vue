@@ -5,301 +5,296 @@ definePageMeta({
     middleware: ['admin'],
 });
 
-const api = useApi();
+type Status = 'success' | 'warning' | 'error';
 
+const api = useApi();
+const { copy } = useClipboard({ legacy: true });
+const { showSuccess } = useToastHelpers();
+
+const checkedAt = ref('');
 const { data, pending, refresh } = await useAsyncData<DatabaseHealthResponse>(
     'admin-db-health',
-    () => api.get('/admin/db-health'),
+    async () => {
+        const res = await api.get<DatabaseHealthResponse>('/admin/db-health');
+        checkedAt.value = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        return res;
+    },
     { server: false },
 );
 
-// Tab state
-const activeTab = ref<'tables' | 'indexes'>('tables');
+const view = ref<'tables' | 'indexes'>('tables');
+const infoOpen = ref(false);
+const showAllInfo = ref(false);
+const INFO_PREVIEW = 5;
 
-// Table columns
-const tableColumns = [
-    { accessorKey: 'name', header: 'Table' },
-    { accessorKey: 'size_pretty', header: 'Size' },
-    { accessorKey: 'row_count', header: 'Rows' },
-    { accessorKey: 'dead_tuples', header: 'Dead Tuples' },
-    { accessorKey: 'seq_scans', header: 'Seq Scans' },
-    { accessorKey: 'idx_scans', header: 'Idx Scans' },
-    { accessorKey: 'last_vacuum', header: 'Last Vacuum' },
-];
-
-const indexColumns = [
-    { accessorKey: 'name', header: 'Index' },
-    { accessorKey: 'table', header: 'Table' },
-    { accessorKey: 'size_pretty', header: 'Size' },
-    { accessorKey: 'scans', header: 'Scans' },
-    { accessorKey: 'is_unused', header: 'Status' },
-];
-
-function formatDate(dateStr: string | null): string {
-    if (!dateStr) return 'Never';
-    return new Date(dateStr).toLocaleString();
-}
-
-function getHealthColor(
-    ratio: number,
-    thresholdWarning: number,
-    thresholdCritical: number,
-): 'success' | 'warning' | 'error' {
+function getHealthColor(ratio: number, thresholdWarning: number, thresholdCritical: number): Status {
     if (ratio >= thresholdWarning) return 'success';
     if (ratio >= thresholdCritical) return 'warning';
     return 'error';
 }
 
-function getCacheColor(ratio: number): 'success' | 'warning' | 'error' {
-    return getHealthColor(ratio, 95, 90);
+const TEXT: Record<Status, string> = { success: 'text-success', warning: 'text-warning', error: 'text-error' };
+const BG: Record<Status, string> = { success: 'bg-success', warning: 'bg-warning', error: 'bg-error' };
+
+const stats = computed(() => {
+    const d = data.value;
+    if (!d) return [];
+    const connPct = d.max_connections ? (d.active_connections / d.max_connections) * 100 : 0;
+    const connStatus = getHealthColor(100 - connPct, 20, 10);
+    const cacheStatus = getHealthColor(d.cache_hit_ratio, 95, 90);
+    const [size, unit] = d.database_size_pretty.split(' ');
+    return [
+        { label: 'Database size', value: size, unit, note: 'OK', noteClass: TEXT.success },
+        {
+            label: 'Connections',
+            value: d.active_connections,
+            unit: `/ ${d.max_connections}`,
+            note: `${connPct.toFixed(0)}% used`,
+            noteClass: TEXT[connStatus],
+            meter: { pct: connPct, class: BG[connStatus] },
+        },
+        {
+            label: 'Cache hit ratio',
+            value: d.cache_hit_ratio.toFixed(1),
+            unit: '%',
+            note: cacheStatus === 'success' ? 'Healthy' : 'Needs attention',
+            noteClass: TEXT[cacheStatus],
+            meter: { pct: d.cache_hit_ratio, class: BG[cacheStatus] },
+        },
+        {
+            label: 'Tables',
+            value: d.tables.length,
+            unit: '',
+            note: `${d.indexes.length} indexes`,
+            noteClass: 'text-muted',
+        },
+    ];
+});
+
+const issues = computed(() => (data.value?.recommendations ?? []).filter((r) => r.severity !== 'info'));
+const infos = computed(() =>
+    (data.value?.recommendations ?? []).filter((r) => r.severity === 'info' && r.type !== 'all_good'),
+);
+const infoSummary = computed(() => {
+    const n = infos.value.length;
+    if (infos.value.every((r) => r.type === 'unused_index'))
+        return `${n} unused ${n === 1 ? 'index' : 'indexes'} could be dropped to save space`;
+    return `${n} ${n === 1 ? 'suggestion' : 'suggestions'}`;
+});
+
+const headerPill = computed(() => {
+    const n = issues.value.length;
+    if (!n) return { label: 'Healthy', color: 'success' as const };
+    const critical = issues.value.some((r) => r.severity === 'critical');
+    return {
+        label: `${n} ${n === 1 ? 'issue' : 'issues'}`,
+        color: critical ? ('error' as const) : ('warning' as const),
+    };
+});
+
+async function copyVacuumSql(table: string) {
+    const sql = `VACUUM ANALYZE "${table}";`;
+    await copy(sql);
+    showSuccess('Copied', sql);
 }
 
-function getConnectionColor(active: number, max: number): 'success' | 'warning' | 'error' {
-    const ratio = (1 - active / max) * 100;
-    return getHealthColor(ratio, 20, 10);
+const maxSize = computed(() =>
+    Math.max(
+        1,
+        ...(view.value === 'tables' ? (data.value?.tables ?? []) : (data.value?.indexes ?? [])).map((r) => r.size),
+    ),
+);
+
+function formatVacuum(dateStr: string | null): string {
+    return dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never';
 }
 
-function getSeverityColor(severity: string): 'info' | 'warning' | 'error' | 'success' {
-    switch (severity) {
-        case 'critical':
-            return 'error';
-        case 'warning':
-            return 'warning';
-        case 'info':
-        default:
-            return 'info';
-    }
-}
-
-function getSeverityIcon(severity: string): string {
-    switch (severity) {
-        case 'critical':
-            return 'i-lucide-alert-circle';
-        case 'warning':
-            return 'i-lucide-alert-triangle';
-        case 'info':
-        default:
-            return 'i-lucide-info';
-    }
-}
+const TABLE_GRID =
+    'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.6fr)_70px_90px_80px_80px_90px]';
+const INDEX_GRID =
+    'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center gap-3 md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.4fr)_minmax(0,1fr)_70px_80px]';
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
-
-        <div class="admin-db-health">
-            <div class="page-header">
-                <h1 class="page-title">Database Health</h1>
+    <div class="flex flex-col gap-4.5">
+        <AdminPageHeader
+            title="Database health"
+            :description="checkedAt ? `PostgreSQL · checked at ${checkedAt}` : 'PostgreSQL'"
+        >
+            <template v-if="data" #badges>
+                <UBadge :label="headerPill.label" :color="headerPill.color" variant="soft" class="rounded-full">
+                    <template #leading><span class="size-1.75 rounded-full bg-current" /></template>
+                </UBadge>
+            </template>
+            <template #actions>
                 <UButton
                     icon="i-lucide-refresh-cw"
                     label="Refresh"
                     color="neutral"
                     variant="outline"
+                    size="lg"
                     :loading="pending"
                     @click="() => refresh()"
                 />
+            </template>
+        </AdminPageHeader>
+
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div
+                v-for="s in stats"
+                :key="s.label"
+                class="flex flex-col gap-2 rounded-xl border border-default bg-default px-4 py-3.5"
+            >
+                <span class="text-[13px] font-semibold text-muted">{{ s.label }}</span>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-extrabold text-highlighted tabular-nums">{{ s.value }}</span>
+                    <span class="text-[13px] text-dimmed">{{ s.unit }}</span>
+                </div>
+                <span v-if="s.meter" class="flex h-1.5 overflow-hidden rounded-full bg-elevated">
+                    <span
+                        class="rounded-full"
+                        :class="s.meter.class"
+                        :style="{ width: `${Math.min(s.meter.pct, 100)}%` }"
+                    />
+                </span>
+                <span class="text-xs font-bold" :class="s.noteClass">{{ s.note }}</span>
             </div>
+        </div>
 
-            <!-- Summary Cards -->
-            <div class="stats-grid">
-                <UCard class="stat-card">
-                    <div class="stat-label">Database Size</div>
-                    <div class="stat-value">{{ data?.database_size_pretty ?? '-' }}</div>
-                    <UBadge color="success" variant="subtle" class="stat-badge">
-                        <UIcon name="i-lucide-check-circle" class="mr-1" />
-                        OK
-                    </UBadge>
-                </UCard>
-
-                <UCard class="stat-card">
-                    <div class="stat-label">Connections</div>
-                    <div class="stat-value">{{ data?.active_connections ?? 0 }} / {{ data?.max_connections ?? 0 }}</div>
-                    <UBadge
-                        :color="data ? getConnectionColor(data.active_connections, data.max_connections) : 'neutral'"
-                        variant="subtle"
-                        class="stat-badge"
-                    >
-                        <UIcon name="i-lucide-check-circle" class="mr-1" />
-                        {{ data ? ((data.active_connections / data.max_connections) * 100).toFixed(0) : 0 }}% used
-                    </UBadge>
-                </UCard>
-
-                <UCard class="stat-card">
-                    <div class="stat-label">Cache Hit Ratio</div>
-                    <div class="stat-value">{{ data?.cache_hit_ratio?.toFixed(1) ?? '-' }}%</div>
-                    <UBadge
-                        :color="data ? getCacheColor(data.cache_hit_ratio) : 'neutral'"
-                        variant="subtle"
-                        class="stat-badge"
-                    >
-                        <UIcon
-                            :name="
-                                data && data.cache_hit_ratio >= 95 ? 'i-lucide-check-circle' : 'i-lucide-alert-triangle'
-                            "
-                            class="mr-1"
-                        />
-                        {{ data && data.cache_hit_ratio >= 95 ? 'Healthy' : 'Needs attention' }}
-                    </UBadge>
-                </UCard>
-
-                <UCard class="stat-card">
-                    <div class="stat-label">Tables</div>
-                    <div class="stat-value">{{ data?.tables?.length ?? 0 }}</div>
-                    <UBadge color="neutral" variant="subtle" class="stat-badge">
-                        {{ data?.indexes?.length ?? 0 }} indexes
-                    </UBadge>
-                </UCard>
+        <AdminCard v-if="issues.length || infos.length" :title="issues.length ? 'Needs attention' : 'Suggestions'">
+            <div v-for="(rec, i) in issues" :key="i" class="flex flex-wrap items-center gap-3 px-4.5 py-3.5">
+                <span
+                    class="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                    :class="rec.severity === 'critical' ? 'bg-error/10 text-error' : 'bg-warning/10 text-warning'"
+                >
+                    <UIcon
+                        :name="rec.severity === 'critical' ? 'i-lucide-octagon-alert' : 'i-lucide-triangle-alert'"
+                        class="size-4"
+                    />
+                </span>
+                <div class="flex min-w-50 flex-1 flex-col gap-0.5">
+                    <span class="text-sm font-bold text-highlighted">{{ rec.action }}</span>
+                    <span class="text-[13px] text-muted">{{ rec.message }}</span>
+                </div>
+                <UButton
+                    v-if="rec.type === 'vacuum_needed' && rec.table"
+                    icon="i-lucide-copy"
+                    label="Copy SQL"
+                    color="neutral"
+                    variant="outline"
+                    @click="copyVacuumSql(rec.table)"
+                />
             </div>
+            <div v-if="infos.length">
+                <button
+                    type="button"
+                    class="flex w-full items-center gap-3 px-4.5 py-3 text-left hover:bg-elevated"
+                    :aria-expanded="infoOpen"
+                    @click="infoOpen = !infoOpen"
+                >
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
+                        <UIcon name="i-lucide-info" class="size-4" />
+                    </span>
+                    <span class="flex-1 text-sm font-bold text-highlighted">{{ infoSummary }}</span>
+                    <UIcon :name="infoOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="text-muted" />
+                </button>
+                <div v-if="infoOpen" class="flex flex-col gap-1.5 pr-4.5 pb-3 pl-15.5">
+                    <span
+                        v-for="(rec, i) in showAllInfo ? infos : infos.slice(0, INFO_PREVIEW)"
+                        :key="i"
+                        class="font-mono text-[13px] [overflow-wrap:anywhere] text-muted"
+                    >
+                        {{ rec.message }}
+                    </span>
+                    <button
+                        v-if="infos.length > INFO_PREVIEW"
+                        type="button"
+                        class="w-fit text-[13px] font-bold text-primary hover:underline"
+                        @click="showAllInfo = !showAllInfo"
+                    >
+                        {{ showAllInfo ? 'Show less' : `Show all ${infos.length}` }}
+                    </button>
+                </div>
+            </div>
+        </AdminCard>
 
-            <!-- Recommendations -->
-            <UCard v-if="data?.recommendations?.length" class="recommendations-card">
-                <template #header>
-                    <h2 class="section-title">Recommendations ({{ data.recommendations.length }})</h2>
-                </template>
-                <div class="recommendations-list">
-                    <div v-for="(rec, index) in data.recommendations" :key="index" class="recommendation-item">
-                        <UBadge :color="getSeverityColor(rec.severity)" variant="subtle" size="xs">
-                            {{ rec.severity }}
-                        </UBadge>
-                        <span v-if="rec.table" class="recommendation-table">{{ rec.table }}:</span>
-                        <span class="recommendation-message">{{ rec.action }}</span>
+        <div class="flex flex-col gap-2.5">
+            <AdminToolbar
+                v-model:segment="view"
+                :segments="[
+                    { value: 'tables', label: 'Tables', count: data?.tables.length },
+                    { value: 'indexes', label: 'Indexes', count: data?.indexes.length },
+                ]"
+            />
+
+            <AdminCard v-if="view === 'tables'">
+                <template #columns>
+                    <div :class="TABLE_GRID">
+                        <span>Table</span>
+                        <span>Size</span>
+                        <span>Rows</span>
+                        <span class="hidden md:block">Dead tuples</span>
+                        <span class="hidden md:block">Seq scans</span>
+                        <span class="hidden md:block">Idx scans</span>
+                        <span class="hidden md:block">Last vacuum</span>
                     </div>
+                </template>
+                <div v-for="t in data?.tables ?? []" :key="t.name" :class="TABLE_GRID" class="px-4.5 py-2.5 text-sm">
+                    <span class="truncate font-mono text-[13px] text-highlighted" :title="t.name">{{ t.name }}</span>
+                    <div class="flex min-w-0 items-center gap-2">
+                        <span class="w-16 shrink-0 text-muted tabular-nums">{{ t.size_pretty }}</span>
+                        <span class="flex h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
+                            <span class="bg-primary opacity-70" :style="{ width: `${(t.size / maxSize) * 100}%` }" />
+                        </span>
+                    </div>
+                    <span class="text-muted tabular-nums">{{ t.row_count.toLocaleString() }}</span>
+                    <span
+                        class="hidden tabular-nums md:block"
+                        :class="t.dead_tuples > t.row_count * 0.1 ? 'font-bold text-warning' : 'text-muted'"
+                    >
+                        {{ t.dead_tuples.toLocaleString() }}
+                    </span>
+                    <span class="hidden text-muted tabular-nums md:block">{{ t.seq_scans.toLocaleString() }}</span>
+                    <span class="hidden text-muted tabular-nums md:block">{{ t.idx_scans.toLocaleString() }}</span>
+                    <span
+                        class="hidden text-muted md:block"
+                        :title="t.last_vacuum ? new Date(t.last_vacuum).toLocaleString() : undefined"
+                    >
+                        {{ formatVacuum(t.last_vacuum) }}
+                    </span>
                 </div>
-            </UCard>
+            </AdminCard>
 
-            <!-- Tabs for Tables and Indexes -->
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button :class="['tab', { active: activeTab === 'tables' }]" @click="activeTab = 'tables'">
-                        Tables
-                    </button>
-                    <button :class="['tab', { active: activeTab === 'indexes' }]" @click="activeTab = 'indexes'">
-                        Indexes
-                    </button>
+            <AdminCard v-else>
+                <template #columns>
+                    <div :class="INDEX_GRID">
+                        <span>Index</span>
+                        <span>Size</span>
+                        <span class="hidden md:block">Table</span>
+                        <span>Scans</span>
+                        <span class="hidden md:block">Status</span>
+                    </div>
+                </template>
+                <div v-for="ix in data?.indexes ?? []" :key="ix.name" :class="INDEX_GRID" class="px-4.5 py-2.5 text-sm">
+                    <span class="truncate font-mono text-[13px] text-highlighted" :title="ix.name">{{ ix.name }}</span>
+                    <div class="flex min-w-0 items-center gap-2">
+                        <span class="w-16 shrink-0 text-muted tabular-nums">{{ ix.size_pretty }}</span>
+                        <span class="flex h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
+                            <span class="bg-primary opacity-70" :style="{ width: `${(ix.size / maxSize) * 100}%` }" />
+                        </span>
+                    </div>
+                    <span class="hidden truncate font-mono text-[13px] text-muted md:block">{{ ix.table }}</span>
+                    <span class="text-muted tabular-nums">{{ ix.scans.toLocaleString() }}</span>
+                    <span class="hidden md:block">
+                        <UBadge
+                            :label="ix.is_unused ? 'Unused' : 'Active'"
+                            :color="ix.is_unused ? 'warning' : 'success'"
+                            variant="soft"
+                            class="rounded-full"
+                        />
+                    </span>
                 </div>
-
-                <!-- Tables Tab -->
-                <UCard v-if="activeTab === 'tables'">
-                    <UTable :columns="tableColumns" :data="data?.tables ?? []" :loading="pending">
-                        <template #row_count-cell="{ row }">
-                            {{ row.original.row_count.toLocaleString() }}
-                        </template>
-                        <template #dead_tuples-cell="{ row }">
-                            <span :class="{ 'text-warning': row.original.dead_tuples > row.original.row_count * 0.1 }">
-                                {{ row.original.dead_tuples.toLocaleString() }}
-                            </span>
-                        </template>
-                        <template #seq_scans-cell="{ row }">
-                            {{ row.original.seq_scans.toLocaleString() }}
-                        </template>
-                        <template #idx_scans-cell="{ row }">
-                            {{ row.original.idx_scans.toLocaleString() }}
-                        </template>
-                        <template #last_vacuum-cell="{ row }">
-                            {{ formatDate(row.original.last_vacuum) }}
-                        </template>
-                    </UTable>
-                </UCard>
-
-                <!-- Indexes Tab -->
-                <UCard v-if="activeTab === 'indexes'">
-                    <UTable :columns="indexColumns" :data="data?.indexes ?? []" :loading="pending">
-                        <template #scans-cell="{ row }">
-                            {{ row.original.scans.toLocaleString() }}
-                        </template>
-                        <template #is_unused-cell="{ row }">
-                            <UBadge
-                                :color="row.original.is_unused ? 'warning' : 'success'"
-                                :label="row.original.is_unused ? 'Unused' : 'Active'"
-                                variant="subtle"
-                            />
-                        </template>
-                    </UTable>
-                </UCard>
-            </div>
+            </AdminCard>
         </div>
     </div>
 </template>
-
-<style scoped>
-@reference "~/assets/css/main.css";
-
-.admin-db-health {
-    @apply max-w-7xl mx-auto;
-}
-
-.page-header {
-    @apply flex items-center justify-between mb-6;
-}
-
-.page-title {
-    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.stats-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6;
-}
-
-.stat-card {
-    @apply text-center;
-}
-
-.stat-label {
-    @apply text-sm text-gray-500 dark:text-gray-400 mb-1;
-}
-
-.stat-value {
-    @apply text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2;
-}
-
-.stat-badge {
-    @apply inline-flex items-center;
-}
-
-.section-title {
-    @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
-}
-
-.recommendations-card {
-    @apply mb-6;
-}
-
-.recommendations-list {
-    @apply space-y-2 max-h-[200px] overflow-y-auto;
-}
-
-.recommendation-item {
-    @apply flex items-center gap-2 text-sm;
-}
-
-.recommendation-table {
-    @apply font-mono text-gray-500 dark:text-gray-400;
-}
-
-.recommendation-message {
-    @apply text-gray-700 dark:text-gray-300;
-}
-
-.tabs-container {
-    @apply space-y-4;
-}
-
-.tabs {
-    @apply flex gap-2;
-}
-
-.tab {
-    @apply px-4 py-2 text-sm font-medium rounded-lg transition-colors;
-    @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100;
-    @apply hover:bg-gray-100 dark:hover:bg-gray-800;
-}
-
-.tab.active {
-    @apply bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300;
-}
-
-.text-warning {
-    @apply text-amber-600 dark:text-amber-400 font-medium;
-}
-</style>

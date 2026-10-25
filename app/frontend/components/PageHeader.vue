@@ -5,6 +5,8 @@ import { useMainNavExtensions } from '~/config/main-nav-ext';
 
 const auth = useAuth();
 const route = useRoute();
+// The admin layout spans the whole window, so its top bar does too.
+const fullWidth = computed(() => route.meta.layout === 'admin');
 const navExtensions = useMainNavExtensions();
 const accountActions = useAccountActions();
 const { t } = useI18n();
@@ -102,7 +104,7 @@ function onSelectLogout() {
             class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-400 to-transparent dark:via-primary-500/50"
         />
 
-        <div class="header-content page-box">
+        <div class="header-content page-box" :class="{ '!max-w-none': fullWidth }">
             <!-- Left: Navigation -->
             <nav class="nav-links">
                 <NuxtLink to="/" class="nav-icon-link" :aria-label="t('core.common.home')">

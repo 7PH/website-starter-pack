@@ -12,8 +12,5 @@ if (!Number.isInteger(id)) {
 </script>
 
 <template>
-    <div class="page-box">
-        <AdminPageBanner />
-        <CmsPageEditor :endpoint="`/cms/admin/pages/${id}`" />
-    </div>
+    <CmsPageEditor :endpoint="`/cms/admin/pages/${id}`" />
 </template>

@@ -115,14 +115,16 @@ let nextKey = 0;
 // Batches run in order, each after the previous one finished.
 let chain = Promise.resolve();
 
-/** Upload queue: files go one at a time so a phone on a weak connection isn't saturated. */
-export function useCmsMediaUpload(onUploaded: (media: CmsMediaRead) => void) {
+/** Upload queue: files go one at a time so a phone on a weak connection isn't saturated. Without `onUploaded`, just reads the queue. */
+export function useCmsMediaUpload(onUploaded?: (media: CmsMediaRead) => void) {
     // Resolved here: Nuxt composables aren't available after an await in the upload loop.
     const url = `${useRuntimeConfig().public.apiBase}/cms/media`;
     const auth = useAuth();
 
-    onMounted(() => listeners.add(onUploaded));
-    onUnmounted(() => listeners.delete(onUploaded));
+    if (onUploaded) {
+        onMounted(() => listeners.add(onUploaded));
+        onUnmounted(() => listeners.delete(onUploaded));
+    }
 
     function enqueue(files: File[]) {
         const pending: [CmsUploadItem, File][] = files.map((file) => {

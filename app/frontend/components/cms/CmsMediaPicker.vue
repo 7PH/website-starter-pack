@@ -28,7 +28,7 @@ function pick(media: CmsMediaRead) {
     <UModal v-model:open="open" :title="t('cms.media.pickerTitle')" class="sm:max-w-4xl">
         <template #body>
             <div class="flex flex-col gap-4">
-                <CmsMediaDropzone compact @uploaded="add" />
+                <CmsMediaDropzone @uploaded="add" />
                 <CmsMediaGrid :items="items" @select="pick" />
                 <p v-if="!loading && !items.length" class="py-6 text-center text-sm text-gray-500">
                     {{ t('cms.media.empty') }}
