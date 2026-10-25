@@ -439,6 +439,7 @@ export type Fixed = boolean;
 export type Fields = CmsTemplateField[];
 export type Id12 = number | null;
 export type Template = string;
+export type SchemaType = "WebPage" | "Article";
 export type FixedKey1 = string | null;
 export type Slug = string | null;
 export type Title1 = string;
@@ -448,6 +449,7 @@ export type PublishedAt = string | null;
 export type UpdatedAt = string | null;
 export type Id13 = number | null;
 export type Template1 = string;
+export type SchemaType1 = "WebPage" | "Article";
 export type FixedKey2 = string | null;
 export type Slug1 = string | null;
 export type Title2 = string;
@@ -1297,6 +1299,7 @@ export interface Label1 {
 export interface CmsPageRead {
   id: Id12;
   template: Template;
+  schema_type: SchemaType;
   fixed_key: FixedKey1;
   slug: Slug;
   title: Title1;
@@ -1316,6 +1319,7 @@ export interface Fields1 {
 export interface CmsPageAdminRead {
   id: Id13;
   template: Template1;
+  schema_type: SchemaType1;
   fixed_key: FixedKey2;
   slug: Slug1;
   title: Title2;

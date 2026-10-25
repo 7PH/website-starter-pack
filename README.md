@@ -85,6 +85,8 @@ What you get:
 - **Quick edit on the page itself**: wrap any part of your pages in `<CmsEditable :page="home" field="tagline">…</CmsEditable>`. People who can edit get a pencil opening a modal for that field, and the page data refreshes in place. For an empty field, pass `add-label="…"` and no content: editors get an add button, visitors nothing. Add `<CmsPageEditButton :page="home" />` for a shortcut to the full editor (free pages get it automatically). Edit controls are rendered in the browser only: visitors' HTML just gets a plain `<div>` around each wrapped part.
 - **Backups** also archive `static/cms/` (`cms_media_<stamp>.tar`) next to each database dump, and restore both.
 - `<html lang>` follows the site's language.
+- **SEO on free pages**: `<title>` is "<SEO title> · <site name>" (`NUXT_PUBLIC_APP_NAME`), plus `og:site_name`, `og:locale` and JSON-LD (WebPage and a Home > page breadcrumb). Set `schema_type="Article"` on a template for dated content (eg `post`): its pages get Article JSON-LD with their dates and `og:type` article.
+- **Local business**: call `useSchemaLocalBusiness({ type: 'HealthAndBeautyBusiness', name, url, telephone, address: { streetAddress, postalCode, addressLocality, addressCountry }, openingHours, sameAs })` on your home page, eg with the data of a fixed `site` page, so search engines get your address, phone and hours.
 
 Adding a field to a template needs no migration. The `cms_*` tables are created in every app, even with the flag off (they stay empty).
 

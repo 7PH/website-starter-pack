@@ -54,6 +54,7 @@ TEST_TEMPLATES = {
     ),
     "post": Template(
         label={"en": "Post"},
+        schema_type="Article",
         fields={
             "intro": textarea(label={"en": "Intro"}, max=50),
             "body": richtext(label={"en": "Body"}, required=True, default="<p>Start</p>"),
@@ -390,6 +391,12 @@ class TestSeo:
         assert client.get("/cms/pages/by-slug/a").json()["seo_description"] == "Short intro"
         b = client.get("/cms/pages/by-slug/b").json()
         assert (b["seo_title"], b["seo_description"]) == ("T", "D")
+
+    def test_schema_type_comes_from_the_template(self, client, session):
+        add_page(session, "a")
+        add_page(session, "b", template="default")
+        assert client.get("/cms/pages/by-slug/a").json()["schema_type"] == "Article"
+        assert client.get("/cms/pages/by-slug/b").json()["schema_type"] == "WebPage"
 
 
 class TestFreePages:

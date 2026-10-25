@@ -354,6 +354,7 @@ def _page_to_read(page: CmsPageBase, media: dict[int, CmsMediaPublic], admin: bo
     common = dict(
         id=page.id,
         template=page.template,
+        schema_type=template.schema_type,
         fixed_key=page.fixed_key,
         slug=page.slug,
         title=page.title,
