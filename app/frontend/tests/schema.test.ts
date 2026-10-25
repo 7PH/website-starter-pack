@@ -14,6 +14,7 @@ import {
     buildLdScript,
     buildLocalBusinessSchema,
     buildProductSchema,
+    buildWebPageSchema,
 } from '~/composables/schema';
 
 describe('buildLdScript — script tag input', () => {
@@ -92,6 +93,71 @@ describe('buildLocalBusinessSchema', () => {
     it('omits geo when not provided', () => {
         const out = buildLocalBusinessSchema({ name: 'X', address: 'Y' });
         expect(out).not.toHaveProperty('geo');
+    });
+
+    it('emits a subtype with a postal address and drops missing fields', () => {
+        const out = buildLocalBusinessSchema({
+            type: 'HealthAndBeautyBusiness',
+            name: 'Cabinet',
+            telephone: '+33 1 23 45 67 89',
+            address: {
+                streetAddress: '1 rue Haute',
+                postalCode: '75001',
+                addressLocality: 'Paris',
+                addressCountry: 'FR',
+            },
+            sameAs: ['https://maps.example.com/cabinet'],
+        });
+        expect(JSON.parse(buildLdScript('local-business', out).innerHTML)).toEqual({
+            '@context': 'https://schema.org',
+            '@type': 'HealthAndBeautyBusiness',
+            name: 'Cabinet',
+            telephone: '+33 1 23 45 67 89',
+            sameAs: ['https://maps.example.com/cabinet'],
+            address: {
+                '@type': 'PostalAddress',
+                streetAddress: '1 rue Haute',
+                postalCode: '75001',
+                addressLocality: 'Paris',
+                addressCountry: 'FR',
+            },
+        });
+    });
+});
+
+describe('buildWebPageSchema', () => {
+    const page = { headline: 'Prices', url: 'https://example.com/prices', siteName: 'Site' };
+    const site = { '@type': 'Organization', name: 'Site' };
+
+    it('emits a WebPage by default, without the fields left out', () => {
+        expect(JSON.parse(buildLdScript('page', buildWebPageSchema(page)).innerHTML)).toEqual({
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            headline: 'Prices',
+            url: 'https://example.com/prices',
+            author: site,
+            publisher: site,
+        });
+    });
+
+    it('emits an Article with its dates, image and main entity', () => {
+        const out = buildWebPageSchema({
+            ...page,
+            type: 'Article',
+            description: 'D',
+            image: 'https://static.example.com/1.webp',
+            datePublished: '2026-01-01T00:00:00Z',
+            dateModified: '2026-02-01T00:00:00Z',
+        });
+        expect(out).toMatchObject({
+            '@type': 'Article',
+            description: 'D',
+            image: 'https://static.example.com/1.webp',
+            datePublished: '2026-01-01T00:00:00Z',
+            dateModified: '2026-02-01T00:00:00Z',
+            author: site,
+            mainEntityOfPage: 'https://example.com/prices',
+        });
     });
 });
 

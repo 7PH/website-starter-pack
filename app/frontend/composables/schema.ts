@@ -121,23 +121,45 @@ export function useSchemaProduct(input: ProductInput) {
 // LocalBusiness
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface PostalAddressInput {
+    streetAddress: string;
+    postalCode: string;
+    addressLocality: string;
+    /** ISO code, eg 'FR'. */
+    addressCountry: string;
+}
+
 export interface LocalBusinessInput {
     name: string;
-    address: string;
+    /** A schema.org subtype, eg 'HealthAndBeautyBusiness', 'Dentist'. Default 'LocalBusiness'. */
+    type?: string;
+    /** A plain string is still accepted, but search engines want the structured form. */
+    address: string | PostalAddressInput;
+    description?: string;
+    url?: string;
+    telephone?: string;
+    email?: string;
+    /** eg 'Mo-Fr 09:00-18:00'. */
+    openingHours?: string | string[];
+    priceRange?: string;
+    image?: string | string[];
+    /** Profiles elsewhere (Google Maps, Facebook, directories). */
+    sameAs?: string[];
     geo?: { latitude: number; longitude: number };
 }
 
-export function buildLocalBusinessSchema(input: LocalBusinessInput) {
+export function buildLocalBusinessSchema({ type, address, geo, ...rest }: LocalBusinessInput) {
+    // Optional fields left undefined are dropped by JSON.stringify.
     return {
         '@context': 'https://schema.org',
-        '@type': 'LocalBusiness',
-        name: input.name,
-        address: input.address,
-        ...(input.geo && {
+        '@type': type ?? 'LocalBusiness',
+        ...rest,
+        address: typeof address === 'string' ? address : { '@type': 'PostalAddress', ...address },
+        ...(geo && {
             geo: {
                 '@type': 'GeoCoordinates',
-                latitude: input.geo.latitude,
-                longitude: input.geo.longitude,
+                latitude: geo.latitude,
+                longitude: geo.longitude,
             },
         }),
     };
@@ -217,4 +239,39 @@ export function buildArticleSchema(input: ArticleInput) {
 
 export function useSchemaArticle(input: ArticleInput) {
     useHead({ script: [buildLdScript('article', buildArticleSchema(input))] });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WebPage: a content page published by the site itself (CMS pages). Article
+// for dated content (blog posts, news): search engines then show its date.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface WebPageInput {
+    type?: 'WebPage' | 'Article';
+    headline: string;
+    description?: string;
+    /** Canonical URL. */
+    url: string;
+    image?: string;
+    datePublished?: string;
+    dateModified?: string;
+    /** Author and publisher. */
+    siteName: string;
+}
+
+export function buildWebPageSchema({ type = 'WebPage', siteName, ...rest }: WebPageInput) {
+    const site = { '@type': 'Organization', name: siteName };
+    // Optional fields left undefined are dropped by JSON.stringify.
+    return {
+        '@context': 'https://schema.org',
+        '@type': type,
+        ...rest,
+        author: site,
+        publisher: site,
+        ...(type === 'Article' && { mainEntityOfPage: rest.url }),
+    };
+}
+
+export function useSchemaWebPage(input: WebPageInput) {
+    useHead({ script: [buildLdScript('page', buildWebPageSchema(input))] });
 }

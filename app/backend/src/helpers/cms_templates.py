@@ -12,6 +12,7 @@ from typing import Literal
 
 type Localized = dict[str, str]
 type FieldType = Literal["text", "textarea", "richtext", "image"]
+type SchemaType = Literal["WebPage", "Article"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,8 @@ class Template:
     fields: dict[str, Field]
     # Fixed: exactly one page (home, site settings...), not routed. Free: any number of pages, each at its slug.
     fixed: bool = False
+    # Article for dated content (blog posts, news): search engines show its date and author. Sets og:type too.
+    schema_type: SchemaType = "WebPage"
 
 
 def text(

@@ -684,7 +684,7 @@
                 "help": "Comment la page apparaît dans les résultats Google. Laissez vide pour un remplissage automatique.",
                 "seoTitle": "Titre dans Google",
                 "seoDescription": "Description dans Google",
-                "titleTooLong": "Le titre de la page dépasse 70 caractères : Google le coupera. Écrivez-en un plus court ici."
+                "titleTooLong": "Le titre de la page dépasse {max} caractères : Google le coupera. Écrivez-en un plus court ici."
             },
             "delete": {
                 "button": "Supprimer la page",

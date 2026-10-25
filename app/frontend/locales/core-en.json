@@ -684,7 +684,7 @@
                 "help": "How the page looks in Google results. Leave empty to fill in automatically.",
                 "seoTitle": "Title in Google",
                 "seoDescription": "Description in Google",
-                "titleTooLong": "Your title is longer than 70 characters: Google will cut it. Write a shorter one here."
+                "titleTooLong": "Your title is longer than {max} characters: Google will cut it. Write a shorter one here."
             },
             "delete": {
                 "button": "Delete page",

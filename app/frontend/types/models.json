@@ -905,6 +905,14 @@
           "title": "Template",
           "type": "string"
         },
+        "schema_type": {
+          "enum": [
+            "WebPage",
+            "Article"
+          ],
+          "title": "Schema Type",
+          "type": "string"
+        },
         "fixed_key": {
           "anyOf": [
             {
@@ -990,6 +998,7 @@
       "required": [
         "id",
         "template",
+        "schema_type",
         "fixed_key",
         "slug",
         "title",
@@ -1134,6 +1143,14 @@
           "title": "Template",
           "type": "string"
         },
+        "schema_type": {
+          "enum": [
+            "WebPage",
+            "Article"
+          ],
+          "title": "Schema Type",
+          "type": "string"
+        },
         "fixed_key": {
           "anyOf": [
             {
@@ -1211,6 +1228,7 @@
       "required": [
         "id",
         "template",
+        "schema_type",
         "fixed_key",
         "slug",
         "title",

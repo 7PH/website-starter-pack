@@ -34,6 +34,7 @@ class CmsPageRead(BaseModel):
     # None for a fixed page that was never edited (its defaults are served).
     id: int | None
     template: str
+    schema_type: Literal["WebPage", "Article"]
     fixed_key: str | None
     slug: str | None
     title: str

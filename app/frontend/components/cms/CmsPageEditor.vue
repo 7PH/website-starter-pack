@@ -43,6 +43,9 @@ const [{ data: page, pending, error, refresh }, { data: templates }] = await Pro
 
 const template = computed(() => templates.value?.find((tpl) => tpl.name === page.value?.template));
 const isFixed = computed(() => page.value?.fixed_key != null);
+// Free pages get " · <site name>" appended to their <title> (CmsPublicPage), which eats into what Google shows.
+const siteSuffix = ` · ${useRuntimeConfig().public.appName}`;
+const seoTitleMax = computed(() => SEO_TITLE_MAX - (isFixed.value ? 0 : siteSuffix.length));
 const heading = computed(() =>
     isFixed.value ? cmsLabel(template.value?.label, locale.value) : form.value.title || t('cms.pages.untitled'),
 );
@@ -314,16 +317,16 @@ async function remove() {
                                     </p>
                                     <UFormField
                                         :label="t('cms.pages.seo.seoTitle')"
-                                        :hint="`${(form.seo_title || form.title).length} / ${SEO_TITLE_MAX}`"
+                                        :hint="`${(form.seo_title || form.title).length} / ${seoTitleMax}`"
                                         :help="
-                                            !form.seo_title && form.title.length > SEO_TITLE_MAX
-                                                ? t('cms.pages.seo.titleTooLong')
+                                            !form.seo_title && form.title.length > seoTitleMax
+                                                ? t('cms.pages.seo.titleTooLong', { max: seoTitleMax })
                                                 : undefined
                                         "
                                     >
                                         <UInput
                                             v-model="form.seo_title"
-                                            :maxlength="SEO_TITLE_MAX"
+                                            :maxlength="seoTitleMax"
                                             :placeholder="form.title"
                                             class="w-full"
                                         />
