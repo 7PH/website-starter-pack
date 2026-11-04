@@ -252,6 +252,7 @@ app/frontend/config/admin-nav-ext.ts:template
 app/frontend/config/account-tabs.ts
 app/frontend/config/account-tabs-ext.ts:template
 app/frontend/config/main-nav-ext.ts:template
+app/frontend/config/premium-ext.ts:template
 app/frontend/config/conversation-subtypes.ts
 app/frontend/config/conversation-subtypes-ext.ts:template
 app/frontend/config/component-overrides.ts:template

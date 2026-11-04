@@ -11,6 +11,7 @@ export function useOrganizationSubscription(
     org: Ref<OrganizationRead | null | undefined>,
     refreshOrg: () => void,
 ) {
+    const { showError } = useToastHelpers();
     const api = useApi();
 
     const showSubscribeModal = ref(false);
@@ -59,6 +60,9 @@ export function useOrganizationSubscription(
             } else {
                 window.location.href = response.url;
             }
+        } catch (error) {
+            // Without this a refused checkout (eg a 409 from an app rule) failed silently.
+            showError(error, 'core.billing.checkoutFailed');
         } finally {
             subscribingPriceId.value = null;
         }

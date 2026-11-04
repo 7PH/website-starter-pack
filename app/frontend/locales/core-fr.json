@@ -137,7 +137,9 @@
             "subscriptionSuccess": "Bienvenue dans Premium",
             "subscriptionSuccessDescription": "Votre abonnement est actif.",
             "subscriptionCanceled": "Paiement annulé",
-            "subscriptionCanceledDescription": "Aucun montant n'a été débité."
+            "subscriptionCanceledDescription": "Aucun montant n'a été débité.",
+            "checkoutFailed": "Impossible de démarrer le paiement",
+            "seeDetails": "Voir le détail"
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",
