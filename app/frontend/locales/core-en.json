@@ -137,7 +137,9 @@
             "subscriptionSuccess": "Welcome to Premium",
             "subscriptionSuccessDescription": "Your subscription is active.",
             "subscriptionCanceled": "Checkout canceled",
-            "subscriptionCanceledDescription": "You have not been charged."
+            "subscriptionCanceledDescription": "You have not been charged.",
+            "checkoutFailed": "Couldn't start the checkout",
+            "seeDetails": "See details"
         },
         "legal": {
             "lastUpdated": "Last updated",

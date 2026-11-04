@@ -10,6 +10,7 @@ import * as stripeApi from '~/utils/api/stripe';
  * the Manage-Billing portal redirect.
  */
 export function useUserSubscription() {
+    const { showError } = useToastHelpers();
     const showSubscribeModal = ref(false);
     const plans = ref<StripePlan[]>([]);
     const isLoadingPlans = ref(false);
@@ -41,6 +42,9 @@ export function useUserSubscription() {
             } else {
                 window.location.href = response.url;
             }
+        } catch (error) {
+            // Without this a refused checkout (eg a 409 from an app rule) failed silently.
+            showError(error, 'core.billing.checkoutFailed');
         } finally {
             subscribingPriceId.value = null;
         }

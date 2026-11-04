@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import { useMainNavExtensions } from '~/config/main-nav-ext';
+import { useUserExternalPremium } from '~/config/premium-ext';
 
 const auth = useAuth();
 const route = useRoute();
@@ -11,6 +12,7 @@ const navExtensions = useMainNavExtensions();
 const accountActions = useAccountActions();
 const { t } = useI18n();
 const { isPremium, loading: subscriptionLoading } = useStripe();
+const externalPremium = useUserExternalPremium();
 const { locale, availableLocales, setLocale } = useAppLocale();
 const { isDark, toggle: toggleColorMode } = useColorModeToggle();
 const userDisplay = useUserDisplay();
@@ -142,8 +144,23 @@ function onSelectLogout() {
                     <template v-else>
                         <!-- Premium badge or Upgrade CTA. Managed accounts can't subscribe
                              themselves and inherit premium from their owner — hide entirely. -->
+                        <!-- Premium coming from outside Stripe (config/premium-ext.ts) replaces the Upgrade CTA. -->
                         <NuxtLink
-                            v-if="stripeEnabled && !subscriptionLoading && !isManagedAccount"
+                            v-if="
+                                stripeEnabled &&
+                                !subscriptionLoading &&
+                                !isManagedAccount &&
+                                !isPremium &&
+                                externalPremium
+                            "
+                            :to="externalPremium.to ?? '/account?tab=billing'"
+                            class="external-premium"
+                        >
+                            <UIcon name="i-lucide-clock" />
+                            <span class="max-sm:hidden">{{ externalPremium.label }}</span>
+                        </NuxtLink>
+                        <NuxtLink
+                            v-else-if="stripeEnabled && !subscriptionLoading && !isManagedAccount"
                             to="/account?tab=billing"
                             :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                         >
@@ -253,6 +270,18 @@ function onSelectLogout() {
 
 .premium-badge:hover {
     @apply from-amber-200 to-amber-300 dark:from-amber-800/50 dark:to-amber-700/50;
+}
+
+/* Premium handled outside Stripe (pending or arranged elsewhere) - neutral */
+.external-premium {
+    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full;
+    @apply text-xs font-semibold no-underline;
+    @apply bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200;
+    @apply transition-all duration-200;
+}
+
+.external-premium:hover {
+    @apply bg-gray-200 dark:bg-gray-700;
 }
 
 /* Upgrade CTA - primary color */

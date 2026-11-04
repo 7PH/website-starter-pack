@@ -1,6 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
 import { PREMIUM_SOURCE, useOrganizationStatus } from '~/composables/organizations/useOrganizationStatus';
+import { useUserExternalPremium } from '~/config/premium-ext';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -13,6 +14,9 @@ const { organizations, firstOrg, firstAdminOrg, premiumOrg, isOrgAdmin, isAdminO
     useOrganizationStatus();
 
 const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
+// Premium arranged outside Stripe: say so, and don't offer a subscription that would be paid twice.
+const externalPremium = useUserExternalPremium();
+const pendingExternal = computed(() => (isPremium.value ? null : externalPremium.value));
 
 const formattedExpiresAt = computed(() => {
     if (!expiresAt.value) return '';
@@ -69,7 +73,7 @@ const sourceLabel = computed(() => {
     if (premiumSource.value === PREMIUM_SOURCE.ORGANIZATION && premiumOrg.value) {
         return t('core.billing.sourceViaOrg', { orgName: premiumOrg.value.organization_name });
     }
-    return t('core.billing.sourceNone');
+    return pendingExternal.value?.label ?? t('core.billing.sourceNone');
 });
 </script>
 
@@ -111,7 +115,29 @@ const sourceLabel = computed(() => {
                 class="mb-4"
             />
 
-            <p v-if="premiumSource === PREMIUM_SOURCE.BOTH" class="hint">
+            <UAlert
+                v-if="pendingExternal"
+                color="info"
+                variant="subtle"
+                icon="i-lucide-clock"
+                :title="pendingExternal.label"
+                :description="pendingExternal.description"
+                :actions="
+                    pendingExternal.to
+                        ? [
+                              {
+                                  label: t('core.billing.seeDetails'),
+                                  to: pendingExternal.to,
+                                  color: 'neutral',
+                                  variant: 'outline',
+                              },
+                          ]
+                        : []
+                "
+                class="mb-4"
+            />
+
+            <p v-else-if="premiumSource === PREMIUM_SOURCE.BOTH" class="hint">
                 {{ t('core.billing.bothSourcesHint') }}
             </p>
 
@@ -158,7 +184,7 @@ const sourceLabel = computed(() => {
                 </NuxtLink>
 
                 <UButton
-                    v-if="stripeEnabled && !isPremium"
+                    v-if="stripeEnabled && !isPremium && !pendingExternal"
                     :label="t('core.billing.subscribePersonally')"
                     icon="i-lucide-sparkles"
                     :color="organizations.length > 0 ? 'neutral' : 'primary'"

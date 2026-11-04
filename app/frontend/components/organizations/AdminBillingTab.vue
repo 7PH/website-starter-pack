@@ -1,6 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script lang="ts" setup>
+import { useOrganizationExternalPremium } from '~/config/premium-ext';
 import { formatDate } from '~/utils/formatters';
 
 const props = defineProps<{
@@ -12,6 +13,8 @@ const { formatPrice, formatInterval } = usePriceFormat();
 const api = useApi();
 const modal = useModalStore();
 const { showSuccess, showError } = useToastHelpers();
+// Premium arranged outside Stripe (config/premium-ext.ts): shown first so nobody assigns a plan on top of it.
+const externalPremium = useOrganizationExternalPremium(computed(() => props.orgId));
 
 const data = ref<OrganizationAdminBillingRead | null>(null);
 const plans = ref<OrganizationPlan[]>([]);
@@ -156,6 +159,26 @@ onMounted(() => {
         </div>
 
         <template v-else-if="data">
+            <UAlert
+                v-if="externalPremium"
+                color="info"
+                variant="subtle"
+                icon="i-lucide-receipt"
+                :title="externalPremium.label"
+                :description="externalPremium.description"
+                :actions="
+                    externalPremium.to
+                        ? [
+                              {
+                                  label: t('core.billing.seeDetails'),
+                                  to: externalPremium.to,
+                                  color: 'neutral',
+                                  variant: 'outline',
+                              },
+                          ]
+                        : []
+                "
+            />
             <!-- Balance -->
             <UCard>
                 <template #header>

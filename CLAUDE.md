@@ -143,6 +143,8 @@ async def require_premium(
 
 Use `usePremiumStatus()` for entitlement reads outside markup; use `<PremiumBadge>` to mark premium content visually.
 
+Premium arranged outside Stripe (invoices, purchase orders, partners): return it from `config/premium-ext.ts`. The header, the account billing tab and both organization billing tabs then show it instead of selling a Stripe subscription.
+
 ## Type Generation
 
 Types auto-generated from Pydantic schemas. Run `./scripts/_core/convert-models.sh` after schema changes.

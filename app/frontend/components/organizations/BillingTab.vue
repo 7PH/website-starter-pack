@@ -1,6 +1,7 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script lang="ts" setup>
 import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
+import { useOrganizationExternalPremium } from '~/config/premium-ext';
 
 const props = defineProps<{
     org: OrganizationRead;
@@ -16,6 +17,8 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const orgRef = computed(() => props.org);
 const { isOverQuota, progressColor, usedSeats, totalSeats, progressValue } = useOrganizationQuotaDisplay(orgRef);
+// Premium arranged outside Stripe: the Stripe buttons would open a portal or a second subscription.
+const externalPremium = useOrganizationExternalPremium(computed(() => props.org.id));
 </script>
 
 <template>
@@ -23,7 +26,7 @@ const { isOverQuota, progressColor, usedSeats, totalSeats, progressValue } = use
         <template #header>
             <UiCardHeader :title="t('core.organizations.tabs.billing')">
                 <template #actions>
-                    <template v-if="canManageSubscription && !org.deleted_at">
+                    <template v-if="canManageSubscription && !org.deleted_at && !externalPremium">
                         <UButton
                             v-if="org.stripe_premium"
                             :label="t('core.organizations.manageBilling')"
@@ -45,6 +48,27 @@ const { isOverQuota, progressColor, usedSeats, totalSeats, progressValue } = use
                 </template>
             </UiCardHeader>
         </template>
+        <UAlert
+            v-if="externalPremium"
+            color="info"
+            variant="subtle"
+            icon="i-lucide-receipt"
+            :title="externalPremium.label"
+            :description="externalPremium.description"
+            :actions="
+                externalPremium.to
+                    ? [
+                          {
+                              label: t('core.billing.seeDetails'),
+                              to: externalPremium.to,
+                              color: 'neutral',
+                              variant: 'outline',
+                          },
+                      ]
+                    : []
+            "
+            class="mb-4"
+        />
 
         <div v-if="org.stripe_premium" class="space-y-4">
             <div>
