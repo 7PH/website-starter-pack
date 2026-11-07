@@ -44,28 +44,6 @@ http:
         certResolver: letsencrypt
       {{ end }}
 
-    # Umami Analytics
-    umami:
-      rule: "Host(`{{env "UMAMI_SUBDOMAIN"}}.{{env "PUBLIC_WEBSITE_HOST"}}`)"
-      entryPoints: default
-      service: umami
-      middlewares:
-        - basic-auth-middleware
-      {{ if eq (env "USE_TLS") "true" }}
-      tls:
-        certResolver: letsencrypt
-      {{ end }}
-
-    # No basic auth: visitors load the tracker, and the dashboard's own Bearer header would override it
-    umami-public:
-      rule: "Host(`{{env "UMAMI_SUBDOMAIN"}}.{{env "PUBLIC_WEBSITE_HOST"}}`) && (PathPrefix(`/api/`) || Path(`/script.js`))"
-      entryPoints: default
-      service: umami
-      {{ if eq (env "USE_TLS") "true" }}
-      tls:
-        certResolver: letsencrypt
-      {{ end }}
-
   services:
     static:
       loadBalancer:
@@ -86,11 +64,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://adminer:8080"
-
-    umami:
-      loadBalancer:
-        servers:
-          - url: "http://umami:3000"
 
   middlewares:
     api-strip-prefix:

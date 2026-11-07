@@ -12,7 +12,7 @@ mkdir -p "$BACKUP_DIR"
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 DUMP_FILE="$BACKUP_DIR/db_backup_${DATE}_manual.sql"
 
-# Use project name to find the exact db container (not umami-db)
+# Use project name to find the exact db container
 DB_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-db"
 DB_CONTAINER=$(docker container list --filter "name=^${DB_CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null)
 # Fallback: try exact name match with docker inspect

@@ -8,7 +8,7 @@ if [ -z "$APP_DB_NAME" ] || [ -z "$APP_DB_USER" ] || [ -z "$APP_DB_PASSWORD" ]; 
 fi
 
 # Check if the database container is running
-# Use project name to find the exact db container (not umami-db)
+# Use project name to find the exact db container
 DB_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-db"
 DB_CONTAINER=$(docker container list --filter "name=^${DB_CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null)
 # Fallback: try exact name match with docker inspect

@@ -44,7 +44,6 @@ x-frontend-common: &frontend-common
         NUXT_PUBLIC_ORG_SELF_SERVICE_SUBSCRIPTIONS: ${ORG_SELF_SERVICE_SUBSCRIPTIONS:-true}
         NUXT_PUBLIC_ORG_SELF_SERVICE_CREATION: ${ORG_SELF_SERVICE_CREATION:-true}
         NUXT_PUBLIC_ADMINER_URL: ${NUXT_PUBLIC_ADMINER_URL:-}
-        NUXT_PUBLIC_UMAMI_DASHBOARD_URL: ${NUXT_PUBLIC_UMAMI_DASHBOARD_URL:-}
         NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
         # Build-time flag read by nuxt.config.ts. Compose propagates this to the
         # dev container at runtime; for prod-node, see build.args below.
@@ -267,8 +266,6 @@ services:
                 STATIC_ORIGIN: ${STATIC_ORIGIN:-}
                 NUXT_PUBLIC_APP_NAME: ${APP_NAME}
                 NUXT_PUBLIC_DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
-                NUXT_PUBLIC_UMAMI_ENABLED: ${NUXT_PUBLIC_UMAMI_ENABLED:-false}
-                UMAMI_SUBDOMAIN: ${UMAMI_SUBDOMAIN:-analytics}
         networks:
             web:
                 aliases:
@@ -294,51 +291,6 @@ services:
             web:
                 aliases:
                     - frontend
-
-    # Umami Analytics
-    umami:
-        container_name: ${COMPOSE_PROJECT_NAME}-umami
-        image: ghcr.io/umami-software/umami:postgresql-latest
-        restart: always
-        profiles:
-            - prod
-            - dev
-            - debug
-        environment:
-            DATABASE_URL: postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env (see .env.template)}@umami-db:5432/${UMAMI_DB_NAME:-umami}
-            DATABASE_TYPE: postgresql
-            APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in .env (see .env.template)}
-            TRACKER_SCRIPT_NAME: analytics
-            DISABLE_TELEMETRY: "1"
-        depends_on:
-            umami-db:
-                condition: service_healthy
-        networks:
-            web:
-                aliases:
-                    - umami
-
-    umami-db:
-        container_name: ${COMPOSE_PROJECT_NAME}-umami-db
-        image: postgres:15-alpine
-        restart: always
-        profiles:
-            - prod
-            - dev
-            - debug
-        environment:
-            POSTGRES_DB: ${UMAMI_DB_NAME:-umami}
-            POSTGRES_USER: ${UMAMI_DB_USER:-umami}
-            POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env (see .env.template)}
-        volumes:
-            - ./services/umami/data:/var/lib/postgresql/data:rw
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER:-umami} -d ${UMAMI_DB_NAME:-umami}"]
-            interval: 5s
-            timeout: 5s
-            retries: 5
-        networks:
-            - web
 
 volumes:
     letsencrypt_traefik:

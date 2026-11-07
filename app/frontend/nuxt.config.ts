@@ -2,6 +2,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
+import { ANALYTICS } from './config/analytics-ext';
 import { ROUTE_RULES_EXT } from './config/route-rules-ext';
 import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
 import sitemapExt from './config/sitemap-ext';
@@ -27,19 +28,15 @@ const localPath = (path: string) => fileURLToPath(new URL(path, import.meta.url)
 // go in config/route-rules-ext.ts at a path more specific than '/**'.
 const IS_DEV = process.env.NODE_ENV !== 'production';
 const STATIC_ORIGIN = process.env.STATIC_ORIGIN || (PUBLIC_URL ? PUBLIC_URL.replace('://', '://static.') : '');
-const UMAMI_ORIGIN =
-    process.env.NUXT_PUBLIC_UMAMI_ENABLED === 'true' && PUBLIC_URL
-        ? PUBLIC_URL.replace('://', `://${process.env.UMAMI_SUBDOMAIN || 'analytics'}.`)
-        : '';
 const cspDirective = (...parts: string[]) => parts.filter(Boolean).join(' ');
 const CONTENT_SECURITY_POLICY = [
     "default-src 'self'",
     // 'unsafe-inline' is required by Nuxt SSR (no nonces); 'unsafe-eval' + ws: are dev-only (HMR).
-    cspDirective("script-src 'self' 'unsafe-inline'", UMAMI_ORIGIN, IS_DEV ? "'unsafe-eval'" : ''),
+    cspDirective("script-src 'self' 'unsafe-inline'", ...ANALYTICS.origins, IS_DEV ? "'unsafe-eval'" : ''),
     "style-src 'self' 'unsafe-inline'",
     cspDirective("img-src 'self' data: blob:", STATIC_ORIGIN),
     // api.iconify.design: @nuxt/icon fetches icons from the Iconify CDN (see the `icon` config below).
-    cspDirective("connect-src 'self' https://api.iconify.design", UMAMI_ORIGIN, IS_DEV ? 'ws: wss:' : ''),
+    cspDirective("connect-src 'self' https://api.iconify.design", ...ANALYTICS.origins, IS_DEV ? 'ws: wss:' : ''),
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -110,6 +107,8 @@ export default defineNuxtConfig({
 
     app: {
         pageTransition: { name: 'page', mode: 'out-in' },
+        // Analytics tracker(s) from config/analytics-ext.ts
+        head: { script: ANALYTICS.scripts },
     },
 
     // Vite config for Docker/WSL2 file watching
@@ -139,11 +138,6 @@ export default defineNuxtConfig({
             orgInvitationsEnabled: false, // NUXT_PUBLIC_ORG_INVITATIONS_ENABLED - use email invitations instead of direct-add
             cmsEnabled: false, // NUXT_PUBLIC_CMS_ENABLED - CMS mode (editor role, media library, pages)
             adminerUrl: '', // NUXT_PUBLIC_ADMINER_URL - external URL to Adminer
-            // Umami Analytics (optional)
-            umamiEnabled: false, // NUXT_PUBLIC_UMAMI_ENABLED
-            umamiUrl: '', // NUXT_PUBLIC_UMAMI_URL
-            umamiWebsiteId: '', // NUXT_PUBLIC_UMAMI_WEBSITE_ID
-            umamiDashboardUrl: '', // NUXT_PUBLIC_UMAMI_DASHBOARD_URL - admin panel link
             defaultLocale: '', // NUXT_PUBLIC_DEFAULT_LOCALE
             mobileApp: IS_MOBILE_APP, // true when bundled inside a Capacitor wrapper
         },

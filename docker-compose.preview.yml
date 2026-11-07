@@ -7,7 +7,7 @@
 #   - traefik-prod is on preview-net + has discovery labels for host-Traefik
 #   - db uses a Compose-managed named volume (wiped by `down -v`)
 #   - backend-prod uses named volumes for writeable paths (no host accumulation)
-#   - adminer / umami / umami-db are profile-disabled (no admin UIs in previews)
+#   - adminer is profile-disabled (no admin UIs in previews)
 
 services:
     traefik-prod:
@@ -51,14 +51,6 @@ services:
             - ./services/static/ext:/etc/nginx/static-ext:ro
 
     adminer:
-        profiles: !override
-            - disabled
-
-    umami:
-        profiles: !override
-            - disabled
-
-    umami-db:
         profiles: !override
             - disabled
 

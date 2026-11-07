@@ -9,7 +9,7 @@ import { adminGetConversations } from '~/utils/api/conversations';
 export type AdminNavLink = Omit<AdminNavItem, 'labelKey' | 'badge' | 'condition'> & { badge?: number };
 
 /**
- * Admin sidebar groups (core + PROJECT_ADMIN_NAV + Adminer/Umami links), shared by the desktop sidebar and the mobile drawer.
+ * Admin sidebar groups (core + PROJECT_ADMIN_NAV + Adminer link), shared by the desktop sidebar and the mobile drawer.
  * `text(english, key)` gives the shell's own strings: English for admins, translated for CMS editors, whose admin is client-facing.
  *
  * @example
@@ -33,15 +33,6 @@ export function useAdminNav() {
                 href: config.public.adminerUrl as string,
                 external: true,
                 order: 100,
-            });
-        }
-        if (config.public.umamiDashboardUrl) {
-            items.push({
-                label: 'Analytics',
-                icon: 'i-lucide-bar-chart-3',
-                href: config.public.umamiDashboardUrl as string,
-                external: true,
-                order: 101,
             });
         }
         const links = items

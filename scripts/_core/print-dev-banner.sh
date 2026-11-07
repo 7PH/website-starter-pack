@@ -39,7 +39,6 @@ PUBLIC_WEBSITE_HOST="${PUBLIC_WEBSITE_HOST:-localhost}"
 PUBLIC_PORT="${PUBLIC_PORT:-80}"
 USE_TLS="${USE_TLS:-false}"
 ADMINER_SUBDOMAIN="${ADMINER_SUBDOMAIN:-adminer}"
-UMAMI_SUBDOMAIN="${UMAMI_SUBDOMAIN:-analytics}"
 
 if [ "$USE_TLS" = "true" ]; then
     SCHEME="https"
@@ -59,7 +58,6 @@ APP_URL="${SCHEME}://${PUBLIC_WEBSITE_HOST}${PORT_SUFFIX}"
 API_DOCS_URL="${APP_URL}/api/docs"
 STATIC_URL="${SCHEME}://static.${PUBLIC_WEBSITE_HOST}${PORT_SUFFIX}"
 ADMINER_URL="${SCHEME}://${ADMINER_SUBDOMAIN}.${PUBLIC_WEBSITE_HOST}${PORT_SUFFIX}"
-UMAMI_URL="${SCHEME}://${UMAMI_SUBDOMAIN}.${PUBLIC_WEBSITE_HOST}${PORT_SUFFIX}"
 
 flag() {
     if [ "${1:-false}" = "true" ]; then
@@ -81,7 +79,6 @@ label "App"       "$APP_URL"
 label "API docs"  "$API_DOCS_URL"
 label "Static"    "$STATIC_URL"
 label "Adminer"   "$ADMINER_URL"
-label "Analytics" "$UMAMI_URL"
 if [ "$MODE" = "dev" ]; then
     label "Traefik"   "http://localhost:${TRAEFIK_DASHBOARD_PORT:-8080}"
 fi

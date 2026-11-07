@@ -18,7 +18,7 @@ if [ ! -f "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-# Use project name to find the exact db container (not umami-db)
+# Use project name to find the exact db container
 DB_CONTAINER_NAME="${COMPOSE_PROJECT_NAME:-starterpack}-db"
 DB_CONTAINER=$(docker container list --filter "name=^${DB_CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null)
 if [ -z "$DB_CONTAINER" ]; then

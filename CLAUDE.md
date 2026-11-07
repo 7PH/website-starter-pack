@@ -71,7 +71,7 @@ The starterpack repo is public. Never name a sub-app (name, domain, repo, paths,
 Sub-apps can replace core components via `config/component-overrides.ts`. Override components must match original props/events. Use `useOverridable()` to add new override points.
 
 ### URL Routing
-`/` → Frontend, `/api/*` → Backend (prefix stripped), Subdomains: `static.*`, `adminer.*`, `analytics.*`
+`/` → Frontend, `/api/*` → Backend (prefix stripped), Subdomains: `static.*`, `adminer.*`
 
 ### Email templates
 `app/backend/src/templates/email/` is synced from the starterpack. To translate or rebrand an email, put a file with the same name in the app-owned `app/backend/src/templates_app/email/`; it wins over the core one. Add `<name>.subject` there to override the subject line (Jinja, same context as the body).

@@ -199,6 +199,7 @@ app/frontend/middleware/cms.ts
 app/frontend/middleware/managed-accounts-enabled.ts
 app/frontend/middleware/nonmanaged-only.ts
 app/frontend/types/modal.ts
+app/frontend/types/analytics.ts
 app/frontend/utils/api/index.ts
 app/frontend/utils/api/auth.ts
 app/frontend/utils/api/stripe.ts
@@ -253,6 +254,7 @@ app/frontend/config/account-tabs.ts
 app/frontend/config/account-tabs-ext.ts:template
 app/frontend/config/main-nav-ext.ts:template
 app/frontend/config/premium-ext.ts:template
+app/frontend/config/analytics-ext.ts:template
 app/frontend/config/conversation-subtypes.ts
 app/frontend/config/conversation-subtypes-ext.ts:template
 app/frontend/config/component-overrides.ts:template
