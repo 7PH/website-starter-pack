@@ -3,6 +3,7 @@
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { ANALYTICS } from './config/analytics-ext';
+import { CSP_EXT } from './config/csp-ext';
 import { ROUTE_RULES_EXT } from './config/route-rules-ext';
 import { SECURITY_HEADERS_OVERRIDE } from './config/security-headers';
 import sitemapExt from './config/sitemap-ext';
@@ -23,24 +24,29 @@ const CMS_ENABLED = process.env.CMS_ENABLED === 'true';
 const localPath = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 // Content-Security-Policy, built from env so each app's media + analytics
-// origins are allowed. Override or remove it in config/security-headers.ts
+// origins are allowed. Add sources in config/csp-ext.ts, override or remove it in config/security-headers.ts
 // (set to ''); per-route exceptions (e.g. /embed needing `frame-ancestors *`)
 // go in config/route-rules-ext.ts at a path more specific than '/**'.
 const IS_DEV = process.env.NODE_ENV !== 'production';
 const STATIC_ORIGIN = process.env.STATIC_ORIGIN || (PUBLIC_URL ? PUBLIC_URL.replace('://', '://static.') : '');
-const cspDirective = (...parts: string[]) => parts.filter(Boolean).join(' ');
-const CONTENT_SECURITY_POLICY = [
-    "default-src 'self'",
+const CSP: Record<string, string[]> = {
+    'default-src': ["'self'"],
     // 'unsafe-inline' is required by Nuxt SSR (no nonces); 'unsafe-eval' + ws: are dev-only (HMR).
-    cspDirective("script-src 'self' 'unsafe-inline'", ...ANALYTICS.origins, IS_DEV ? "'unsafe-eval'" : ''),
-    "style-src 'self' 'unsafe-inline'",
-    cspDirective("img-src 'self' data: blob:", STATIC_ORIGIN),
+    'script-src': ["'self'", "'unsafe-inline'", ...ANALYTICS.origins, IS_DEV ? "'unsafe-eval'" : ''],
+    'style-src': ["'self'", "'unsafe-inline'"],
+    'img-src': ["'self'", 'data:', 'blob:', STATIC_ORIGIN],
     // api.iconify.design: @nuxt/icon fetches icons from the Iconify CDN (see the `icon` config below).
-    cspDirective("connect-src 'self' https://api.iconify.design", ...ANALYTICS.origins, IS_DEV ? 'ws: wss:' : ''),
-    "frame-ancestors 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-].join('; ');
+    'connect-src': ["'self'", 'https://api.iconify.design', ...ANALYTICS.origins, IS_DEV ? 'ws: wss:' : ''],
+    'frame-ancestors': ["'self'"],
+    'base-uri': ["'self'"],
+    'form-action': ["'self'"],
+};
+for (const [directive, sources = []] of Object.entries(CSP_EXT)) {
+    CSP[directive] = [...(CSP[directive] ?? ["'self'"]), ...sources];
+}
+const CONTENT_SECURITY_POLICY = Object.entries(CSP)
+    .map(([directive, sources]) => [directive, ...sources.filter(Boolean)].join(' '))
+    .join('; ');
 
 // Default security headers (merged with project overrides)
 const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
