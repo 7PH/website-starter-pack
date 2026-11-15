@@ -26,6 +26,7 @@ from ..helpers.auth import get_current_nonmanaged_user, get_user_or_404
 from ..helpers.db import get_session
 from ..helpers.hooks import SubscriptionChanged, fire
 from ..helpers.redirects import validate_redirect_url
+from ..helpers.user_display import billing_name
 from ..models.organization import OrganizationBase
 from ..models.user import UserBase
 from ..schemas.stripe import (
@@ -138,7 +139,7 @@ def create_user_checkout(
         db_user.stripe_id = stripe_helper.sync_customer(
             user_id=user.id,
             email=user.email,
-            name=f"{user.first_name} {user.last_name}",
+            name=billing_name(user),
             check_user_exists=lambda uid: get_user_by_id(session, uid) is not None,
         )
         session.add(db_user)

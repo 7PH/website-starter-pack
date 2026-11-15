@@ -97,7 +97,7 @@
             "somethingWentWrong": "Une erreur est survenue",
             "unexpectedError": "Une erreur inattendue s'est produite",
             "tryAgain": "Réessayer",
-            "tooManyRequests": "Trop de tentatives, réessayez dans quelques minutes"
+            "tooManyRequests": "Trop de tentatives. Réessayez plus tard."
         },
         "validation": {
             "required": "Ce champ est requis"
@@ -178,6 +178,9 @@
                 "newEmail": "Nouvelle adresse email",
                 "confirmWithPassword": "Entrez votre mot de passe pour confirmer",
                 "sendVerification": "Envoyer l'email de vérification",
+                "verified": "Vérifié",
+                "notVerified": "Non vérifié",
+                "alreadyVerified": "Votre email est déjà vérifié",
                 "verificationSent": "Email de vérification envoyé à votre nouvelle adresse",
                 "changeSuccess": "Email changé avec succès",
                 "changeFailed": "Échec du changement d'email",

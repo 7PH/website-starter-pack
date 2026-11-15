@@ -1,10 +1,13 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 <script setup lang="ts">
+import * as usersApi from '~/utils/api/users';
+
 const auth = useAuth();
 const accountActions = useAccountActions();
 const { t } = useI18n();
 const backendConfig = useBackendConfig();
 const usernamesEnabled = computed(() => backendConfig.config?.usernames_enabled === true);
+const realNamesEnabled = computed(() => backendConfig.config?.real_names_enabled !== false);
 const { validateUsername } = useUsernameRules();
 
 // Loading states
@@ -15,9 +18,6 @@ const isEmailLoading = ref(false);
 const profileErrors = ref<Record<string, string>>({});
 const emailErrors = ref<Record<string, string>>({});
 
-// Password visibility toggle
-const showEmailPassword = ref(false);
-
 // Profile form
 const profileForm = reactive({
     firstName: auth.user?.first_name || '',
@@ -25,6 +25,22 @@ const profileForm = reactive({
     username: auth.user?.username || '',
     customData: (auth.user?.custom_data ?? {}) as UserCustomData,
 });
+
+// The token's copy goes stale once the user verifies from the email link, so read the live value.
+onMounted(async () => {
+    try {
+        auth.updateUser(await usersApi.getCurrentUser());
+    } catch {
+        // Keep the token's copy
+    }
+});
+
+const isResendingVerification = ref(false);
+async function resendVerification() {
+    isResendingVerification.value = true;
+    await accountActions.sendVerificationEmail();
+    isResendingVerification.value = false;
+}
 
 // Email form
 const emailForm = reactive({
@@ -50,10 +66,10 @@ watch(
 // Validations
 function validateProfile(): boolean {
     profileErrors.value = {};
-    if (!profileForm.firstName.trim()) {
+    if (realNamesEnabled.value && !profileForm.firstName.trim()) {
         profileErrors.value.firstName = t('core.validation.required');
     }
-    if (!profileForm.lastName.trim()) {
+    if (realNamesEnabled.value && !profileForm.lastName.trim()) {
         profileErrors.value.lastName = t('core.validation.required');
     }
     // Blank is only "leave it alone" for users who never got a handle (OAuth and
@@ -146,7 +162,7 @@ function cancelEmailChange() {
                     />
                 </UFormField>
 
-                <div class="flex gap-4">
+                <div v-if="realNamesEnabled" class="flex gap-4">
                     <UFormField :label="t('core.auth.firstName')" :error="profileErrors.firstName" class="flex-1">
                         <UInput
                             v-model="profileForm.firstName"
@@ -194,7 +210,28 @@ function cancelEmailChange() {
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
                         {{ t('core.account.email.current') }}
                     </p>
-                    <p class="font-medium">{{ auth.user?.email }}</p>
+                    <p class="font-medium flex items-center gap-2">
+                        {{ auth.user?.email }}
+                        <UBadge
+                            v-if="auth.user?.email_confirmed != null"
+                            :color="auth.user.email_confirmed ? 'success' : 'warning'"
+                            variant="subtle"
+                            size="sm"
+                            :label="
+                                auth.user.email_confirmed
+                                    ? t('core.account.email.verified')
+                                    : t('core.account.email.notVerified')
+                            "
+                        />
+                    </p>
+                    <UButton
+                        v-if="auth.user?.email_confirmed === false"
+                        class="mt-4 mr-2"
+                        variant="soft"
+                        :label="t('core.account.email.sendVerification')"
+                        :loading="isResendingVerification"
+                        @click="resendVerification"
+                    />
                     <UButton
                         class="mt-4"
                         variant="outline"
@@ -216,24 +253,11 @@ function cancelEmailChange() {
                     </UFormField>
 
                     <UFormField :label="t('core.account.email.confirmWithPassword')" :error="emailErrors.password">
-                        <UInput
+                        <UiPasswordInput
                             v-model="emailForm.password"
-                            :type="showEmailPassword ? 'text' : 'password'"
                             autocomplete="current-password"
-                            :color="emailErrors.password ? 'error' : undefined"
-                            :ui="{ trailing: 'pe-1' }"
-                            class="w-full"
-                        >
-                            <template #trailing>
-                                <UButton
-                                    color="neutral"
-                                    variant="link"
-                                    size="sm"
-                                    :icon="showEmailPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                    @click="showEmailPassword = !showEmailPassword"
-                                />
-                            </template>
-                        </UInput>
+                            :error="!!emailErrors.password"
+                        />
                     </UFormField>
 
                     <div class="flex gap-2 justify-end">

@@ -18,6 +18,7 @@ from ..models.user import UserBase
 from ..schemas.user import UserRead, UserTokenUpdate
 from .db import get_session
 from .exception import InvalidTokenException
+from .user_display import billing_name
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 
@@ -117,7 +118,7 @@ def sync_existing_user_to_stripe(user: UserBase) -> None:
         stripe_helper.sync_customer(
             user_id=user.id,
             email=user.email,
-            name=f"{user.first_name} {user.last_name}",
+            name=billing_name(user),
             existing_stripe_id=user.stripe_id,
         )
 
@@ -147,7 +148,7 @@ def setup_new_user_stripe(session: Session, user: UserBase, *, allow_orphan_reus
     user.stripe_id = stripe_helper.sync_customer(
         user_id=user.id,
         email=user.email,
-        name=f"{user.first_name} {user.last_name}",
+        name=billing_name(user),
         check_user_exists=check_user_exists,
     )
     update_user(session, user)
@@ -225,6 +226,7 @@ def build_user_read_with_orgs(session: Session, user: UserBase) -> UserRead:
         first_name=user.first_name,
         last_name=user.last_name,
         display_name=user.display_name,
+        email_confirmed=bool(user.email_confirmed),
         is_admin=user.is_admin,
         is_premium=is_premium_effective(session, user),
         has_personal_subscription=user.has_personal_subscription,

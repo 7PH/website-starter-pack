@@ -18,6 +18,7 @@ from ..crud.organizations import (
 )
 from ..helpers.auth import get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
+from ..helpers.user_display import display_for
 from ..schemas.organization_invitation import (
     OrganizationInvitationListResponse,
     OrganizationInvitationRead,
@@ -31,10 +32,8 @@ router = APIRouter(prefix="/invitations")
 
 
 def _inviter_name(inviter) -> str | None:
-    """Return ``"First Last"`` (falling back to email) for an inviter row, or None."""
-    if not inviter:
-        return None
-    return f"{inviter.first_name} {inviter.last_name}".strip() or inviter.email
+    """Return the inviter's display label, or None."""
+    return display_for(inviter) if inviter else None
 
 
 def _invitation_to_read(invitation, include_token: bool = False) -> OrganizationInvitationRead:

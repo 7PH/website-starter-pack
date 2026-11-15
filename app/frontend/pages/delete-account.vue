@@ -18,7 +18,6 @@ const status = ref<'loading' | 'ready' | 'invalid'>('loading');
 const info = ref<AccountDeletionInfo | null>(null);
 const token = ref<string | null>(null);
 const password = ref('');
-const showPassword = ref(false);
 const isSubmitting = ref(false);
 const passwordError = ref('');
 
@@ -100,24 +99,7 @@ async function confirmDeletion() {
                     :label="t('core.account.privacy.confirmPage.passwordLabel')"
                     :error="passwordError"
                 >
-                    <UInput
-                        v-model="password"
-                        :type="showPassword ? 'text' : 'password'"
-                        autocomplete="current-password"
-                        :color="passwordError ? 'error' : undefined"
-                        :ui="{ trailing: 'pe-1' }"
-                        class="w-full"
-                    >
-                        <template #trailing>
-                            <UButton
-                                color="neutral"
-                                variant="link"
-                                size="sm"
-                                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                @click="showPassword = !showPassword"
-                            />
-                        </template>
-                    </UInput>
+                    <UiPasswordInput v-model="password" autocomplete="current-password" :error="!!passwordError" />
                 </UFormField>
 
                 <div class="flex justify-end gap-2 pt-2">

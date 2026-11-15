@@ -9,7 +9,7 @@ import secrets
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from ..constants import EventType
+from ..constants import REAL_NAMES_ENABLED, EventType
 from ..crud.event_logs import log_event
 from ..crud.users import create_user, get_user_by_email
 from ..helpers.auth import hash_password, issue_jwt_with_orgs, setup_new_user_stripe
@@ -141,8 +141,9 @@ async def handle_google_callback(
         user = UserBase(
             email=email,
             hashed_password=hash_password(random_password),
-            first_name=google_user.first_name,
-            last_name=google_user.last_name.upper() if google_user.last_name else "",
+            # A pseudonymous app must not keep the real name Google sends.
+            first_name=google_user.first_name if REAL_NAMES_ENABLED else None,
+            last_name=(google_user.last_name.upper() if google_user.last_name else "") if REAL_NAMES_ENABLED else None,
             email_confirmed=True,  # Google emails are pre-verified
             oauth_provider=OAuthProvider.GOOGLE,
             oauth_id=google_user.id,

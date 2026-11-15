@@ -217,6 +217,7 @@ app/frontend/utils/cms.ts
 app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
 app/frontend/components/ui/ModalHeader.vue
+app/frontend/components/ui/PasswordInput.vue
 app/frontend/components/ui/FormActions.vue
 app/frontend/components/ui/GradientBorder.vue
 app/frontend/components/ui/PageWrapper.vue

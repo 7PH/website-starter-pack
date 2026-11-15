@@ -91,9 +91,19 @@ const settingsMenuItems = computed(() => [
         })),
 ]);
 
+const loginLink = useTemplateRef<{ $el: HTMLElement }>('loginLink');
+
 function onSelectLogout() {
     // Logging out on a public page should not also navigate the user off it.
     accountActions.logout(route.meta.auth ? '/' : route.fullPath);
+}
+
+// The menu's trigger is gone after logout, so its own focus restore would drop focus on the page body.
+function onUserMenuCloseAutoFocus(event: Event) {
+    if (auth.isLoggedIn) return;
+    event.preventDefault();
+    // The link renders on the next tick, once the header has reacted to the logout.
+    nextTick(() => loginLink.value?.$el.focus());
 }
 </script>
 
@@ -132,7 +142,7 @@ function onSelectLogout() {
                 <ClientOnly>
                     <!-- Logged out state -->
                     <template v-if="!auth.isLoggedIn">
-                        <NuxtLink to="/login" class="nav-link">
+                        <NuxtLink ref="loginLink" to="/login" class="nav-link">
                             {{ t('core.auth.login') }}
                         </NuxtLink>
                         <NuxtLink to="/login?mode=signup">
@@ -172,7 +182,7 @@ function onSelectLogout() {
                         </NuxtLink>
 
                         <!-- User dropdown -->
-                        <UDropdownMenu :items="userMenuItems">
+                        <UDropdownMenu :items="userMenuItems" :content="{ onCloseAutoFocus: onUserMenuCloseAutoFocus }">
                             <UButton
                                 :label="displayLabel"
                                 :aria-label="displayLabel"
