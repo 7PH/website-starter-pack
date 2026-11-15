@@ -12,9 +12,6 @@ const isPasswordLoading = ref(false);
 const passwordErrors = ref<Record<string, string>>({});
 
 // Password visibility toggles
-const showCurrentPassword = ref(false);
-const showNewPassword = ref(false);
-const showConfirmPassword = ref(false);
 
 // Password form
 const passwordForm = reactive({
@@ -69,66 +66,27 @@ async function handlePasswordChange() {
 
         <form class="flex flex-col gap-4" @submit.prevent="handlePasswordChange">
             <UFormField :label="t('core.account.password.current')" :error="passwordErrors.currentPassword">
-                <UInput
+                <UiPasswordInput
                     v-model="passwordForm.currentPassword"
-                    :type="showCurrentPassword ? 'text' : 'password'"
                     autocomplete="current-password"
-                    :color="passwordErrors.currentPassword ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="showCurrentPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="showCurrentPassword = !showCurrentPassword"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!passwordErrors.currentPassword"
+                />
             </UFormField>
 
             <UFormField :label="t('core.account.password.new')" :error="passwordErrors.newPassword">
-                <UInput
+                <UiPasswordInput
                     v-model="passwordForm.newPassword"
-                    :type="showNewPassword ? 'text' : 'password'"
                     autocomplete="new-password"
-                    :color="passwordErrors.newPassword ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="showNewPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="showNewPassword = !showNewPassword"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!passwordErrors.newPassword"
+                />
             </UFormField>
 
             <UFormField :label="t('core.account.password.confirm')" :error="passwordErrors.confirmPassword">
-                <UInput
+                <UiPasswordInput
                     v-model="passwordForm.confirmPassword"
-                    :type="showConfirmPassword ? 'text' : 'password'"
                     autocomplete="new-password"
-                    :color="passwordErrors.confirmPassword ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="showConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="showConfirmPassword = !showConfirmPassword"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!passwordErrors.confirmPassword"
+                />
             </UFormField>
 
             <div class="flex justify-end">

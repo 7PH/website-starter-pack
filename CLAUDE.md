@@ -114,6 +114,7 @@ ALL user-facing text must be translated. Never hardcode user-visible strings.
 - **User-facing pages**: Use `const { t } = useI18n()` then `t('key')`
 - **Locale files**: `locales/core-{en,fr}.json` (starterpack-managed) + `locales/{en,fr}.json` (app-specific, deep merged)
 - **Locale switching**: `useAppLocale()` composable
+- **App-owned layouts**: wrap them in `<UApp :locale="uiLocale">` (from `useAppLocale()`) like the core ones, or Nuxt UI's own labels (Close, Show password...) stay in English
 
 ## Styling
 

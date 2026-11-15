@@ -2,13 +2,14 @@
 
 /**
  * Composable for shared auth form logic between ModalAuth and login page.
- * Provides form state, validation, and password visibility toggles.
+ * Provides form state and validation.
  */
 export function useAuthForms() {
     const { t } = useI18n();
     const backendConfig = useBackendConfig();
     const minPasswordLength = computed(() => backendConfig.config?.password_min_length ?? 8);
     const usernamesEnabled = computed(() => backendConfig.config?.usernames_enabled === true);
+    const realNamesEnabled = computed(() => backendConfig.config?.real_names_enabled !== false);
 
     const { validateUsername } = useUsernameRules();
 
@@ -37,15 +38,6 @@ export function useAuthForms() {
     const resetPasswordForm = reactive({
         password: '',
         confirmPassword: '',
-    });
-
-    // Password visibility toggles
-    const passwordVisibility = reactive({
-        login: false,
-        signup: false,
-        signupConfirm: false,
-        reset: false,
-        resetConfirm: false,
     });
 
     // Loading and errors
@@ -88,10 +80,10 @@ export function useAuthForms() {
             const usernameError = validateUsername(signupForm.username);
             if (usernameError) errors.value.username = usernameError;
         }
-        if (!signupForm.firstName) {
+        if (realNamesEnabled.value && !signupForm.firstName) {
             errors.value.firstName = t('core.validation.required');
         }
-        if (!signupForm.lastName) {
+        if (realNamesEnabled.value && !signupForm.lastName) {
             errors.value.lastName = t('core.validation.required');
         }
         if (!signupForm.password) {
@@ -145,13 +137,6 @@ export function useAuthForms() {
         resetPasswordForm.password = '';
         resetPasswordForm.confirmPassword = '';
 
-        // Reset visibility
-        passwordVisibility.login = false;
-        passwordVisibility.signup = false;
-        passwordVisibility.signupConfirm = false;
-        passwordVisibility.reset = false;
-        passwordVisibility.resetConfirm = false;
-
         clearErrors();
     }
 
@@ -170,10 +155,10 @@ export function useAuthForms() {
         resetPasswordForm,
 
         // Password visibility
-        passwordVisibility,
 
         // State
         usernamesEnabled,
+        realNamesEnabled,
         isLoading,
         errors,
         withLoading,

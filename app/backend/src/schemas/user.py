@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from ..constants import PASSWORD_MIN_LENGTH, USERNAMES_ENABLED
+from ..constants import PASSWORD_MIN_LENGTH, REAL_NAMES_ENABLED, USERNAMES_ENABLED
 from ..helpers.user_display import display_for
 from ..helpers.username import validate_username
 from .organization import UserOrganizationInfo
@@ -38,6 +38,8 @@ class UserRead(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
+    # None when built from a JWT, which doesn't carry it; GET /users/me has the live value.
+    email_confirmed: bool | None = None
     is_admin: bool
     is_premium: bool
     has_personal_subscription: bool = False
@@ -60,6 +62,9 @@ class UserRead(BaseModel):
         # own username column must not start seeing it on the API.
         if not USERNAMES_ENABLED:
             self.username = None
+        # Names stored before the flag was turned off must not keep surfacing.
+        if not REAL_NAMES_ENABLED:
+            self.first_name = self.last_name = None
         self.display_label = display_for(self)
         return self
 
@@ -88,6 +93,9 @@ class UserPreviewRead(BaseModel):
     def _populate_display_label(self) -> "UserPreviewRead":
         if not USERNAMES_ENABLED:
             self.username = None
+        # Names stored before the flag was turned off must not keep surfacing.
+        if not REAL_NAMES_ENABLED:
+            self.first_name = self.last_name = None
         self.display_label = display_for(self)
         return self
 
@@ -95,9 +103,9 @@ class UserPreviewRead(BaseModel):
 class UserCreate(BaseModel):
     email: str = Field(max_length=255)
     password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    # Required-ness is enforced in the controller; the schema can't read config.
+    # Required-ness of names and username is enforced in the controller, from config.
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
     username: str | None = None
     # Writable subset only: users must not self-set privileged custom_data.
     custom_data: UserCustomDataWritable | None = None
@@ -109,8 +117,8 @@ class UserCreate(BaseModel):
 
     @field_validator("last_name")
     @classmethod
-    def to_uppercase(cls, v: str) -> str:
-        return v.upper()
+    def to_uppercase(cls, v: str | None) -> str | None:
+        return v.upper() if v is not None else None
 
     @field_validator("username")
     @classmethod
@@ -119,8 +127,9 @@ class UserCreate(BaseModel):
 
 
 class UserChangeInfo(BaseModel):
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
+    # None means "leave unchanged".
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
     # None means "leave unchanged". There is deliberately no way for a user to
     # clear their own handle: it's their public identity and signup requires
     # one. Admins can clear it (moderation) via AdminUserUpdate.

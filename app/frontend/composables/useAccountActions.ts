@@ -17,7 +17,10 @@ export function useAccountActions() {
     // Rate limiting is generic across endpoints, so its message doesn't need a per-call key.
     const DEFAULT_STATUS_KEYS: Record<number, string> = { 429: 'core.errors.tooManyRequests' };
 
-    /** Run an API call, toast success/error, return true on success. */
+    /**
+     * Run an API call, toast success, return true on success.
+     * Errors are toasted, or handed to `onError` so a form can show them in place.
+     */
     async function withToast<T>(
         op: () => Promise<T>,
         successKey: string,
@@ -25,6 +28,7 @@ export function useAccountActions() {
         onSuccess?: (result: T) => void,
         // Status -> i18n key, for codes with one unambiguous cause on that endpoint.
         statusKeys?: Record<number, string>,
+        onError?: (message: string) => void,
     ): Promise<boolean> {
         try {
             const result = await op();
@@ -33,7 +37,9 @@ export function useAccountActions() {
             return true;
         } catch (error) {
             const mapped = { ...DEFAULT_STATUS_KEYS, ...statusKeys }[getErrorStatus(error) ?? 0];
-            if (mapped) {
+            if (onError) {
+                onError(mapped ? t(mapped) : getErrorMessage(error, t(errorKey)));
+            } else if (mapped) {
                 showError(new Error(t(mapped)), mapped);
             } else {
                 showError(error, errorKey);
@@ -48,8 +54,9 @@ export function useAccountActions() {
 
     /**
      * Login with an identifier (email, or username when usernames are enabled).
+     * Pass `onError` to show the failure in the form instead of a toast.
      */
-    async function login(identifier: string, password: string): Promise<boolean> {
+    async function login(identifier: string, password: string, onError?: (message: string) => void): Promise<boolean> {
         const usernamesEnabled = useBackendConfig().config?.usernames_enabled === true;
         const invalidKey = usernamesEnabled ? 'core.auth.invalidCredentialsUsername' : 'core.auth.invalidCredentials';
         return withToast(
@@ -60,11 +67,13 @@ export function useAccountActions() {
             // The server's detail would otherwise win over the fallback key and
             // reach the user in English.
             { 401: invalidKey },
+            onError,
         );
     }
 
     /**
      * Register a new user.
+     * Pass `onError` to show the failure in the form instead of a toast.
      */
     async function signup(
         email: string,
@@ -73,14 +82,16 @@ export function useAccountActions() {
         lastName: string,
         customData?: UserCustomData,
         username?: string,
+        onError?: (message: string) => void,
     ): Promise<boolean> {
         return withToast(
             () =>
                 usersApi.signup({
                     email,
                     password,
-                    first_name: firstName,
-                    last_name: lastName,
+                    // Empty when the app collects no names; the API rejects empty strings.
+                    first_name: firstName || undefined,
+                    last_name: lastName || undefined,
                     custom_data: customData,
                     ...(username ? { username } : {}),
                 }),
@@ -88,12 +99,13 @@ export function useAccountActions() {
             'core.errors.generic',
             (response) => {
                 auth.saveUserToken(response);
-                // Trigger email verification send (fire and forget)
-                sendVerificationEmail().catch(() => {});
+                // Fire and forget: the account exists either way, and the user can resend from their account.
+                sendVerificationEmail();
             },
             // A 409 here is either field, and the response can't say which, so the
             // message names both. Without usernames it can only be the email.
             { 409: username ? 'core.auth.signupConflict' : 'core.auth.emailTaken' },
+            onError,
         );
     }
 
@@ -120,18 +132,16 @@ export function useAccountActions() {
     }
 
     /**
-     * Send email verification to current user.
+     * Send (or resend) the email verification to the current user.
      */
     async function sendVerificationEmail(): Promise<boolean> {
-        try {
-            await authApi.sendVerificationEmail();
-            showSuccess(t('core.auth.verificationEmailSent'));
-            return true;
-        } catch (error) {
-            // Non-critical - just log
-            console.error('Failed to send verification email:', error);
-            return false;
-        }
+        return withToast(
+            () => authApi.sendVerificationEmail(),
+            'core.auth.verificationEmailSent',
+            'core.errors.generic',
+            undefined,
+            { 400: 'core.account.email.alreadyVerified' },
+        );
     }
 
     /**
@@ -173,8 +183,8 @@ export function useAccountActions() {
         return withToast(
             () =>
                 usersApi.updateProfile({
-                    first_name: firstName,
-                    last_name: lastName,
+                    first_name: firstName || undefined,
+                    last_name: lastName || undefined,
                     custom_data: customData,
                     ...(username ? { username } : {}),
                 }),

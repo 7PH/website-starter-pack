@@ -22,10 +22,10 @@ onMounted(() => {
 
 const {
     usernamesEnabled,
+    realNamesEnabled,
     loginForm,
     signupForm,
     forgotPasswordForm,
-    passwordVisibility,
     isLoading,
     errors,
     validateLogin,
@@ -58,9 +58,14 @@ function validateSignupWithMetadata(): boolean {
 }
 
 // Actions
+// Shown in the form rather than a toast, which screen readers may miss and which vanishes.
+function showFormError(message: string) {
+    errors.value.general = message;
+}
+
 async function handleLogin() {
     if (!validateLogin()) return;
-    if (await withLoading(() => accountActions.login(loginForm.identifier, loginForm.password))) {
+    if (await withLoading(() => accountActions.login(loginForm.identifier, loginForm.password, showFormError))) {
         redirectAfterAuth();
     }
 }
@@ -75,6 +80,7 @@ async function handleSignup() {
             signupForm.lastName,
             signupForm.customData,
             usernamesEnabled.value ? signupForm.username.trim() : undefined,
+            showFormError,
         ),
     );
     if (success) redirectAfterAuth();
@@ -101,41 +107,29 @@ function switchMode(newMode: AuthMode) {
 
         <!-- Login Form -->
         <form v-if="mode === 'login'" class="flex flex-col gap-5" @submit.prevent="handleLogin">
+            <UAlert v-if="errors.general" color="error" role="alert" :title="errors.general" />
+
             <UFormField
                 :label="usernamesEnabled ? t('core.auth.usernameOrEmail') : t('core.auth.email')"
-                :error="errors.identifier"
+                :error="errors.identifier || !!errors.general"
             >
                 <UInput
                     v-model="loginForm.identifier"
                     :type="usernamesEnabled ? 'text' : 'email'"
                     :autocomplete="usernamesEnabled ? 'username' : 'email'"
                     :placeholder="usernamesEnabled ? t('core.auth.usernameOrEmail') : t('core.auth.email')"
-                    :color="errors.identifier ? 'error' : undefined"
+                    :color="errors.identifier || errors.general ? 'error' : undefined"
                     class="w-full"
                 />
             </UFormField>
 
-            <UFormField :label="t('core.auth.password')" :error="errors.password">
-                <UInput
+            <UFormField :label="t('core.auth.password')" :error="errors.password || !!errors.general">
+                <UiPasswordInput
                     v-model="loginForm.password"
-                    :type="passwordVisibility.login ? 'text' : 'password'"
                     autocomplete="current-password"
                     :placeholder="t('core.auth.password')"
-                    :color="errors.password ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="passwordVisibility.login ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            :aria-label="passwordVisibility.login ? 'Hide password' : 'Show password'"
-                            @click="passwordVisibility.login = !passwordVisibility.login"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!(errors.password || errors.general)"
+                />
             </UFormField>
 
             <div class="flex items-center justify-between">
@@ -167,7 +161,9 @@ function switchMode(newMode: AuthMode) {
 
         <!-- Signup Form -->
         <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
-            <div class="flex gap-3">
+            <UAlert v-if="errors.general" color="error" role="alert" :title="errors.general" />
+
+            <div v-if="realNamesEnabled" class="flex gap-3">
                 <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">
                     <UInput
                         v-model="signupForm.firstName"
@@ -217,47 +213,21 @@ function switchMode(newMode: AuthMode) {
             </UFormField>
 
             <UFormField :label="t('core.auth.password')" :error="errors.password">
-                <UInput
+                <UiPasswordInput
                     v-model="signupForm.password"
-                    :type="passwordVisibility.signup ? 'text' : 'password'"
                     autocomplete="new-password"
                     :placeholder="t('core.auth.password')"
-                    :color="errors.password ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="passwordVisibility.signup ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="passwordVisibility.signup = !passwordVisibility.signup"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!errors.password"
+                />
             </UFormField>
 
             <UFormField :label="t('core.auth.confirmPassword')" :error="errors.confirmPassword">
-                <UInput
+                <UiPasswordInput
                     v-model="signupForm.confirmPassword"
-                    :type="passwordVisibility.signupConfirm ? 'text' : 'password'"
                     autocomplete="new-password"
                     :placeholder="t('core.auth.confirmPassword')"
-                    :color="errors.confirmPassword ? 'error' : undefined"
-                    :ui="{ trailing: 'pe-1' }"
-                    class="w-full"
-                >
-                    <template #trailing>
-                        <UButton
-                            color="neutral"
-                            variant="link"
-                            size="sm"
-                            :icon="passwordVisibility.signupConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                            @click="passwordVisibility.signupConfirm = !passwordVisibility.signupConfirm"
-                        />
-                    </template>
-                </UInput>
+                    :error="!!errors.confirmPassword"
+                />
             </UFormField>
 
             <UsersSignupMetadataFields

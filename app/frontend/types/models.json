@@ -426,6 +426,10 @@
           "title": "Usernames Enabled",
           "type": "boolean"
         },
+        "real_names_enabled": {
+          "title": "Real Names Enabled",
+          "type": "boolean"
+        },
         "cms_enabled": {
           "title": "Cms Enabled",
           "type": "boolean"
@@ -467,6 +471,7 @@
         "org_invitations_enabled",
         "managed_accounts_enabled",
         "usernames_enabled",
+        "real_names_enabled",
         "cms_enabled",
         "username_pattern",
         "llm_enabled",
@@ -4014,16 +4019,32 @@
     "UserChangeInfo": {
       "properties": {
         "first_name": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
         },
         "username": {
           "anyOf": [
@@ -4049,10 +4070,6 @@
           "default": null
         }
       },
-      "required": [
-        "first_name",
-        "last_name"
-      ],
       "title": "UserChangeInfo",
       "type": "object"
     },
@@ -4091,16 +4108,32 @@
           "type": "string"
         },
         "first_name": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
         },
         "username": {
           "anyOf": [
@@ -4128,9 +4161,7 @@
       },
       "required": [
         "email",
-        "password",
-        "first_name",
-        "last_name"
+        "password"
       ],
       "title": "UserCreate",
       "type": "object"
@@ -4350,6 +4381,18 @@
           ],
           "default": null,
           "title": "Display Name"
+        },
+        "email_confirmed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email Confirmed"
         },
         "is_admin": {
           "title": "Is Admin",

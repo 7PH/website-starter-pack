@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.helpers import user_display
-from src.helpers.user_display import display_for
+from src.helpers.user_display import billing_name, display_for, greeting_for
 
 
 @pytest.fixture
@@ -24,6 +24,11 @@ def usernames_on(monkeypatch):
 @pytest.fixture
 def usernames_off(monkeypatch):
     monkeypatch.setattr(user_display, "USERNAMES_ENABLED", False)
+
+
+@pytest.fixture
+def real_names_off(monkeypatch):
+    monkeypatch.setattr(user_display, "REAL_NAMES_ENABLED", False)
 
 
 def _user(**kwargs):
@@ -73,3 +78,32 @@ class TestDisplayFor:
     def test_first_name_only_falls_through_to_email(self):
         user = _user(first_name="Alice", email="a@b.c")
         assert display_for(user) == "a@b.c"
+
+    def test_names_ignored_when_real_names_are_off(self, real_names_off):
+        """Names stored before a pseudonymous app turned the flag off must not surface."""
+        assert display_for(_user(first_name="Alice", last_name="Doe", email="a@b.c")) == "a@b.c"
+
+
+class TestBillingName:
+    def test_real_name(self):
+        assert billing_name(_user(first_name="Alice", last_name="Doe", username="johndoe")) == "Alice Doe"
+
+    def test_partial_name_is_not_padded(self):
+        assert billing_name(_user(first_name="Alice", email="a@b.c")) == "Alice"
+
+    def test_falls_back_to_display_label_without_names(self, usernames_on):
+        assert billing_name(_user(username="johndoe", email="a@b.c")) == "johndoe"
+
+    def test_skips_names_when_real_names_are_off(self, real_names_off):
+        assert billing_name(_user(first_name="Alice", last_name="Doe", email="a@b.c")) == "a@b.c"
+
+
+class TestGreetingFor:
+    def test_first_name(self):
+        assert greeting_for(_user(first_name="Alice", last_name="Doe")) == "Alice"
+
+    def test_never_none_string_without_names(self, usernames_on):
+        assert greeting_for(_user(username="johndoe")) == "johndoe"
+
+    def test_skips_first_name_when_real_names_are_off(self, real_names_off):
+        assert greeting_for(_user(first_name="Alice", email="a@b.c")) == "a@b.c"

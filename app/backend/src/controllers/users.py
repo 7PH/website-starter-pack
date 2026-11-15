@@ -7,7 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..constants import IS_PROD, JWT_ACCESS_TOKEN_EXPIRE_MINUTES, PUBLIC_URL, USERNAMES_ENABLED, EventType
+from ..constants import (
+    IS_PROD,
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+    PUBLIC_URL,
+    REAL_NAMES_ENABLED,
+    USERNAMES_ENABLED,
+    EventType,
+)
 from ..crud.event_logs import log_event
 from ..crud.users import (
     create_user,
@@ -46,6 +53,7 @@ from ..helpers.email import (
     swallow_email_errors,
 )
 from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip
+from ..helpers.user_display import greeting_for
 from ..helpers.username import username_conflict_as_409
 from ..models.user import UserBase
 from ..schemas.user import (
@@ -109,6 +117,12 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
         username = user_create.username
 
+    # Not stored when disabled: a pseudonymous app must not keep real names it never shows.
+    if REAL_NAMES_ENABLED and not (user_create.first_name and user_create.last_name):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="First and last name are required")
+    first_name = user_create.first_name if REAL_NAMES_ENABLED else None
+    last_name = user_create.last_name if REAL_NAMES_ENABLED else None
+
     custom_data: dict = {}
     if user_create.custom_data is not None:
         custom_data = user_create.custom_data.model_dump(exclude_none=True)
@@ -117,8 +131,8 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
         email=user_create.email,
         username=username,
         hashed_password=hash_password(user_create.password),
-        first_name=user_create.first_name,
-        last_name=user_create.last_name,
+        first_name=first_name,
+        last_name=last_name,
         custom_data=custom_data,
     )
     with username_conflict_as_409(session):
@@ -263,10 +277,10 @@ def update_me(
     """
     user = get_user_or_404(session, current_user.id)
 
-    if user_change_info.first_name is not None:
+    if REAL_NAMES_ENABLED and user_change_info.first_name is not None:
         user.first_name = user_change_info.first_name
 
-    if user_change_info.last_name is not None:
+    if REAL_NAMES_ENABLED and user_change_info.last_name is not None:
         user.last_name = user_change_info.last_name
 
     if USERNAMES_ENABLED and user_change_info.username is not None and user_change_info.username != user.username:
@@ -382,7 +396,7 @@ def request_email_change(
     with swallow_email_errors():
         send_email_change_email(
             to_email=new_email,
-            username=user.first_name,
+            username=greeting_for(user),
             confirmation_link=confirmation_url,
         )
 
@@ -437,7 +451,7 @@ def request_account_deletion(
     try:
         send_account_deletion_email(
             to_email=user.email,
-            username=user.first_name or user.email,
+            username=greeting_for(user),
             confirmation_link=confirmation_url,
         )
     except Exception as exc:

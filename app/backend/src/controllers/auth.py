@@ -38,6 +38,7 @@ from ..helpers.email import (
 )
 from ..helpers.hooks import AccessCodeResolution, fire, has_handlers
 from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip, is_rate_limited
+from ..helpers.user_display import greeting_for
 from ..schemas.user import (
     AccountDeletionConfirm,
     AccountDeletionInfo,
@@ -110,7 +111,7 @@ def send_verification_email(
     with swallow_email_errors():
         send_email_verification_email(
             to_email=user.email,
-            username=user.first_name,
+            username=greeting_for(user),
             verification_link=verification_url,
         )
 
@@ -200,7 +201,7 @@ def request_password_reset(
         with swallow_email_errors():
             send_password_reset_email(
                 to_email=user.email,
-                username=user.first_name,
+                username=greeting_for(user),
                 reset_link=reset_url,
             )
 

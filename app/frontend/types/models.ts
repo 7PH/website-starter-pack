@@ -112,6 +112,7 @@ export type Username = string | null;
 export type FirstName = string | null;
 export type LastName = string | null;
 export type DisplayName = string | null;
+export type EmailConfirmed = boolean | null;
 export type IsAdmin = boolean;
 export type IsPremium = boolean;
 export type HasPersonalSubscription = boolean;
@@ -132,13 +133,13 @@ export type AuthMethod1 = string;
 export type DisplayLabel1 = string | null;
 export type Email1 = string;
 export type Password = string;
-export type FirstName2 = string;
-export type LastName2 = string;
+export type FirstName2 = string | null;
+export type LastName2 = string | null;
 export type Username2 = string | null;
 export type NewEmail = string;
 export type Password1 = string;
-export type FirstName3 = string;
-export type LastName3 = string;
+export type FirstName3 = string | null;
+export type LastName3 = string | null;
 export type Username3 = string | null;
 export type OldPassword = string;
 export type NewPassword = string;
@@ -160,7 +161,7 @@ export type LastName4 = string | null;
 export type DisplayName2 = string | null;
 export type IsAdmin2 = boolean;
 export type IsPremium1 = boolean;
-export type EmailConfirmed = boolean;
+export type EmailConfirmed1 = boolean;
 export type AuthMethod2 = string;
 export type ManagedAccountGroupId1 = number | null;
 export type CreatedAt1 = string | null;
@@ -502,6 +503,7 @@ export type OrganizationsEnabled = boolean;
 export type OrgInvitationsEnabled = boolean;
 export type ManagedAccountsEnabled = boolean;
 export type UsernamesEnabled = boolean;
+export type RealNamesEnabled = boolean;
 export type CmsEnabled = boolean;
 export type UsernamePattern = string;
 export type LlmEnabled = boolean;
@@ -572,6 +574,7 @@ export interface UserRead {
   first_name?: FirstName;
   last_name?: LastName;
   display_name?: DisplayName;
+  email_confirmed?: EmailConfirmed;
   is_admin: IsAdmin;
   is_premium: IsPremium;
   has_personal_subscription?: HasPersonalSubscription;
@@ -618,8 +621,8 @@ export interface UserPreviewCustomData {}
 export interface UserCreate {
   email: Email1;
   password: Password;
-  first_name: FirstName2;
-  last_name: LastName2;
+  first_name?: FirstName2;
+  last_name?: LastName2;
   username?: Username2;
   custom_data?: UserCustomDataWritable | null;
 }
@@ -637,8 +640,8 @@ export interface UserChangeEmail {
   password: Password1;
 }
 export interface UserChangeInfo {
-  first_name: FirstName3;
-  last_name: LastName3;
+  first_name?: FirstName3;
+  last_name?: LastName3;
   username?: Username3;
   custom_data?: UserCustomDataWritable | null;
 }
@@ -687,7 +690,7 @@ export interface AdminUserRead {
   display_name?: DisplayName2;
   is_admin?: IsAdmin2;
   is_premium?: IsPremium1;
-  email_confirmed?: EmailConfirmed;
+  email_confirmed?: EmailConfirmed1;
   auth_method?: AuthMethod2;
   managed_account_group_id?: ManagedAccountGroupId1;
   created_at: CreatedAt1;
@@ -1399,6 +1402,7 @@ export interface BackendConfig {
   org_invitations_enabled: OrgInvitationsEnabled;
   managed_accounts_enabled: ManagedAccountsEnabled;
   usernames_enabled: UsernamesEnabled;
+  real_names_enabled: RealNamesEnabled;
   cms_enabled: CmsEnabled;
   username_pattern: UsernamePattern;
   llm_enabled: LlmEnabled;
