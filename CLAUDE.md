@@ -148,7 +148,7 @@ Premium arranged outside Stripe (invoices, purchase orders, partners): return it
 
 ## Type Generation
 
-Types auto-generated from Pydantic schemas. Run `./scripts/_core/convert-models.sh` after schema changes.
+Types auto-generated from Pydantic schemas. Run `bash scripts/_core/convert-models.sh` after schema changes.
 
 ## Upgrades
 
