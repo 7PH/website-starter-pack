@@ -74,3 +74,14 @@ def _ratelimit_store(monkeypatch):
     monkeypatch.setattr(ratelimit, "_redis", fake)
     monkeypatch.setattr(ratelimit, "_check_quota", fake.register_script(ratelimit._SLIDING_WINDOW_LUA))
     yield
+
+
+@pytest.fixture(autouse=True)
+def _real_names_on(monkeypatch):
+    """Pin REAL_NAMES_ENABLED to its default so an app's env can't flip core tests; tests that need it off patch it again."""
+    from src.controllers import oauth, users
+    from src.helpers import user_display
+    from src.schemas import user
+
+    for module in (oauth, users, user_display, user):
+        monkeypatch.setattr(module, "REAL_NAMES_ENABLED", True)

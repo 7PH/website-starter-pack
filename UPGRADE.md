@@ -105,5 +105,5 @@ npm run lint:backend
 
 Schema changes may require regenerating types:
 ```bash
-./scripts/_core/convert-models.sh
+bash scripts/_core/convert-models.sh
 ```
