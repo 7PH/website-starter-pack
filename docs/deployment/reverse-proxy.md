@@ -117,3 +117,11 @@ Traefik passes *other* headers (`X-Client-IP`, `CF-Connecting-IP`) through
 untouched — that is what these setups rely on. The resolver lives in
 `app/backend/src/helpers/real_ip.py` and reads whatever `TRUSTED_IP_HEADER`
 names.
+
+## Cloudflare: Browser Cache TTL
+
+Set Caching > Configuration > Browser Cache TTL to **Respect Existing Headers**.
+Any other value overrides the app's `Cache-Control` on every response, 404s
+included, so a `/_nuxt/` file missing for a few seconds during a deploy stays
+broken in browsers for that whole TTL. The app already sends a 1-year
+`immutable` header on built assets and `no-store` on their 404s.
