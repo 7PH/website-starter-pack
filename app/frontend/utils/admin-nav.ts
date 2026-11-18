@@ -16,6 +16,12 @@ export interface AdminNavGroup<T extends GroupableItem> {
     items: T[];
 }
 
+/** Core items then project ones, a project item replacing the core item with the same `to` (so `condition: () => false` hides it). */
+export function mergeAdminNav<T extends { to?: string }>(core: T[], project: T[]): T[] {
+    const projectRoutes = new Set(project.map((item) => item.to).filter(Boolean));
+    return [...core.filter((item) => !item.to || !projectRoutes.has(item.to)), ...project];
+}
+
 /** Sorts items by order into groups sorted by group order. No group: 'project'; external links: 'tools'; unknown ids: a group at order 50 named after the id. */
 export function groupAdminNav<T extends GroupableItem>(
     items: T[],

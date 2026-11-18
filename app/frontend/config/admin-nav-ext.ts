@@ -8,6 +8,10 @@
  *     { label: 'Orders', icon: 'i-lucide-shopping-cart', to: '/admin/orders', order: 15, group: 'Shop' },
  *     { label: 'Articles', icon: 'i-lucide-file-text', to: '/admin/articles', order: 25, group: 'content' },
  * ];
+ *
+ * An item with the same `to` as a core item replaces it, eg to relabel or regroup it. Add `condition: () => false` to
+ * hide it (the page itself stays reachable):
+ *     { label: 'Orgs', icon: 'i-lucide-building-2', to: '/admin/organizations', condition: () => false },
  */
 
 import type { AdminNavItem } from './admin-nav';

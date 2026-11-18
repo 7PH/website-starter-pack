@@ -25,7 +25,7 @@ export function useAdminNav() {
     }
 
     const groups = computed(() => {
-        const items: AdminNavItem[] = [...CORE_ADMIN_NAV, ...PROJECT_ADMIN_NAV];
+        const items: AdminNavItem[] = mergeAdminNav(CORE_ADMIN_NAV, PROJECT_ADMIN_NAV);
         if (config.public.adminerUrl) {
             items.push({
                 label: 'Adminer',

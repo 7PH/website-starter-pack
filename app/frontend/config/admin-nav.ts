@@ -12,7 +12,7 @@ export interface AdminNavItem {
     labelKey?: string;
     /** Icon name (e.g., 'i-lucide-users') */
     icon: string;
-    /** Route path (for internal links) */
+    /** Route path (for internal links). A PROJECT_ADMIN_NAV item with a core item's `to` replaces it */
     to?: string;
     /** External URL (for external links) */
     href?: string;
