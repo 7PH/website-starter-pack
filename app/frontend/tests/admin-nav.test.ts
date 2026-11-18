@@ -1,7 +1,7 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
 import { describe, expect, it } from 'vitest';
-import { filterAdminNav, groupAdminNav, isAdminNavActive } from '~/utils/admin-nav';
+import { filterAdminNav, groupAdminNav, isAdminNavActive, mergeAdminNav } from '~/utils/admin-nav';
 
 const DEFS = {
     content: { label: 'Content', order: 10 },
@@ -60,5 +60,23 @@ describe('isAdminNavActive', () => {
         ['/admin/users', undefined, false],
     ])('%s under %s -> %s', (path, to, expected) => {
         expect(isAdminNavActive(path, to)).toBe(expected);
+    });
+});
+
+describe('mergeAdminNav', () => {
+    const core = [
+        { label: 'Users', to: '/admin/users' },
+        { label: 'Orgs', to: '/admin/organizations' },
+        { label: 'Adminer', href: 'https://adminer' },
+    ];
+
+    it('appends project items when no route clashes', () => {
+        const project = [{ label: 'Orders', to: '/admin/orders' }];
+        expect(mergeAdminNav(core, project)).toEqual([...core, ...project]);
+    });
+
+    it('lets a project item replace the core item with the same route', () => {
+        const project = [{ label: 'Teams', to: '/admin/organizations' }];
+        expect(mergeAdminNav(core, project).map((i) => i.label)).toEqual(['Users', 'Adminer', 'Teams']);
     });
 });
