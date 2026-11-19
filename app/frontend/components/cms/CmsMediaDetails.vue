@@ -37,8 +37,6 @@ const dirty = computed(
         focalX.value !== props.media.focal_x ||
         focalY.value !== props.media.focal_y,
 );
-// Crop previews follow the marker before saving.
-const preview = computed(() => ({ ...props.media, focal_x: focalX.value, focal_y: focalY.value }));
 const addedOn = computed(() => new Date(props.media.created_at).toLocaleDateString(locale.value));
 
 /** Resolves true once saved, so the page can save before closing the panel. */
@@ -93,18 +91,7 @@ async function remove() {
     <div class="flex flex-col gap-6">
         <section class="flex flex-col gap-2">
             <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ t('cms.media.focal') }}</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('cms.media.focalHelp') }}</p>
-            <CmsFocalPicker v-model:x="focalX" v-model:y="focalY" :media="media" />
-            <div class="flex items-end gap-3">
-                <figure class="w-24 shrink-0">
-                    <CmsImage :media="preview" sizes="96px" class="aspect-square w-full rounded object-cover" />
-                    <figcaption class="mt-1 text-xs text-gray-500">{{ t('cms.media.previewSquare') }}</figcaption>
-                </figure>
-                <figure class="min-w-0 flex-1">
-                    <CmsImage :media="preview" sizes="320px" class="aspect-[21/9] w-full rounded object-cover" />
-                    <figcaption class="mt-1 text-xs text-gray-500">{{ t('cms.media.previewWide') }}</figcaption>
-                </figure>
-            </div>
+            <CmsFocalEditor v-model:x="focalX" v-model:y="focalY" :media="media" />
         </section>
 
         <UFormField :label="t('cms.media.alt')" :help="t('cms.media.altHelp')">
