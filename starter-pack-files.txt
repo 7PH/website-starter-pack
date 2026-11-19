@@ -310,6 +310,7 @@ app/frontend/components/admin/AdminCard.vue
 app/frontend/components/admin/AdminPagination.vue
 app/frontend/components/cms/CmsEditable.vue
 app/frontend/components/cms/CmsFocalPicker.vue
+app/frontend/components/cms/CmsFocalEditor.vue
 app/frontend/components/cms/CmsInlineEditModal.vue
 app/frontend/components/cms/CmsImage.vue
 app/frontend/components/cms/CmsMediaDetails.vue
