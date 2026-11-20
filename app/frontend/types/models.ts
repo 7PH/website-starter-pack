@@ -463,14 +463,14 @@ export type CreatedAt12 = string;
 export type UsedBy = CmsMediaUsage[];
 /**
  * @minItems 1
- * @maxItems 2000
+ * @maxItems 20000
  */
 export type Ids = [number, ...number[]];
 export type Deleted = number[];
 export type InUse = number[];
 /**
  * @minItems 1
- * @maxItems 2000
+ * @maxItems 20000
  */
 export type Ids1 = [number, ...number[]];
 export type Folder4 = string;
