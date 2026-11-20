@@ -39,8 +39,16 @@ class CmsMediaBase(Base):
     # Point to keep in frame when cropping, 0..1 from the top-left corner.
     focal_x = Column(Float, nullable=False, server_default=text("0.5"))
     focal_y = Column(Float, nullable=False, server_default=text("0.5"))
+    # One folder per photo, eg "Portraits". None: not in a folder.
+    folder = Column(String(100), nullable=True)
     uploaded_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # Upload time, or the photo's original date when an import sets it.
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("idx_cms_media_created_at", "created_at"),
+        Index("idx_cms_media_folder", "folder"),
+    )
 
 
 class CmsPageBase(Base):
