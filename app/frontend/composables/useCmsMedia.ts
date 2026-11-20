@@ -17,42 +17,89 @@ export function cmsUploadErrorKey(status: number | undefined): string {
     return 'cms.media.errors.generic';
 }
 
-/** One page-at-a-time view of the photo library, newest first. Each caller gets its own state. */
-export function useCmsMediaLibrary() {
+export type CmsMediaSort = 'newest' | 'oldest' | 'name' | 'used';
+export type CmsMediaUsageFilter = '' | 'used' | 'unused' | 'missing_alt';
+
+export interface CmsMediaFilters {
+    q: string;
+    sort: CmsMediaSort;
+    usage: CmsMediaUsageFilter;
+    /** null: every folder. '': photos in no folder. */
+    folder: string | null;
+}
+
+export const defaultCmsMediaFilters = (sort: CmsMediaSort = 'newest'): CmsMediaFilters => ({
+    q: '',
+    sort,
+    usage: '',
+    folder: null,
+});
+
+/** Query params of the filters, for the list and the id list behind "select all". */
+export function cmsMediaParams(filters: CmsMediaFilters): Record<string, string> {
+    const params: Record<string, string> = {};
+    if (filters.q.trim()) params.q = filters.q.trim();
+    if (filters.usage) params.usage = filters.usage;
+    if (filters.folder !== null) params.folder = filters.folder;
+    return params;
+}
+
+/** One page-at-a-time view of the photo library for the given filters, reloaded when they change. Each caller gets its own state. */
+export function useCmsMediaLibrary(filters: Ref<CmsMediaFilters>) {
     const api = useApi();
-    const items = ref<CmsMediaRead[]>([]);
+    const items = ref<CmsMediaLibraryItem[]>([]);
     const total = ref(0);
+    const missingAlt = ref(0);
+    const folders = ref<string[]>([]);
     const loading = ref(false);
+    const failed = ref(false);
     const hasMore = computed(() => items.value.length < total.value);
+    // A slower, older request must not overwrite the answer to the latest filters.
+    let latest = 0;
 
     async function load(reset = false) {
+        const request = ++latest;
         loading.value = true;
         try {
-            const offset = reset ? 0 : items.value.length;
-            const page = await api.get<CmsMediaListResponse>('/cms/media', { offset, limit: PAGE_SIZE });
-            items.value = reset ? page.items : [...items.value, ...page.items];
+            const page = await api.get<CmsMediaListResponse>('/cms/media', {
+                ...cmsMediaParams(filters.value),
+                sort: filters.value.sort,
+                offset: reset ? 0 : items.value.length,
+                limit: PAGE_SIZE,
+            });
+            if (request !== latest) return;
+            failed.value = false;
+            // Uploads and deletes shift offsets: skip photos already shown.
+            const known = new Set(reset ? [] : items.value.map((m) => m.id));
+            items.value = [...(reset ? [] : items.value), ...page.items.filter((m) => !known.has(m.id))];
             total.value = page.total;
+            missingAlt.value = page.missing_alt;
+            folders.value = page.folders;
+        } catch (error) {
+            if (request === latest) failed.value = true;
+            throw error;
         } finally {
-            loading.value = false;
+            if (request === latest) loading.value = false;
         }
     }
 
     function add(media: CmsMediaRead) {
         if (items.value.some((m) => m.id === media.id)) return;
-        items.value.unshift(media);
+        items.value.unshift({ ...media, usage_count: 0 });
         total.value++;
     }
 
     function replace(media: CmsMediaRead) {
-        items.value = items.value.map((m) => (m.id === media.id ? media : m));
+        items.value = items.value.map((m) => (m.id === media.id ? { ...m, ...media } : m));
     }
 
-    function remove(id: number) {
-        items.value = items.value.filter((m) => m.id !== id);
-        total.value--;
+    function remove(ids: number[]) {
+        const gone = new Set(ids);
+        items.value = items.value.filter((m) => !gone.has(m.id));
+        total.value -= ids.length;
     }
 
-    return { items, total, loading, hasMore, load, add, replace, remove };
+    return { items, total, missingAlt, folders, loading, failed, hasMore, load, add, replace, remove };
 }
 
 /**
