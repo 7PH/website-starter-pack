@@ -115,6 +115,7 @@ function switchMode(newMode: AuthMode) {
             >
                 <UInput
                     v-model="loginForm.identifier"
+                    autofocus
                     :type="usernamesEnabled ? 'text' : 'email'"
                     :autocomplete="usernamesEnabled ? 'username' : 'email'"
                     :placeholder="usernamesEnabled ? t('core.auth.usernameOrEmail') : t('core.auth.email')"
@@ -167,6 +168,7 @@ function switchMode(newMode: AuthMode) {
                 <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">
                     <UInput
                         v-model="signupForm.firstName"
+                        autofocus
                         autocomplete="given-name"
                         :placeholder="t('core.auth.firstName')"
                         :color="errors.firstName ? 'error' : undefined"
@@ -193,6 +195,7 @@ function switchMode(newMode: AuthMode) {
             >
                 <UInput
                     v-model="signupForm.username"
+                    :autofocus="!realNamesEnabled"
                     type="text"
                     autocomplete="username"
                     :placeholder="t('core.auth.username')"
@@ -204,6 +207,7 @@ function switchMode(newMode: AuthMode) {
             <UFormField :label="t('core.auth.email')" :error="errors.email">
                 <UInput
                     v-model="signupForm.email"
+                    :autofocus="!realNamesEnabled && !usernamesEnabled"
                     type="email"
                     autocomplete="email"
                     :placeholder="t('core.auth.email')"
