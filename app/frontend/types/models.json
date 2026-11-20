@@ -682,7 +682,7 @@
           "items": {
             "type": "integer"
           },
-          "maxItems": 2000,
+          "maxItems": 20000,
           "minItems": 1,
           "title": "Ids",
           "type": "array"
@@ -724,7 +724,7 @@
           "items": {
             "type": "integer"
           },
-          "maxItems": 2000,
+          "maxItems": 20000,
           "minItems": 1,
           "title": "Ids",
           "type": "array"
