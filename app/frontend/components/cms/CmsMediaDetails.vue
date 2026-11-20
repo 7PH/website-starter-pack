@@ -1,8 +1,8 @@
 <!-- ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack. -->
 
 <script setup lang="ts">
-/** Edit one photo: description, focal point (with crop previews) and delete. */
-const props = defineProps<{ media: CmsMediaRead }>();
+/** Edit one photo: description, focal point (with crop previews), folder and delete. Lists the pages showing it. */
+const props = defineProps<{ media: CmsMediaRead; folders?: string[] }>();
 const emit = defineEmits<{ updated: [media: CmsMediaRead]; deleted: [id: number] }>();
 
 const { t, locale } = useI18n();
@@ -15,10 +15,13 @@ const ALT_MAX = 300;
 const alt = ref('');
 const focalX = ref(0.5);
 const focalY = ref(0.5);
+const folder = ref('');
 const saving = ref(false);
 const deleting = ref(false);
 // Pages that stopped the last delete, shown with links to their editor.
 const usedBy = ref<CmsMediaUsage[]>([]);
+// Pages showing the photo, loaded when it opens: the list only carries a count.
+const usedOn = ref<CmsMediaUsage[] | null>(null);
 
 watch(
     () => props.media,
@@ -26,7 +29,22 @@ watch(
         alt.value = media.alt;
         focalX.value = media.focal_x;
         focalY.value = media.focal_y;
+        folder.value = media.folder ?? '';
         usedBy.value = [];
+    },
+    { immediate: true },
+);
+
+watch(
+    () => props.media.id,
+    async (id) => {
+        usedOn.value = null;
+        try {
+            const detail = await api.get<CmsMediaDetail>(`/cms/media/${id}`);
+            if (id === props.media.id) usedOn.value = detail.used_by;
+        } catch (error) {
+            showCmsError(error);
+        }
     },
     { immediate: true },
 );
@@ -35,7 +53,8 @@ const dirty = computed(
     () =>
         alt.value.trim() !== props.media.alt ||
         focalX.value !== props.media.focal_x ||
-        focalY.value !== props.media.focal_y,
+        focalY.value !== props.media.focal_y ||
+        folder.value.trim() !== (props.media.folder ?? ''),
 );
 const addedOn = computed(() => new Date(props.media.created_at).toLocaleDateString(locale.value));
 
@@ -47,6 +66,7 @@ async function save(): Promise<boolean> {
             alt: alt.value.trim(),
             focal_x: focalX.value,
             focal_y: focalY.value,
+            folder: folder.value.trim(),
         });
         emit('updated', media);
         showSuccess(t('cms.media.saved'));
@@ -100,6 +120,24 @@ async function remove() {
                 <span class="text-xs text-gray-500">{{ alt.length }}/{{ ALT_MAX }}</span>
             </template>
         </UFormField>
+
+        <UFormField :label="t('cms.media.folder')" :help="t('cms.media.folderHelp')">
+            <UInput v-model="folder" :maxlength="100" list="cms-media-folders" icon="i-lucide-folder" class="w-full" />
+            <datalist id="cms-media-folders">
+                <option v-for="f in folders" :key="f" :value="f" />
+            </datalist>
+        </UFormField>
+
+        <div class="text-sm">
+            <p class="font-medium text-gray-900 dark:text-gray-100">{{ t('cms.media.usedOn') }}</p>
+            <USkeleton v-if="usedOn === null" class="mt-1 h-4 w-40" />
+            <p v-else-if="!usedOn.length" class="text-gray-500 dark:text-gray-400">{{ t('cms.media.notUsed') }}</p>
+            <ul v-else class="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                <li v-for="page in usedOn" :key="page.id">
+                    <NuxtLink :to="pageLink(page)" class="text-primary underline">{{ page.title }}</NuxtLink>
+                </li>
+            </ul>
+        </div>
 
         <p class="text-xs break-all text-gray-500 dark:text-gray-400">
             {{ media.original_name }}<br />

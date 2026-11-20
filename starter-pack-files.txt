@@ -317,6 +317,8 @@ app/frontend/components/cms/CmsImage.vue
 app/frontend/components/cms/CmsMediaDetails.vue
 app/frontend/components/cms/CmsMediaDropzone.vue
 app/frontend/components/cms/CmsMediaGrid.vue
+app/frontend/components/cms/CmsMediaFilterBar.vue
+app/frontend/components/cms/CmsMediaLoadMore.vue
 app/frontend/components/cms/CmsMediaPicker.vue
 app/frontend/components/cms/CmsMediaUploadQueue.vue
 app/frontend/components/cms/CmsPageEditButton.vue
