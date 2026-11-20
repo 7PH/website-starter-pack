@@ -28,10 +28,10 @@ function click(media: CmsMediaLibraryItem) {
                 :aria-pressed="selected ? selected.has(media.id) : undefined"
                 @click="click(media)"
             >
-                <!-- Tiles are ~150-250px: the smallest generated width is enough, even on a sharp screen. -->
+                <!-- Understated on purpose: at 160px the smallest width (480) still covers a 3x phone screen. -->
                 <CmsImage
                     :media="media"
-                    sizes="240px"
+                    sizes="160px"
                     class="size-full object-cover transition-transform duration-200 group-hover:scale-105"
                 />
                 <span

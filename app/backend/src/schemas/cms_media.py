@@ -73,7 +73,7 @@ class CmsMediaUpdate(BaseModel):
 
 
 class CmsMediaBulkDelete(BaseModel):
-    ids: list[int] = Field(min_length=1, max_length=2000)
+    ids: list[int] = Field(min_length=1, max_length=20000)
 
 
 class CmsMediaBulkDeleteResponse(BaseModel):
@@ -83,6 +83,6 @@ class CmsMediaBulkDeleteResponse(BaseModel):
 
 
 class CmsMediaBulkUpdate(BaseModel):
-    ids: list[int] = Field(min_length=1, max_length=2000)
+    ids: list[int] = Field(min_length=1, max_length=20000)
     # "" takes the photos out of their folder.
     folder: str = Field(max_length=100)

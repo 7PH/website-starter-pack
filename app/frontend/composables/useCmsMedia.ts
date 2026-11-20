@@ -45,7 +45,7 @@ export function cmsMediaParams(filters: CmsMediaFilters): Record<string, string>
 }
 
 /** One page-at-a-time view of the photo library for the given filters, reloaded when they change. Each caller gets its own state. */
-export function useCmsMediaLibrary(filters: Ref<CmsMediaFilters>) {
+export function useCmsMediaLibrary(filters: Ref<CmsMediaFilters> = ref(defaultCmsMediaFilters())) {
     const api = useApi();
     const items = ref<CmsMediaLibraryItem[]>([]);
     const total = ref(0);
@@ -93,10 +93,10 @@ export function useCmsMediaLibrary(filters: Ref<CmsMediaFilters>) {
         items.value = items.value.map((m) => (m.id === media.id ? { ...m, ...media } : m));
     }
 
-    function remove(ids: number[]) {
-        const gone = new Set(ids);
+    function remove(ids: number | number[]) {
+        const gone = new Set(Array.isArray(ids) ? ids : [ids]);
         items.value = items.value.filter((m) => !gone.has(m.id));
-        total.value -= ids.length;
+        total.value -= gone.size;
     }
 
     return { items, total, missingAlt, folders, loading, failed, hasMore, load, add, replace, remove };
