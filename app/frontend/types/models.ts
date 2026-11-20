@@ -81,6 +81,11 @@ export type Models =
   | CmsMediaListResponse
   | CmsMediaUpdate
   | CmsMediaUsage
+  | CmsMediaLibraryItem
+  | CmsMediaDetail
+  | CmsMediaBulkDelete
+  | CmsMediaBulkDeleteResponse
+  | CmsMediaBulkUpdate
   | CmsTemplateField
   | CmsTemplateRead
   | CmsPageRead
@@ -421,15 +426,54 @@ export type FocalX1 = number;
 export type FocalY1 = number;
 export type Src1 = string;
 export type OriginalName = string;
+export type Folder = string | null;
 export type CreatedAt10 = string;
-export type Items6 = CmsMediaRead[];
-export type Total5 = number;
-export type Alt2 = string | null;
-export type FocalX2 = number | null;
-export type FocalY2 = number | null;
 export type Id11 = number;
+export type Alt2 = string;
+export type Width2 = number;
+export type Height2 = number;
+export type FocalX2 = number;
+export type FocalY2 = number;
+export type Src2 = string;
+export type OriginalName1 = string;
+export type Folder1 = string | null;
+export type CreatedAt11 = string;
+export type UsageCount = number;
+export type Items6 = CmsMediaLibraryItem[];
+export type Total5 = number;
+export type MissingAlt = number;
+export type Folders = string[];
+export type Alt3 = string | null;
+export type FocalX3 = number | null;
+export type FocalY3 = number | null;
+export type Folder2 = string | null;
+export type Id12 = number;
 export type Title = string;
 export type FixedKey = string | null;
+export type Id13 = number;
+export type Alt4 = string;
+export type Width3 = number;
+export type Height3 = number;
+export type FocalX4 = number;
+export type FocalY4 = number;
+export type Src3 = string;
+export type OriginalName2 = string;
+export type Folder3 = string | null;
+export type CreatedAt12 = string;
+export type UsedBy = CmsMediaUsage[];
+/**
+ * @minItems 1
+ * @maxItems 2000
+ */
+export type Ids = [number, ...number[]];
+export type Deleted = number[];
+export type InUse = number[];
+/**
+ * @minItems 1
+ * @maxItems 2000
+ */
+export type Ids1 = [number, ...number[]];
+export type Folder4 = string;
 export type Name10 = string;
 export type Type2 = "text" | "textarea" | "richtext" | "image";
 export type Default = string | null;
@@ -438,7 +482,7 @@ export type Max = number | null;
 export type Name11 = string;
 export type Fixed = boolean;
 export type Fields = CmsTemplateField[];
-export type Id12 = number | null;
+export type Id14 = number | null;
 export type Template = string;
 export type SchemaType = "WebPage" | "Article";
 export type FixedKey1 = string | null;
@@ -448,7 +492,7 @@ export type SeoTitle = string;
 export type SeoDescription = string;
 export type PublishedAt = string | null;
 export type UpdatedAt = string | null;
-export type Id13 = number | null;
+export type Id15 = number | null;
 export type Template1 = string;
 export type SchemaType1 = "WebPage" | "Article";
 export type FixedKey2 = string | null;
@@ -465,7 +509,7 @@ export type Total6 = number;
 /**
  * @maxItems 500
  */
-export type Ids = number[];
+export type Ids2 = number[];
 export type Template2 = string;
 export type Title3 = string;
 export type Title4 = string | null;
@@ -479,7 +523,7 @@ export type UpdatedAt2 = string | null;
 export type SeoTitle2 = string | null;
 export type SeoDescription2 = string | null;
 export type CoverMediaId = number | null;
-export type Id14 = number;
+export type Id16 = number;
 export type Template3 = string;
 export type Slug3 = string;
 export type Title5 = string;
@@ -519,34 +563,34 @@ export type Content = string;
  * Sub-apps widen the accepted set by overriding ``UserInitiableSubtype`` in ``constants_ext.py``.
  */
 export type CoreConversationSubtype = "bug_report" | "feature_request";
-export type Id15 = number;
+export type Id17 = number;
 export type Type3 = string;
 export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
-export type Id16 = number;
+export type Id18 = number;
 export type Email14 = string;
 export type FirstName7 = string;
 export type LastName7 = string;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
-export type CreatedAt11 = string | null;
+export type CreatedAt13 = string | null;
 export type UpdatedAt5 = string | null;
 export type UnreadCount = number;
-export type Id17 = number;
+export type Id19 = number;
 export type ConversationId = number;
 export type SenderId = number | null;
 export type Content1 = string;
 export type IsAdminResponse = boolean;
-export type CreatedAt12 = string | null;
-export type Id18 = number;
+export type CreatedAt14 = string | null;
+export type Id20 = number;
 export type Type4 = string;
 export type Subtype1 = string | null;
 export type Subject2 = string | null;
 export type CreatedById1 = number | null;
 export type IsClosed1 = boolean;
 export type ClosedAt1 = string | null;
-export type CreatedAt13 = string | null;
+export type CreatedAt15 = string | null;
 export type UpdatedAt6 = string | null;
 export type UnreadCount1 = number;
 export type Messages = MessageRead[];
@@ -1244,33 +1288,88 @@ export interface CmsMediaRead {
   urls: Urls1;
   src: Src1;
   original_name: OriginalName;
+  folder?: Folder;
   created_at: CreatedAt10;
 }
 export interface Urls1 {
   [k: string]: string;
 }
 /**
- * Page of the photo library, newest first.
+ * Page of the photo library for the given filters.
  */
 export interface CmsMediaListResponse {
   items: Items6;
   total: Total5;
+  missing_alt: MissingAlt;
+  folders: Folders;
+}
+/**
+ * A photo in a library listing, with the number of pages showing it.
+ */
+export interface CmsMediaLibraryItem {
+  id: Id11;
+  alt: Alt2;
+  width: Width2;
+  height: Height2;
+  focal_x: FocalX2;
+  focal_y: FocalY2;
+  urls: Urls2;
+  src: Src2;
+  original_name: OriginalName1;
+  folder?: Folder1;
+  created_at: CreatedAt11;
+  usage_count: UsageCount;
+}
+export interface Urls2 {
+  [k: string]: string;
 }
 /**
  * Editable fields of a photo. Omitted fields are left unchanged.
  */
 export interface CmsMediaUpdate {
-  alt?: Alt2;
-  focal_x?: FocalX2;
-  focal_y?: FocalY2;
+  alt?: Alt3;
+  focal_x?: FocalX3;
+  focal_y?: FocalY3;
+  folder?: Folder2;
 }
 /**
- * A page showing a photo, listed when deleting that photo is refused (409).
+ * A page showing a photo (cover, image field or rich text), published or not.
  */
 export interface CmsMediaUsage {
-  id: Id11;
+  id: Id12;
   title: Title;
   fixed_key?: FixedKey;
+}
+/**
+ * One photo with the pages showing it.
+ */
+export interface CmsMediaDetail {
+  id: Id13;
+  alt: Alt4;
+  width: Width3;
+  height: Height3;
+  focal_x: FocalX4;
+  focal_y: FocalY4;
+  urls: Urls3;
+  src: Src3;
+  original_name: OriginalName2;
+  folder?: Folder3;
+  created_at: CreatedAt12;
+  used_by: UsedBy;
+}
+export interface Urls3 {
+  [k: string]: string;
+}
+export interface CmsMediaBulkDelete {
+  ids: Ids;
+}
+export interface CmsMediaBulkDeleteResponse {
+  deleted: Deleted;
+  in_use: InUse;
+}
+export interface CmsMediaBulkUpdate {
+  ids: Ids1;
+  folder: Folder4;
 }
 export interface CmsTemplateField {
   name: Name10;
@@ -1300,7 +1399,7 @@ export interface Label1 {
  * A page as the public site sees it: defaults merged, photos expanded, SEO filled.
  */
 export interface CmsPageRead {
-  id: Id12;
+  id: Id14;
   template: Template;
   schema_type: SchemaType;
   fixed_key: FixedKey1;
@@ -1320,7 +1419,7 @@ export interface Fields1 {
  * A page in the editor. Here seo_title and seo_description are what the editor typed, empty = automatic (title, seo_description_auto).
  */
 export interface CmsPageAdminRead {
-  id: Id13;
+  id: Id15;
   template: Template1;
   schema_type: SchemaType1;
   fixed_key: FixedKey2;
@@ -1346,7 +1445,7 @@ export interface CmsPageListResponse {
  * Free page ids in their new order.
  */
 export interface CmsPageOrder {
-  ids: Ids;
+  ids: Ids2;
 }
 export interface CmsPageCreate {
   template: Template2;
@@ -1367,7 +1466,7 @@ export interface CmsPageUpdate {
   cover_media_id?: CoverMediaId;
 }
 export interface CmsPageListItem {
-  id: Id14;
+  id: Id16;
   template: Template3;
   slug: Slug3;
   title: Title5;
@@ -1423,7 +1522,7 @@ export interface ConversationCreate {
  * Schema for reading a conversation.
  */
 export interface ConversationRead {
-  id: Id15;
+  id: Id17;
   type: Type3;
   subtype?: Subtype;
   subject?: Subject1;
@@ -1431,7 +1530,7 @@ export interface ConversationRead {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed;
   closed_at?: ClosedAt;
-  created_at?: CreatedAt11;
+  created_at?: CreatedAt13;
   updated_at?: UpdatedAt5;
   unread_count?: UnreadCount;
   last_message?: MessageRead | null;
@@ -1440,7 +1539,7 @@ export interface ConversationRead {
  * User preview for conversation context, includes email for admin visibility.
  */
 export interface ConversationUserPreview {
-  id: Id16;
+  id: Id18;
   email: Email14;
   first_name: FirstName7;
   last_name: LastName7;
@@ -1449,19 +1548,19 @@ export interface ConversationUserPreview {
  * Schema for reading a message.
  */
 export interface MessageRead {
-  id: Id17;
+  id: Id19;
   conversation_id: ConversationId;
   sender_id: SenderId;
   sender?: ConversationUserPreview | null;
   content: Content1;
   is_admin_response?: IsAdminResponse;
-  created_at?: CreatedAt12;
+  created_at?: CreatedAt14;
 }
 /**
  * Schema for conversation with messages.
  */
 export interface ConversationDetail {
-  id: Id18;
+  id: Id20;
   type: Type4;
   subtype?: Subtype1;
   subject?: Subject2;
@@ -1469,7 +1568,7 @@ export interface ConversationDetail {
   created_by?: ConversationUserPreview | null;
   is_closed?: IsClosed1;
   closed_at?: ClosedAt1;
-  created_at?: CreatedAt13;
+  created_at?: CreatedAt15;
   updated_at?: UpdatedAt6;
   unread_count?: UnreadCount1;
   last_message?: MessageRead | null;

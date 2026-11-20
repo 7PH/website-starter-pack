@@ -36,6 +36,11 @@ from .schemas.cms_editor import (
     CmsMeRead,
 )
 from .schemas.cms_media import (
+    CmsMediaBulkDelete,
+    CmsMediaBulkDeleteResponse,
+    CmsMediaBulkUpdate,
+    CmsMediaDetail,
+    CmsMediaLibraryItem,
     CmsMediaListResponse,
     CmsMediaPublic,
     CmsMediaRead,
@@ -204,6 +209,11 @@ CoreModels = (
     | CmsMediaListResponse
     | CmsMediaUpdate
     | CmsMediaUsage
+    | CmsMediaLibraryItem
+    | CmsMediaDetail
+    | CmsMediaBulkDelete
+    | CmsMediaBulkDeleteResponse
+    | CmsMediaBulkUpdate
     # CMS page models
     | CmsTemplateField
     | CmsTemplateRead

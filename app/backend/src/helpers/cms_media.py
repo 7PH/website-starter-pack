@@ -70,7 +70,10 @@ def media_to_public(media: CmsMediaBase) -> CmsMediaPublic:
 
 def media_to_read(media: CmsMediaBase) -> CmsMediaRead:
     return CmsMediaRead(
-        **media_to_public(media).model_dump(), original_name=media.original_name, created_at=media.created_at
+        **media_to_public(media).model_dump(),
+        original_name=media.original_name,
+        folder=media.folder,
+        created_at=media.created_at,
     )
 
 
@@ -189,14 +192,19 @@ def media_ids_in_fields(value) -> set[int]:
     return set()
 
 
-def pages_using_media(session: Session, media_id: int) -> list[CmsMediaUsage]:
-    """Pages showing this photo (cover, image field or rich text)."""
+def media_usage(session: Session) -> dict[int, list[CmsMediaUsage]]:
+    """Media id → pages showing it (cover, image field or rich text), from one scan of every page."""
     # Scanned in Python: content sites have few pages, and this keeps the check exact (5 never matches 50).
     pages = session.query(
         CmsPageBase.id, CmsPageBase.title, CmsPageBase.fixed_key, CmsPageBase.cover_media_id, CmsPageBase.fields
     ).all()
-    return [
-        CmsMediaUsage(id=page_id, title=title or fixed_key or "?", fixed_key=fixed_key)
-        for page_id, title, fixed_key, cover_media_id, fields in pages
-        if cover_media_id == media_id or media_id in media_ids_in_fields(fields or {})
-    ]
+    usage: dict[int, list[CmsMediaUsage]] = {}
+    for page_id, title, fixed_key, cover_media_id, fields in pages:
+        page = CmsMediaUsage(id=page_id, title=title or fixed_key or "?", fixed_key=fixed_key)
+        for media_id in media_ids_in_fields(fields or {}) | {cover_media_id} - {None}:
+            usage.setdefault(media_id, []).append(page)
+    return usage
+
+
+def pages_using_media(session: Session, media_id: int) -> list[CmsMediaUsage]:
+    return media_usage(session).get(media_id, [])

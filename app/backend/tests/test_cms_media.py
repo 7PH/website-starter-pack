@@ -256,6 +256,15 @@ class TestHelpers:
             {"id": 3, "title": "Blog post", "fixed_key": None},
         ]
 
+    def test_media_usage_lists_each_page_once_per_photo(self):
+        session = MagicMock()
+        session.query.return_value.all.return_value = [
+            (1, "Home", None, 5, {"hero": {"media_id": 5}, "body": '<img data-media-id="6">'}),
+            (2, "About", None, 6, {}),
+        ]
+        usage = cms_media.media_usage(session)
+        assert {media_id: [p.id for p in pages] for media_id, pages in usage.items()} == {5: [1], 6: [1, 2]}
+
 
 def _media(media_id=7, sizes=None) -> CmsMediaBase:
     return CmsMediaBase(
@@ -327,6 +336,9 @@ class TestPermissions:
             ("patch", "/cms/media/7", {"json": {"alt": "x"}}),
             ("delete", "/cms/media/7", {}),
             ("post", "/cms/media", {"files": {"file": ("a.jpg", b"x", "image/jpeg")}}),
+            ("get", "/cms/media/ids", {}),
+            ("post", "/cms/media/bulk-delete", {"json": {"ids": [7]}}),
+            ("post", "/cms/media/bulk-update", {"json": {"ids": [7], "folder": "x"}}),
         ],
     )
     def test_plain_user_is_refused(self, make_client, method, path, kwargs):
@@ -424,3 +436,35 @@ class TestEndpoints:
         assert response.status_code == 204
         session.delete.assert_called_once()
         assert not (temp_static_dir / "cms/media/7-tok").exists()
+
+
+class TestLibraryAtScale:
+    def test_patch_empty_folder_takes_photo_out_of_it(self, make_client):
+        client, session = make_client("editor")
+        media = _media()
+        media.folder = "Portraits"
+        session.get.side_effect = lambda model, key: object() if model.__name__ == "CmsEditorBase" else media
+        assert client.patch("/cms/media/7", json={"folder": "  "}).status_code == 200
+        assert media.folder is None
+
+    def test_upload_refuses_a_future_date(self, make_client):
+        client, session = make_client("editor")
+        response = client.post(
+            "/cms/media",
+            files={"file": ("a.jpg", _image_bytes(), "image/jpeg")},
+            data={"created_at": "2999-01-01T00:00:00"},
+        )
+        assert response.status_code == 422
+        session.add.assert_not_called()
+
+    def test_bulk_delete_skips_photos_in_use(self, make_client, temp_static_dir):
+        client, session = make_client("editor")
+        for media_id in (7, 8):
+            (temp_static_dir / f"cms/media/{media_id}-tok").mkdir(parents=True)
+        session.query.return_value.all.return_value = [(3, "Home", "home", 7, {})]
+        session.query.return_value.filter.return_value.all.return_value = [_media(7), _media(8)]
+        response = client.post("/cms/media/bulk-delete", json={"ids": [7, 8]})
+        assert response.json() == {"deleted": [8], "in_use": [7]}
+        assert [c.args[0].id for c in session.delete.call_args_list] == [8]
+        assert (temp_static_dir / "cms/media/7-tok").exists()
+        assert not (temp_static_dir / "cms/media/8-tok").exists()

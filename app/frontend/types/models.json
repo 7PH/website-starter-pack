@@ -676,12 +676,241 @@
       "title": "CmsMeRead",
       "type": "object"
     },
+    "CmsMediaBulkDelete": {
+      "properties": {
+        "ids": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2000,
+          "minItems": 1,
+          "title": "Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ids"
+      ],
+      "title": "CmsMediaBulkDelete",
+      "type": "object"
+    },
+    "CmsMediaBulkDeleteResponse": {
+      "properties": {
+        "deleted": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Deleted",
+          "type": "array"
+        },
+        "in_use": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "In Use",
+          "type": "array"
+        }
+      },
+      "required": [
+        "deleted",
+        "in_use"
+      ],
+      "title": "CmsMediaBulkDeleteResponse",
+      "type": "object"
+    },
+    "CmsMediaBulkUpdate": {
+      "properties": {
+        "ids": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2000,
+          "minItems": 1,
+          "title": "Ids",
+          "type": "array"
+        },
+        "folder": {
+          "maxLength": 100,
+          "title": "Folder",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ids",
+        "folder"
+      ],
+      "title": "CmsMediaBulkUpdate",
+      "type": "object"
+    },
+    "CmsMediaDetail": {
+      "description": "One photo with the pages showing it.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "alt": {
+          "title": "Alt",
+          "type": "string"
+        },
+        "width": {
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "focal_x": {
+          "title": "Focal X",
+          "type": "number"
+        },
+        "focal_y": {
+          "title": "Focal Y",
+          "type": "number"
+        },
+        "urls": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Urls",
+          "type": "object"
+        },
+        "src": {
+          "title": "Src",
+          "type": "string"
+        },
+        "original_name": {
+          "title": "Original Name",
+          "type": "string"
+        },
+        "folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "used_by": {
+          "items": {
+            "$ref": "#/$defs/CmsMediaUsage"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "alt",
+        "width",
+        "height",
+        "focal_x",
+        "focal_y",
+        "urls",
+        "src",
+        "original_name",
+        "created_at",
+        "used_by"
+      ],
+      "title": "CmsMediaDetail",
+      "type": "object"
+    },
+    "CmsMediaLibraryItem": {
+      "description": "A photo in a library listing, with the number of pages showing it.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "alt": {
+          "title": "Alt",
+          "type": "string"
+        },
+        "width": {
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "focal_x": {
+          "title": "Focal X",
+          "type": "number"
+        },
+        "focal_y": {
+          "title": "Focal Y",
+          "type": "number"
+        },
+        "urls": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Urls",
+          "type": "object"
+        },
+        "src": {
+          "title": "Src",
+          "type": "string"
+        },
+        "original_name": {
+          "title": "Original Name",
+          "type": "string"
+        },
+        "folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "usage_count": {
+          "title": "Usage Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "alt",
+        "width",
+        "height",
+        "focal_x",
+        "focal_y",
+        "urls",
+        "src",
+        "original_name",
+        "created_at",
+        "usage_count"
+      ],
+      "title": "CmsMediaLibraryItem",
+      "type": "object"
+    },
     "CmsMediaListResponse": {
-      "description": "Page of the photo library, newest first.",
+      "description": "Page of the photo library for the given filters.",
       "properties": {
         "items": {
           "items": {
-            "$ref": "#/$defs/CmsMediaRead"
+            "$ref": "#/$defs/CmsMediaLibraryItem"
           },
           "title": "Items",
           "type": "array"
@@ -689,11 +918,24 @@
         "total": {
           "title": "Total",
           "type": "integer"
+        },
+        "missing_alt": {
+          "title": "Missing Alt",
+          "type": "integer"
+        },
+        "folders": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Folders",
+          "type": "array"
         }
       },
       "required": [
         "items",
-        "total"
+        "total",
+        "missing_alt",
+        "folders"
       ],
       "title": "CmsMediaListResponse",
       "type": "object"
@@ -792,6 +1034,18 @@
           "title": "Original Name",
           "type": "string"
         },
+        "folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
+        },
         "created_at": {
           "format": "date-time",
           "title": "Created At",
@@ -856,13 +1110,26 @@
           ],
           "default": null,
           "title": "Focal Y"
+        },
+        "folder": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
         }
       },
       "title": "CmsMediaUpdate",
       "type": "object"
     },
     "CmsMediaUsage": {
-      "description": "A page showing a photo, listed when deleting that photo is refused (409).",
+      "description": "A page showing a photo (cover, image field or rich text), published or not.",
       "properties": {
         "id": {
           "title": "Id",
@@ -4743,6 +5010,21 @@
     },
     {
       "$ref": "#/$defs/CmsMediaUsage"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaLibraryItem"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaDetail"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaBulkDelete"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaBulkDeleteResponse"
+    },
+    {
+      "$ref": "#/$defs/CmsMediaBulkUpdate"
     },
     {
       "$ref": "#/$defs/CmsTemplateField"
