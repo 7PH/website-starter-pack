@@ -28,15 +28,16 @@ const { uiLocale } = useAppLocale();
             </div>
 
             <!-- Right panel - Form -->
-            <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-surface-50 dark:bg-surface-900">
+            <!-- A column, not absolute positioning: on short screens (phones, 200% zoom) the logo pushes the form down instead of overlapping it -->
+            <div class="w-full lg:w-1/2 flex flex-col p-8 bg-surface-50 dark:bg-surface-900">
                 <!-- Mobile header -->
-                <div class="lg:hidden absolute top-0 left-0 right-0 p-4">
+                <div class="lg:hidden mb-6">
                     <NuxtLink to="/" class="text-xl font-bold text-primary">
                         {{ t('core.app.name') }}
                     </NuxtLink>
                 </div>
 
-                <div class="w-full max-w-md">
+                <div class="w-full max-w-md m-auto">
                     <NuxtPage />
                 </div>
             </div>
