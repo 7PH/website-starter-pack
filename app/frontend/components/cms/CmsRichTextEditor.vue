@@ -11,20 +11,28 @@ const html = defineModel<string>({ default: '' });
 const { t } = useI18n();
 const { showWarning } = useToastHelpers();
 
+type ImageSize = 'small' | 'medium' | null;
+type ImageAlign = 'left' | 'right' | null;
+
 // data-media-id ties the photo to the library so it can't be deleted while used. Pasted foreign images are refused
 // here: the server would drop them on save while the editor kept showing them.
+// data-size and data-align are display options (RICH_TEXT_CLASS), absent for a full width photo.
 const LibraryImage = Image.extend({
     parseHTML() {
         return [{ tag: 'img[src][data-media-id]' }];
     },
     addAttributes() {
+        // Stored as a data-* attribute, left out at its default (null).
+        const attribute = (name: string, key: string) => ({
+            default: null,
+            parseHTML: (el: HTMLElement) => el.getAttribute(name),
+            renderHTML: (attrs: Record<string, unknown>) => (attrs[key] ? { [name]: attrs[key] } : {}),
+        });
         return {
             ...this.parent?.(),
-            mediaId: {
-                default: null,
-                parseHTML: (el) => el.getAttribute('data-media-id'),
-                renderHTML: (attrs) => (attrs.mediaId ? { 'data-media-id': attrs.mediaId } : {}),
-            },
+            mediaId: attribute('data-media-id', 'mediaId'),
+            size: attribute('data-size', 'size'),
+            align: attribute('data-align', 'align'),
         };
     },
 });
@@ -45,7 +53,12 @@ const editor = useEditor({
         }),
         LibraryImage,
     ],
-    editorProps: { attributes: { class: `${RICH_TEXT_CLASS} min-h-48 px-4 py-2 focus:outline-none` } },
+    editorProps: {
+        attributes: {
+            // The selected photo is outlined, so it's clear the image bar and the Delete key act on it.
+            class: `${RICH_TEXT_CLASS} min-h-48 px-4 py-2 focus:outline-none [&_img]:cursor-pointer [&_img.ProseMirror-selectednode]:outline-3 [&_img.ProseMirror-selectednode]:outline-offset-2 [&_img.ProseMirror-selectednode]:outline-primary-500`,
+        },
+    },
     onUpdate: ({ editor }) => (html.value = editor.getHTML()),
 });
 
@@ -134,6 +147,58 @@ function applyLink(value = linkUrl.value) {
 }
 
 const pickerOpen = ref(false);
+// Set while the picker replaces the selected photo: where that photo is.
+let replaceAt: number | null = null;
+
+const image = computed(() => {
+    const e = editor.value;
+    if (!e?.isActive('image')) return null;
+    const attrs = e.getAttributes('image');
+    return { size: (attrs.size ?? null) as ImageSize, align: (attrs.align ?? null) as ImageAlign };
+});
+
+const sizes = computed(() => [
+    { value: 'small' as ImageSize, label: t('cms.pages.editor.imageSmall') },
+    { value: 'medium' as ImageSize, label: t('cms.pages.editor.imageMedium') },
+    { value: null, label: t('cms.pages.editor.imageFull') },
+]);
+const aligns = computed(() => [
+    { value: 'left' as ImageAlign, icon: 'i-lucide-align-left', label: t('cms.pages.editor.imageLeft') },
+    { value: null, icon: 'i-lucide-align-center', label: t('cms.pages.editor.imageCenter') },
+    { value: 'right' as ImageAlign, icon: 'i-lucide-align-right', label: t('cms.pages.editor.imageRight') },
+]);
+
+function setImage(attrs: { size?: ImageSize; align?: ImageAlign }) {
+    // A full width photo can't sit beside text.
+    if (attrs.size === null) attrs = { size: null, align: null };
+    editor.value?.chain().focus().updateAttributes('image', attrs).run();
+}
+
+function pickNewImage() {
+    replaceAt = null;
+    pickerOpen.value = true;
+}
+
+function replaceImage() {
+    replaceAt = editor.value?.state.selection.from ?? null;
+    pickerOpen.value = true;
+}
+
+function removeImage() {
+    editor.value?.chain().focus().deleteSelection().run();
+}
+
+function onPicked(media: CmsMediaRead) {
+    if (replaceAt === null) return insertImage(media);
+    // Size and position stay: only the photo changes.
+    editor.value
+        ?.chain()
+        .focus()
+        .setNodeSelection(replaceAt)
+        .updateAttributes('image', { src: inlineImageSrc(media), alt: media.alt, mediaId: media.id })
+        .run();
+    pickerOpen.value = false;
+}
 
 // "HTML" view of the same content, like WordPress's "Text" tab. The server cleans it on save like anything typed visually.
 const sourceMode = ref(false);
@@ -220,7 +285,7 @@ function keepEditorFocus(event: Event) {
                         color="neutral"
                         variant="ghost"
                         size="sm"
-                        @click="pickerOpen = true"
+                        @click="pickNewImage"
                     />
                 </UTooltip>
             </template>
@@ -233,6 +298,58 @@ function keepEditorFocus(event: Event) {
                 class="ml-auto"
                 @click="toggleSource"
             />
+        </div>
+        <div
+            v-if="image && !sourceMode"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-gray-200 bg-gray-50 p-1 text-sm dark:border-gray-800 dark:bg-gray-800/50"
+            role="toolbar"
+            :aria-label="t('cms.pages.editor.imageTools')"
+        >
+            <UButton
+                icon="i-lucide-replace"
+                :label="t('cms.pages.editor.imageReplace')"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="replaceImage"
+            />
+            <div class="flex items-center gap-1">
+                <span class="px-1 text-gray-500 dark:text-gray-400">{{ t('cms.pages.editor.imageSize') }}</span>
+                <UButton
+                    v-for="option in sizes"
+                    :key="option.label"
+                    :label="option.label"
+                    :color="image.size === option.value ? 'primary' : 'neutral'"
+                    :variant="image.size === option.value ? 'soft' : 'ghost'"
+                    :aria-pressed="image.size === option.value"
+                    size="sm"
+                    @click="setImage({ size: option.value })"
+                />
+            </div>
+            <div v-if="image.size" class="flex items-center gap-1">
+                <UTooltip v-for="option in aligns" :key="option.icon" :text="option.label">
+                    <UButton
+                        :icon="option.icon"
+                        :aria-label="option.label"
+                        :color="image.align === option.value ? 'primary' : 'neutral'"
+                        :variant="image.align === option.value ? 'soft' : 'ghost'"
+                        :aria-pressed="image.align === option.value"
+                        size="sm"
+                        @click="setImage({ align: option.value })"
+                    />
+                </UTooltip>
+            </div>
+            <UTooltip :text="t('cms.pages.editor.imageRemoveHelp')">
+                <UButton
+                    icon="i-lucide-trash-2"
+                    :label="t('cms.pages.editor.imageRemove')"
+                    color="error"
+                    variant="ghost"
+                    size="sm"
+                    class="ml-auto"
+                    @click="removeImage"
+                />
+            </UTooltip>
         </div>
         <div v-if="sourceMode" class="flex flex-col gap-1 p-2">
             <UTextarea
@@ -248,10 +365,6 @@ function keepEditorFocus(event: Event) {
         </div>
         <!-- The text scrolls inside the box, so the toolbar above it never leaves the screen on long content. -->
         <EditorContent v-show="!sourceMode" :editor="editor" class="max-h-[65vh] overflow-y-auto" />
-        <CmsMediaPicker
-            v-model:open="pickerOpen"
-            :content="{ onCloseAutoFocus: keepEditorFocus }"
-            @select="insertImage"
-        />
+        <CmsMediaPicker v-model:open="pickerOpen" :content="{ onCloseAutoFocus: keepEditorFocus }" @select="onPicked" />
     </div>
 </template>

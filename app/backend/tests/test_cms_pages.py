@@ -206,6 +206,15 @@ class TestSanitizeRichText:
         )
         assert result == '<img src="https://static.example.com/cms/media/7/960.webp" alt="A" data-media-id="7">'
 
+    def test_image_keeps_known_size_and_alignment_only(self):
+        src = "https://static.example.com/cms/media/7/960.webp"
+        kept = sanitize_rich_text(f'<img src="{src}" alt="" data-size="small" data-align="left">', self.resolve)
+        assert 'data-size="small"' in kept and 'data-align="left"' in kept
+        dropped = sanitize_rich_text(
+            f'<img src="{src}" alt="" data-size="huge" data-align="x" title="t">', self.resolve
+        )
+        assert dropped == f'<img src="{src}" alt="" data-media-id="7">'
+
     @pytest.mark.parametrize("src", ["https://evil.example/cat.jpg", "data:image/png;base64,AAAA", ""])
     def test_foreign_images_are_dropped(self, src):
         assert sanitize_rich_text(f'<p>a<img src="{src}">b</p>', self.resolve) == "<p>ab</p>"
@@ -345,6 +354,15 @@ class TestValidation:
             ' sizes="(min-width: 768px) 736px, 100vw" alt="Tom &amp; &quot;Jerry&quot; > cat" width="1600" height="900"'
             f' loading="lazy" decoding="async" data-media-id="{media.id}"></p>'
         )
+
+    def test_rich_text_image_options_survive_save_and_read(self, editor, session):
+        media = add_media(session)
+        page = add_page(session, "a")
+        body = f'<img src="/cms/media/{media.id}-tok/960.webp" alt="" data-size="medium" data-align="right">'
+        editor.patch(f"/cms/admin/pages/{page.id}", json={"fields": {"body": body}})
+        read = editor.get("/cms/pages/by-slug/a").json()["fields"]["body"]
+        assert 'sizes="(min-width: 768px) 442px, 100vw"' in read
+        assert read.endswith(f'data-media-id="{media.id}" data-size="medium" data-align="right">')
 
     def test_rich_text_image_of_a_deleted_photo_is_dropped(self, client, session):
         add_page(session, "a", fields={"body": {"html": '<p>a<img src="x" alt="" data-media-id="404">b</p>'}})

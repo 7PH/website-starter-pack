@@ -18,14 +18,18 @@ from ..schemas.cms_media import CmsMediaPublic
 from ..schemas.cms_page import CmsPageAdminRead, CmsPageRead, CmsPageUpdate
 from .cms_media import media_ids_in_fields, media_to_public, media_to_read
 from .cms_templates import Field, Template, get_templates
-from .sanitize import sanitize_rich_text
+from .sanitize import RICH_TEXT_IMAGE_OPTIONS, sanitize_rich_text
 
 SEO_DESCRIPTION_LENGTH = 155
 MAX_SLUG_LENGTH = 200
 # Slugs made from a title stay short; a hand-typed one may use the whole column.
 AUTO_SLUG_LENGTH = 80
-# Width of rich text on the public page (CmsRichText inside CmsPageContent).
+# Width of rich text on the public page (CmsRichText inside CmsPageContent), and of its smaller images (RICH_TEXT_CLASS).
 RICH_TEXT_IMAGE_SIZES = "(min-width: 768px) 736px, 100vw"
+RICH_TEXT_IMAGE_SIZES_BY_OPTION = {
+    "small": "(min-width: 768px) 245px, 100vw",
+    "medium": "(min-width: 768px) 442px, 100vw",
+}
 # Checked before sanitizing, so absurd payloads never reach bleach.
 MAX_RICH_TEXT_INPUT_LENGTH = 500_000
 # Stored size and photo count of one rich text field, far above any real page.
@@ -173,10 +177,17 @@ def _render_images(value: str, media: dict[int, CmsMediaPublic]) -> str:
         if not photo:
             return ""
         srcset = ", ".join(f"{url} {width}w" for width, url in photo.urls.items())
+        options = "".join(
+            f' {name}="{attributes[name]}"'
+            for name, allowed in RICH_TEXT_IMAGE_OPTIONS.items()
+            if attributes.get(name) in allowed
+        )
+        sizes = RICH_TEXT_IMAGE_SIZES_BY_OPTION.get(attributes.get("data-size", ""), RICH_TEXT_IMAGE_SIZES)
         # alt is kept as stored: bleach already escaped it.
         return (
-            f'<img src="{photo.src}" srcset="{srcset}" sizes="{RICH_TEXT_IMAGE_SIZES}" alt="{attributes.get("alt", "")}"'
-            f' width="{photo.width}" height="{photo.height}" loading="lazy" decoding="async" data-media-id="{photo.id}">'
+            f'<img src="{photo.src}" srcset="{srcset}" sizes="{sizes}" alt="{attributes.get("alt", "")}"'
+            f' width="{photo.width}" height="{photo.height}" loading="lazy" decoding="async" data-media-id="{photo.id}"'
+            f"{options}>"
         )
 
     return _IMG_TAG.sub(render, value)

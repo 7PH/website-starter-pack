@@ -51,7 +51,15 @@ ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 
 # CMS rich text: what the page editor can produce, nothing more.
 RICH_TEXT_TAGS = ["h2", "h3", "p", "br", "strong", "em", "a", "ul", "ol", "li", "blockquote", "img"]
-RICH_TEXT_ATTRIBUTES = {"a": ["href"], "img": ["src", "alt"], "ol": ["start"]}
+# Display options of a rich text image. Absent: full width, centered, as before they existed.
+RICH_TEXT_IMAGE_OPTIONS = {"data-size": ("small", "medium"), "data-align": ("left", "right")}
+
+
+def _rich_text_image_attribute(tag: str, name: str, value: str) -> bool:
+    return name in ("src", "alt") or value in RICH_TEXT_IMAGE_OPTIONS.get(name, ())
+
+
+RICH_TEXT_ATTRIBUTES = {"a": ["href"], "img": _rich_text_image_attribute, "ol": ["start"]}
 
 # Maps an <img> src to the attributes to set on it (src, srcset...), or None to drop the image.
 type ImageResolver = Callable[[str], dict[str, str] | None]
