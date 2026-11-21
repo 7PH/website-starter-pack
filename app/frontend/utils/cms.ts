@@ -104,4 +104,11 @@ export const RICH_TEXT_CLASS = [
     '[&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic',
     '[&_a]:underline [&_a]:underline-offset-2',
     '[&_img]:my-6 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg',
+    // Smaller images (data-size, set in the editor): centered, a third or 60% of the column. Full width on phones, to stay readable.
+    '[&_img[data-size]]:block [&_img[data-size]]:mx-auto',
+    'md:[&_img[data-size=small]]:max-w-[33%] md:[&_img[data-size=medium]]:max-w-[60%]',
+    // Left or right (data-align): text wraps around it from tablets up. Only content with such an image gets flow-root, so the rest renders as before.
+    'md:[&_img[data-align=left]]:float-left md:[&_img[data-align=left]]:mr-6 md:[&_img[data-align=left]]:mt-1',
+    'md:[&_img[data-align=right]]:float-right md:[&_img[data-align=right]]:ml-6 md:[&_img[data-align=right]]:mt-1',
+    '[&:has(img[data-align])]:flow-root',
 ].join(' ');
