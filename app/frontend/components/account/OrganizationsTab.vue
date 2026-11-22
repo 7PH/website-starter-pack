@@ -16,7 +16,11 @@ onMounted(() => {
 
 async function onAccept(invitation: OrganizationInvitationRead) {
     const ok = await accept(invitation);
-    if (ok) await auth.refreshToken();
+    if (ok) {
+        await auth.refreshToken();
+        // The team list below loads its own copy: without this it still says "not a member" until a reload.
+        await refreshNuxtData('user-organizations-list');
+    }
 }
 </script>
 
