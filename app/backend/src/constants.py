@@ -51,6 +51,8 @@ MANAGED_ACCOUNTS_MAX_PER_USER = int(os.environ.get("MANAGED_ACCOUNTS_MAX_PER_USE
 
 # First and last name at signup. Off = for pseudonymous apps: no name fields, names never stored or shown.
 REAL_NAMES_ENABLED = os.environ.get("REAL_NAMES_ENABLED", "true").lower() == "true"
+# Store last names in capitals ("Marie DUPONT"), the French convention. Off: kept as typed.
+UPPERCASE_LAST_NAMES = os.environ.get("UPPERCASE_LAST_NAMES", "true").lower() == "true"
 
 # Public handles, usable as a login identifier. Off = column stays NULL, no UI.
 USERNAMES_ENABLED = os.environ.get("USERNAMES_ENABLED", "false").lower() == "true"

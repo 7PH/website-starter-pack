@@ -53,8 +53,6 @@ class TestValidateUsername:
             validate_username("bob@gmail.com")
 
 
-
-
 class TestCharset:
     def test_allows_forum_style_brackets(self):
         assert validate_username("Kim[2]") == "Kim[2]"
@@ -73,9 +71,7 @@ class TestEmailShape:
         with pytest.raises(ValueError):
             require_email_shape(value)
 
-    @pytest.mark.parametrize(
-        "value", ["a@b.com", "admin@localhost", "tester+tag@example.co.uk", "user@preview.app"]
-    )
+    @pytest.mark.parametrize("value", ["a@b.com", "admin@localhost", "tester+tag@example.co.uk", "user@preview.app"])
     def test_accepts_real_addresses_including_ones_EmailStr_rejects(self, value):
         assert require_email_shape(value) == value
 
@@ -147,3 +143,13 @@ class TestPublicSchemaPrivacy:
         )
         assert "email" not in preview.model_dump()
         assert preview.display_label is None
+
+
+class TestLastNameCase:
+    def test_last_name_in_capitals_by_default(self, monkeypatch):
+        monkeypatch.setattr(user_schemas, "UPPERCASE_LAST_NAMES", True)
+        assert UserCreate(email="a@b.fr", password="x" * 12, last_name="Raman").last_name == "RAMAN"
+
+    def test_last_name_as_typed_when_turned_off(self, monkeypatch):
+        monkeypatch.setattr(user_schemas, "UPPERCASE_LAST_NAMES", False)
+        assert UserCreate(email="a@b.fr", password="x" * 12, last_name="Raman").last_name == "Raman"
