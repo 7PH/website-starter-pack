@@ -30,6 +30,11 @@ MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 # Decompression bomb guard: a small file can declare a huge canvas.
 MAX_PIXELS = 40_000_000
 WIDTHS = [480, 960, 1600, 2400]
+# Animations: every frame is decoded, resized and encoded for every width, so they get fewer widths and caps of their own.
+# All frames sit in memory at once: 50 MP across frames is ~200 MB at most.
+ANIMATED_WIDTHS = [480, 960]
+MAX_FRAMES = 300
+MAX_ANIMATED_PIXELS = 50_000_000
 # WebP can't encode a side longer than this.
 WEBP_MAX_SIDE = 16383
 WEBP_QUALITY = 80
@@ -38,7 +43,7 @@ WEBP_QUALITY = 80
 _PROCESSING = threading.Semaphore(2)
 
 # Magic MIME type → the only Pillow decoder allowed for it.
-ALLOWED_FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
+ALLOWED_FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP", "image/gif": "GIF"}
 
 # Same rule as STATIC_ORIGIN in nuxt.config.ts: Traefik serves ./static on the `static.` subdomain.
 # Overridable for hosts where that rule doesn't hold (previews use `static-<host>`).
@@ -113,7 +118,7 @@ def process_image(content: bytes) -> tuple[int, int, dict[int, bytes]]:
     mime = magic.from_buffer(content[:4096], mime=True)
     pil_format = ALLOWED_FORMATS.get(mime)
     if not pil_format:
-        raise HTTPException(status_code=415, detail=f"Unsupported file type '{mime}'. Use JPEG, PNG or WebP")
+        raise HTTPException(status_code=415, detail=f"Unsupported file type '{mime}'. Use JPEG, PNG, WebP or GIF")
 
     with _PROCESSING:
         try:
@@ -121,7 +126,8 @@ def process_image(content: bytes) -> tuple[int, int, dict[int, bytes]]:
             img = Image.open(io.BytesIO(content), formats=[pil_format])
             if img.width * img.height > MAX_PIXELS:
                 raise HTTPException(status_code=422, detail=f"Image exceeds {MAX_PIXELS // 1_000_000} megapixels")
-            img.seek(0)  # Animated files: first frame only.
+            if getattr(img, "n_frames", 1) > 1:
+                return _process_animation(img)
 
             # Shrink to the largest output size before the costly steps. The target is computed on the
             # upright size (EXIF orientations 5-8 swap the sides) and also keeps the height encodable.
@@ -158,6 +164,42 @@ def process_image(content: bytes) -> tuple[int, int, dict[int, bytes]]:
             raise
         except (OSError, SyntaxError, ValueError, Image.DecompressionBombError) as err:
             raise HTTPException(status_code=400, detail="Could not read this image") from err
+    return width, height, files
+
+
+def _process_animation(img) -> tuple[int, int, dict[int, bytes]]:
+    """Animated GIF or WebP: every width as an animated WebP, with the frame timings and loop count kept."""
+    from PIL import Image, ImageSequence
+
+    if img.n_frames > MAX_FRAMES:
+        raise HTTPException(status_code=422, detail=f"Animation exceeds {MAX_FRAMES} frames")
+    if img.width * img.height * img.n_frames > MAX_ANIMATED_PIXELS:
+        raise HTTPException(status_code=422, detail=f"Animation exceeds {MAX_ANIMATED_PIXELS // 1_000_000} megapixels")
+
+    widths = [w for w in ANIMATED_WIDTHS if w <= img.width] or [img.width]
+    width, height = widths[-1], max(1, round(img.height * widths[-1] / img.width))
+    # Each frame comes out whole (Pillow applies GIF disposal), so frames can be resized independently.
+    frames, durations = [], []
+    for frame in ImageSequence.Iterator(img):
+        rgba = frame.convert("RGBA")
+        # Read after the frame is decoded: WebP only sets it then.
+        durations.append(frame.info.get("duration", 100))
+        frames.append(rgba.resize((width, height), Image.LANCZOS) if rgba.width != width else rgba)
+    files = {}
+    for w in widths:
+        h = max(1, round(height * w / width))
+        resized = [f.resize((w, h), Image.LANCZOS) for f in frames] if w != width else frames
+        buf = io.BytesIO()
+        resized[0].save(
+            buf,
+            "WEBP",
+            save_all=True,
+            append_images=resized[1:],
+            duration=durations,
+            loop=img.info.get("loop", 0),
+            quality=WEBP_QUALITY,
+        )
+        files[w] = buf.getvalue()
     return width, height, files
 
 
