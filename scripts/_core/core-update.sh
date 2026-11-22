@@ -25,6 +25,7 @@ UPSTREAM_DIR="$TEMP_DIR/starterpack"
 # Parse command line arguments
 ANALYZE_ONLY=false
 LIST_DIVERGENCES=false
+ASSUME_YES=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --analyze)
@@ -35,10 +36,15 @@ while [[ $# -gt 0 ]]; do
             LIST_DIVERGENCES=true
             shift
             ;;
+        -y|--yes)
+            ASSUME_YES=true
+            shift
+            ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            echo "Usage: $0 [--analyze | --list-divergences]"
+            echo "Usage: $0 [--analyze | --list-divergences | --yes]"
             echo "  --analyze           Show upgrade analysis without applying changes"
+            echo "  -y, --yes           Apply without asking (non-interactive runs)"
             echo "  --list-divergences  List core files that diverge from the starterpack release recorded in .starterpack-version (audit only)"
             exit 1
             ;;
@@ -745,6 +751,11 @@ resolve_target_ref() {
 #######################################
 # Main
 #######################################
+# Undo the manifest sync of a run that applied nothing.
+restore_manifest() {
+    if [ -f "$TEMP_DIR/manifest.before" ]; then cp "$TEMP_DIR/manifest.before" "$MANIFEST"; fi
+}
+
 main() {
     check_prerequisites
 
@@ -776,7 +787,8 @@ main() {
         # 2 uses the already-resync'd local manifest and wouldn't see them.
         local -a preresync_removed=("${SYNC_REMOVED[@]}")
 
-        # Sync manifest
+        # Sync manifest. Kept aside first: --analyze or an aborted run must leave it as it was.
+        cp "$MANIFEST" "$TEMP_DIR/manifest.before"
         mkdir -p "$(dirname "$MANIFEST")"
         cp "$UPSTREAM_DIR/$MANIFEST" "$MANIFEST"
 
@@ -816,6 +828,7 @@ main() {
             echo -e "${GREEN}Everything is up to date!${NC}"
         fi
 
+        restore_manifest
         exit 0
     fi
 
@@ -830,9 +843,15 @@ main() {
     show_summary
 
     echo -e "${BLUE}───────────────────────────────────────${NC}"
-    read -p "Apply these changes? [y/N] " confirm
+    if [ "$ASSUME_YES" = true ]; then
+        confirm=y
+    else
+        # No terminal (closed stdin): read fails, and that counts as a no.
+        read -r -p "Apply these changes? [y/N] " confirm || confirm=n
+    fi
 
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        restore_manifest
         echo "Aborted."
         exit 0
     fi
