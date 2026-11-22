@@ -165,9 +165,7 @@ def _build_list_response(
     for conv in conversations:
         target_user = unread_for_user_id if unread_for_user_id is not None else conv.created_by_id
         unread = unread_counts.get((conv.id, target_user), 0) if target_user is not None else 0
-        items.append(
-            _conversation_to_read(conv, unread_count=unread, last_message=last_messages.get(conv.id))
-        )
+        items.append(_conversation_to_read(conv, unread_count=unread, last_message=last_messages.get(conv.id)))
     return ConversationListResponse(items=items, total=total, limit=limit, offset=offset)
 
 

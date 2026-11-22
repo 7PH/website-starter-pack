@@ -121,7 +121,6 @@ def _get_membership_or_404(session: Session, member_id: int, org_id: int) -> Use
     return membership
 
 
-
 def _check_org_access(
     session: Session,
     org_id: int,
@@ -146,7 +145,9 @@ def _check_org_access(
     return org
 
 
-def _check_not_last_admin(session: Session, org_id: int, membership: UserOrganizationBase, action: str = "remove") -> None:
+def _check_not_last_admin(
+    session: Session, org_id: int, membership: UserOrganizationBase, action: str = "remove"
+) -> None:
     """Check if the given member is the last admin. Raises 400 if so."""
     if membership.is_admin:
         admin_count = count_org_admins(session, org_id)
@@ -376,8 +377,15 @@ def update_org(
 
     # Update optional fields
     optional_fields = [
-        'description', 'phone', 'tax_number', 'address_line1',
-        'address_line2', 'city', 'state', 'postal_code', 'country'
+        "description",
+        "phone",
+        "tax_number",
+        "address_line1",
+        "address_line2",
+        "city",
+        "state",
+        "postal_code",
+        "country",
     ]
     for field in optional_fields:
         value = getattr(org_data, field, None)
@@ -601,12 +609,7 @@ def _update_member_premium_status(
         # grants can't both pass the quota check and oversubscribe. Re-read
         # the live row inside the lock to pick up any changes made between
         # the caller's load and now.
-        locked_org = (
-            session.query(OrganizationBase)
-            .filter(OrganizationBase.id == org.id)
-            .with_for_update()
-            .one()
-        )
+        locked_org = session.query(OrganizationBase).filter(OrganizationBase.id == org.id).with_for_update().one()
         current_premium = count_org_premium_members(session, locked_org.id)
         if current_premium >= locked_org.stripe_quota:
             raise HTTPException(
@@ -832,10 +835,7 @@ def get_org_subscription(
     stripe_status = stripe_helper.get_org_subscription_status(org.stripe_id)
 
     # Sync DB if status differs (handles webhook failures)
-    if (
-        stripe_status["stripe_premium"] != org.stripe_premium
-        or stripe_status["stripe_quota"] != org.stripe_quota
-    ):
+    if stripe_status["stripe_premium"] != org.stripe_premium or stripe_status["stripe_quota"] != org.stripe_quota:
         # Store previous premium status before updating
         was_premium = org.stripe_premium
 
@@ -927,7 +927,9 @@ def create_invitation(
         expiry_days=ORG_INVITATION_EXPIRY_DAYS,
     )
 
-    invitation_link = f"{PUBLIC_URL.rstrip('/')}/invitations/{invitation.token}" if PUBLIC_URL else f"/invitations/{invitation.token}"
+    invitation_link = (
+        f"{PUBLIC_URL.rstrip('/')}/invitations/{invitation.token}" if PUBLIC_URL else f"/invitations/{invitation.token}"
+    )
     inviter_name = f"{user.first_name} {user.last_name}".strip() or user.email
     send_organization_invitation_email(
         to_email=invitation.email,

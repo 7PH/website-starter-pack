@@ -68,9 +68,7 @@ class TestSeedUsers:
             patch("src.controllers.internal.hash_password", return_value="hashed"),
         ):
             result = seed_users(
-                payload=SeedUsersRequest(
-                    users=[_spec("admin@preview.app", is_admin=True), _spec("u@preview.app")]
-                ),
+                payload=SeedUsersRequest(users=[_spec("admin@preview.app", is_admin=True), _spec("u@preview.app")]),
                 session=session,
             )
         assert mock_create.call_count == 2
@@ -96,9 +94,7 @@ class TestSeedUsers:
             patch("src.controllers.internal.hash_password", return_value="new-hash"),
         ):
             result = seed_users(
-                payload=SeedUsersRequest(
-                    users=[_spec("admin@preview.app", is_admin=True, is_premium=True)]
-                ),
+                payload=SeedUsersRequest(users=[_spec("admin@preview.app", is_admin=True, is_premium=True)]),
                 session=session,
             )
         assert mock_create.call_count == 0

@@ -91,9 +91,7 @@ class TestSignInWithCode:
 
     def test_valid_id_and_code_issues_jwt(self, reset_hooks):
         """Validator accepts (account_id, code); we get a Bearer token back."""
-        _resolve_with(
-            lambda account_id, code, _req: _stub_user(account_id) if code == "OK" else None
-        )
+        _resolve_with(lambda account_id, code, _req: _stub_user(account_id) if code == "OK" else None)
 
         with (
             patch("src.controllers.auth.log_event"),

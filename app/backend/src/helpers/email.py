@@ -28,6 +28,7 @@ def swallow_email_errors():
     except Exception as e:
         logger.warning("Email send failed: %s", e)
 
+
 # Configuration
 MAILGUN_ENABLED = bool(os.environ.get("MAILGUN_API_KEY"))
 MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "")
@@ -247,9 +248,5 @@ def send_conversation_reply_email(to_email: str, username: str, conversation_id:
         subject="New reply to your message",
         template_basename="conversation_reply",
         context={"username": username, "conversation_link": conversation_link},
-        text_fallback=(
-            f"Hello {username},\n\n"
-            f"The team replied to your message. Read it here:\n"
-            f"{conversation_link}\n"
-        ),
+        text_fallback=(f"Hello {username},\n\nThe team replied to your message. Read it here:\n{conversation_link}\n"),
     )

@@ -82,9 +82,7 @@ def list_my_pending_invitations(
     if not ORG_INVITATIONS_ENABLED:
         return OrganizationInvitationListResponse(items=[])
     pending = invitations_crud.list_user_pending_invitations(session, user.email)
-    return OrganizationInvitationListResponse(
-        items=[_invitation_to_read(inv, include_token=True) for inv in pending]
-    )
+    return OrganizationInvitationListResponse(items=[_invitation_to_read(inv, include_token=True) for inv in pending])
 
 
 @router.get("/{token}", response_model=PendingInvitationPreview)

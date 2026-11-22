@@ -297,14 +297,18 @@ def get_active_codes_for_accounts(session: Session, user_ids: list[int]) -> dict
     if not user_ids:
         return {}
     now = datetime.now(UTC)
-    rows = session.execute(
-        select(AccessCodeBase)
-        .where(
-            AccessCodeBase.user_id.in_(user_ids),
-            AccessCodeBase.revoked_at.is_(None),
-            (AccessCodeBase.expires_at.is_(None)) | (AccessCodeBase.expires_at > now),
+    rows = (
+        session.execute(
+            select(AccessCodeBase)
+            .where(
+                AccessCodeBase.user_id.in_(user_ids),
+                AccessCodeBase.revoked_at.is_(None),
+                (AccessCodeBase.expires_at.is_(None)) | (AccessCodeBase.expires_at > now),
+            )
+            .order_by(AccessCodeBase.user_id, AccessCodeBase.created_at.desc())
+            .distinct(AccessCodeBase.user_id)
         )
-        .order_by(AccessCodeBase.user_id, AccessCodeBase.created_at.desc())
-        .distinct(AccessCodeBase.user_id)
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {row.user_id: row.code for row in rows}

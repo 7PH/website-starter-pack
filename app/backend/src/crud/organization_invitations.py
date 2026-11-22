@@ -63,9 +63,7 @@ def _pending_filters() -> list:
     ]
 
 
-def get_pending_invitation(
-    session: Session, organization_id: int, email: str
-) -> OrganizationInvitationBase | None:
+def get_pending_invitation(session: Session, organization_id: int, email: str) -> OrganizationInvitationBase | None:
     return session.execute(
         select(OrganizationInvitationBase).where(
             OrganizationInvitationBase.organization_id == organization_id,
@@ -75,9 +73,7 @@ def get_pending_invitation(
     ).scalar_one_or_none()
 
 
-def list_org_pending_invitations(
-    session: Session, organization_id: int
-) -> list[OrganizationInvitationBase]:
+def list_org_pending_invitations(session: Session, organization_id: int) -> list[OrganizationInvitationBase]:
     return list(
         session.execute(
             select(OrganizationInvitationBase)
@@ -98,9 +94,7 @@ def list_org_pending_invitations(
     )
 
 
-def list_user_pending_invitations(
-    session: Session, email: str
-) -> list[OrganizationInvitationBase]:
+def list_user_pending_invitations(session: Session, email: str) -> list[OrganizationInvitationBase]:
     return list(
         session.execute(
             select(OrganizationInvitationBase)

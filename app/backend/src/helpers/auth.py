@@ -141,9 +141,7 @@ def setup_new_user_stripe(session: Session, user: UserBase, *, allow_orphan_reus
     if not stripe_helper.is_enabled():
         return
     check_user_exists = (
-        (lambda uid: get_user_by_id(session, uid) is not None)
-        if allow_orphan_reuse
-        else (lambda uid: True)
+        (lambda uid: get_user_by_id(session, uid) is not None) if allow_orphan_reuse else (lambda uid: True)
     )
     user.stripe_id = stripe_helper.sync_customer(
         user_id=user.id,

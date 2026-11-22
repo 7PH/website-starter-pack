@@ -375,8 +375,5 @@ def public_picker(
     accounts = list_accounts_in_group(session, group.id)
     return PublicPickerPayload(
         group_name=group.name,
-        members=[
-            PublicPickerEntry(managed_account_id=a.id, display_name=a.display_name)
-            for a in accounts
-        ],
+        members=[PublicPickerEntry(managed_account_id=a.id, display_name=a.display_name) for a in accounts],
     )

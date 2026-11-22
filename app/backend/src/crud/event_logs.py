@@ -95,5 +95,3 @@ def get_events(
     events = query.order_by(EventLogBase.created_at.desc()).offset(offset).limit(limit).all()
 
     return [EventLogRead.model_validate(e) for e in events], total
-
-
