@@ -67,9 +67,12 @@ class TestAdjustOrgBalance:
             created=1_700_000_000,
             type="adjustment",
         )
-        with patch.object(stripe_helper, "STRIPE_ENABLED", True), \
-             patch.object(stripe_helper.stripe.Customer, "create_balance_transaction",
-                          return_value=fake_tx) as mock_create:
+        with (
+            patch.object(stripe_helper, "STRIPE_ENABLED", True),
+            patch.object(
+                stripe_helper.stripe.Customer, "create_balance_transaction", return_value=fake_tx
+            ) as mock_create,
+        ):
             result = stripe_helper.adjust_org_balance(
                 stripe_customer_id="cus_abc",
                 amount_cents=1000,
@@ -95,9 +98,12 @@ class TestAdjustOrgBalance:
             created=1_700_000_001,
             type="adjustment",
         )
-        with patch.object(stripe_helper, "STRIPE_ENABLED", True), \
-             patch.object(stripe_helper.stripe.Customer, "create_balance_transaction",
-                          return_value=fake_tx) as mock_create:
+        with (
+            patch.object(stripe_helper, "STRIPE_ENABLED", True),
+            patch.object(
+                stripe_helper.stripe.Customer, "create_balance_transaction", return_value=fake_tx
+            ) as mock_create,
+        ):
             result = stripe_helper.adjust_org_balance(
                 stripe_customer_id="cus_abc",
                 amount_cents=-500,
@@ -128,8 +134,10 @@ class TestGetOrgBalance:
     def test_credit_shown_as_positive(self):
         """Stripe balance of -10000 (credit) surfaces as +10000 for admin."""
         fake_customer = {"balance": -10000, "currency": "eur"}
-        with patch.object(stripe_helper, "STRIPE_ENABLED", True), \
-             patch.object(stripe_helper.stripe.Customer, "retrieve", return_value=fake_customer):
+        with (
+            patch.object(stripe_helper, "STRIPE_ENABLED", True),
+            patch.object(stripe_helper.stripe.Customer, "retrieve", return_value=fake_customer),
+        ):
             result = stripe_helper.get_org_balance("cus_abc")
             assert result["balance_cents"] == 10000
             assert result["currency"] == "eur"
@@ -137,8 +145,10 @@ class TestGetOrgBalance:
     def test_debt_shown_as_negative(self):
         """Stripe balance of +5000 (owed) surfaces as -5000 for admin."""
         fake_customer = {"balance": 5000, "currency": "eur"}
-        with patch.object(stripe_helper, "STRIPE_ENABLED", True), \
-             patch.object(stripe_helper.stripe.Customer, "retrieve", return_value=fake_customer):
+        with (
+            patch.object(stripe_helper, "STRIPE_ENABLED", True),
+            patch.object(stripe_helper.stripe.Customer, "retrieve", return_value=fake_customer),
+        ):
             result = stripe_helper.get_org_balance("cus_abc")
             assert result["balance_cents"] == -5000
 
@@ -163,14 +173,25 @@ class TestRunBillingCycle:
 
         fake_session = MagicMock()
 
-        with patch.object(stripe_helper, "is_enabled", return_value=True), \
-             patch.object(billing, "SessionLocal", return_value=fake_session), \
-             patch.object(billing, "get_orgs_due_for_cycle_debit", return_value=[org]), \
-             patch.object(stripe_helper, "get_price_details",
-                          return_value={"amount": 3000, "currency": "eur", "interval": "month",
-                                        "name": "Pro", "price_id": "price_x", "seats": 10}), \
-             patch.object(stripe_helper, "adjust_org_balance") as mock_adjust, \
-             patch.object(billing, "log_event"):
+        with (
+            patch.object(stripe_helper, "is_enabled", return_value=True),
+            patch.object(billing, "SessionLocal", return_value=fake_session),
+            patch.object(billing, "get_orgs_due_for_cycle_debit", return_value=[org]),
+            patch.object(
+                stripe_helper,
+                "get_price_details",
+                return_value={
+                    "amount": 3000,
+                    "currency": "eur",
+                    "interval": "month",
+                    "name": "Pro",
+                    "price_id": "price_x",
+                    "seats": 10,
+                },
+            ),
+            patch.object(stripe_helper, "adjust_org_balance") as mock_adjust,
+            patch.object(billing, "log_event"),
+        ):
             processed = billing.run_billing_cycle(now=now)
 
         assert processed == 1
@@ -193,10 +214,12 @@ class TestRunBillingCycle:
         org.billing_price_id = "price_x"
 
         fake_session = MagicMock()
-        with patch.object(stripe_helper, "is_enabled", return_value=True), \
-             patch.object(billing, "SessionLocal", return_value=fake_session), \
-             patch.object(billing, "get_orgs_due_for_cycle_debit", return_value=[org]), \
-             patch.object(stripe_helper, "adjust_org_balance") as mock_adjust:
+        with (
+            patch.object(stripe_helper, "is_enabled", return_value=True),
+            patch.object(billing, "SessionLocal", return_value=fake_session),
+            patch.object(billing, "get_orgs_due_for_cycle_debit", return_value=[org]),
+            patch.object(stripe_helper, "adjust_org_balance") as mock_adjust,
+        ):
             processed = billing.run_billing_cycle(now=datetime(2026, 5, 1))
 
         assert processed == 0

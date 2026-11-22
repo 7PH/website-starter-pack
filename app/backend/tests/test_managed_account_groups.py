@@ -115,9 +115,10 @@ class TestPolicy:
 class TestOwnership:
     def test_require_owned_group_404_when_missing(self):
         session = MagicMock()
-        with patch(
-            "src.controllers.managed_account_groups.get_group", return_value=None
-        ), pytest.raises(HTTPException) as exc:
+        with (
+            patch("src.controllers.managed_account_groups.get_group", return_value=None),
+            pytest.raises(HTTPException) as exc,
+        ):
             _require_owned_group(session, group_id=999, user_id=1)
         assert exc.value.status_code == 404
 
@@ -125,9 +126,10 @@ class TestOwnership:
         """Don't leak existence — return 404 for groups owned by someone else."""
         session = MagicMock()
         other_group = _group(owner_id=2)
-        with patch(
-            "src.controllers.managed_account_groups.get_group", return_value=other_group
-        ), pytest.raises(HTTPException) as exc:
+        with (
+            patch("src.controllers.managed_account_groups.get_group", return_value=other_group),
+            pytest.raises(HTTPException) as exc,
+        ):
             _require_owned_group(session, group_id=10, user_id=1)
         assert exc.value.status_code == 404
 
@@ -154,9 +156,10 @@ class TestOwnership:
     def test_require_owned_account_404_when_not_managed(self):
         """get_managed_account returns None for non-managed users."""
         session = MagicMock()
-        with patch(
-            "src.controllers.managed_account_groups.get_managed_account", return_value=None
-        ), pytest.raises(HTTPException) as exc:
+        with (
+            patch("src.controllers.managed_account_groups.get_managed_account", return_value=None),
+            pytest.raises(HTTPException) as exc,
+        ):
             _require_owned_account(session, account_id=100, user_id=1)
         assert exc.value.status_code == 404
 
@@ -204,9 +207,7 @@ class TestBulkCreateCrud:
             "create_managed_account",
             side_effect=[(_account(1), "CODE1"), (_account(2), "CODE2")],
         ) as mock_create:
-            created, skipped = crud.bulk_create_managed_accounts(
-                session, group_id=10, display_names=["Alice", "Bob"]
-            )
+            created, skipped = crud.bulk_create_managed_accounts(session, group_id=10, display_names=["Alice", "Bob"])
 
         assert len(created) == 2
         assert skipped == 0
@@ -231,9 +232,7 @@ class TestBulkCreateCrud:
         _mock_existing_names(session, ["Alice"])  # already in group
 
         with patch.object(crud, "create_managed_account", return_value=(_account(2), "Y")) as mock_create:
-            created, skipped = crud.bulk_create_managed_accounts(
-                session, group_id=10, display_names=["alice", "Bob"]
-            )
+            created, skipped = crud.bulk_create_managed_accounts(session, group_id=10, display_names=["alice", "Bob"])
 
         assert len(created) == 1
         assert skipped == 1
@@ -384,9 +383,7 @@ class TestSeatGate:
                 session=session,
                 user=_owner(),
                 group_id=10,
-                body=ManagedAccountBulkCreate(
-                    accounts=[ManagedAccountCreate(display_name="Alice")]
-                ),
+                body=ManagedAccountBulkCreate(accounts=[ManagedAccountCreate(display_name="Alice")]),
             )
 
         assert exc.value.status_code == 402
@@ -461,9 +458,7 @@ class TestSeatGate:
                 session=session,
                 user=_owner(),
                 group_id=10,
-                body=ManagedAccountBulkCreate(
-                    accounts=[ManagedAccountCreate(display_name=f"S{i}") for i in range(25)]
-                ),
+                body=ManagedAccountBulkCreate(accounts=[ManagedAccountCreate(display_name=f"S{i}") for i in range(25)]),
             )
 
         assert [e.count_to_create for e in captured] == [1, 25]

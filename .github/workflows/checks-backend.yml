@@ -41,15 +41,21 @@ jobs:
         continue-on-error: true
         run: ruff check src/ tests/ --config ruff.toml
 
+      - name: Ruff (format)
+        id: ruff-format
+        continue-on-error: true
+        run: ruff format --check src/ tests/ --config ruff.toml
+
       - name: Pytest (unit tests)
         id: pytest
         continue-on-error: true
         run: pytest tests/ -v
 
       - name: Fail if any check failed
-        if: steps.ruff.outcome == 'failure' || steps.pytest.outcome == 'failure'
+        if: steps.ruff.outcome == 'failure' || steps.ruff-format.outcome == 'failure' || steps.pytest.outcome == 'failure'
         run: |
           echo "::error::One or more backend checks failed:"
           echo "  ruff:   ${{ steps.ruff.outcome }}"
+          echo "  format: ${{ steps.ruff-format.outcome }}"
           echo "  pytest: ${{ steps.pytest.outcome }}"
           exit 1

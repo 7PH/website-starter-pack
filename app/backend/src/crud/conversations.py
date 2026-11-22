@@ -67,12 +67,14 @@ def _create_conversation_with_initial_message(
     session.add(conversation)
     session.flush()
 
-    session.add(MessageBase(
-        conversation_id=conversation.id,
-        sender_id=creator_id,
-        content=initial_content,
-        is_admin_response=is_admin_response,
-    ))
+    session.add(
+        MessageBase(
+            conversation_id=conversation.id,
+            sender_id=creator_id,
+            content=initial_content,
+            is_admin_response=is_admin_response,
+        )
+    )
     add_participant(session, conversation.id, creator_id, last_read_at=datetime.now(UTC))
     return conversation
 
@@ -241,9 +243,7 @@ def get_last_message(session: Session, conversation_id: int) -> MessageBase | No
     )
 
 
-def get_last_messages_for(
-    session: Session, conversation_ids: list[int]
-) -> dict[int, MessageBase]:
+def get_last_messages_for(session: Session, conversation_ids: list[int]) -> dict[int, MessageBase]:
     """Return ``{conversation_id: last_message}`` in a single query.
 
     Uses Postgres DISTINCT ON to pick the newest message per conversation —
@@ -281,9 +281,7 @@ def get_unread_count(session: Session, conversation_id: int, user_id: int) -> in
     return query.scalar() or 0
 
 
-def get_unread_counts_for(
-    session: Session, pairs: list[tuple[int, int]]
-) -> dict[tuple[int, int], int]:
+def get_unread_counts_for(session: Session, pairs: list[tuple[int, int]]) -> dict[tuple[int, int], int]:
     """Return ``{(conversation_id, user_id): unread_count}`` in 1 + N queries.
 
     One batched query fetches participants (for last_read_at), then one COUNT

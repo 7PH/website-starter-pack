@@ -8,7 +8,7 @@ from sqlalchemy.pool import QueuePool
 
 Base = declarative_base()
 
-db_url = f"postgresql://{os.environ["APP_DB_USER"]}:{os.environ["APP_DB_PASSWORD"]}@db/{os.environ["APP_DB_NAME"]}"
+db_url = f"postgresql://{os.environ['APP_DB_USER']}:{os.environ['APP_DB_PASSWORD']}@db/{os.environ['APP_DB_NAME']}"
 
 
 def _build_options_string() -> str:

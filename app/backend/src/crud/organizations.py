@@ -12,9 +12,7 @@ from ..models.organization import OrganizationBase, UserOrganizationBase
 # Organization CRUD
 
 
-def get_organization_by_id(
-    session: Session, org_id: int, include_deleted: bool = False
-) -> OrganizationBase | None:
+def get_organization_by_id(session: Session, org_id: int, include_deleted: bool = False) -> OrganizationBase | None:
     """Retrieve an organization by ID. By default excludes deleted orgs."""
     org = session.get(OrganizationBase, org_id)
     if org and not include_deleted and org.deleted_at is not None:
@@ -25,18 +23,14 @@ def get_organization_by_id(
 def get_organization_by_email(session: Session, email: str) -> OrganizationBase | None:
     """Retrieve a non-deleted organization by email."""
     return session.execute(
-        select(OrganizationBase).where(
-            OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None)
-        )
+        select(OrganizationBase).where(OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None))
     ).scalar_one_or_none()
 
 
 def get_organization_by_stripe_id(session: Session, stripe_id: str) -> OrganizationBase | None:
     """Retrieve a non-deleted organization by Stripe customer ID."""
     return session.execute(
-        select(OrganizationBase).where(
-            OrganizationBase.stripe_id == stripe_id, OrganizationBase.deleted_at.is_(None)
-        )
+        select(OrganizationBase).where(OrganizationBase.stripe_id == stripe_id, OrganizationBase.deleted_at.is_(None))
     ).scalar_one_or_none()
 
 
@@ -111,9 +105,7 @@ def soft_delete_organization(session: Session, org: OrganizationBase) -> None:
 
 def is_org_email_taken(session: Session, email: str, exclude_org_id: int | None = None) -> bool:
     """Check if an email is already used by a non-deleted organization."""
-    query = select(OrganizationBase).where(
-        OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None)
-    )
+    query = select(OrganizationBase).where(OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None))
     if exclude_org_id:
         query = query.where(OrganizationBase.id != exclude_org_id)
     return session.execute(query).scalar_one_or_none() is not None
@@ -122,9 +114,7 @@ def is_org_email_taken(session: Session, email: str, exclude_org_id: int | None 
 # User-Organization Membership CRUD
 
 
-def get_user_org_membership(
-    session: Session, user_id: int, org_id: int
-) -> UserOrganizationBase | None:
+def get_user_org_membership(session: Session, user_id: int, org_id: int) -> UserOrganizationBase | None:
     """Get a user's membership in a specific organization."""
     return session.get(UserOrganizationBase, (user_id, org_id))
 
@@ -239,7 +229,9 @@ def get_orgs_due_for_cycle_debit(session: Session, now: datetime) -> list[Organi
                 OrganizationBase.billing_cycle_end.is_not(None),
                 OrganizationBase.billing_cycle_end <= now,
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
     )
 
 
@@ -248,13 +240,16 @@ def reset_org_members_premium(session: Session, org_id: int) -> list[int]:
 
     Returns list of affected user IDs so caller can update their premium cache.
     """
-    members = session.execute(
-        select(UserOrganizationBase)
-        .where(
-            UserOrganizationBase.organization_id == org_id,
-            UserOrganizationBase.has_premium_seat.is_(True),
+    members = (
+        session.execute(
+            select(UserOrganizationBase).where(
+                UserOrganizationBase.organization_id == org_id,
+                UserOrganizationBase.has_premium_seat.is_(True),
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     affected_user_ids = []
     for membership in members:

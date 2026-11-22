@@ -3,7 +3,6 @@
 Tests for HTML sanitization utility.
 """
 
-
 from src.helpers.sanitize import sanitize_html, strip_all_tags
 
 

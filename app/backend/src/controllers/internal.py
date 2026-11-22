@@ -90,9 +90,7 @@ class SeedUsersResponse(BaseModel):
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(_require_internal_key)],
 )
-def seed_users(
-    *, payload: SeedUsersRequest, session: Session = Depends(get_session)
-) -> SeedUsersResponse:
+def seed_users(*, payload: SeedUsersRequest, session: Session = Depends(get_session)) -> SeedUsersResponse:
     """Idempotently upsert a roster of password-auth users for preview/dev.
 
     Same gating as the rest of /internal: the route is unregistered when

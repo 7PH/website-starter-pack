@@ -230,7 +230,9 @@ def reset_password(
     # Reject non-password accounts: even a leaked reset token shouldn't be able
     # to graft a password onto an oauth/access_code/deleted user.
     if user.auth_method != "password":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset is not available for this account")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset is not available for this account"
+        )
 
     if len(body.password) < PASSWORD_MIN_LENGTH:
         raise HTTPException(
@@ -266,7 +268,9 @@ def confirm_email_change(
     # Ensure the current_email in the token matches user's current email
     # This invalidates old tokens if user requested another email change
     if user.email != payload["current_email"]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token is no longer valid (email was changed)")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Token is no longer valid (email was changed)"
+        )
 
     new_email = payload["new_email"]
 

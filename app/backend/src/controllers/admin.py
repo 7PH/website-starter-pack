@@ -49,11 +49,15 @@ def get_dashboard_stats(
     """Get dashboard statistics (excludes deleted users)."""
     # Single COUNT with FILTER clauses returns all three figures in one query
     # against one scan, instead of three separate sequential scans.
-    row = session.query(
-        func.count(UserBase.id),
-        func.count(UserBase.id).filter(UserBase.is_admin),
-        func.count(UserBase.id).filter(UserBase.is_premium),
-    ).filter(UserBase.deleted_at.is_(None)).one()
+    row = (
+        session.query(
+            func.count(UserBase.id),
+            func.count(UserBase.id).filter(UserBase.is_admin),
+            func.count(UserBase.id).filter(UserBase.is_premium),
+        )
+        .filter(UserBase.deleted_at.is_(None))
+        .one()
+    )
     total_users, admin_users, premium_users = row
 
     # Get recent events

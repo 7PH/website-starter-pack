@@ -395,9 +395,7 @@ def verify_webhook_signature(payload: bytes, signature: str) -> dict:
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, signature, STRIPE_WEBHOOK_SECRET
-        )
+        event = stripe.Webhook.construct_event(payload, signature, STRIPE_WEBHOOK_SECRET)
         return event
 
     except stripe.error.SignatureVerificationError as e:
