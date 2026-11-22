@@ -129,6 +129,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
                         :key="item.to"
                         :to="item.to"
                         :aria-label="item.label"
+                        :title="item.label"
                         class="nav-link"
                     >
                         <UIcon :name="item.icon" />
@@ -227,7 +228,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
 }
 
 .header-content {
-    @apply flex items-center justify-between h-full;
+    @apply flex items-center justify-between gap-3 h-full;
     min-height: var(--page-header-height);
 }
 

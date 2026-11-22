@@ -31,11 +31,20 @@ const switchConfirmed = ref(false);
 const replacesAccount = computed(
     () => auth.isLoggedIn && auth.user?.managed_account_group_id == null && !switchConfirmed.value,
 );
-let pendingPersonalLink = false;
+// Personal link waiting for that answer. Its code stays in the address bar until then, so a reload or "Go back" keeps it.
+let pendingPersonalLink: { id: number; code: string } | null = null;
 
 function confirmSwitch() {
     switchConfirmed.value = true;
-    if (pendingPersonalLink) signIn();
+    if (pendingPersonalLink) signInWithPersonalLink(pendingPersonalLink);
+}
+
+function signInWithPersonalLink(link: { id: number; code: string }) {
+    // Drop the code from the address bar and history before signing in.
+    history.replaceState(history.state, '', window.location.pathname + window.location.search);
+    selectedId.value = link.id;
+    code.value = link.code;
+    signIn();
 }
 
 // A personal link (e.g. a printed QR code) carries `#a=<managed account id>&code=<code>`.
@@ -54,12 +63,8 @@ async function load() {
         payload.value = await api.get<PublicPickerPayload>(`/c/${token.value}`);
         const link = personalLink();
         if (link && payload.value.members.some((m) => m.managed_account_id === link.id)) {
-            // Drop the code from the address bar and history before signing in.
-            history.replaceState(history.state, '', window.location.pathname + window.location.search);
-            selectedId.value = link.id;
-            code.value = link.code;
-            if (replacesAccount.value) pendingPersonalLink = true;
-            else signIn();
+            if (replacesAccount.value) pendingPersonalLink = link;
+            else signInWithPersonalLink(link);
             return;
         }
         // Pre-select the last name this browser used, if any.
@@ -77,7 +82,8 @@ async function load() {
 onMounted(load);
 
 watchEffect(() => {
-    if (payload.value && token.value) {
+    // Not while asking: someone who goes back shouldn't find a name pre-selected next time.
+    if (payload.value && token.value && !replacesAccount.value) {
         pickerLink.write({
             token: token.value,
             lastAccountId: selectedId.value,
@@ -133,7 +139,7 @@ function back() {
             icon="i-lucide-link-2-off"
         />
 
-        <UCard v-else-if="payload && replacesAccount" class="picker__switch">
+        <UCard v-else-if="payload && replacesAccount">
             <div class="flex flex-col gap-4 text-center">
                 <UIcon name="i-lucide-user-round-x" class="mx-auto size-10 text-warning" />
                 <p class="text-base font-medium">
