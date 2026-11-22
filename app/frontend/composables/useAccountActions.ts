@@ -28,7 +28,7 @@ export function useAccountActions() {
         onSuccess?: (result: T) => void,
         // Status -> i18n key, for codes with one unambiguous cause on that endpoint.
         statusKeys?: Record<number, string>,
-        onError?: (message: string) => void,
+        onError?: (message: string, status?: number) => void,
     ): Promise<boolean> {
         try {
             const result = await op();
@@ -38,7 +38,7 @@ export function useAccountActions() {
         } catch (error) {
             const mapped = { ...DEFAULT_STATUS_KEYS, ...statusKeys }[getErrorStatus(error) ?? 0];
             if (onError) {
-                onError(mapped ? t(mapped) : getErrorMessage(error, t(errorKey)));
+                onError(mapped ? t(mapped) : getErrorMessage(error, t(errorKey)), getErrorStatus(error));
             } else if (mapped) {
                 showError(new Error(t(mapped)), mapped);
             } else {
@@ -56,7 +56,11 @@ export function useAccountActions() {
      * Login with an identifier (email, or username when usernames are enabled).
      * Pass `onError` to show the failure in the form instead of a toast.
      */
-    async function login(identifier: string, password: string, onError?: (message: string) => void): Promise<boolean> {
+    async function login(
+        identifier: string,
+        password: string,
+        onError?: (message: string, status?: number) => void,
+    ): Promise<boolean> {
         const usernamesEnabled = useBackendConfig().config?.usernames_enabled === true;
         const invalidKey = usernamesEnabled ? 'core.auth.invalidCredentialsUsername' : 'core.auth.invalidCredentials';
         return withToast(
@@ -82,7 +86,7 @@ export function useAccountActions() {
         lastName: string,
         customData?: UserCustomData,
         username?: string,
-        onError?: (message: string) => void,
+        onError?: (message: string, status?: number) => void,
     ): Promise<boolean> {
         return withToast(
             () =>

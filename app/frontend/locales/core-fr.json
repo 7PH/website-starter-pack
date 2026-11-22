@@ -53,7 +53,8 @@
             "invalidVerificationLink": "Lien de vérification invalide ou expiré",
             "hidePassword": "Masquer le mot de passe",
             "showPassword": "Afficher le mot de passe",
-            "passwordResetTitle": "Réinitialisation du mot de passe"
+            "passwordResetTitle": "Réinitialisation du mot de passe",
+            "loginInstead": "Me connecter plutôt"
         },
         "user": {
             "display": {
@@ -238,7 +239,7 @@
             "createSuccessDescription": "{name} a été créée. Vous en êtes maintenant le propriétaire.",
             "createFailed": "Échec de la création de l'organisation",
             "admin": "Propriétaire",
-            "roleTooltip": "Les propriétaires gèrent l'organisation et la facturation. Les membres accèdent aux fonctionnalités partagées.",
+            "roleTooltip": "Les propriétaires gèrent l'organisation et ses membres. Les membres accèdent aux fonctionnalités partagées.",
             "member": "Membre",
             "manage": "Gérer",
             "leave": "Quitter",
@@ -388,7 +389,9 @@
             "invitationCanceled": "Invitation annulée",
             "invitationCancelFailed": "Échec de l'annulation de l'invitation",
             "invitationSendFailed": "Échec de l'envoi de l'invitation",
-            "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation."
+            "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation.",
+            "invitedByExpires": "Invitation de {name} · expire le {date}",
+            "invitationExpires": "Expire le {date}"
         },
         "theme": {
             "light": "Mode clair",

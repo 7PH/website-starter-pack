@@ -6,6 +6,7 @@ definePageMeta({
 });
 
 const { t } = useI18n();
+usePageTitle(() => t('core.managed_accounts.title'));
 const { showError, showSuccess } = useToastHelpers();
 const composable = useManagedAccountGroup();
 const modal = useModalStore();

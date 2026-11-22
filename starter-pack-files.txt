@@ -182,6 +182,7 @@ app/frontend/composables/useAccountActions.ts
 app/frontend/composables/useToastHelpers.ts
 app/frontend/composables/useAppLocale.ts
 app/frontend/composables/useAuthForms.ts
+app/frontend/composables/usePageTitle.ts
 app/frontend/composables/useUsernameRules.ts
 app/frontend/composables/useColorModeToggle.ts
 app/frontend/composables/useTableState.ts

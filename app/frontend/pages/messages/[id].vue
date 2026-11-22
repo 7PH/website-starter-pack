@@ -27,6 +27,7 @@ const {
     () => conversationsApi.getConversation(conversationId.value),
     { server: false },
 );
+usePageTitle(() => conversation.value?.subject || t('core.messages.title'));
 
 // New message
 const newMessage = ref('');
