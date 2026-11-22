@@ -51,8 +51,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Cleanup on exit
+# Cleanup on exit. A run that applied nothing (--analyze, a no, Ctrl-C, an error) gets its manifest back as it was.
+APPLIED=false
 cleanup() {
+    if [ "$APPLIED" = false ] && [ -f "$TEMP_DIR/manifest.before" ]; then
+        cp "$TEMP_DIR/manifest.before" "$MANIFEST"
+    fi
     rm -rf "$TEMP_DIR"
 }
 trap cleanup EXIT
@@ -751,11 +755,6 @@ resolve_target_ref() {
 #######################################
 # Main
 #######################################
-# Undo the manifest sync of a run that applied nothing.
-restore_manifest() {
-    if [ -f "$TEMP_DIR/manifest.before" ]; then cp "$TEMP_DIR/manifest.before" "$MANIFEST"; fi
-}
-
 main() {
     check_prerequisites
 
@@ -828,7 +827,6 @@ main() {
             echo -e "${GREEN}Everything is up to date!${NC}"
         fi
 
-        restore_manifest
         exit 0
     fi
 
@@ -845,18 +843,21 @@ main() {
     echo -e "${BLUE}───────────────────────────────────────${NC}"
     if [ "$ASSUME_YES" = true ]; then
         confirm=y
+    elif [ ! -t 0 ]; then
+        # An agent or a script: a silent "no" would look like a successful upgrade.
+        echo -e "${RED}No terminal to confirm in. Review the changes above, then run again with --yes.${NC}"
+        exit 1
     else
-        # No terminal (closed stdin): read fails, and that counts as a no.
-        read -r -p "Apply these changes? [y/N] " confirm || confirm=n
+        read -r -p "Apply these changes? [y/N] " confirm
     fi
 
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        restore_manifest
         echo "Aborted."
         exit 0
     fi
 
     echo ""
+    APPLIED=true
     apply_changes
 }
 

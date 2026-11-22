@@ -174,14 +174,14 @@ function switchMode(newMode: AuthMode) {
                         ? [
                               {
                                   label: t('core.auth.loginInstead'),
-                                  color: 'error',
-                                  variant: 'outline',
+                                  color: 'neutral',
+                                  variant: 'solid',
                                   onClick: () => switchMode('login'),
                               },
                               {
                                   label: t('core.auth.forgotPassword'),
-                                  color: 'error',
-                                  variant: 'link',
+                                  color: 'neutral',
+                                  variant: 'outline',
                                   onClick: () => switchMode('forgot-password'),
                               },
                           ]
