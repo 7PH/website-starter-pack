@@ -31,7 +31,7 @@ master, so in-flight upstream work never lands on a sub-app.
 4. Enter plan mode to create upgrade plan for user approval
 
 5. After user approves, execute:
-   - Run `bash scripts/_core/core-update.sh` to apply upgrade
+   - Run `bash scripts/_core/core-update.sh --yes` to apply upgrade (the user already approved, and without a terminal it can't ask)
    - Re-apply preserved local modifications
    - Run validation commands
 

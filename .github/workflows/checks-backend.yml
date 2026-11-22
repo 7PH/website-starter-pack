@@ -43,6 +43,8 @@ jobs:
 
       - name: Ruff (format)
         id: ruff-format
+        # Starterpack only: this file syncs to every app, and app code formatted another way must not start failing CI.
+        if: github.repository == '7PH/website-starter-pack'
         continue-on-error: true
         run: ruff format --check src/ tests/ --config ruff.toml
 

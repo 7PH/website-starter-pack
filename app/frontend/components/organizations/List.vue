@@ -17,6 +17,7 @@ const config = useRuntimeConfig();
 const {
     data: organizations,
     pending,
+    status,
     refresh,
 } = await useAsyncData<UserOrganizationInfo[]>(
     'user-organizations-list',
@@ -85,7 +86,8 @@ async function leaveOrganization(org: UserOrganizationInfo) {
     <div class="organizations-list">
         <OrganizationsPageActions :can-create-org="canCreateOrg" @create="showCreateModal = true" />
 
-        <div v-if="pending" class="loading-state">
+        <!-- 'idle' until the client fetch (server: false) starts, so the server renders the spinner too, not the empty state. -->
+        <div v-if="pending || status === 'idle'" class="loading-state">
             <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary-500" />
         </div>
 

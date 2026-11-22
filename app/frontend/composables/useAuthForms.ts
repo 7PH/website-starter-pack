@@ -66,7 +66,8 @@ export function useAuthForms() {
     /** Failed login or signup, shown in the form rather than a toast, which screen readers may miss and which vanishes. */
     function showFormError(message: string, status?: number) {
         errors.value.general = message;
-        accountExists.value = status === 409;
+        // With usernames on, a 409 may be the username: only offer logging in when it can only be the email.
+        accountExists.value = status === 409 && !usernamesEnabled.value;
     }
 
     /** Before switching forms: carry the email typed in one form over to the others, so it isn't typed twice. */
