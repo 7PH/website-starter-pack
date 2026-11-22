@@ -430,6 +430,11 @@
           "title": "Real Names Enabled",
           "type": "boolean"
         },
+        "uppercase_last_names": {
+          "default": true,
+          "title": "Uppercase Last Names",
+          "type": "boolean"
+        },
         "cms_enabled": {
           "title": "Cms Enabled",
           "type": "boolean"

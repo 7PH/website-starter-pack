@@ -27,6 +27,7 @@ def get_config() -> BackendConfig:
         managed_accounts_enabled=constants.MANAGED_ACCOUNTS_ENABLED,
         usernames_enabled=constants.USERNAMES_ENABLED,
         real_names_enabled=constants.REAL_NAMES_ENABLED,
+        uppercase_last_names=constants.UPPERCASE_LAST_NAMES,
         cms_enabled=constants.CMS_ENABLED,
         username_pattern=USERNAME_PATTERN.pattern,
         llm_enabled=constants.LLM_ENABLED,

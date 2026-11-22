@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from ..constants import PASSWORD_MIN_LENGTH, REAL_NAMES_ENABLED, USERNAMES_ENABLED
+from ..constants import PASSWORD_MIN_LENGTH, REAL_NAMES_ENABLED, UPPERCASE_LAST_NAMES, USERNAMES_ENABLED
 from ..helpers.user_display import display_for
 from ..helpers.username import validate_username
 from .organization import UserOrganizationInfo
@@ -118,7 +118,7 @@ class UserCreate(BaseModel):
     @field_validator("last_name")
     @classmethod
     def to_uppercase(cls, v: str | None) -> str | None:
-        return v.upper() if v is not None else None
+        return v.upper() if v is not None and UPPERCASE_LAST_NAMES else v
 
     @field_validator("username")
     @classmethod

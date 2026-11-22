@@ -26,6 +26,8 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const { showError, showSuccess } = useToastHelpers();
 const composable = useManagedAccountGroup();
+const backendConfig = useBackendConfig();
+const uppercaseLastNames = computed(() => backendConfig.config?.uppercase_last_names !== false);
 
 type Delimiter = ',' | ';' | '\t' | ' ';
 
@@ -105,9 +107,9 @@ const preview = computed<PreviewRow[]>(() => {
         .map((line) => {
             let [first, last] = splitNameLine(line, delim);
             if (lastNameFirst.value) [first, last] = [last, first];
-            // Normalize: title-case first, uppercase last (matches the domatex convention).
+            // Normalize: title-case first, last name like signup does (capitals unless the app turned that off).
             const niceFirst = first.charAt(0).toUpperCase() + first.slice(1);
-            const niceLast = last.toUpperCase();
+            const niceLast = uppercaseLastNames.value ? last.toUpperCase() : last;
             const display_name = [niceFirst, niceLast].filter(Boolean).join(' ');
             return { first_name: niceFirst, last_name: niceLast, display_name };
         })

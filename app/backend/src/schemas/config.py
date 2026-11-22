@@ -30,6 +30,7 @@ class CoreBackendConfig(BaseModel):
     managed_accounts_enabled: bool
     usernames_enabled: bool
     real_names_enabled: bool
+    uppercase_last_names: bool = True
     cms_enabled: bool
 
     # Served so the client validates against one definition instead of a copy.
