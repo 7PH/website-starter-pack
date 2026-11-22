@@ -4,7 +4,6 @@
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { useOrganizationInvitations } from '~/composables/organizations/useOrganizationInvitations';
 import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
-import { formatDate } from '~/utils/formatters';
 
 const props = withDefaults(
     defineProps<{
@@ -27,7 +26,10 @@ const emit = defineEmits<{
     removeMember: [member: OrganizationMemberRead];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+// In the app's language, not the browser's (which also differs between server and client render).
+const shortDate = (value: string) =>
+    new Date(value).toLocaleDateString(locale.value, { day: 'numeric', month: 'short' });
 const config = useRuntimeConfig();
 const modal = useModalStore();
 
@@ -64,8 +66,10 @@ const memberColumns = computed(() => {
         { accessorKey: 'email', header: t('core.organizations.email') },
         { accessorKey: 'name', header: t('core.organizations.name') },
         { accessorKey: 'role', header: t('core.organizations.admin') },
-        { accessorKey: 'premium', header: t('core.organizations.premium') },
     ];
+    // Only where premium means something: a subscribed org, or seats given some other way.
+    if (props.org.stripe_premium || (props.org.members ?? []).some((m) => m.has_premium_seat))
+        cols.push({ accessorKey: 'premium', header: t('core.organizations.premium') });
     if (props.isOwner) cols.push({ accessorKey: 'actions', header: '' });
     return cols;
 });
@@ -230,8 +234,16 @@ function handleInvite(email: string, isAdmin: boolean) {
                                 />
                                 <UBadge v-else :label="t('core.organizations.member')" color="neutral" size="xs" />
                                 <span class="pending-expiry">
-                                    {{ t('core.organizations.invitationFrom', { orgName: '' }) }}
-                                    · {{ formatDate(inv.expires_at) }}
+                                    {{
+                                        inv.invited_by_name
+                                            ? t('core.organizations.invitedByExpires', {
+                                                  name: inv.invited_by_name,
+                                                  date: shortDate(inv.expires_at),
+                                              })
+                                            : t('core.organizations.invitationExpires', {
+                                                  date: shortDate(inv.expires_at),
+                                              })
+                                    }}
                                 </span>
                             </div>
                         </div>
