@@ -598,7 +598,7 @@
             "dropTitle": "Drop your photos here",
             "dropOr": "or",
             "choose": "Choose photos",
-            "dropHint": "JPEG, PNG or WebP, up to 15 MB each. You can pick several at once.",
+            "dropHint": "JPEG, PNG, WebP or GIF (animated too), up to 15 MB each. You can pick several at once.",
             "processing": "Preparing…",
             "dismiss": "Dismiss",
             "empty": "No photos yet. Add your first ones above.",
@@ -627,11 +627,12 @@
             "pickerTitle": "Choose a photo",
             "errors": {
                 "tooBig": "This photo is too big (15 MB max).",
-                "wrongType": "This file type is not supported. Use JPEG, PNG or WebP.",
+                "wrongType": "This file type is not supported. Use JPEG, PNG, WebP or GIF.",
                 "unreadable": "This photo could not be read. It may be damaged or too large.",
                 "generic": "Upload failed. Please try again.",
                 "tooManyPixels": "This photo is too large (more than 40 megapixels).",
-                "sessionExpired": "Your session has expired. Please log in again."
+                "sessionExpired": "Your session has expired. Please log in again.",
+                "animationTooBig": "This animation is too long or too large. Keep it under 300 frames, or make it smaller."
             },
             "unsavedTitle": "Save the changes to this photo?",
             "unsavedMessage": "You changed the description or the main subject of this photo.",
@@ -640,7 +641,7 @@
             "missingAlt": "{n} photo shown on your site has no description yet. It is read aloud to blind visitors and helps Google. | {n} photos shown on your site have no description yet. They are read aloud to blind visitors and help Google.",
             "showMissing": "Show these photos",
             "showAll": "Show all",
-            "dropHintShort": "JPEG, PNG, WebP · 15 MB max",
+            "dropHintShort": "JPEG, PNG, WebP, GIF · 15 MB max",
             "search": "Search by name or description",
             "sort": "Sort",
             "sortNewest": "Newest first",

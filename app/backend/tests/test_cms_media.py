@@ -41,6 +41,16 @@ def _image_bytes(size=(100, 50), mode="RGB", fmt="JPEG", color=(200, 30, 30), **
     return buf.getvalue()
 
 
+def _animation_bytes(size=(1000, 500), frames=3, fmt="GIF") -> bytes:
+    """An animation whose frames each have their own color and duration."""
+    images = [Image.new("RGB", size, (60 * i, 30, 200 - 60 * i)) for i in range(frames)]
+    buf = io.BytesIO()
+    images[0].save(
+        buf, fmt, save_all=True, append_images=images[1:], duration=[100 + 50 * i for i in range(frames)], loop=0
+    )
+    return buf.getvalue()
+
+
 def _decode(data: bytes) -> Image.Image:
     img = Image.open(io.BytesIO(data))
     img.load()
@@ -167,7 +177,7 @@ class TestProcessImage:
         assert exc.value.status_code == 413
 
     def test_rejects_wrong_type_whatever_the_name(self):
-        for data in (b"<svg xmlns='http://www.w3.org/2000/svg'></svg>", b"GIF89a" + b"\x00" * 50, b"plain text"):
+        for data in (b"<svg xmlns='http://www.w3.org/2000/svg'></svg>", _image_bytes(fmt="BMP"), b"plain text"):
             with pytest.raises(HTTPException) as exc:
                 cms_media.process_image(data)
             assert exc.value.status_code == 415
@@ -180,6 +190,36 @@ class TestProcessImage:
             pytest.raises(HTTPException) as exc,
         ):
             cms_media.process_image(data)
+        assert exc.value.status_code == 422
+
+    @pytest.mark.parametrize("fmt", ["GIF", "WEBP"])
+    def test_animation_stays_animated_at_every_width(self, fmt):
+        width, height, files = cms_media.process_image(_animation_bytes(fmt=fmt))
+        assert (width, height) == (960, 480)
+        assert sorted(files) == [480, 960]
+        for w, data in files.items():
+            out = Image.open(io.BytesIO(data))
+            assert (out.format, out.n_frames, out.width) == ("WEBP", 3, w)
+            out.seek(2)
+            out.load()
+            assert out.info["duration"] == 200
+
+    def test_static_gif_is_a_plain_photo(self):
+        width, _, files = cms_media.process_image(_image_bytes(size=(600, 300), fmt="GIF"))
+        assert width == 600 and sorted(files) == [480]
+        assert getattr(_decode(files[480]), "n_frames", 1) == 1
+
+    def test_rejects_animation_over_the_frame_cap(self, monkeypatch):
+        monkeypatch.setattr(cms_media, "MAX_FRAMES", 2)
+        with pytest.raises(HTTPException) as exc:
+            cms_media.process_image(_animation_bytes(size=(50, 50)))
+        assert exc.value.status_code == 422
+        assert "frames" in exc.value.detail
+
+    def test_rejects_animation_over_the_pixel_cap(self, monkeypatch):
+        monkeypatch.setattr(cms_media, "MAX_ANIMATED_PIXELS", 3 * 50 * 50 - 1)
+        with pytest.raises(HTTPException) as exc:
+            cms_media.process_image(_animation_bytes(size=(50, 50)))
         assert exc.value.status_code == 422
 
     def test_rejects_truncated_image(self):

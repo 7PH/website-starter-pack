@@ -5,14 +5,15 @@ import { getErrorStatus, withStatus } from '~/utils/errors';
 const PAGE_SIZE = 60;
 // Same cap as the backend, below the host nginx body limit.
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
-export const CMS_MEDIA_ACCEPT = 'image/jpeg,image/png,image/webp';
+export const CMS_MEDIA_ACCEPT = 'image/jpeg,image/png,image/webp,image/gif';
 
-/** Status code of a failed upload → translation key. Mirrors the backend's 413/415/422/400. */
-export function cmsUploadErrorKey(status: number | undefined): string {
+/** Failed upload → translation key. Mirrors the backend's 413/415/422/400; its 422 detail tells an animation from a still. */
+export function cmsUploadErrorKey(status: number | undefined, detail = ''): string {
     if (status === 401) return 'cms.media.errors.sessionExpired';
     if (status === 413) return 'cms.media.errors.tooBig';
     if (status === 415) return 'cms.media.errors.wrongType';
-    if (status === 422) return 'cms.media.errors.tooManyPixels';
+    if (status === 422)
+        return detail.startsWith('Animation') ? 'cms.media.errors.animationTooBig' : 'cms.media.errors.tooManyPixels';
     if (status === 400) return 'cms.media.errors.unreadable';
     return 'cms.media.errors.generic';
 }
@@ -139,7 +140,7 @@ function uploadWithProgress(
         xhr.responseType = 'json';
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300 && xhr.response) resolve(xhr.response);
-            else reject(withStatus(new Error(xhr.statusText), xhr.status));
+            else reject(withStatus(new Error(xhr.response?.detail ?? xhr.statusText), xhr.status));
         };
         // A promise left pending would stall every upload queued after this one.
         xhr.onerror = xhr.onabort = xhr.ontimeout = () => reject(new Error('Network error'));
@@ -203,7 +204,7 @@ export function useCmsMediaUpload(onUploaded?: (media: CmsMediaRead) => void) {
                 // Same as useApi on an expired token: drop it so the user logs in again.
                 if (status === 401) auth.logout();
                 const target = live();
-                if (target) target.errorKey = cmsUploadErrorKey(status);
+                if (target) target.errorKey = cmsUploadErrorKey(status, error instanceof Error ? error.message : '');
             }
         }
     }

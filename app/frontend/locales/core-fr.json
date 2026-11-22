@@ -598,7 +598,7 @@
             "dropTitle": "Déposez vos photos ici",
             "dropOr": "ou",
             "choose": "Choisir des photos",
-            "dropHint": "JPEG, PNG ou WebP, 15 Mo maximum par photo. Vous pouvez en choisir plusieurs à la fois.",
+            "dropHint": "JPEG, PNG, WebP ou GIF (animé aussi), 15 Mo maximum par photo. Vous pouvez en choisir plusieurs à la fois.",
             "processing": "Préparation…",
             "dismiss": "Fermer",
             "empty": "Aucune photo pour l'instant. Ajoutez vos premières photos ci-dessus.",
@@ -627,11 +627,12 @@
             "pickerTitle": "Choisir une photo",
             "errors": {
                 "tooBig": "Cette photo est trop lourde (15 Mo maximum).",
-                "wrongType": "Ce type de fichier n'est pas accepté. Utilisez JPEG, PNG ou WebP.",
+                "wrongType": "Ce type de fichier n'est pas accepté. Utilisez JPEG, PNG, WebP ou GIF.",
                 "unreadable": "Impossible de lire cette photo. Elle est peut-être abîmée ou trop grande.",
                 "generic": "L'envoi a échoué. Réessayez.",
                 "tooManyPixels": "Cette photo est trop grande (plus de 40 mégapixels).",
-                "sessionExpired": "Votre session a expiré. Reconnectez-vous."
+                "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
+                "animationTooBig": "Cette animation est trop longue ou trop grande. Restez sous 300 images, ou réduisez sa taille."
             },
             "unsavedTitle": "Enregistrer les modifications de cette photo ?",
             "unsavedMessage": "Vous avez modifié la description ou le sujet principal de cette photo.",
@@ -640,7 +641,7 @@
             "missingAlt": "{n} photo affichée sur votre site n'a pas encore de description. Elle est lue à voix haute aux personnes aveugles et aide Google. | {n} photos affichées sur votre site n'ont pas encore de description. Elle est lue à voix haute aux personnes aveugles et aide Google.",
             "showMissing": "Voir les photos concernées",
             "showAll": "Tout afficher",
-            "dropHintShort": "JPEG, PNG, WebP · 15 Mo max",
+            "dropHintShort": "JPEG, PNG, WebP, GIF · 15 Mo max",
             "search": "Rechercher par nom ou description",
             "sort": "Trier",
             "sortNewest": "Plus récentes",
