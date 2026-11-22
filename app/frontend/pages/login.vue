@@ -28,6 +28,10 @@ const {
     forgotPasswordForm,
     isLoading,
     errors,
+    accountExists,
+    showFormError,
+    carryEmail,
+    clearErrors,
     validateLogin,
     validateSignup,
     validateForgotPassword,
@@ -50,6 +54,7 @@ const title = computed(() => {
             return t('core.auth.forgotPassword');
     }
 });
+usePageTitle(title);
 
 function validateSignupWithMetadata(): boolean {
     const baseValid = validateSignup();
@@ -58,10 +63,6 @@ function validateSignupWithMetadata(): boolean {
 }
 
 // Actions
-// Shown in the form rather than a toast, which screen readers may miss and which vanishes.
-function showFormError(message: string) {
-    errors.value.general = message;
-}
 
 async function handleLogin() {
     if (!validateLogin()) return;
@@ -93,8 +94,9 @@ async function handleForgotPassword() {
 }
 
 function switchMode(newMode: AuthMode) {
+    carryEmail();
+    clearErrors();
     mode.value = newMode;
-    errors.value = {};
 }
 </script>
 
@@ -162,7 +164,30 @@ function switchMode(newMode: AuthMode) {
 
         <!-- Signup Form -->
         <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
-            <UAlert v-if="errors.general" color="error" role="alert" :title="errors.general" />
+            <UAlert
+                v-if="errors.general"
+                color="error"
+                role="alert"
+                :title="errors.general"
+                :actions="
+                    accountExists
+                        ? [
+                              {
+                                  label: t('core.auth.loginInstead'),
+                                  color: 'error',
+                                  variant: 'outline',
+                                  onClick: () => switchMode('login'),
+                              },
+                              {
+                                  label: t('core.auth.forgotPassword'),
+                                  color: 'error',
+                                  variant: 'link',
+                                  onClick: () => switchMode('forgot-password'),
+                              },
+                          ]
+                        : undefined
+                "
+            />
 
             <div v-if="realNamesEnabled" class="flex gap-3">
                 <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">

@@ -54,9 +54,31 @@ export function useAuthForms() {
         }
     }
 
+    // Set when signup hit an existing account, to offer logging in or a reset instead.
+    const accountExists = ref(false);
+
     // Clear all errors
     function clearErrors() {
         errors.value = {};
+        accountExists.value = false;
+    }
+
+    /** Failed login or signup, shown in the form rather than a toast, which screen readers may miss and which vanishes. */
+    function showFormError(message: string, status?: number) {
+        errors.value.general = message;
+        accountExists.value = status === 409;
+    }
+
+    /** Before switching forms: carry the email typed in one form over to the others, so it isn't typed twice. */
+    function carryEmail() {
+        const email =
+            signupForm.email ||
+            (loginForm.identifier.includes('@') ? loginForm.identifier : '') ||
+            forgotPasswordForm.email;
+        if (!email) return;
+        loginForm.identifier ||= email;
+        signupForm.email ||= email;
+        forgotPasswordForm.email ||= email;
     }
 
     // Validation functions
@@ -154,8 +176,6 @@ export function useAuthForms() {
         forgotPasswordForm,
         resetPasswordForm,
 
-        // Password visibility
-
         // State
         usernamesEnabled,
         realNamesEnabled,
@@ -170,6 +190,9 @@ export function useAuthForms() {
         validateResetPassword,
 
         // Utilities
+        accountExists,
+        showFormError,
+        carryEmail,
         clearErrors,
         resetForms,
         setEmail,

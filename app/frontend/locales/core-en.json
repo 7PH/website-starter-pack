@@ -53,7 +53,8 @@
             "invalidVerificationLink": "Invalid or expired verification link",
             "hidePassword": "Hide password",
             "showPassword": "Show password",
-            "passwordResetTitle": "Password Reset"
+            "passwordResetTitle": "Password Reset",
+            "loginInstead": "Log in instead"
         },
         "user": {
             "display": {
@@ -238,7 +239,7 @@
             "createSuccessDescription": "{name} has been created. You are now the Owner.",
             "createFailed": "Failed to create organization",
             "admin": "Owner",
-            "roleTooltip": "Owners manage the organization and billing. Members just access shared features.",
+            "roleTooltip": "Owners manage the organization and its members. Members just access shared features.",
             "member": "Member",
             "manage": "Manage",
             "leave": "Leave",
@@ -388,7 +389,9 @@
             "invitationCanceled": "Invitation canceled",
             "invitationCancelFailed": "Failed to cancel invitation",
             "invitationSendFailed": "Failed to send invitation",
-            "invitationLoginPrompt": "Log in or sign up to accept this invitation."
+            "invitationLoginPrompt": "Log in or sign up to accept this invitation.",
+            "invitedByExpires": "Invited by {name} · expires {date}",
+            "invitationExpires": "Expires {date}"
         },
         "theme": {
             "light": "Light mode",

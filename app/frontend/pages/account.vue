@@ -9,6 +9,7 @@ definePageMeta({
 });
 
 const { t } = useI18n();
+usePageTitle(() => t('core.account.title'));
 const route = useRoute();
 const router = useRouter();
 

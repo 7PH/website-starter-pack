@@ -32,6 +32,11 @@ const {
     resetPasswordForm,
     isLoading,
     errors,
+    accountExists,
+    showFormError,
+    carryEmail,
+    clearErrors,
+    setEmail,
     validateLogin,
     validateSignup,
     validateForgotPassword,
@@ -47,15 +52,9 @@ watch(isOpen, (open) => {
         // Reset to initial mode or default
         const opts = options.value;
         mode.value = opts?.initialMode || 'login';
-        errors.value = {};
+        clearErrors();
         isLoading.value = false;
-
-        // Pre-fill email if provided
-        if (opts?.email) {
-            loginForm.identifier = opts.email;
-            signupForm.email = opts.email;
-            forgotPasswordForm.email = opts.email;
-        }
+        if (opts?.email) setEmail(opts.email);
     }
 });
 
@@ -90,11 +89,6 @@ function validateSignupWithMetadata(): boolean {
 function onAuthSuccess() {
     options.value.onSuccess?.();
     close(true);
-}
-
-// Shown in the form rather than a toast, which screen readers may miss and which vanishes.
-function showFormError(message: string) {
-    errors.value.general = message;
 }
 
 async function handleLogin() {
@@ -139,8 +133,9 @@ async function handleResetPassword() {
 }
 
 function switchMode(newMode: AuthModalMode) {
+    carryEmail();
+    clearErrors();
     mode.value = newMode;
-    errors.value = {};
 }
 </script>
 
@@ -235,7 +230,30 @@ function switchMode(newMode: AuthModalMode) {
 
                 <!-- Signup Form -->
                 <form v-else-if="mode === 'signup'" class="flex flex-col gap-5" @submit.prevent="handleSignup">
-                    <UAlert v-if="errors.general" color="error" role="alert" :title="errors.general" />
+                    <UAlert
+                        v-if="errors.general"
+                        color="error"
+                        role="alert"
+                        :title="errors.general"
+                        :actions="
+                            accountExists
+                                ? [
+                                      {
+                                          label: t('core.auth.loginInstead'),
+                                          color: 'error',
+                                          variant: 'outline',
+                                          onClick: () => switchMode('login'),
+                                      },
+                                      {
+                                          label: t('core.auth.forgotPassword'),
+                                          color: 'error',
+                                          variant: 'link',
+                                          onClick: () => switchMode('forgot-password'),
+                                      },
+                                  ]
+                                : undefined
+                        "
+                    />
 
                     <div v-if="realNamesEnabled" class="flex gap-3">
                         <UFormField :label="t('core.auth.firstName')" :error="errors.firstName" class="flex-1">

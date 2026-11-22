@@ -14,6 +14,7 @@ definePageMeta({
 const MessagesPageActions = useOverridable('MessagesPageActions', MessagesPageActionsDefault);
 
 const { t } = useI18n();
+usePageTitle(() => t('core.messages.title'));
 
 // Filters
 const includeClosed = ref(false);
