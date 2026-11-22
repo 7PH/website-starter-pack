@@ -14,6 +14,9 @@ from datetime import datetime, timedelta
 import stripe
 from fastapi import HTTPException
 
+# App params go last in each call's dict, so a key set by the app wins over core's (kwargs would raise on a duplicate).
+from .stripe_ext import BILLING_PORTAL_PARAMS, CHECKOUT_SESSION_PARAMS, CUSTOMER_PARAMS
+
 logger = logging.getLogger(__name__)
 
 # In-process TTL cache for /stripe/subscription. Eliminates per-pageload Stripe
@@ -92,9 +95,7 @@ def sync_org_customer(
 
         # Create new customer for organization
         customer = stripe.Customer.create(
-            email=email,
-            name=name,
-            metadata={"org_id": str(org_id)},
+            **{"email": email, "name": name, "metadata": {"org_id": str(org_id)}, **CUSTOMER_PARAMS}
         )
         return customer.id
 
@@ -221,9 +222,7 @@ def sync_customer(
 
         # Create new customer (default path)
         customer = stripe.Customer.create(
-            email=email,
-            name=name,
-            metadata={"user_id": str(user_id)},
+            **{"email": email, "name": name, "metadata": {"user_id": str(user_id)}, **CUSTOMER_PARAMS}
         )
         return customer.id
 
@@ -328,8 +327,7 @@ def create_billing_portal_session(
 
     try:
         session = stripe.billing_portal.Session.create(
-            customer=stripe_customer_id,
-            return_url=return_url,
+            **{"customer": stripe_customer_id, "return_url": return_url, **BILLING_PORTAL_PARAMS}
         )
         return session.url
 
@@ -361,12 +359,15 @@ def create_checkout_session(
 
     try:
         session = stripe.checkout.Session.create(
-            customer=stripe_customer_id,
-            payment_method_types=["card"],
-            line_items=[{"price": price_id, "quantity": 1}],
-            mode="subscription",
-            success_url=success_url,
-            cancel_url=cancel_url,
+            **{
+                "customer": stripe_customer_id,
+                "payment_method_types": ["card"],
+                "line_items": [{"price": price_id, "quantity": 1}],
+                "mode": "subscription",
+                "success_url": success_url,
+                "cancel_url": cancel_url,
+                **CHECKOUT_SESSION_PARAMS,
+            }
         )
         # The customer's status is about to change: don't serve a cached "not premium" when they return.
         invalidate_subscription_cache(stripe_customer_id)
