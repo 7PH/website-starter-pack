@@ -567,7 +567,10 @@
                 "importSuccess": "{n} comptes importés ({skipped} ignorés)",
                 "importFailed": "Impossible d'importer les comptes.",
                 "importEmpty": "Collez des noms ci-dessus pour prévisualiser."
-            }
+            },
+            "switchWarning": "Vous êtes connecté en tant que {name}. Vous connecter avec ce lien vous déconnectera de ce compte, dans tous vos onglets.",
+            "switchContinue": "Continuer avec ce lien",
+            "switchBack": "Retour"
         },
         "errorPage": {
             "notFoundTitle": "Page introuvable",

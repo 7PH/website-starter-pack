@@ -567,7 +567,10 @@
                 "importSuccess": "Imported {n} accounts ({skipped} skipped)",
                 "importFailed": "Couldn't import accounts.",
                 "importEmpty": "Paste names above to preview."
-            }
+            },
+            "switchWarning": "You are signed in as {name}. Signing in with this link will sign you out of that account, in every tab.",
+            "switchContinue": "Continue with this link",
+            "switchBack": "Go back"
         },
         "errorPage": {
             "notFoundTitle": "Page not found",
