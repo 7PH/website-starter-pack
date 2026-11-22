@@ -10,7 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import text
 
-from ..helpers.db import SessionLocal
+from ..helpers.db import engine
 from ..helpers.logging import get_logger
 
 logger = get_logger(__name__)
@@ -34,7 +34,7 @@ def _run_once_per_cluster(lock_id: int, log_name: str, fn: Callable) -> None:
     Use when running uvicorn with >1 worker (BACKEND_WORKERS>1), or when scaling
     backend pods horizontally. All workers tick the cron at the same moment;
     only the worker that grabs the lock executes. The lock auto-releases when
-    the session disconnects, so a crashed worker won't hold it past the run.
+    the connection closes, so a crashed worker won't hold it past the run.
 
     `lock_id` must be a stable 64-bit signed int. Pick a hand-chosen constant
     per job (no random/hash) so the lock identity is consistent across deploys.
@@ -44,34 +44,30 @@ def _run_once_per_cluster(lock_id: int, log_name: str, fn: Callable) -> None:
     cluster-singleton job that runs during peak traffic, size DB_POOL_SIZE
     accordingly.
     """
-    session = SessionLocal()
+    # A Connection, not a Session: a Session hands its connection back to the pool on commit, so the unlock would run
+    # on another connection and the lock would stay held by an idle pooled one, skipping every later tick.
     try:
-        got_lock = session.execute(text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id}).scalar()
-        # Close the implicit transaction SQLAlchemy opened for the SELECT above.
-        # Without this commit, the lock session is "idle in transaction" for the
-        # whole job, which DB_IDLE_IN_TRANSACTION_TIMEOUT_MS would kill,
-        # releasing the lock mid-run. The advisory lock itself is session-level
-        # and survives the commit.
-        session.commit()
-        if not got_lock:
-            logger.debug(f"{log_name}: another worker holds the cluster lock; skipping this tick")
-            return
-        try:
-            fn()
-        finally:
+        with engine.connect() as conn:
+            got_lock = conn.execute(text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id}).scalar()
+            # Ends the implicit transaction, or the connection sits "idle in transaction" for the whole job and
+            # DB_IDLE_IN_TRANSACTION_TIMEOUT_MS kills it mid-run. The advisory lock is session-level and survives.
+            conn.commit()
+            if not got_lock:
+                logger.debug(f"{log_name}: another worker holds the cluster lock; skipping this tick")
+                return
             try:
-                session.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": lock_id})
-                session.commit()
-            except Exception:
-                # Connection went bad. Invalidate it so the pool discards it
-                # instead of handing the still-locked connection back out.
-                # The lock dies when the backend closes the connection.
-                session.invalidate()
-                raise
+                fn()
+            finally:
+                try:
+                    conn.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": lock_id})
+                    conn.commit()
+                except Exception:
+                    # Connection went bad: the pool must discard it rather than hand a still-locked one back out.
+                    # The lock dies when the backend closes the connection.
+                    conn.invalidate()
+                    raise
     except Exception as e:
         logger.error(f"{log_name}: cluster-singleton execution failed: {e}", exc_info=True)
-    finally:
-        session.close()
 
 
 def register_cron_task(
