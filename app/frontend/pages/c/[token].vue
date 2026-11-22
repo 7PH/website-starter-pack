@@ -12,6 +12,7 @@ const router = useRouter();
 const { showError } = useToastHelpers();
 const api = useApi();
 const accessCode = useAccessCode();
+const auth = useAuth();
 const pickerLink = usePickerLink();
 
 const token = computed(() => String(route.params.token));
@@ -23,6 +24,19 @@ const notFound = ref(false);
 const selectedId = ref<number | null>(null);
 const code = ref('');
 const isSigningIn = ref(false);
+
+// Signing in here replaces the session in every tab. An owner or admin opening their own group's link must be asked
+// first, or they're silently switched to a managed account. Managed accounts switching between themselves need no warning.
+const switchConfirmed = ref(false);
+const replacesAccount = computed(
+    () => auth.isLoggedIn && auth.user?.managed_account_group_id == null && !switchConfirmed.value,
+);
+let pendingPersonalLink = false;
+
+function confirmSwitch() {
+    switchConfirmed.value = true;
+    if (pendingPersonalLink) signIn();
+}
 
 // A personal link (e.g. a printed QR code) carries `#a=<managed account id>&code=<code>`.
 // It lives in the fragment so the code never reaches the server or its logs.
@@ -44,7 +58,8 @@ async function load() {
             history.replaceState(history.state, '', window.location.pathname + window.location.search);
             selectedId.value = link.id;
             code.value = link.code;
-            signIn();
+            if (replacesAccount.value) pendingPersonalLink = true;
+            else signIn();
             return;
         }
         // Pre-select the last name this browser used, if any.
@@ -117,6 +132,25 @@ function back() {
             :description="t('core.managed_accounts.linkNotFoundDescription')"
             icon="i-lucide-link-2-off"
         />
+
+        <UCard v-else-if="payload && replacesAccount" class="picker__switch">
+            <div class="flex flex-col gap-4 text-center">
+                <UIcon name="i-lucide-user-round-x" class="mx-auto size-10 text-warning" />
+                <p class="text-base font-medium">
+                    {{
+                        t('core.managed_accounts.switchWarning', { name: auth.user?.display_label ?? auth.user?.email })
+                    }}
+                </p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <UButton :label="t('core.managed_accounts.switchBack')" color="neutral" variant="outline" to="/" />
+                    <UButton
+                        :label="t('core.managed_accounts.switchContinue')"
+                        color="warning"
+                        @click="confirmSwitch"
+                    />
+                </div>
+            </div>
+        </UCard>
 
         <template v-else-if="payload">
             <header class="picker__header">

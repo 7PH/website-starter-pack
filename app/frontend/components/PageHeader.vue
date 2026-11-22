@@ -123,7 +123,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
                     <UIcon name="i-lucide-home" />
                 </NuxtLink>
                 <ClientOnly>
-                    <!-- Icon only on phones, so the nav stays on one line. -->
+                    <!-- Icon only below lg: with a few app items, labels don't fit a phone in landscape. -->
                     <NuxtLink
                         v-for="item in navExtensions"
                         :key="item.to"
@@ -132,7 +132,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
                         class="nav-link"
                     >
                         <UIcon :name="item.icon" />
-                        <span class="max-sm:hidden whitespace-nowrap">{{ item.label }}</span>
+                        <span class="max-lg:hidden whitespace-nowrap">{{ item.label }}</span>
                     </NuxtLink>
                 </ClientOnly>
             </nav>
@@ -232,7 +232,8 @@ function onUserMenuCloseAutoFocus(event: Event) {
 }
 
 .nav-links {
-    @apply flex items-center gap-1;
+    /* Many app items: the nav scrolls in the header rather than pushing the page wider than the screen. */
+    @apply flex items-center gap-1 min-w-0 overflow-x-auto;
 }
 
 .nav-link {
@@ -258,7 +259,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
 }
 
 .nav-actions {
-    @apply flex items-center gap-3;
+    @apply flex items-center gap-3 shrink-0;
 }
 
 .nav-icon-btn {
