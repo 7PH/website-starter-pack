@@ -59,6 +59,11 @@ def is_enabled() -> bool:
     return STRIPE_ENABLED
 
 
+def _customer_metadata(**ids: str) -> dict:
+    """App metadata plus core's id, which wins: customer reuse and webhooks look customers up by it."""
+    return {**CUSTOMER_PARAMS.get("metadata", {}), **ids}
+
+
 def sync_org_customer(
     org_id: int,
     email: str,
@@ -95,7 +100,7 @@ def sync_org_customer(
 
         # Create new customer for organization
         customer = stripe.Customer.create(
-            **{"email": email, "name": name, "metadata": {"org_id": str(org_id)}, **CUSTOMER_PARAMS}
+            **{**CUSTOMER_PARAMS, "email": email, "name": name, "metadata": _customer_metadata(org_id=str(org_id))}
         )
         return customer.id
 
@@ -222,7 +227,7 @@ def sync_customer(
 
         # Create new customer (default path)
         customer = stripe.Customer.create(
-            **{"email": email, "name": name, "metadata": {"user_id": str(user_id)}, **CUSTOMER_PARAMS}
+            **{**CUSTOMER_PARAMS, "email": email, "name": name, "metadata": _customer_metadata(user_id=str(user_id))}
         )
         return customer.id
 

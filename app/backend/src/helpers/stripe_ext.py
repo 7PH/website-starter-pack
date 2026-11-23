@@ -30,5 +30,6 @@ CHECKOUT_SESSION_PARAMS: dict[str, Any] = {}
 # stripe.billing_portal.Session.create
 BILLING_PORTAL_PARAMS: dict[str, Any] = {}
 
-# stripe.Customer.create, for users and organizations (not applied to existing customers)
+# stripe.Customer.create, for users and organizations (not applied to existing customers). `metadata` is merged with
+# core's (user_id / org_id, which win); other keys set here win over core's (eg `email`, `name`)
 CUSTOMER_PARAMS: dict[str, Any] = {}
