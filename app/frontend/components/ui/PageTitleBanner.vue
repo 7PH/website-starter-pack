@@ -10,9 +10,9 @@ defineProps<{
     <div class="page-title-banner" :class="{ compact, 'has-subnav': $slots.subnav }">
         <div class="banner-content page-content-width">
             <div class="banner-left">
-                <h4 class="font-semibold text-2xl mb-3 text-slate-800 dark:text-slate-100">
+                <h1 class="font-semibold text-2xl mb-3 text-slate-800 dark:text-slate-100">
                     <slot />
-                </h4>
+                </h1>
                 <div class="text-slate-600 dark:text-slate-400">
                     <slot name="subtitle" />
                 </div>

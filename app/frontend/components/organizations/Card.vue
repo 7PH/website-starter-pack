@@ -12,7 +12,7 @@ const emit = defineEmits<{
 }>();
 
 const isAdmin = computed(() => props.organization.is_admin);
-const orgLink = computed(() => `/organizations/${props.organization.organization_id}`);
+const orgLink = computed(() => organizationLink(props.organization.organization_id));
 
 function handleLeave(event: Event) {
     event.preventDefault();

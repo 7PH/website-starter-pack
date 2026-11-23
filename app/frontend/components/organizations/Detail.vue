@@ -265,7 +265,7 @@ onMounted(() => {
                         {{ org.name }}
                     </h1>
                     <span class="text-sm text-muted">
-                        {{ t('core.organizations.contactEmail') }}: {{ org.email }}
+                        {{ t('core.organizations.contactEmailLine', { email: org.email }) }}
                     </span>
                     <div class="mt-1 flex flex-wrap gap-1.5">
                         <UBadge

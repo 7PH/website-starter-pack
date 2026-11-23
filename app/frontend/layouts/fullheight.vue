@@ -18,9 +18,14 @@ const { uiLocale } = useAppLocale();
 <template>
     <UiPageWrapper>
         <UApp :locale="uiLocale" class="flex flex-col flex-1 min-h-0">
+            <UiSkipLink />
             <ImpersonationBanner />
             <component :is="PageHeader" />
-            <main class="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden">
+            <main
+                id="main-content"
+                tabindex="-1"
+                class="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden outline-none"
+            >
                 <NuxtPage />
             </main>
             <component :is="PageFooter" v-if="showFooter" />

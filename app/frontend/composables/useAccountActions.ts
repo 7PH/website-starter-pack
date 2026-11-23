@@ -15,6 +15,7 @@ export function useAccountActions() {
     const { showSuccess, showError } = useToastHelpers();
 
     // Rate limiting is generic across endpoints, so its message doesn't need a per-call key.
+    const backendConfig = useBackendConfig();
     const DEFAULT_STATUS_KEYS: Record<number, string> = { 429: 'core.errors.tooManyRequests' };
 
     /**
@@ -37,10 +38,12 @@ export function useAccountActions() {
             return true;
         } catch (error) {
             const mapped = { ...DEFAULT_STATUS_KEYS, ...statusKeys }[getErrorStatus(error) ?? 0];
+            const wait = getErrorStatus(error) === 429 ? getRetryAfter(error) : undefined;
+            const message = wait ? t('core.errors.tryAgainIn', { wait: formatWait(wait) }) : mapped && t(mapped);
             if (onError) {
-                onError(mapped ? t(mapped) : getErrorMessage(error, t(errorKey)), getErrorStatus(error));
-            } else if (mapped) {
-                showError(new Error(t(mapped)), mapped);
+                onError(message || getErrorMessage(error, t(errorKey)), getErrorStatus(error));
+            } else if (message) {
+                showError(new Error(message), mapped ?? errorKey);
             } else {
                 showError(error, errorKey);
             }
@@ -104,7 +107,8 @@ export function useAccountActions() {
             (response) => {
                 auth.saveUserToken(response);
                 // Fire and forget: the account exists either way, and the user can resend from their account.
-                sendVerificationEmail();
+                // No mail service: nothing would be sent, so don't claim it was.
+                if (backendConfig.config?.email_enabled !== false) sendVerificationEmail();
             },
             // A 409 here is either field, and the response can't say which, so the
             // message names both. Without usernames it can only be the email.

@@ -435,6 +435,11 @@
           "title": "Uppercase Last Names",
           "type": "boolean"
         },
+        "email_enabled": {
+          "default": true,
+          "title": "Email Enabled",
+          "type": "boolean"
+        },
         "cms_enabled": {
           "title": "Cms Enabled",
           "type": "boolean"

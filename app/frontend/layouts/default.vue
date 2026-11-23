@@ -18,13 +18,21 @@ const { uiLocale } = useAppLocale();
 <template>
     <UiPageWrapper>
         <UApp :locale="uiLocale" class="flex flex-col flex-1 min-h-0">
+            <UiSkipLink />
             <ImpersonationBanner />
             <component :is="PageHeader" />
-            <main class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-                <!-- error.vue fills the slot, routes get the page. -->
-                <slot><NuxtPage /></slot>
+            <!-- The footer scrolls with the page: pinned, it took a band of every screen. Still at the bottom on a short page. -->
+            <main
+                id="main-content"
+                tabindex="-1"
+                class="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden outline-none"
+            >
+                <div class="flex flex-1 flex-col">
+                    <!-- error.vue fills the slot, routes get the page. -->
+                    <slot><NuxtPage /></slot>
+                </div>
+                <component :is="PageFooter" v-if="showFooter" />
             </main>
-            <component :is="PageFooter" v-if="showFooter" />
 
             <!-- Global modals -->
             <ModalConfirm />

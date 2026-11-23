@@ -118,7 +118,8 @@ function onUserMenuCloseAutoFocus(event: Event) {
 
         <div class="header-content page-box" :class="{ '!max-w-none': fullWidth }">
             <!-- Left: Navigation -->
-            <nav class="nav-links">
+            <!-- Touch screens: every header control at least 44x44, the size a finger can hit. -->
+            <nav class="nav-links pointer-coarse:[&_a]:min-h-11 pointer-coarse:[&_a]:min-w-11">
                 <NuxtLink to="/" class="nav-icon-link" :aria-label="t('core.common.home')">
                     <UIcon name="i-lucide-home" />
                 </NuxtLink>
@@ -139,7 +140,9 @@ function onUserMenuCloseAutoFocus(event: Event) {
             </nav>
 
             <!-- Right: Actions -->
-            <div class="nav-actions">
+            <div
+                class="nav-actions pointer-coarse:[&_a]:min-h-11 pointer-coarse:[&_a]:min-w-11 pointer-coarse:[&_button]:min-h-11 pointer-coarse:[&_button]:min-w-11"
+            >
                 <ClientOnly>
                     <!-- Logged out state -->
                     <template v-if="!auth.isLoggedIn">
@@ -202,7 +205,13 @@ function onUserMenuCloseAutoFocus(event: Event) {
 
                         <!-- Settings dropdown -->
                         <UDropdownMenu :items="settingsMenuItems">
-                            <UButton icon="i-lucide-settings" color="neutral" variant="ghost" size="sm" />
+                            <UButton
+                                icon="i-lucide-settings"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                :aria-label="t('core.theme.settings')"
+                            />
                         </UDropdownMenu>
                     </template>
 

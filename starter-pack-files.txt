@@ -114,6 +114,7 @@ app/backend/tests/test_backups.py
 app/backend/tests/test_cms_editors.py
 app/backend/tests/test_admin_billing.py
 app/backend/tests/test_auth_code.py
+app/backend/tests/test_ratelimit_wait.py
 app/backend/tests/test_config.py
 app/backend/tests/test_email_subject.py
 app/backend/tests/test_bug_report.py
@@ -217,12 +218,14 @@ app/frontend/utils/admin-nav.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
+app/frontend/utils/organization-link.ts
 app/frontend/utils/name-import.ts
 app/frontend/utils/markdown.ts
 app/frontend/utils/cms.ts
 app/frontend/components/ui/GradientButton.vue
 app/frontend/components/ui/CardHeader.vue
 app/frontend/components/ui/ModalHeader.vue
+app/frontend/components/ui/SkipLink.vue
 app/frontend/components/ui/PasswordInput.vue
 app/frontend/components/ui/FormActions.vue
 app/frontend/components/ui/GradientBorder.vue
@@ -261,6 +264,7 @@ app/frontend/config/account-tabs.ts
 app/frontend/config/account-tabs-ext.ts:template
 app/frontend/config/main-nav-ext.ts:template
 app/frontend/config/premium-ext.ts:template
+app/frontend/config/organization-links-ext.ts:template
 app/frontend/config/analytics-ext.ts:template
 app/frontend/config/csp-ext.ts:template
 app/frontend/config/conversation-subtypes.ts
@@ -353,6 +357,7 @@ app/frontend/pages/admin/cms/preview/[id].vue
 app/frontend/plugins/backend-config.ts
 app/frontend/plugins/app-title.ts
 app/frontend/plugins/auth.client.ts
+app/frontend/plugins/route-focus.client.ts
 app/frontend/plugins/cms-access.client.ts
 app/frontend/plugins/cms-html-lang.ts
 app/frontend/server/routes/robots.txt.ts
