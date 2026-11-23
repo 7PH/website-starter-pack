@@ -13,11 +13,20 @@ defineProps<{
 const emit = defineEmits<{
     close: [];
 }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
     <div class="flex justify-between items-center">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h3>
-        <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="xs" @click="emit('close')" />
+        <UButton
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('core.common.close')"
+            @click="emit('close')"
+        />
     </div>
 </template>

@@ -17,7 +17,9 @@ const breadcrumbItems = computed(() => [{ label: t('core.common.home'), to: '/' 
             <CommonBreadcrumb :items="breadcrumbItems" class="mb-4" />
             <header class="legal-header">
                 <h1 class="legal-title">{{ title }}</h1>
-                <p v-if="lastUpdated" class="legal-updated">{{ t('core.legal.lastUpdated') }}: {{ lastUpdated }}</p>
+                <p v-if="lastUpdated" class="legal-updated">
+                    {{ t('core.legal.lastUpdatedOn', { date: lastUpdated }) }}
+                </p>
             </header>
 
             <div class="legal-content">

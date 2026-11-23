@@ -3,13 +3,13 @@
 import { PREMIUM_SOURCE, useOrganizationStatus } from '~/composables/organizations/useOrganizationStatus';
 import { useUserExternalPremium } from '~/config/premium-ext';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { showSuccess, showWarning } = useToastHelpers();
 const stripe = useStripe();
 const config = useRuntimeConfig();
-const { isPremium, loading, refresh, cancelAtPeriodEnd, expiresAt } = stripe;
+const { isPremium, loading, refresh, cancelAtPeriodEnd, expiresAt, plan } = stripe;
 const { organizations, firstOrg, firstAdminOrg, premiumOrg, isOrgAdmin, isAdminOfPremiumOrg, premiumSource } =
     useOrganizationStatus();
 
@@ -18,14 +18,9 @@ const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'tr
 const externalPremium = useUserExternalPremium();
 const pendingExternal = computed(() => (isPremium.value ? null : externalPremium.value));
 
-const formattedExpiresAt = computed(() => {
-    if (!expiresAt.value) return '';
-    const d = expiresAt.value;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}/${month}/${day}`;
-});
+const formattedExpiresAt = computed(
+    () => expiresAt.value?.toLocaleDateString(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }) ?? '',
+);
 
 // Stripe Checkout returns here with ?subscription=success|canceled. refresh() re-syncs premium from Stripe
 // (and the token), so the nav updates without waiting for the webhook or a reload.
@@ -51,7 +46,21 @@ const {
     openSubscribeModal,
     subscribeToPlan,
     openBillingPortal,
+    loadPlans,
 } = useUserSubscription();
+
+// The personal plan, matched in the plan list: its name and price, shown with the next charge date.
+const hasPersonal = computed(
+    () => premiumSource.value === PREMIUM_SOURCE.PERSONAL || premiumSource.value === PREMIUM_SOURCE.BOTH,
+);
+const currentPlan = computed(() => plans.value.find((p) => p.price_id === plan.value) ?? null);
+watch(
+    () => hasPersonal.value && !!plan.value,
+    (show) => {
+        if (show) loadPlans().catch(() => {});
+    },
+    { immediate: true },
+);
 
 const openingPortal = ref(false);
 async function onOpenBillingPortal() {
@@ -91,9 +100,18 @@ const sourceLabel = computed(() => {
                 </div>
                 <div class="flex-1">
                     <h3 class="heading">{{ t('core.billing.yourPremiumAccess') }}</h3>
-                    <p class="source-line">
-                        <span class="source-label">{{ t('core.billing.source') }}:</span>
-                        <span>{{ sourceLabel }}</span>
+                    <p class="source-line">{{ t('core.billing.sourceLine', { source: sourceLabel }) }}</p>
+                    <p v-if="hasPersonal && currentPlan" class="source-line">
+                        {{
+                            t('core.billing.planLine', {
+                                name: currentPlan.name,
+                                price: formatPrice(currentPlan.amount, currentPlan.currency, locale),
+                                interval: t(`core.billing.interval.${currentPlan.interval}`),
+                            })
+                        }}
+                        <template v-if="!cancelAtPeriodEnd && formattedExpiresAt">
+                            · {{ t('core.billing.nextCharge', { date: formattedExpiresAt }) }}
+                        </template>
                     </p>
                 </div>
                 <UBadge
@@ -166,7 +184,7 @@ const sourceLabel = computed(() => {
 
                 <NuxtLink
                     v-if="isAdminOfPremiumOrg && premiumOrg"
-                    :to="`/organizations/${premiumOrg.organization_id}?tab=billing`"
+                    :to="organizationLink(premiumOrg.organization_id, 'billing')"
                 >
                     <UButton
                         :label="t('core.billing.manageOrganization')"
@@ -178,7 +196,7 @@ const sourceLabel = computed(() => {
 
                 <NuxtLink
                     v-else-if="!isPremium && isOrgAdmin && firstAdminOrg"
-                    :to="`/organizations/${firstAdminOrg.organization_id}?tab=billing`"
+                    :to="organizationLink(firstAdminOrg.organization_id, 'billing')"
                 >
                     <UButton :label="t('core.billing.manageOrganization')" icon="i-lucide-building-2" color="primary" />
                 </NuxtLink>
@@ -228,11 +246,7 @@ const sourceLabel = computed(() => {
 }
 
 .source-line {
-    @apply text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1;
-}
-
-.source-label {
-    @apply font-medium text-gray-700 dark:text-gray-300;
+    @apply text-sm text-gray-600 dark:text-gray-400 mt-1;
 }
 
 .hint {

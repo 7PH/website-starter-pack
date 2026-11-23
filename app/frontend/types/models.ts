@@ -550,6 +550,7 @@ export type ManagedAccountsEnabled = boolean;
 export type UsernamesEnabled = boolean;
 export type RealNamesEnabled = boolean;
 export type UppercaseLastNames = boolean;
+export type EmailEnabled = boolean;
 export type CmsEnabled = boolean;
 export type UsernamePattern = string;
 export type LlmEnabled = boolean;
@@ -1506,6 +1507,7 @@ export interface BackendConfig {
   usernames_enabled: UsernamesEnabled;
   real_names_enabled: RealNamesEnabled;
   uppercase_last_names?: UppercaseLastNames;
+  email_enabled?: EmailEnabled;
   cms_enabled: CmsEnabled;
   username_pattern: UsernamePattern;
   llm_enabled: LlmEnabled;

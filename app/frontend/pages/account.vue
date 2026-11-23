@@ -52,6 +52,19 @@ function onTabChange(key: string | number) {
     activeTabId.value = String(key);
 }
 
+const tabsEl = useTemplateRef<{ $el: HTMLElement }>('tabsEl');
+// On a phone the tab list scrolls sideways: a link to ?tab=billing must not leave that tab off-screen.
+watch(
+    [tabsEl, activeTabId],
+    () =>
+        requestAnimationFrame(() =>
+            tabsEl.value?.$el
+                ?.querySelector?.('[aria-selected="true"]')
+                ?.scrollIntoView({ block: 'nearest', inline: 'nearest' }),
+        ),
+    { flush: 'post' },
+);
+
 // An unknown ?tab= renders the first tab anyway; drop it so the URL matches what is on screen.
 onMounted(() => {
     const tabParam = route.query.tab as string | undefined;
@@ -74,9 +87,12 @@ onMounted(() => {
         <ClientOnly>
             <!-- Tab Navigation -->
             <!-- Triggers size to their label and the strip scrolls: an even split clips each one to an initial on a phone. -->
+            <!-- content=false: the tab content renders below, an empty tab panel would only add a stop for keyboards. -->
             <UTabs
+                ref="tabsEl"
                 :items="tabItems"
                 :model-value="activeTabId"
+                :content="false"
                 class="mb-6"
                 :ui="{ list: 'overflow-x-auto', trigger: 'grow-0 shrink-0' }"
                 @update:model-value="onTabChange"

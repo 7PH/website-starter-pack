@@ -96,6 +96,7 @@ const selected = computed(() => payload.value?.members.find((m) => m.managed_acc
 
 // Inline under the field: a corner toast fades before a pupil reads it, and the backend detail is English.
 const codeError = ref('');
+const codeInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('codeInput');
 const CODE_ERROR_KEYS: Record<number, string> = {
     401: 'core.managed_accounts.signInFailed',
     429: 'core.errors.tooManyRequests',
@@ -113,10 +114,17 @@ async function signIn() {
         await router.push('/');
     } catch (error) {
         const key = CODE_ERROR_KEYS[getErrorStatus(error) ?? 0];
-        if (key) codeError.value = t(key);
+        const wait = getErrorStatus(error) === 429 ? getRetryAfter(error) : undefined;
+        if (wait) codeError.value = t('core.managed_accounts.tryAgainIn', { wait: formatWait(wait) });
+        else if (key) codeError.value = t(key);
         else showError(error, 'core.managed_accounts.signInFailed');
     } finally {
         isSigningIn.value = false;
+    }
+    // Back in the field, so the next try starts by typing (the button keeps focus otherwise).
+    if (codeError.value) {
+        await nextTick();
+        codeInput.value?.inputRef?.focus();
     }
 }
 
@@ -205,6 +213,7 @@ function back() {
                 </div>
                 <UFormField :label="t('core.managed_accounts.code')" :error="codeError || undefined" class="w-full">
                     <UInput
+                        ref="codeInput"
                         v-model="code"
                         autofocus
                         autocomplete="off"

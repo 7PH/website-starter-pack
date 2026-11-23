@@ -10,14 +10,14 @@
             "register": "Inscription",
             "forgotPassword": "Mot de passe oublié ?",
             "resetPassword": "Réinitialiser le mot de passe",
-            "email": "Email",
+            "email": "E-mail",
             "username": "Nom d'utilisateur",
-            "usernameOrEmail": "Nom d'utilisateur ou email",
+            "usernameOrEmail": "Nom d'utilisateur ou e-mail",
             "usernameHelp": "2 à 32 caractères. Lettres, chiffres, et _ - [ ]",
             "usernameInvalid": "2 à 32 caractères : lettres, chiffres, ou _ - [ ]",
-            "emailTaken": "Un compte existe déjà avec cet email",
+            "emailTaken": "Un compte existe déjà avec cet e-mail",
             "usernameTaken": "Ce nom d'utilisateur est déjà pris",
-            "signupConflict": "Cet email ou ce nom d'utilisateur est déjà pris",
+            "signupConflict": "Cet e-mail ou ce nom d'utilisateur est déjà pris",
             "invalidCredentialsUsername": "Nom d'utilisateur ou mot de passe invalide",
             "password": "Mot de passe",
             "confirmPassword": "Confirmer le mot de passe",
@@ -33,21 +33,21 @@
             "passwordResetSent": "Vérifiez votre boîte mail",
             "passwordResetSentDescription": "Si un compte existe pour cette adresse, vous allez recevoir un lien valable 4 heures. Pensez à regarder dans les spams.",
             "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
-            "invalidCredentials": "Email ou mot de passe invalide",
+            "invalidCredentials": "E-mail ou mot de passe invalide",
             "passwordTooShort": "Le mot de passe doit contenir au moins {minLength} caractères",
             "passwordMismatch": "Les mots de passe ne correspondent pas",
-            "verificationEmailSent": "Email de vérification envoyé",
-            "emailVerified": "Email vérifié avec succès",
+            "verificationEmailSent": "E-mail de vérification envoyé",
+            "emailVerified": "E-mail vérifié avec succès",
             "welcomeBack": "Bienvenue",
             "brandingTagline": "Connectez-vous pour accéder à votre compte.",
-            "forgotPasswordMessage": "Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+            "forgotPasswordMessage": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
             "sendResetLink": "Envoyer le lien",
             "backToLogin": "Retour à la connexion",
             "invalidResetLink": "Lien de réinitialisation invalide",
             "invalidResetLinkDescription": "Ce lien de réinitialisation est invalide ou a expiré.",
-            "verifyingEmail": "Vérification de votre email...",
-            "emailVerifiedTitle": "Email vérifié !",
-            "emailVerifiedDescription": "Votre email a été vérifié avec succès. Redirection...",
+            "verifyingEmail": "Vérification de votre e-mail...",
+            "emailVerifiedTitle": "E-mail vérifié !",
+            "emailVerifiedDescription": "Votre e-mail a été vérifié avec succès. Redirection...",
             "verificationFailed": "Échec de la vérification",
             "noVerificationToken": "Aucun jeton de vérification trouvé",
             "invalidVerificationLink": "Lien de vérification invalide ou expiré",
@@ -72,7 +72,7 @@
             "errorTitle": "Échec de la connexion",
             "errorStarting": "Impossible de démarrer la connexion. Veuillez réessayer.",
             "errorCallback": "Impossible de finaliser la connexion. Veuillez réessayer.",
-            "accessDenied": "Accès refusé. Veuillez réessayer ou utiliser email/mot de passe.",
+            "accessDenied": "Accès refusé. Veuillez réessayer ou utiliser e-mail/mot de passe.",
             "missingParams": "Callback invalide. Veuillez vous reconnecter."
         },
         "common": {
@@ -83,7 +83,9 @@
             "home": "Accueil",
             "loading": "Chargement...",
             "actions": "Actions",
-            "goToHome": "Retour à l'accueil"
+            "goToHome": "Retour à l'accueil",
+            "close": "Fermer",
+            "skipToContent": "Aller au contenu"
         },
         "unsavedChanges": {
             "title": "Modifications non enregistrées",
@@ -98,7 +100,8 @@
             "somethingWentWrong": "Une erreur est survenue",
             "unexpectedError": "Une erreur inattendue s'est produite",
             "tryAgain": "Réessayer",
-            "tooManyRequests": "Trop de tentatives. Réessayez plus tard."
+            "tooManyRequests": "Trop de tentatives. Réessayez plus tard.",
+            "tryAgainIn": "Trop de tentatives. Réessayez dans {wait}."
         },
         "validation": {
             "required": "Ce champ est requis"
@@ -130,17 +133,20 @@
             "selectPlan": "Choisir",
             "noPlanAvailable": "Aucun plan disponible",
             "interval": {
-                "day": "/ jour",
-                "week": "/ semaine",
-                "month": "/ mois",
-                "year": "/ an"
+                "month": "mois",
+                "year": "an",
+                "week": "semaine",
+                "day": "jour"
             },
             "subscriptionSuccess": "Bienvenue dans Premium",
             "subscriptionSuccessDescription": "Votre abonnement est actif.",
             "subscriptionCanceled": "Paiement annulé",
             "subscriptionCanceledDescription": "Aucun montant n'a été débité.",
             "checkoutFailed": "Impossible de démarrer le paiement",
-            "seeDetails": "Voir le détail"
+            "seeDetails": "Voir le détail",
+            "sourceLine": "Source : {source}",
+            "planLine": "{name}, {price} par {interval}",
+            "nextCharge": "prochain prélèvement le {date}"
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",
@@ -148,7 +154,8 @@
             "terms": "Conditions d'utilisation",
             "privacy": "Politique de confidentialité",
             "cookies": "Politique des cookies",
-            "title": "Informations légales"
+            "title": "Informations légales",
+            "lastUpdatedOn": "Dernière mise à jour : {date}"
         },
         "footer": {
             "copyright": "Tous droits réservés."
@@ -172,21 +179,21 @@
                 "description": "Mettre à jour vos informations personnelles"
             },
             "email": {
-                "title": "Adresse email",
-                "description": "Gérer votre adresse email",
-                "current": "Email actuel",
-                "change": "Changer d'email",
-                "newEmail": "Nouvelle adresse email",
+                "title": "Adresse e-mail",
+                "description": "Gérer votre adresse e-mail",
+                "current": "E-mail actuel",
+                "change": "Changer d'e-mail",
+                "newEmail": "Nouvelle adresse e-mail",
                 "confirmWithPassword": "Entrez votre mot de passe pour confirmer",
-                "sendVerification": "Envoyer l'email de vérification",
+                "sendVerification": "Envoyer l'e-mail de vérification",
                 "verified": "Vérifié",
                 "notVerified": "Non vérifié",
-                "alreadyVerified": "Votre email est déjà vérifié",
-                "verificationSent": "Email de vérification envoyé à votre nouvelle adresse",
-                "changeSuccess": "Email changé avec succès",
-                "changeFailed": "Échec du changement d'email",
-                "confirming": "Confirmation de votre changement d'email...",
-                "redirectingToLogin": "Votre email a été changé. Veuillez vous connecter avec votre nouvel email.",
+                "alreadyVerified": "Votre e-mail est déjà vérifié",
+                "verificationSent": "E-mail de vérification envoyé à votre nouvelle adresse",
+                "changeSuccess": "E-mail changé avec succès",
+                "changeFailed": "Échec du changement d'e-mail",
+                "confirming": "Confirmation de votre changement d'e-mail...",
+                "redirectingToLogin": "Votre e-mail a été changé. Veuillez vous connecter avec votre nouvel e-mail.",
                 "noToken": "Aucun jeton de confirmation trouvé",
                 "invalidToken": "Lien de confirmation invalide ou expiré"
             },
@@ -209,11 +216,11 @@
                 },
                 "requestModal": {
                     "title": "Supprimer votre compte",
-                    "body": "Nous vous enverrons un lien de confirmation par email. Le lien expire dans 1 heure. Votre compte n'est pas supprimé tant que vous n'avez pas cliqué dessus.",
-                    "confirm": "Envoyer l'email de confirmation",
-                    "sentTitle": "Vérifiez votre email",
+                    "body": "Nous vous enverrons un lien de confirmation par e-mail. Le lien expire dans 1 heure. Votre compte n'est pas supprimé tant que vous n'avez pas cliqué dessus.",
+                    "confirm": "Envoyer l'e-mail de confirmation",
+                    "sentTitle": "Vérifiez votre e-mail",
                     "sentBody": "Nous avons envoyé un lien de confirmation. Il expire dans 1 heure.",
-                    "failedTitle": "Impossible d'envoyer l'email de confirmation",
+                    "failedTitle": "Impossible d'envoyer l'e-mail de confirmation",
                     "failedBody": "Réessayez plus tard. Si le problème persiste, contactez le support — ils peuvent supprimer votre compte manuellement."
                 },
                 "confirmPage": {
@@ -256,8 +263,8 @@
             "save": "Enregistrer",
             "cancel": "Annuler",
             "name": "Nom",
-            "email": "Email",
-            "contactEmail": "Email de contact",
+            "email": "E-mail",
+            "contactEmail": "E-mail de contact",
             "phone": "Téléphone",
             "taxNumber": "Numéro de TVA",
             "addressLine1": "Adresse ligne 1",
@@ -385,17 +392,19 @@
             "invitationCancelTitle": "Annuler l'invitation",
             "invitationCancelConfirm": "Annuler l'invitation envoyée à {email} ?",
             "invitationSent": "Invitation envoyée",
-            "invitationSentDescription": "{email} recevra un email avec un lien pour rejoindre.",
+            "invitationSentDescription": "{email} recevra un e-mail avec un lien pour rejoindre.",
             "invitationCanceled": "Invitation annulée",
             "invitationCancelFailed": "Échec de l'annulation de l'invitation",
             "invitationSendFailed": "Échec de l'envoi de l'invitation",
             "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation.",
             "invitedByExpires": "Invitation de {name} · expire le {date}",
-            "invitationExpires": "Expire le {date}"
+            "invitationExpires": "Expire le {date}",
+            "contactEmailLine": "E-mail de contact : {email}"
         },
         "theme": {
             "light": "Mode clair",
-            "dark": "Mode sombre"
+            "dark": "Mode sombre",
+            "settings": "Préférences d'affichage"
         },
         "admin": {
             "title": "Admin",
@@ -415,7 +424,7 @@
             "signIn": "Se connecter",
             "features": {
                 "auth": "Authentification",
-                "authDescription": "Authentification intégrée avec email/mot de passe et connexions sociales",
+                "authDescription": "Authentification intégrée avec e-mail/mot de passe et connexions sociales",
                 "payments": "Paiements",
                 "paymentsDescription": "Intégration Stripe pour les abonnements et la facturation",
                 "organizations": "Organisations",
@@ -481,7 +490,7 @@
         "managed_accounts": {
             "title": "Vos groupes de comptes gérés",
             "menuLabel": "Comptes gérés",
-            "subtitle": "Créez des comptes pour des personnes qui se connectent avec un code, sans email.",
+            "subtitle": "Créez des comptes pour des personnes qui se connectent avec un code, sans e-mail.",
             "addGroup": "Nouveau groupe",
             "createGroup": "Créer le groupe",
             "createGroupTitle": "Créer un groupe",
@@ -573,7 +582,8 @@
             },
             "switchWarning": "Vous êtes connecté en tant que {name}. Vous connecter avec ce lien vous déconnectera de ce compte, dans tous vos onglets.",
             "switchContinue": "Continuer avec ce lien",
-            "switchBack": "Retour"
+            "switchBack": "Retour",
+            "tryAgainIn": "Trop d'essais. Réessayez dans {wait}, ou demandez votre code."
         },
         "errorPage": {
             "notFoundTitle": "Page introuvable",

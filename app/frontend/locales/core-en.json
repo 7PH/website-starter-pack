@@ -83,7 +83,9 @@
             "home": "Home",
             "loading": "Loading...",
             "actions": "Actions",
-            "goToHome": "Go to Home"
+            "goToHome": "Go to Home",
+            "close": "Close",
+            "skipToContent": "Skip to content"
         },
         "unsavedChanges": {
             "title": "Unsaved changes",
@@ -98,7 +100,8 @@
             "somethingWentWrong": "Something went wrong",
             "unexpectedError": "An unexpected error occurred",
             "tryAgain": "Try again",
-            "tooManyRequests": "Too many attempts. Please try again later."
+            "tooManyRequests": "Too many attempts. Please try again later.",
+            "tryAgainIn": "Too many attempts. Try again in {wait}."
         },
         "validation": {
             "required": "This field is required"
@@ -130,17 +133,20 @@
             "selectPlan": "Select",
             "noPlanAvailable": "No subscription plans available",
             "interval": {
-                "day": "/day",
-                "week": "/wk",
-                "month": "/mo",
-                "year": "/yr"
+                "month": "month",
+                "year": "year",
+                "week": "week",
+                "day": "day"
             },
             "subscriptionSuccess": "Welcome to Premium",
             "subscriptionSuccessDescription": "Your subscription is active.",
             "subscriptionCanceled": "Checkout canceled",
             "subscriptionCanceledDescription": "You have not been charged.",
             "checkoutFailed": "Couldn't start the checkout",
-            "seeDetails": "See details"
+            "seeDetails": "See details",
+            "sourceLine": "Source: {source}",
+            "planLine": "{name}, {price} per {interval}",
+            "nextCharge": "next charge on {date}"
         },
         "legal": {
             "lastUpdated": "Last updated",
@@ -148,7 +154,8 @@
             "terms": "Terms of Service",
             "privacy": "Privacy Policy",
             "cookies": "Cookie Policy",
-            "title": "Legal"
+            "title": "Legal",
+            "lastUpdatedOn": "Last updated: {date}"
         },
         "footer": {
             "copyright": "All rights reserved."
@@ -391,11 +398,13 @@
             "invitationSendFailed": "Failed to send invitation",
             "invitationLoginPrompt": "Log in or sign up to accept this invitation.",
             "invitedByExpires": "Invited by {name} · expires {date}",
-            "invitationExpires": "Expires {date}"
+            "invitationExpires": "Expires {date}",
+            "contactEmailLine": "Contact email: {email}"
         },
         "theme": {
             "light": "Light mode",
-            "dark": "Dark mode"
+            "dark": "Dark mode",
+            "settings": "Display settings"
         },
         "admin": {
             "title": "Admin",
@@ -573,7 +582,8 @@
             },
             "switchWarning": "You are signed in as {name}. Signing in with this link will sign you out of that account, in every tab.",
             "switchContinue": "Continue with this link",
-            "switchBack": "Go back"
+            "switchBack": "Go back",
+            "tryAgainIn": "Too many tries. Try again in {wait}, or ask for your code."
         },
         "errorPage": {
             "notFoundTitle": "Page not found",

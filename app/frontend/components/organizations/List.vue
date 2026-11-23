@@ -48,7 +48,7 @@ async function createOrganization(formData: {
         );
         showCreateModal.value = false;
         await auth.refreshToken();
-        router.push(`/organizations/${newOrg.id}`);
+        router.push(organizationLink(newOrg.id));
     } catch (error: unknown) {
         showError(error, 'core.organizations.createFailed');
     } finally {

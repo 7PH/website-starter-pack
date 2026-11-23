@@ -225,7 +225,7 @@ function cancelEmailChange() {
                         />
                     </p>
                     <UButton
-                        v-if="auth.user?.email_confirmed === false"
+                        v-if="auth.user?.email_confirmed === false && backendConfig.config?.email_enabled !== false"
                         class="mt-4 mr-2"
                         variant="soft"
                         :label="t('core.account.email.sendVerification')"
