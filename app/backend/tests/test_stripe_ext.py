@@ -39,7 +39,11 @@ def test_billing_portal_and_new_customers_get_app_params():
     with (
         patch.object(stripe_helper, "STRIPE_ENABLED", True),
         patch.object(stripe_helper, "BILLING_PORTAL_PARAMS", {"locale": "fr"}),
-        patch.object(stripe_helper, "CUSTOMER_PARAMS", {"preferred_locales": ["fr"]}),
+        patch.object(
+            stripe_helper,
+            "CUSTOMER_PARAMS",
+            {"preferred_locales": ["fr"], "metadata": {"plan": "school", "org_id": "x"}},
+        ),
         patch("src.helpers.stripe.stripe.billing_portal.Session.create") as portal,
         patch("src.helpers.stripe.stripe.Customer.create") as create_customer,
     ):
@@ -47,3 +51,5 @@ def test_billing_portal_and_new_customers_get_app_params():
         stripe_helper.sync_org_customer(org_id=7, email="org@example.com", name="Org", existing_stripe_id=None)
     assert portal.call_args.kwargs == {"customer": "cus_1", "return_url": "https://back", "locale": "fr"}
     assert create_customer.call_args.kwargs["preferred_locales"] == ["fr"]
+    # App metadata kept, core's id wins.
+    assert create_customer.call_args.kwargs["metadata"] == {"plan": "school", "org_id": "7"}
