@@ -277,6 +277,7 @@ export type MemberCount = number;
 export type PremiumMemberCount = number;
 export type UserId2 = number;
 export type Email6 = string | null;
+export type DisplayLabel3 = string | null;
 export type FirstName6 = string;
 export type LastName6 = string;
 export type IsAdmin4 = boolean;
@@ -962,6 +963,7 @@ export interface CustomData {
 export interface OrganizationMemberRead {
   user_id: UserId2;
   email?: Email6;
+  display_label?: DisplayLabel3;
   first_name: FirstName6;
   last_name: LastName6;
   is_admin: IsAdmin4;

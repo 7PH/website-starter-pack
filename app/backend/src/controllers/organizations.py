@@ -49,6 +49,7 @@ from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_c
 from ..helpers.db import get_session
 from ..helpers.email import send_organization_invitation_email
 from ..helpers.redirects import validate_redirect_url as _validate_redirect_url
+from ..helpers.user_display import display_for
 from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
 from ..models.user import UserBase
 from ..schemas.organization import (
@@ -165,9 +166,12 @@ def _membership_to_read(
     membership: UserOrganizationBase, user: UserBase, show_email: bool = True
 ) -> OrganizationMemberRead:
     """Convert membership + user to OrganizationMemberRead schema."""
+    label = display_for(user)
     return OrganizationMemberRead(
         user_id=user.id,
         email=user.email if show_email else None,
+        # display_for ends on the email: never through this field when the email is hidden.
+        display_label=label if show_email or label != user.email else None,
         first_name=user.first_name,
         last_name=user.last_name,
         is_admin=membership.is_admin,
@@ -213,7 +217,8 @@ def _build_org_read(
 def _org_to_read(session: Session, org: OrganizationBase, viewer: UserRead) -> OrganizationRead:
     """Convert org model to read schema with full member list.
 
-    Plain members don't see each other's email: only site admins and org admins do, and everyone sees their own.
+    Plain members don't see each other's email, nor the org's billing internals: only site admins and org admins do,
+    and everyone sees their own email.
     """
     memberships, total = get_organization_members(session, org.id, page=1, per_page=ORG_DETAIL_MEMBER_LIMIT)
     viewer_membership = get_user_org_membership(session, viewer.id, org.id)
@@ -222,7 +227,8 @@ def _org_to_read(session: Session, org: OrganizationBase, viewer: UserRead) -> O
         _membership_to_read(m, m.user, show_email=sees_emails or m.user.id == viewer.id) for m in memberships if m.user
     ]
     premium_count = sum(1 for m in memberships if m.has_premium_seat)
-    return _build_org_read(org, total, premium_count, members_list)
+    read = _build_org_read(org, total, premium_count, members_list)
+    return read if sees_emails else read.model_copy(update={"stripe_id": None, "stripe_dashboard_url": None})
 
 
 # ============================================================================

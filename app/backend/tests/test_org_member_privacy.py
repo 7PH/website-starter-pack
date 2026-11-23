@@ -38,10 +38,20 @@ def _emails_seen_by(viewer: UserRead) -> dict[int, str | None]:
     with (
         patch.object(controller, "get_organization_members", return_value=(MEMBERS, len(MEMBERS))),
         patch.object(controller, "get_user_org_membership", return_value=membership),
-        patch.object(controller, "_build_org_read", side_effect=lambda org, total, premium, members: members),
+        patch.object(controller, "_build_org_read", side_effect=lambda org, total, premium, members: _Read(members)),
     ):
-        members = controller._org_to_read(MagicMock(), org, viewer)
-    return {m.user_id: m.email for m in members}
+        read = controller._org_to_read(MagicMock(), org, viewer)
+    return {m.user_id: m.email for m in read.members}
+
+
+class _Read:
+    """Stands in for OrganizationRead: keeps the members and records what model_copy blanked."""
+
+    def __init__(self, members, blanked=None):
+        self.members, self.blanked = members, blanked or {}
+
+    def model_copy(self, update):
+        return _Read(self.members, update)
 
 
 def test_plain_member_sees_only_their_own_email():
@@ -51,3 +61,16 @@ def test_plain_member_sees_only_their_own_email():
 @pytest.mark.parametrize("viewer", [_viewer(1), _viewer(99, site_admin=True)], ids=["org admin", "site admin"])
 def test_org_and_site_admins_see_every_email(viewer):
     assert all(_emails_seen_by(viewer).values())
+
+
+def test_plain_member_gets_no_billing_internals_nor_emails_through_display_names():
+    viewer = _viewer(2)
+    with (
+        patch.object(controller, "get_organization_members", return_value=(MEMBERS, len(MEMBERS))),
+        patch.object(controller, "get_user_org_membership", return_value=MEMBERS[1]),
+        patch.object(controller, "_build_org_read", side_effect=lambda org, total, premium, members: _Read(members)),
+        patch.object(controller, "display_for", side_effect=lambda user: user.email),
+    ):
+        read = controller._org_to_read(MagicMock(), SimpleNamespace(id=9), viewer)
+    assert read.blanked == {"stripe_id": None, "stripe_dashboard_url": None}
+    assert {m.user_id: m.display_label for m in read.members} == {1: None, 2: "u2@example.com", 3: None}
