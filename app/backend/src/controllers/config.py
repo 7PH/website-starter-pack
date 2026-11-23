@@ -5,6 +5,7 @@
 from fastapi import APIRouter, status
 
 from .. import constants
+from ..helpers.email import MAILGUN_ENABLED
 from ..helpers.username import USERNAME_PATTERN
 from ..schemas.config_ext import BackendConfig, build_extra
 
@@ -28,6 +29,7 @@ def get_config() -> BackendConfig:
         usernames_enabled=constants.USERNAMES_ENABLED,
         real_names_enabled=constants.REAL_NAMES_ENABLED,
         uppercase_last_names=constants.UPPERCASE_LAST_NAMES,
+        email_enabled=MAILGUN_ENABLED,
         cms_enabled=constants.CMS_ENABLED,
         username_pattern=USERNAME_PATTERN.pattern,
         llm_enabled=constants.LLM_ENABLED,

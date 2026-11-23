@@ -40,11 +40,14 @@ _redis = redis.Redis.from_url(
 #   KEYS[1] = bucket key
 #   ARGV[1] = now (seconds)   ARGV[2] = window seconds   ARGV[3] = quota
 #   ARGV[4] = consume ("1"/"0")   ARGV[5] = unique member (used when consuming)
-# Returns 1 when the quota is already reached, else 0.
+# Returns 0 when allowed, else the seconds until a slot frees up (at least 1).
 _SLIDING_WINDOW_LUA = """
 redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1] - ARGV[2])
-if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[3]) then
-  return 1
+local count = redis.call('ZCARD', KEYS[1])
+if count >= tonumber(ARGV[3]) then
+  -- The hit whose expiry brings the count back under the quota.
+  local oldest = redis.call('ZRANGE', KEYS[1], count - tonumber(ARGV[3]), count - tonumber(ARGV[3]), 'WITHSCORES')
+  return math.max(1, math.ceil(tonumber(oldest[2]) + ARGV[2] - ARGV[1]))
 end
 if ARGV[4] == '1' then
   redis.call('ZADD', KEYS[1], ARGV[1], ARGV[5])
@@ -64,14 +67,14 @@ def get_client_ip(request: Request) -> str:
     return get_real_ip(request)
 
 
-def is_rate_limited(
+def rate_limit_wait(
     action: str,
     quota: float,
     key: str,
     duration_minutes: int = 1,
     consume_quota: bool = False,
-) -> bool:
-    """Return True if action/key has reached its quota in the trailing window.
+) -> int:
+    """Seconds until action/key is allowed again, 0 if it is now.
 
     When ``consume_quota`` is True and the quota is not yet reached, records the
     current hit. Raises HTTPException 503 if the Redis store is unreachable.
@@ -80,14 +83,34 @@ def is_rate_limited(
     window_seconds = 60 * duration_minutes
     bucket = f"rl:{duration_minutes}:{action}:{key}"
     try:
-        limited = _check_quota(
+        wait = _check_quota(
             keys=[bucket],
             args=[now, window_seconds, quota, "1" if consume_quota else "0", uuid.uuid4().hex],
         )
     except redis.RedisError as exc:
         logger.error("Rate-limit store unreachable (%s): %s", REDIS_URL, exc)
         raise HTTPException(status_code=503, detail="Service temporarily unavailable") from exc
-    return bool(limited)
+    return int(wait)
+
+
+def is_rate_limited(
+    action: str,
+    quota: float,
+    key: str,
+    duration_minutes: int = 1,
+    consume_quota: bool = False,
+) -> bool:
+    """Return True if action/key has reached its quota in the trailing window."""
+    return rate_limit_wait(action, quota, key, duration_minutes, consume_quota) > 0
+
+
+def too_many_requests(wait_seconds: int) -> HTTPException:
+    """429 telling the client how long to wait, so it can say "try again in 12 min" rather than "later"."""
+    return HTTPException(
+        status_code=429,
+        detail="Too many requests. Please try again later.",
+        headers={"Retry-After": str(max(1, wait_seconds))},
+    )
 
 
 def ensure_rate_limit(action: str, quota: float, key: str, duration_minutes: int = 1) -> None:
@@ -100,8 +123,8 @@ def ensure_rate_limit(action: str, quota: float, key: str, duration_minutes: int
     :param key: The key to use
     :param count: Maximum number of times the action can be performed per minute
     """
-    if is_rate_limited(action, quota, key, duration_minutes, True):
-        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+    if wait := rate_limit_wait(action, quota, key, duration_minutes, True):
+        raise too_many_requests(wait)
 
 
 def ensure_user_cooldown_and_daily(
