@@ -3438,6 +3438,18 @@
           "default": null,
           "title": "Email"
         },
+        "display_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Label"
+        },
         "first_name": {
           "title": "First Name",
           "type": "string"

@@ -58,6 +58,8 @@ class OrganizationMemberRead(BaseModel):
     user_id: int
     # None for other members when the viewer is a plain member.
     email: str | None = None
+    # Display name, username or real name (see helpers/user_display.py), never the email when that is hidden.
+    display_label: str | None = None
     first_name: str
     last_name: str
     is_admin: bool
