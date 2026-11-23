@@ -62,8 +62,9 @@ watch(
 );
 
 const memberColumns = computed(() => {
+    // Plain members don't get each other's email (null from the API): no column of blanks for them.
     const cols = [
-        { accessorKey: 'email', header: t('core.organizations.email') },
+        ...(props.isOwner ? [{ accessorKey: 'email', header: t('core.organizations.email') }] : []),
         { accessorKey: 'name', header: t('core.organizations.name') },
         { accessorKey: 'role', header: t('core.organizations.admin') },
     ];
