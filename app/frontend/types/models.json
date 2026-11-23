@@ -3427,8 +3427,16 @@
           "type": "integer"
         },
         "email": {
-          "title": "Email",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
         },
         "first_name": {
           "title": "First Name",
@@ -3467,7 +3475,6 @@
       },
       "required": [
         "user_id",
-        "email",
         "first_name",
         "last_name",
         "is_admin",

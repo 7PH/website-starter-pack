@@ -56,7 +56,8 @@ class OrganizationMemberRead(BaseModel):
     """Schema for reading organization member info."""
 
     user_id: int
-    email: str
+    # None for other members when the viewer is a plain member.
+    email: str | None = None
     first_name: str
     last_name: str
     is_admin: bool

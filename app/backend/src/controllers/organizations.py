@@ -161,11 +161,13 @@ def _check_not_last_admin(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
-def _membership_to_read(membership: UserOrganizationBase, user: UserBase) -> OrganizationMemberRead:
+def _membership_to_read(
+    membership: UserOrganizationBase, user: UserBase, show_email: bool = True
+) -> OrganizationMemberRead:
     """Convert membership + user to OrganizationMemberRead schema."""
     return OrganizationMemberRead(
         user_id=user.id,
-        email=user.email,
+        email=user.email if show_email else None,
         first_name=user.first_name,
         last_name=user.last_name,
         is_admin=membership.is_admin,
@@ -208,10 +210,17 @@ def _build_org_read(
     )
 
 
-def _org_to_read(session: Session, org: OrganizationBase) -> OrganizationRead:
-    """Convert org model to read schema with full member list."""
+def _org_to_read(session: Session, org: OrganizationBase, viewer: UserRead) -> OrganizationRead:
+    """Convert org model to read schema with full member list.
+
+    Plain members don't see each other's email: only site admins and org admins do, and everyone sees their own.
+    """
     memberships, total = get_organization_members(session, org.id, page=1, per_page=ORG_DETAIL_MEMBER_LIMIT)
-    members_list = [_membership_to_read(m, m.user) for m in memberships if m.user]
+    viewer_membership = get_user_org_membership(session, viewer.id, org.id)
+    sees_emails = viewer.is_admin or (viewer_membership is not None and viewer_membership.is_admin)
+    members_list = [
+        _membership_to_read(m, m.user, show_email=sees_emails or m.user.id == viewer.id) for m in memberships if m.user
+    ]
     premium_count = sum(1 for m in memberships if m.has_premium_seat)
     return _build_org_read(org, total, premium_count, members_list)
 
@@ -310,7 +319,7 @@ def create_new_organization(
         request=request,
     )
 
-    return _org_to_read(session, org)
+    return _org_to_read(session, org, user)
 
 
 # ============================================================================
@@ -345,7 +354,7 @@ def get_organization(
 ):
     """Get organization details. Accessible by any member of the org (or system admin)."""
     org = _check_org_access(session, org_id, user, require_admin=False)
-    return _org_to_read(session, org)
+    return _org_to_read(session, org, user)
 
 
 @router.patch("/{org_id}", response_model=OrganizationRead)
@@ -407,7 +416,7 @@ def update_org(
             request=request,
         )
 
-    return _org_to_read(session, org)
+    return _org_to_read(session, org, user)
 
 
 @router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
