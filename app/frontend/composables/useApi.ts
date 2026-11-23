@@ -1,7 +1,5 @@
 // ⚠️ STARTERPACK CORE — DO NOT MODIFY. This file is managed by the starterpack.
 
-import type { ApiError } from '~/utils/errors';
-
 export interface ApiFetchOptions extends RequestInit {
     /** Number of retry attempts for failed requests (default: 0) */
     retries?: number;
@@ -90,13 +88,7 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
                     throw withStatus(new Error(response.statusText ?? 'An error occurred'), response.status);
                 }
 
-                const error: ApiError = withStatus(
-                    new Error(errorData.detail ?? response.statusText ?? 'An error occurred'),
-                    response.status,
-                );
-                const retryAfter = Number(response.headers.get('Retry-After'));
-                if (retryAfter > 0) error.retryAfter = retryAfter;
-                throw error;
+                throw responseError(errorData.detail ?? response.statusText ?? 'An error occurred', response);
             }
 
             // Only parse JSON if there's content

@@ -106,7 +106,7 @@ const sourceLabel = computed(() => {
                             t('core.billing.planLine', {
                                 name: currentPlan.name,
                                 price: formatPrice(currentPlan.amount, currentPlan.currency, locale),
-                                interval: t(`core.billing.interval.${currentPlan.interval}`),
+                                interval: t(`core.billing.intervalName.${currentPlan.interval}`),
                             })
                         }}
                         <template v-if="!cancelAtPeriodEnd && formattedExpiresAt">

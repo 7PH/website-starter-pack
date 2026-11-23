@@ -168,6 +168,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
                                 externalPremium
                             "
                             :to="externalPremium.to ?? '/account?tab=billing'"
+                            :aria-label="externalPremium.label"
                             class="external-premium"
                         >
                             <UIcon name="i-lucide-clock" />
@@ -176,6 +177,7 @@ function onUserMenuCloseAutoFocus(event: Event) {
                         <NuxtLink
                             v-else-if="stripeEnabled && !subscriptionLoading && !isManagedAccount"
                             to="/account?tab=billing"
+                            :aria-label="isPremium ? t('core.billing.premium') : t('core.billing.upgrade')"
                             :class="isPremium ? 'premium-badge' : 'upgrade-cta'"
                         >
                             <UIcon name="i-lucide-star" />

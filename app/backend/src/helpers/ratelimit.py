@@ -45,8 +45,11 @@ _SLIDING_WINDOW_LUA = """
 redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1] - ARGV[2])
 local count = redis.call('ZCARD', KEYS[1])
 if count >= tonumber(ARGV[3]) then
-  -- The hit whose expiry brings the count back under the quota.
-  local oldest = redis.call('ZRANGE', KEYS[1], count - tonumber(ARGV[3]), count - tonumber(ARGV[3]), 'WITHSCORES')
+  -- The hit whose expiry brings the count back under the quota (quotas may be fractional).
+  local index = math.max(0, count - math.ceil(tonumber(ARGV[3])))
+  local oldest = redis.call('ZRANGE', KEYS[1], index, index, 'WITHSCORES')
+  -- No hit to wait for (a zero quota): the action stays refused, say a full window.
+  if not oldest[2] then return math.max(1, math.ceil(tonumber(ARGV[2]))) end
   return math.max(1, math.ceil(tonumber(oldest[2]) + ARGV[2] - ARGV[1]))
 end
 if ARGV[4] == '1' then

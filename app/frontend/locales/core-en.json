@@ -133,10 +133,10 @@
             "selectPlan": "Select",
             "noPlanAvailable": "No subscription plans available",
             "interval": {
-                "month": "month",
-                "year": "year",
-                "week": "week",
-                "day": "day"
+                "day": "/day",
+                "week": "/wk",
+                "month": "/mo",
+                "year": "/yr"
             },
             "subscriptionSuccess": "Welcome to Premium",
             "subscriptionSuccessDescription": "Your subscription is active.",
@@ -146,7 +146,13 @@
             "seeDetails": "See details",
             "sourceLine": "Source: {source}",
             "planLine": "{name}, {price} per {interval}",
-            "nextCharge": "next charge on {date}"
+            "nextCharge": "next charge on {date}",
+            "intervalName": {
+                "month": "month",
+                "year": "year",
+                "week": "week",
+                "day": "day"
+            }
         },
         "legal": {
             "lastUpdated": "Last updated",

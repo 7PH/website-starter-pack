@@ -133,10 +133,10 @@
             "selectPlan": "Choisir",
             "noPlanAvailable": "Aucun plan disponible",
             "interval": {
-                "month": "mois",
-                "year": "an",
-                "week": "semaine",
-                "day": "jour"
+                "day": "/ jour",
+                "week": "/ semaine",
+                "month": "/ mois",
+                "year": "/ an"
             },
             "subscriptionSuccess": "Bienvenue dans Premium",
             "subscriptionSuccessDescription": "Votre abonnement est actif.",
@@ -146,7 +146,13 @@
             "seeDetails": "Voir le détail",
             "sourceLine": "Source : {source}",
             "planLine": "{name}, {price} par {interval}",
-            "nextCharge": "prochain prélèvement le {date}"
+            "nextCharge": "prochain prélèvement le {date}",
+            "intervalName": {
+                "month": "mois",
+                "year": "an",
+                "week": "semaine",
+                "day": "jour"
+            }
         },
         "legal": {
             "lastUpdated": "Dernière mise à jour",

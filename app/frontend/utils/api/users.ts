@@ -33,7 +33,7 @@ export async function login(identifier: string, password: string): Promise<UserT
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw withStatus(new Error(error.detail || 'Invalid credentials'), response.status);
+        throw responseError(error.detail || 'Invalid credentials', response);
     }
 
     return response.json();
