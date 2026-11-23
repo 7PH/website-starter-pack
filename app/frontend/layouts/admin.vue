@@ -68,6 +68,7 @@ onMounted(() => {
     <!-- UApp renders no element: the wrapper div is the flex column -->
     <div class="flex min-h-0 flex-1 flex-col bg-slate-50 dark:bg-slate-950">
         <UApp :locale="uiLocale">
+            <UiSkipLink />
             <ImpersonationBanner />
             <component :is="PageHeader" />
 
@@ -132,7 +133,9 @@ onMounted(() => {
                 </aside>
 
                 <main
-                    class="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 md:px-8 md:py-7"
+                    id="main-content"
+                    tabindex="-1"
+                    class="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 md:px-8 md:py-7 outline-none"
                 >
                     <NuxtPage />
                 </main>

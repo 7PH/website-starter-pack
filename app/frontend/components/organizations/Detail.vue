@@ -261,9 +261,10 @@ onMounted(() => {
                     {{ initials(org.name) }}
                 </span>
                 <div class="flex min-w-45 flex-1 flex-col gap-1">
-                    <h1 class="text-[22px] font-extrabold tracking-[-0.01em] text-highlighted md:text-[26px]">
+                    <!-- h2: the page's h1 is its title banner, one h1 per page. -->
+                    <h2 class="text-[22px] font-extrabold tracking-[-0.01em] text-highlighted md:text-[26px]">
                         {{ org.name }}
-                    </h1>
+                    </h2>
                     <span class="text-sm text-muted">
                         {{ t('core.organizations.contactEmailLine', { email: org.email }) }}
                     </span>

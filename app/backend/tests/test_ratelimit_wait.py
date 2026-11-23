@@ -32,3 +32,20 @@ def test_ensure_rate_limit_sends_retry_after():
         ratelimit.ensure_rate_limit("t", 1, "k", duration_minutes=5)
     assert exc.value.status_code == 429
     assert exc.value.headers == {"Retry-After": "240"}
+
+
+def test_zero_quota_is_refused_for_a_full_window():
+    with _at(1000):
+        assert ratelimit.rate_limit_wait("t", 0, "k", duration_minutes=10, consume_quota=True) == 600
+
+
+def test_fractional_quota():
+    with _at(1000):
+        ratelimit.rate_limit_wait("t", 2.5, "k", duration_minutes=10, consume_quota=True)
+    with _at(1100):
+        ratelimit.rate_limit_wait("t", 2.5, "k", duration_minutes=10, consume_quota=True)
+    with _at(1200):
+        assert ratelimit.rate_limit_wait("t", 2.5, "k", duration_minutes=10, consume_quota=True) == 0
+    with _at(1300):
+        # 3 hits, quota 2.5: the oldest (1000) has to leave, at 1600.
+        assert ratelimit.rate_limit_wait("t", 2.5, "k", duration_minutes=10, consume_quota=True) == 300

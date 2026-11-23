@@ -37,9 +37,9 @@ const { uiLocale } = useAppLocale();
                     </NuxtLink>
                 </div>
 
-                <div class="w-full max-w-md m-auto">
+                <main id="main-content" tabindex="-1" class="w-full max-w-md m-auto outline-none">
                     <NuxtPage />
-                </div>
+                </main>
             </div>
         </div>
     </UApp>

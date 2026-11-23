@@ -25,6 +25,14 @@ export function getErrorStatus(error: unknown): number | undefined {
     return error instanceof Error ? (error as ApiError).status : undefined;
 }
 
+/** Error for a failed response: its status, plus the wait a 429's Retry-After asks for. */
+export function responseError(message: string, response: Response): ApiError {
+    const error = withStatus(new Error(message), response.status);
+    const retryAfter = Number(response.headers.get('Retry-After'));
+    if (retryAfter > 0) error.retryAfter = retryAfter;
+    return error;
+}
+
 export function getRetryAfter(error: unknown): number | undefined {
     return error instanceof Error ? (error as ApiError).retryAfter : undefined;
 }
