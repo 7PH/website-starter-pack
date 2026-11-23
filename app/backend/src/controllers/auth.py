@@ -37,7 +37,13 @@ from ..helpers.email import (
     swallow_email_errors,
 )
 from ..helpers.hooks import AccessCodeResolution, fire, has_handlers
-from ..helpers.ratelimit import ensure_rate_limit, ensure_user_cooldown_and_daily, get_client_ip, is_rate_limited
+from ..helpers.ratelimit import (
+    ensure_rate_limit,
+    ensure_user_cooldown_and_daily,
+    get_client_ip,
+    rate_limit_wait,
+    too_many_requests,
+)
 from ..helpers.user_display import greeting_for
 from ..schemas.user import (
     AccountDeletionConfirm,
@@ -399,8 +405,10 @@ def sign_in_with_code(
     # an attacker can't fan out across many accounts from a single IP.
     fail_key = f"{client_ip}:{body.managed_account_id}"
     # Checked before the code, or a locked-out guesser still gets in with the right one.
-    if is_rate_limited("auth-code-fail", AUTH_CODE_FAILURE_THRESHOLD, fail_key, AUTH_CODE_FAILURE_COOLDOWN_MINUTES):
-        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+    if wait := rate_limit_wait(
+        "auth-code-fail", AUTH_CODE_FAILURE_THRESHOLD, fail_key, AUTH_CODE_FAILURE_COOLDOWN_MINUTES
+    ):
+        raise too_many_requests(wait)
 
     event = fire(
         session,

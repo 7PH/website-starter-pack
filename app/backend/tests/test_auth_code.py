@@ -33,7 +33,7 @@ def reset_hooks():
 @pytest.fixture(autouse=True)
 def no_lockout():
     """No Redis in unit tests: the failure lockout starts clear unless a test says otherwise."""
-    with patch("src.controllers.auth.is_rate_limited", return_value=False) as limited:
+    with patch("src.controllers.auth.rate_limit_wait", return_value=0) as limited:
         yield limited
 
 
@@ -155,7 +155,7 @@ class TestSignInWithCode:
 
     def test_locked_out_pair_rejects_the_right_code(self, reset_hooks, no_lockout):
         """During the failure cooldown even the right code is refused, so guessing gains nothing."""
-        no_lockout.return_value = True
+        no_lockout.return_value = 600
         resolver = MagicMock(return_value=_stub_user())
         _resolve_with(resolver)
 
@@ -163,6 +163,7 @@ class TestSignInWithCode:
             sign_in_with_code(request=_stub_request(), session=MagicMock(), body=_body(code="OK"))
 
         assert exc.value.status_code == 429
+        assert exc.value.headers == {"Retry-After": "600"}
         resolver.assert_not_called()
 
 

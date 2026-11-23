@@ -375,5 +375,9 @@ def public_picker(
     accounts = list_accounts_in_group(session, group.id)
     return PublicPickerPayload(
         group_name=group.name,
-        members=[PublicPickerEntry(managed_account_id=a.id, display_name=a.display_name) for a in accounts],
+        # Alphabetical, so a long list can be scanned for one's name.
+        members=[
+            PublicPickerEntry(managed_account_id=a.id, display_name=a.display_name)
+            for a in sorted(accounts, key=lambda a: (a.display_name or "").casefold())
+        ],
     )

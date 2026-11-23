@@ -31,6 +31,8 @@ class CoreBackendConfig(BaseModel):
     usernames_enabled: bool
     real_names_enabled: bool
     uppercase_last_names: bool = True
+    # A mail service is configured: without one, nothing is sent (verification, resets, invitations).
+    email_enabled: bool = True
     cms_enabled: bool
 
     # Served so the client validates against one definition instead of a copy.

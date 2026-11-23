@@ -130,6 +130,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "detail": str(exc.detail),
         },
         status_code=exc.status_code,
+        # Retry-After on 429s, WWW-Authenticate on an invalid token: both read by the frontend.
+        headers=getattr(exc, "headers", None),
     )
 
 
