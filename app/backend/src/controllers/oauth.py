@@ -111,6 +111,12 @@ async def handle_google_callback(
             detail="Could not retrieve email from Google account",
         )
 
+    if not google_user.verified_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your Google account email is not verified",
+        )
+
     email = google_user.email.lower()
 
     # Check if user already exists (auto-link by email)

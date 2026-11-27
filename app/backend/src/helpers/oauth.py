@@ -35,6 +35,8 @@ class GoogleUserInfo:
     email: str
     first_name: str
     last_name: str
+    # Only a verified address may sign up or take over the account that uses it.
+    verified_email: bool = False
     picture: str | None = None
 
 
@@ -135,6 +137,7 @@ async def get_google_user_info(access_token: str) -> GoogleUserInfo:
             email=email,
             first_name=first_name,
             last_name=last_name,
+            verified_email=data.get("verified_email") is True,
             picture=data.get("picture"),
         )
 
