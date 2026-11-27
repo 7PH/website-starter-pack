@@ -46,7 +46,8 @@ const blocked = computed(() => auth.isLoggedIn && (emailMismatch.value || emailU
 
 async function actOnInvitation(action: () => Promise<void>, successKey: string, postSuccess?: () => Promise<void>) {
     if (!auth.isLoggedIn) {
-        router.push({ path: '/login', query: { redirect: route.fullPath, email: preview.value?.email } });
+        // No email in the URL: it would reach analytics, referrers and logs.
+        router.push({ path: '/login', query: { redirect: route.fullPath } });
         return;
     }
     busy.value = true;
