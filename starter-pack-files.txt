@@ -113,6 +113,7 @@ app/backend/tests/test_admin_events.py
 app/backend/tests/test_backups.py
 app/backend/tests/test_cms_editors.py
 app/backend/tests/test_admin_billing.py
+app/backend/tests/test_admin_assigned_plan.py
 app/backend/tests/test_auth_code.py
 app/backend/tests/test_oauth_callback.py
 app/backend/tests/test_ratelimit_wait.py

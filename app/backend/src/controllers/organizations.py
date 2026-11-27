@@ -840,7 +840,8 @@ def get_org_subscription(
 
     org = _check_org_access(session, org_id, user, require_admin=True)
 
-    if not org.stripe_id:
+    # An admin-assigned plan has no Stripe subscription, so Stripe would report it as cancelled.
+    if not org.stripe_id or org.billing_price_id:
         return OrganizationSubscriptionStatus(
             stripe_premium=org.stripe_premium,
             stripe_quota=org.stripe_quota,

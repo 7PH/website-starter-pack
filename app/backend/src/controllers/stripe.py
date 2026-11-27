@@ -286,6 +286,10 @@ def _apply_org_subscription(
     if not org:
         logger.warning(f"No org found for Stripe customer {customer_id}")
         return None
+    if org.billing_price_id:
+        # The admin-assigned plan wins over whatever the Stripe subscription says.
+        logger.info(f"Org {org.id} has an admin-assigned plan, ignoring its Stripe subscription event")
+        return org
     org.stripe_premium = is_premium
     org.stripe_quota = seats if is_premium else 0
     update_organization(session, org)
