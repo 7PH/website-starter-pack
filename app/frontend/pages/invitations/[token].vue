@@ -40,6 +40,10 @@ const emailMismatch = computed(() => {
     return preview.value.email.toLowerCase() !== auth.user.email.toLowerCase();
 });
 
+// The backend refuses invitations until the address is confirmed.
+const emailUnconfirmed = computed(() => auth.isLoggedIn && auth.user?.email_confirmed === false);
+const blocked = computed(() => auth.isLoggedIn && (emailMismatch.value || emailUnconfirmed.value));
+
 async function actOnInvitation(action: () => Promise<void>, successKey: string, postSuccess?: () => Promise<void>) {
     if (!auth.isLoggedIn) {
         router.push({ path: '/login', query: { redirect: route.fullPath, email: preview.value?.email } });
@@ -112,6 +116,15 @@ onMounted(load);
                 />
 
                 <UAlert
+                    v-if="emailUnconfirmed && !emailMismatch"
+                    color="warning"
+                    variant="subtle"
+                    icon="i-lucide-mail-warning"
+                    :description="t('core.organizations.invitationConfirmEmail')"
+                    class="mt-4"
+                />
+
+                <UAlert
                     v-if="auth.isLoggedIn && emailMismatch"
                     color="warning"
                     variant="subtle"
@@ -126,7 +139,7 @@ onMounted(load);
                         icon="i-lucide-check"
                         color="primary"
                         :loading="busy"
-                        :disabled="auth.isLoggedIn && emailMismatch"
+                        :disabled="blocked"
                         @click="accept"
                     />
                     <UButton
@@ -135,7 +148,7 @@ onMounted(load);
                         color="neutral"
                         variant="outline"
                         :loading="busy"
-                        :disabled="auth.isLoggedIn && emailMismatch"
+                        :disabled="blocked"
                         @click="decline"
                     />
                 </div>

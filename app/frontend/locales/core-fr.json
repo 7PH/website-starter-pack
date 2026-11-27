@@ -403,6 +403,7 @@
             "invitationCancelFailed": "Échec de l'annulation de l'invitation",
             "invitationSendFailed": "Échec de l'envoi de l'invitation",
             "invitationLoginPrompt": "Connectez-vous ou inscrivez-vous pour accepter cette invitation.",
+            "invitationConfirmEmail": "Confirmez votre adresse e-mail pour accepter cette invitation.",
             "invitedByExpires": "Invitation de {name} · expire le {date}",
             "invitationExpires": "Expire le {date}",
             "contactEmailLine": "E-mail de contact : {email}"

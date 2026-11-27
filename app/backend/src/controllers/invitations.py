@@ -67,7 +67,12 @@ def _get_pending_invitation_or_404(session: Session, token: str, *, check_expire
     return inv
 
 
-def _assert_invitation_email_matches(invitation, user: UserRead) -> None:
+def _assert_invitation_is_for(invitation, user: UserRead) -> None:
+    # Anyone can sign up with the invitee's address, only a confirmed one proves it is theirs.
+    if not user.email_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Confirm your email address to answer this invitation"
+        )
     if invitation.email.lower() != user.email.lower():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invitation is for a different email")
 
@@ -78,8 +83,8 @@ def list_my_pending_invitations(
     session: Session = Depends(get_session),
     user: UserRead = Depends(get_current_user),
 ):
-    """List pending invitations matching the current user's email."""
-    if not ORG_INVITATIONS_ENABLED:
+    """List pending invitations matching the current user's email, once it is confirmed."""
+    if not ORG_INVITATIONS_ENABLED or not user.email_confirmed:
         return OrganizationInvitationListResponse(items=[])
     pending = invitations_crud.list_user_pending_invitations(session, user.email)
     return OrganizationInvitationListResponse(items=[_invitation_to_read(inv, include_token=True) for inv in pending])
@@ -110,7 +115,7 @@ def accept_invitation(
     """Accept an invitation. Current user's email must match."""
     _enabled_or_404()
     invitation = _get_pending_invitation_or_404(session, token)
-    _assert_invitation_email_matches(invitation, user)
+    _assert_invitation_is_for(invitation, user)
 
     # Already a member?
     if get_user_org_membership(session, user.id, invitation.organization_id):
@@ -156,7 +161,7 @@ def decline_invitation(
     """Decline an invitation. Current user's email must match."""
     _enabled_or_404()
     invitation = _get_pending_invitation_or_404(session, token, check_expired=False)
-    _assert_invitation_email_matches(invitation, user)
+    _assert_invitation_is_for(invitation, user)
 
     invitations_crud.mark_declined(session, invitation)
 

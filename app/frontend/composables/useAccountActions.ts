@@ -156,7 +156,13 @@ export function useAccountActions() {
      * Verify email with token from email link.
      */
     async function verifyEmail(token: string): Promise<boolean> {
-        return withToast(() => authApi.verifyEmail(token), 'core.auth.emailVerified');
+        // Refresh so pages gated on a confirmed email (invitations) see it right away.
+        return withToast(
+            () => authApi.verifyEmail(token),
+            'core.auth.emailVerified',
+            'core.errors.generic',
+            () => auth.refreshToken(),
+        );
     }
 
     /**
