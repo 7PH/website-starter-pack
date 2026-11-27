@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 # User's organization membership (for embedding in UserRead)
 
@@ -34,8 +34,18 @@ class OrganizationFieldsMixin(BaseModel):
     city: str | None = Field(default=None, max_length=100)
     state: str | None = Field(default=None, max_length=100)
     postal_code: str | None = Field(default=None, max_length=20)
-    country: str | None = Field(default=None, max_length=2)
+    country: str | None = None
     custom_data: dict | None = None
+
+    @field_validator("country")
+    @classmethod
+    def check_country(cls, v: str | None) -> str | None:
+        """ISO 3166-1 alpha-2 code, or "" to clear it."""
+        if not v:
+            return v
+        if not (len(v) == 2 and v.isascii() and v.isalpha()):
+            raise ValueError("Use a 2-letter ISO country code, eg FR")
+        return v.upper()
 
 
 class OrganizationCreate(OrganizationFieldsMixin):

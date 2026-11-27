@@ -2,6 +2,7 @@
 
 <script lang="ts" setup>
 import { formatDate } from '~/utils/formatters';
+import { countryOptions } from '~/utils/countries';
 
 const props = defineProps<{
     org: OrganizationRead;
@@ -24,13 +25,27 @@ const formPostalCode = defineModel<string>('formPostalCode');
 const formCountry = defineModel<string>('formCountry');
 const formCustomData = defineModel<OrganizationCustomData>('formCustomData', { required: true });
 
+const { t, locale } = useI18n();
+const countries = computed(() => countryOptions(locale.value));
+const countryName = (code: string | null | undefined) => countries.value.find((c) => c.value === code)?.label ?? code;
+const address = computed(() =>
+    [
+        props.org.address_line1,
+        props.org.address_line2,
+        props.org.city,
+        props.org.state,
+        props.org.postal_code,
+        countryName(props.org.country),
+    ]
+        .filter(Boolean)
+        .join(', '),
+);
+
 const emit = defineEmits<{
     startEdit: [];
     cancelEdit: [];
     save: [];
 }>();
-
-const { t } = useI18n();
 </script>
 
 <template>
@@ -90,10 +105,15 @@ const { t } = useI18n();
                     <UInput v-model="formPostalCode" />
                 </UFormField>
                 <UFormField :label="t('core.organizations.country')" class="flex-1">
-                    <UInput
-                        v-model="formCountry"
+                    <!-- Clearing must send '' (clear it), not null (leave it unchanged). -->
+                    <USelectMenu
+                        :model-value="formCountry || undefined"
+                        :items="countries"
+                        value-key="value"
                         :placeholder="t('core.organizations.countryPlaceholder')"
-                        maxlength="2"
+                        clear
+                        class="w-full"
+                        @update:model-value="formCountry = $event ?? ''"
                     />
                 </UFormField>
             </div>
@@ -130,15 +150,9 @@ const { t } = useI18n();
                 <span class="info-label">{{ t('core.organizations.taxNumber') }}</span>
                 <span class="info-value">{{ org.tax_number }}</span>
             </div>
-            <div v-if="org.address_line1 || org.city" class="info-item">
-                <span class="info-label">{{ t('core.organizations.addressLine1') }}</span>
-                <span class="info-value">
-                    {{
-                        [org.address_line1, org.address_line2, org.city, org.state, org.postal_code, org.country]
-                            .filter(Boolean)
-                            .join(', ')
-                    }}
-                </span>
+            <div v-if="address" class="info-item">
+                <span class="info-label">{{ t('core.organizations.address') }}</span>
+                <span class="info-value">{{ address }}</span>
             </div>
             <div v-if="isAdminView" class="info-item">
                 <span class="info-label">{{ t('core.organizations.created') }}</span>

@@ -127,6 +127,7 @@ app/backend/tests/test_internal.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_org_member_privacy.py
 app/backend/tests/test_org_shared_email.py
+app/backend/tests/test_org_country.py
 app/backend/tests/test_session_revocation.py
 app/backend/tests/test_invitation_confirmed_email.py
 app/backend/tests/test_org_invite_limits.py
@@ -226,6 +227,7 @@ app/frontend/utils/admin-nav.ts
 app/frontend/utils/bug-report.ts
 app/frontend/utils/errors.ts
 app/frontend/utils/formatters.ts
+app/frontend/utils/countries.ts
 app/frontend/utils/organization-link.ts
 app/frontend/utils/name-import.ts
 app/frontend/utils/markdown.ts
