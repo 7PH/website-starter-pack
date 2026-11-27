@@ -36,7 +36,6 @@ from ..crud.organizations import (
     get_organization_members,
     get_organizations,
     get_user_org_membership,
-    is_org_email_taken,
     remove_organization_member,
     reset_org_members_premium,
     soft_delete_organization,
@@ -293,13 +292,6 @@ def create_new_organization(
                 detail=f"Maximum of {ORG_MAX_PER_USER} organization(s) reached",
             )
 
-    # Check if email is taken
-    if is_org_email_taken(session, org_data.email):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An organization with this email already exists",
-        )
-
     # Validate custom_data against project schema
     custom_data = {}
     if org_data.custom_data:
@@ -382,11 +374,6 @@ def update_org(
         org.name = org_data.name
 
     if org_data.email is not None and org_data.email != org.email:
-        if is_org_email_taken(session, org_data.email, exclude_org_id=org.id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An organization with this email already exists",
-            )
         changes["email"] = {"from": org.email, "to": org_data.email}
         org.email = org_data.email
 

@@ -20,13 +20,6 @@ def get_organization_by_id(session: Session, org_id: int, include_deleted: bool 
     return org
 
 
-def get_organization_by_email(session: Session, email: str) -> OrganizationBase | None:
-    """Retrieve a non-deleted organization by email."""
-    return session.execute(
-        select(OrganizationBase).where(OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None))
-    ).scalar_one_or_none()
-
-
 def get_organization_by_stripe_id(session: Session, stripe_id: str) -> OrganizationBase | None:
     """Retrieve a non-deleted organization by Stripe customer ID."""
     return session.execute(
@@ -101,14 +94,6 @@ def soft_delete_organization(session: Session, org: OrganizationBase) -> None:
     """Soft delete an organization."""
     org.deleted_at = datetime.now(UTC)
     session.commit()
-
-
-def is_org_email_taken(session: Session, email: str, exclude_org_id: int | None = None) -> bool:
-    """Check if an email is already used by a non-deleted organization."""
-    query = select(OrganizationBase).where(OrganizationBase.email == email, OrganizationBase.deleted_at.is_(None))
-    if exclude_org_id:
-        query = query.where(OrganizationBase.id != exclude_org_id)
-    return session.execute(query).scalar_one_or_none() is not None
 
 
 # User-Organization Membership CRUD

@@ -10,6 +10,7 @@ app/backend/migrations/2026-05-16-v3.7.0-perf-indexes.sql
 app/backend/migrations/2026-09-03-v5.0.0-add-user-username.sql
 app/backend/migrations/2026-10-24-v5.4.0-cms.sql
 app/backend/migrations/2026-11-20-v6.5.0-cms-media-library.sql
+app/backend/migrations/2026-11-27-vNEXT-org-email-not-unique.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
@@ -124,6 +125,7 @@ app/backend/tests/test_hooks.py
 app/backend/tests/test_internal.py
 app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_org_member_privacy.py
+app/backend/tests/test_org_shared_email.py
 app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_stripe_cancel.py
