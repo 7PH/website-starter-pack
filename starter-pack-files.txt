@@ -10,8 +10,8 @@ app/backend/migrations/2026-05-16-v3.7.0-perf-indexes.sql
 app/backend/migrations/2026-09-03-v5.0.0-add-user-username.sql
 app/backend/migrations/2026-10-24-v5.4.0-cms.sql
 app/backend/migrations/2026-11-20-v6.5.0-cms-media-library.sql
-app/backend/migrations/2026-11-27-vNEXT-org-email-not-unique.sql
-app/backend/migrations/2026-11-27-vNEXT-user-token-version.sql
+app/backend/migrations/2026-11-27-v6.10.0-org-email-not-unique.sql
+app/backend/migrations/2026-11-27-v6.10.0-user-token-version.sql
 app/backend/ruff.toml
 app/backend/src/main.py
 app/backend/src/main_ext.py:template
