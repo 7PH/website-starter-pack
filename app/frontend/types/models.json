@@ -2863,6 +2863,38 @@
       "title": "OAuthCallbackRequest",
       "type": "object"
     },
+    "OAuthCallbackResponse": {
+      "description": "Token for the signed-in user. ``is_new_user`` tells a sign-up from a sign-in, eg for analytics.",
+      "properties": {
+        "access_token": {
+          "title": "Access Token",
+          "type": "string"
+        },
+        "token_parsed": {
+          "$ref": "#/$defs/UserToken"
+        },
+        "user": {
+          "$ref": "#/$defs/UserRead"
+        },
+        "token_type": {
+          "default": "bearer",
+          "title": "Token Type",
+          "type": "string"
+        },
+        "is_new_user": {
+          "default": false,
+          "title": "Is New User",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "access_token",
+        "token_parsed",
+        "user"
+      ],
+      "title": "OAuthCallbackResponse",
+      "type": "object"
+    },
     "OAuthStatusResponse": {
       "description": "Response indicating OAuth availability.",
       "properties": {
@@ -5023,6 +5055,9 @@
     },
     {
       "$ref": "#/$defs/OAuthCallbackRequest"
+    },
+    {
+      "$ref": "#/$defs/OAuthCallbackResponse"
     },
     {
       "$ref": "#/$defs/ManagedAccountGroupCreate"

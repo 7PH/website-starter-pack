@@ -5,6 +5,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+from .user import UserTokenUpdate
+
 
 class OAuthProvider(StrEnum):
     """Supported OAuth providers."""
@@ -32,3 +34,9 @@ class OAuthStatusResponse(BaseModel):
 
     enabled: bool
     providers: list[str]
+
+
+class OAuthCallbackResponse(UserTokenUpdate):
+    """Token for the signed-in user. ``is_new_user`` tells a sign-up from a sign-in, eg for analytics."""
+
+    is_new_user: bool = False

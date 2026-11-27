@@ -63,6 +63,7 @@ export type Models =
   | OAuthStatusResponse
   | OAuthUrlResponse
   | OAuthCallbackRequest
+  | OAuthCallbackResponse
   | ManagedAccountGroupCreate
   | ManagedAccountGroupUpdate
   | ManagedAccountGroupRead
@@ -378,6 +379,9 @@ export type Url3 = string;
 export type State3 = string;
 export type Code = string;
 export type State4 = string;
+export type AccessToken2 = string;
+export type TokenType1 = string;
+export type IsNewUser = boolean;
 export type Name7 = string;
 export type Name8 = string | null;
 export type Archived = boolean | null;
@@ -1176,6 +1180,16 @@ export interface OAuthUrlResponse {
 export interface OAuthCallbackRequest {
   code: Code;
   state: State4;
+}
+/**
+ * Token for the signed-in user. ``is_new_user`` tells a sign-up from a sign-in, eg for analytics.
+ */
+export interface OAuthCallbackResponse {
+  access_token: AccessToken2;
+  token_parsed: UserToken;
+  user: UserRead;
+  token_type?: TokenType1;
+  is_new_user?: IsNewUser;
 }
 export interface ManagedAccountGroupCreate {
   name: Name7;

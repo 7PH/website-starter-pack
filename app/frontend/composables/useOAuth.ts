@@ -11,6 +11,7 @@ export function useOAuth() {
     const api = useApi();
     const auth = useAuth();
     const { showError } = useToastHelpers();
+    const { trackEvent } = useAnalytics();
 
     /**
      * Check if OAuth is enabled and which providers are available.
@@ -84,10 +85,11 @@ export function useOAuth() {
 
         try {
             const body: OAuthCallbackRequest = { code, state };
-            const response = await api.post<UserTokenUpdate>('/oauth/google/callback', body);
+            const response = await api.post<OAuthCallbackResponse>('/oauth/google/callback', body);
 
             // Store the token and user data
             auth.saveUserToken(response);
+            if (response.is_new_user) trackEvent('signup', { method: 'google' });
 
             return true;
         } catch (error) {

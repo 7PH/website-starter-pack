@@ -87,6 +87,7 @@ from .schemas.managed_account import (
 )
 from .schemas.oauth import (
     OAuthCallbackRequest,
+    OAuthCallbackResponse,
     OAuthStatusResponse,
     OAuthUrlResponse,
 )
@@ -189,6 +190,7 @@ CoreModels = (
     | OAuthStatusResponse
     | OAuthUrlResponse
     | OAuthCallbackRequest
+    | OAuthCallbackResponse
     # Managed account models
     | ManagedAccountGroupCreate
     | ManagedAccountGroupUpdate

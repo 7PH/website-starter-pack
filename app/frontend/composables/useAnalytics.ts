@@ -9,6 +9,8 @@ import type { AnalyticsEventData } from '~/types/analytics';
  * @example
  * const { trackEvent } = useAnalytics();
  * trackEvent('button_click', { button: 'signup' });
+ *
+ * Core fires `signup` with `{ method: 'password' | 'google' }` once, when an account is created.
  */
 export function useAnalytics() {
     const isEnabled = computed(() => ANALYTICS.scripts.length > 0);

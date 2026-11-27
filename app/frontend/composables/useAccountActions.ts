@@ -13,6 +13,7 @@ export function useAccountActions() {
     const auth = useAuth();
     const { t } = useI18n();
     const { showSuccess, showError } = useToastHelpers();
+    const { trackEvent } = useAnalytics();
 
     // Rate limiting is generic across endpoints, so its message doesn't need a per-call key.
     const backendConfig = useBackendConfig();
@@ -106,6 +107,7 @@ export function useAccountActions() {
             'core.errors.generic',
             (response) => {
                 auth.saveUserToken(response);
+                trackEvent('signup', { method: 'password' });
                 // Fire and forget: the account exists either way, and the user can resend from their account.
                 // No mail service: nothing would be sent, so don't claim it was.
                 if (backendConfig.config?.email_enabled !== false) sendVerificationEmail();

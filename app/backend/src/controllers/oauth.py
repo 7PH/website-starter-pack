@@ -24,11 +24,11 @@ from ..helpers.ratelimit import ensure_rate_limit, get_client_ip
 from ..models.user import UserBase
 from ..schemas.oauth import (
     OAuthCallbackRequest,
+    OAuthCallbackResponse,
     OAuthProvider,
     OAuthStatusResponse,
     OAuthUrlResponse,
 )
-from ..schemas.user import UserTokenUpdate
 
 router = APIRouter(prefix="/oauth")
 
@@ -67,7 +67,7 @@ def get_google_oauth_url():
     return OAuthUrlResponse(url=url, state=state)
 
 
-@router.post("/google/callback", response_model=UserTokenUpdate)
+@router.post("/google/callback", response_model=OAuthCallbackResponse)
 async def handle_google_callback(
     *,
     request: Request,
@@ -121,6 +121,7 @@ async def handle_google_callback(
 
     # Check if user already exists (auto-link by email)
     user = get_user_by_email(session, email)
+    is_new_user = user is None
 
     if user:
         # Only link to an account that already proved this address.
@@ -171,4 +172,7 @@ async def handle_google_callback(
             details={"method": "oauth", "provider": "google"},
         )
 
-    return issue_jwt_with_orgs(session, user)
+    token = issue_jwt_with_orgs(session, user)
+    return OAuthCallbackResponse(
+        access_token=token.access_token, token_parsed=token.token_parsed, user=token.user, is_new_user=is_new_user
+    )

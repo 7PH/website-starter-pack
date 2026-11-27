@@ -18,7 +18,32 @@ from fastapi import HTTPException
 
 from src.controllers import oauth
 from src.helpers import oauth as oauth_helper
+from src.helpers.auth import create_access_token
 from src.schemas.oauth import OAuthCallbackRequest
+from src.schemas.user import UserRead
+
+
+def _token():
+    return create_access_token(UserRead(id=1, email="a@example.com", is_admin=False, is_premium=False), token_version=0)
+
+
+def test_existing_google_user_is_not_a_new_user():
+    google_user = SimpleNamespace(id="g-1", email="a@example.com", first_name="", last_name="", verified_email=True)
+    with (
+        patch.object(oauth, "is_oauth_enabled", return_value=True),
+        patch.object(oauth, "ensure_rate_limit"),
+        patch.object(oauth, "get_client_ip", return_value="127.0.0.1"),
+        patch.object(oauth, "get_user_from_code", AsyncMock(return_value=google_user)),
+        patch.object(oauth, "get_user_by_email", return_value=SimpleNamespace(id=1, email_confirmed=True)),
+        patch.object(oauth, "log_event"),
+        patch.object(oauth, "issue_jwt_with_orgs", return_value=_token()),
+    ):
+        response = asyncio.run(
+            oauth.handle_google_callback(
+                request=MagicMock(), session=MagicMock(), body=OAuthCallbackRequest(code="code", state="state")
+            )
+        )
+    assert response.is_new_user is False
 
 
 def test_new_google_user_is_created_as_oauth():
@@ -35,9 +60,9 @@ def test_new_google_user_is_created_as_oauth():
         patch.object(oauth, "create_user") as create_user,
         patch.object(oauth, "setup_new_user_stripe"),
         patch.object(oauth, "log_event"),
-        patch.object(oauth, "issue_jwt_with_orgs"),
+        patch.object(oauth, "issue_jwt_with_orgs", return_value=_token()),
     ):
-        asyncio.run(
+        response = asyncio.run(
             oauth.handle_google_callback(
                 request=MagicMock(),
                 session=MagicMock(),
@@ -45,6 +70,7 @@ def test_new_google_user_is_created_as_oauth():
             )
         )
 
+    assert response.is_new_user is True
     user = create_user.call_args.args[1]
     assert user.auth_method == "oauth"
     assert user.oauth_provider == "google"
