@@ -23,6 +23,7 @@ def get_config() -> BackendConfig:
         managed_account_group_max_per_user=constants.MANAGED_ACCOUNT_GROUP_MAX_PER_USER,
         managed_accounts_max_per_user=constants.MANAGED_ACCOUNTS_MAX_PER_USER,
         stripe_enabled=constants.STRIPE_ENABLED,
+        user_plans_enabled=constants.STRIPE_ENABLED and bool(constants.USER_STRIPE_PRICE_IDS),
         organizations_enabled=constants.ORGANIZATIONS_ENABLED,
         org_invitations_enabled=constants.ORG_INVITATIONS_ENABLED,
         managed_accounts_enabled=constants.MANAGED_ACCOUNTS_ENABLED,

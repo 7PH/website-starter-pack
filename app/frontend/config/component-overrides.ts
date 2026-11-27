@@ -9,7 +9,10 @@ import type { Component } from 'vue';
  * - 'PageFooter' - Custom site footer. No props/events.
  * - 'OrganizationsCreateModal' - Custom organization creation modal
  * - 'OrganizationsPageActions' - Custom actions header on organizations list page
- * - 'OrganizationsSubscriptionModal' - Custom billing/subscription UI
+ * - 'OrganizationsBillingTab' - Organization billing tab (plan, seats, upgrade card).
+ *     Props: `org`, `canManageSubscription`, `isAdminView`. Emits `openSubscribeModal`, `openBillingPortal`.
+ * - 'OrganizationsSubscriptionModal' - Organization plan picker.
+ *     Props: `open` (v-model), `plans`, `isLoading`, `subscribingPriceId`. Emits `subscribe`.
  * - 'MessagesPageActions' - Custom actions header on messages list page
  * - 'CmsPageContent' - Look of a free CMS page (CMS_ENABLED). Prop: `page: CmsPageRead`.
  * - 'ModalAuth' - Custom authentication flow

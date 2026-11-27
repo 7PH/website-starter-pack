@@ -10,10 +10,24 @@ const { showSuccess, showWarning } = useToastHelpers();
 const stripe = useStripe();
 const config = useRuntimeConfig();
 const { isPremium, loading, refresh, cancelAtPeriodEnd, expiresAt, plan } = stripe;
-const { organizations, firstOrg, firstAdminOrg, premiumOrg, isOrgAdmin, isAdminOfPremiumOrg, premiumSource } =
-    useOrganizationStatus();
+const {
+    organizations,
+    adminOrgs,
+    firstOrg,
+    firstAdminOrg,
+    premiumOrg,
+    isOrgAdmin,
+    isAdminOfPremiumOrg,
+    premiumSource,
+} = useOrganizationStatus();
+const backendConfig = useBackendConfig();
 
 const stripeEnabled = computed(() => String(config.public.stripeEnabled) === 'true');
+// Without a personal plan to sell, the subscribe button would open an empty plan list.
+const userPlansEnabled = computed(() => backendConfig.config?.user_plans_enabled === true);
+const adminOrgNames = computed(() =>
+    new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(adminOrgs.value.map((o) => o.organization_name)),
+);
 // Premium arranged outside Stripe: say so, and don't offer a subscription that would be paid twice.
 const externalPremium = useUserExternalPremium();
 const pendingExternal = computed(() => (isPremium.value ? null : externalPremium.value));
@@ -160,7 +174,7 @@ const sourceLabel = computed(() => {
             </p>
 
             <p v-else-if="!isPremium && isOrgAdmin && firstAdminOrg" class="hint">
-                {{ t('core.billing.youAreOrgOwner', { orgName: firstAdminOrg.organization_name }) }} —
+                {{ t('core.billing.youAreOrgOwner', { orgName: adminOrgNames }) }} —
                 {{ t('core.billing.manageOrgPrompt') }}
             </p>
 
@@ -202,7 +216,7 @@ const sourceLabel = computed(() => {
                 </NuxtLink>
 
                 <UButton
-                    v-if="stripeEnabled && !isPremium && !pendingExternal"
+                    v-if="stripeEnabled && userPlansEnabled && !isPremium && !pendingExternal"
                     :label="t('core.billing.subscribePersonally')"
                     icon="i-lucide-sparkles"
                     :color="organizations.length > 0 ? 'neutral' : 'primary'"

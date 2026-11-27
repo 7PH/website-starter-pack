@@ -6,6 +6,8 @@ import { useOrganizationMembers, useOrganizationQuota } from '~/composables/orga
 import { useOrganizationSubscription } from '~/composables/organizations/useOrganizationSubscription';
 import { useOrganizationForm } from '~/composables/organizations/useOrganizationForm';
 import { adminCreateConversation } from '~/utils/api/conversations';
+import OrganizationsBillingTabDefault from '~/components/organizations/BillingTab.vue';
+import OrganizationsSubscriptionModalDefault from '~/components/organizations/SubscriptionModal.vue';
 
 export interface OrganizationDetailProps {
     isAdminView?: boolean;
@@ -16,6 +18,12 @@ export interface OrganizationDetailProps {
 const props = withDefaults(defineProps<OrganizationDetailProps>(), {
     isAdminView: false,
 });
+
+const OrganizationsBillingTab = useOverridable('OrganizationsBillingTab', OrganizationsBillingTabDefault);
+const OrganizationsSubscriptionModal = useOverridable(
+    'OrganizationsSubscriptionModal',
+    OrganizationsSubscriptionModalDefault,
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -369,7 +377,8 @@ onMounted(() => {
                 @remove-member="removeMember"
             />
 
-            <OrganizationsBillingTab
+            <component
+                :is="OrganizationsBillingTab"
                 v-else-if="activeTab === 'billing' && isOwner"
                 :org="org"
                 :can-manage-subscription="canManageSubscription"
@@ -461,7 +470,8 @@ onMounted(() => {
             </template>
         </UModal>
 
-        <OrganizationsSubscriptionModal
+        <component
+            :is="OrganizationsSubscriptionModal"
             v-model:open="showSubscribeModal"
             :plans="plans"
             :is-loading="isLoadingPlans"

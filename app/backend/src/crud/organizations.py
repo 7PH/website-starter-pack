@@ -111,6 +111,8 @@ def get_user_organizations(session: Session, user_id: int) -> list[UserOrganizat
             select(UserOrganizationBase)
             .where(UserOrganizationBase.user_id == user_id)
             .options(joinedload(UserOrganizationBase.organization))
+            # Stable, so "your first organization" in the UI doesn't change between requests.
+            .order_by(UserOrganizationBase.created_at, UserOrganizationBase.organization_id)
         )
         .scalars()
         .all()

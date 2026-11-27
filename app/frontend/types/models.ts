@@ -544,6 +544,7 @@ export type OrgInvitationExpiryDays = number;
 export type ManagedAccountGroupMaxPerUser = number;
 export type ManagedAccountsMaxPerUser = number;
 export type StripeEnabled = boolean;
+export type UserPlansEnabled = boolean;
 export type OrganizationsEnabled = boolean;
 export type OrgInvitationsEnabled = boolean;
 export type ManagedAccountsEnabled = boolean;
@@ -1501,6 +1502,7 @@ export interface BackendConfig {
   managed_account_group_max_per_user: ManagedAccountGroupMaxPerUser;
   managed_accounts_max_per_user: ManagedAccountsMaxPerUser;
   stripe_enabled: StripeEnabled;
+  user_plans_enabled?: UserPlansEnabled;
   organizations_enabled: OrganizationsEnabled;
   org_invitations_enabled: OrgInvitationsEnabled;
   managed_accounts_enabled: ManagedAccountsEnabled;

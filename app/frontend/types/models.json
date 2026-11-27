@@ -410,6 +410,11 @@
           "title": "Stripe Enabled",
           "type": "boolean"
         },
+        "user_plans_enabled": {
+          "default": false,
+          "title": "User Plans Enabled",
+          "type": "boolean"
+        },
         "organizations_enabled": {
           "title": "Organizations Enabled",
           "type": "boolean"

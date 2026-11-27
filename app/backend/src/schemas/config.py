@@ -25,6 +25,8 @@ class CoreBackendConfig(BaseModel):
 
     # Feature flags
     stripe_enabled: bool
+    # Stripe is on and USER_STRIPE_PRICE_IDS lists at least one personal plan.
+    user_plans_enabled: bool = False
     organizations_enabled: bool
     org_invitations_enabled: bool
     managed_accounts_enabled: bool
