@@ -5,7 +5,7 @@
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
 from ..models.organization import OrganizationInvitationBase
@@ -71,6 +71,14 @@ def get_pending_invitation(session: Session, organization_id: int, email: str) -
             *_pending_filters(),
         )
     ).scalar_one_or_none()
+
+
+def count_org_pending_invitations(session: Session, organization_id: int) -> int:
+    return session.execute(
+        select(func.count())
+        .select_from(OrganizationInvitationBase)
+        .where(OrganizationInvitationBase.organization_id == organization_id, *_pending_filters())
+    ).scalar_one()
 
 
 def list_org_pending_invitations(session: Session, organization_id: int) -> list[OrganizationInvitationBase]:

@@ -47,6 +47,7 @@ from ..helpers import stripe as stripe_helper
 from ..helpers.auth import get_current_admin, get_current_nonmanaged_user, get_current_user
 from ..helpers.db import get_session
 from ..helpers.email import send_organization_invitation_email
+from ..helpers.ratelimit import ensure_rate_limit
 from ..helpers.redirects import validate_redirect_url as _validate_redirect_url
 from ..helpers.user_display import display_for
 from ..models.organization import OrganizationBase, OrganizationInvitationBase, UserOrganizationBase
@@ -84,6 +85,11 @@ router = APIRouter(prefix="/organizations")
 
 # Default limit for fetching all members of an org in detail view
 ORG_DETAIL_MEMBER_LIMIT = 100
+
+# Each invitation sends an email, so these bound how much mail one account or org can trigger.
+INVITES_PER_USER_PER_DAY = 20
+INVITES_PER_ORG_PER_DAY = 50
+MAX_PENDING_INVITES_PER_ORG = 50
 
 
 # ============================================================================
@@ -900,6 +906,10 @@ def create_invitation(
     org = _check_org_access(session, org_id, user, require_admin=True)
     if org.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization is deleted")
+    if not user.email_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Confirm your email address before inviting members"
+        )
 
     existing_user = get_user_by_email(session, invitation_data.email)
     if existing_user and get_user_org_membership(session, existing_user.id, org.id):
@@ -914,12 +924,22 @@ def create_invitation(
             detail="An invitation is already pending for this email",
         )
 
-    org_member_count = count_organization_members(session, org.id)
-    if org_member_count >= ORG_MAX_MEMBERS:
+    pending_count = invitations_crud.count_org_pending_invitations(session, org.id)
+    if pending_count >= MAX_PENDING_INVITES_PER_ORG:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Organization has reached the maximum of {ORG_MAX_MEMBERS} member(s)",
+            detail=f"Organization has reached the maximum of {MAX_PENDING_INVITES_PER_ORG} pending invitations",
         )
+    # Pending invitations hold a seat, or accepting them all could overflow the org.
+    if count_organization_members(session, org.id) + pending_count >= ORG_MAX_MEMBERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Organization has reached the maximum of {ORG_MAX_MEMBERS} member(s), pending invitations included",
+        )
+
+    # Last, so a refused request doesn't use up quota.
+    ensure_rate_limit(action="org-invite-user", quota=INVITES_PER_USER_PER_DAY, key=str(user.id), duration_minutes=1440)
+    ensure_rate_limit(action="org-invite-org", quota=INVITES_PER_ORG_PER_DAY, key=str(org.id), duration_minutes=1440)
 
     invitation = invitations_crud.create_invitation(
         session,

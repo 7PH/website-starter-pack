@@ -129,6 +129,7 @@ app/backend/tests/test_org_member_privacy.py
 app/backend/tests/test_org_shared_email.py
 app/backend/tests/test_session_revocation.py
 app/backend/tests/test_invitation_confirmed_email.py
+app/backend/tests/test_org_invite_limits.py
 app/backend/tests/test_managed_account_permissions.py
 app/backend/tests/test_stripe_webhook.py
 app/backend/tests/test_stripe_cancel.py
