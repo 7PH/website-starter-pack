@@ -149,6 +149,7 @@ async def handle_google_callback(
                 else None
             ),
             email_confirmed=True,  # Google emails are pre-verified
+            auth_method="oauth",
             oauth_provider=OAuthProvider.GOOGLE,
             oauth_id=google_user.id,
         )
