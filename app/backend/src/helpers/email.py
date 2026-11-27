@@ -16,17 +16,24 @@ from jinja2 import ChoiceLoader, Environment, FileSystemLoader, Template, Templa
 logger = logging.getLogger(__name__)
 
 
+class EmailNotConfiguredError(ValueError):
+    """No mail service is set up: expected in dev, not an outage."""
+
+
 @contextmanager
 def swallow_email_errors():
     """Run a send_*_email() call without bubbling exceptions.
 
     Use when an email failure (e.g. Mailgun unconfigured in dev) shouldn't
-    block the user flow. Failures are logged so ops can spot real outages.
+    block the user flow. Real failures are logged with their traceback, or a
+    broken template would drop every email quietly.
     """
     try:
         yield
-    except Exception as e:
-        logger.warning("Email send failed: %s", e)
+    except EmailNotConfiguredError as e:
+        logger.warning("Email not sent: %s", e)
+    except Exception:
+        logger.exception("Email send failed")
 
 
 # Configuration
@@ -53,15 +60,18 @@ if _template_dirs:
     )
 
 
-def _render_template(name: str, **context) -> str | None:
-    """Render a template by name with the default context, or None if missing."""
+def _render_template(template_name: str, /, **context) -> str | None:
+    """Render a template by name with the default context, or None if missing.
+
+    Positional-only and a dict merge, so any context key works, `name` and `app_name` included.
+    """
     if _template_env is None:
         return None
     try:
-        template: Template = _template_env.get_template(name)
+        template: Template = _template_env.get_template(template_name)
     except TemplateNotFound:
         return None
-    return template.render(public_url=PUBLIC_URL, app_name=APP_NAME, **context)
+    return template.render({"public_url": PUBLIC_URL, "app_name": APP_NAME, **context})
 
 
 def send_email(
@@ -87,7 +97,7 @@ def send_email(
     if not MAILGUN_ENABLED:
         logger.warning(f"Email disabled, skipping: {to_email} - {subject}")
         if raise_on_error:
-            raise ValueError("Email service not configured (MAILGUN_API_KEY missing)")
+            raise EmailNotConfiguredError("Email service not configured (MAILGUN_API_KEY missing)")
         return False
 
     data = {
