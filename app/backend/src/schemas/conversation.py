@@ -17,9 +17,10 @@ class ConversationUserPreview(BaseModel):
     """User preview for conversation context, includes email for admin visibility."""
 
     id: int
-    email: str
-    first_name: str
-    last_name: str
+    # NULL for users without an email (managed accounts, deleted users) or without real names.
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class MessageCreate(BaseModel):

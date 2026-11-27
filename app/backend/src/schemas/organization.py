@@ -70,8 +70,9 @@ class OrganizationMemberRead(BaseModel):
     email: str | None = None
     # Display name, username or real name (see helpers/user_display.py), never the email when that is hidden.
     display_label: str | None = None
-    first_name: str
-    last_name: str
+    # NULL for seeded, pseudonymous or Google users without a family name.
+    first_name: str | None = None
+    last_name: str | None = None
     is_admin: bool
     is_premium: bool
     has_premium_seat: bool = False

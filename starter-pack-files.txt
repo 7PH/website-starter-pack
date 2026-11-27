@@ -128,6 +128,7 @@ app/backend/tests/test_managed_account_groups.py
 app/backend/tests/test_org_member_privacy.py
 app/backend/tests/test_org_shared_email.py
 app/backend/tests/test_org_country.py
+app/backend/tests/test_null_names.py
 app/backend/tests/test_session_revocation.py
 app/backend/tests/test_invitation_confirmed_email.py
 app/backend/tests/test_org_invite_limits.py

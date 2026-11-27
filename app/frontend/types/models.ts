@@ -278,8 +278,8 @@ export type PremiumMemberCount = number;
 export type UserId2 = number;
 export type Email6 = string | null;
 export type DisplayLabel3 = string | null;
-export type FirstName6 = string;
-export type LastName6 = string;
+export type FirstName6 = string | null;
+export type LastName6 = string | null;
 export type IsAdmin4 = boolean;
 export type IsPremium4 = boolean;
 export type HasPremiumSeat1 = boolean;
@@ -573,9 +573,9 @@ export type Subtype = string | null;
 export type Subject1 = string | null;
 export type CreatedById = number | null;
 export type Id18 = number;
-export type Email14 = string;
-export type FirstName7 = string;
-export type LastName7 = string;
+export type Email14 = string | null;
+export type FirstName7 = string | null;
+export type LastName7 = string | null;
 export type IsClosed = boolean;
 export type ClosedAt = string | null;
 export type CreatedAt13 = string | null;
@@ -966,8 +966,8 @@ export interface OrganizationMemberRead {
   user_id: UserId2;
   email?: Email6;
   display_label?: DisplayLabel3;
-  first_name: FirstName6;
-  last_name: LastName6;
+  first_name?: FirstName6;
+  last_name?: LastName6;
   is_admin: IsAdmin4;
   is_premium: IsPremium4;
   has_premium_seat?: HasPremiumSeat1;
@@ -1548,9 +1548,9 @@ export interface ConversationRead {
  */
 export interface ConversationUserPreview {
   id: Id18;
-  email: Email14;
-  first_name: FirstName7;
-  last_name: LastName7;
+  email?: Email14;
+  first_name?: FirstName7;
+  last_name?: LastName7;
 }
 /**
  * Schema for reading a message.

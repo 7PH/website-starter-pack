@@ -2108,23 +2108,44 @@
           "type": "integer"
         },
         "email": {
-          "title": "Email",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
         },
         "first_name": {
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
         }
       },
       "required": [
-        "id",
-        "email",
-        "first_name",
-        "last_name"
+        "id"
       ],
       "title": "ConversationUserPreview",
       "type": "object"
@@ -3460,12 +3481,28 @@
           "title": "Display Label"
         },
         "first_name": {
-          "title": "First Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Name"
         },
         "last_name": {
-          "title": "Last Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Name"
         },
         "is_admin": {
           "title": "Is Admin",
@@ -3496,8 +3533,6 @@
       },
       "required": [
         "user_id",
-        "first_name",
-        "last_name",
         "is_admin",
         "is_premium"
       ],

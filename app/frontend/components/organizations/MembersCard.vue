@@ -4,6 +4,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { useOrganizationInvitations } from '~/composables/organizations/useOrganizationInvitations';
 import { useOrganizationQuotaDisplay } from '~/composables/organizations/useOrganizationQuotaDisplay';
+import { previewLabel } from '~/utils/formatters';
 
 const props = withDefaults(
     defineProps<{
@@ -184,7 +185,7 @@ function handleInvite(email: string, isAdmin: boolean) {
 
                 <!-- display_label also covers display names and usernames, so rows aren't blank in apps without real names. -->
                 <template #name-cell="{ row }">{{
-                    row.original.display_label ?? `${row.original.first_name} ${row.original.last_name}`
+                    row.original.display_label ?? previewLabel(row.original, '')
                 }}</template>
 
                 <template #role-cell="{ row }">
