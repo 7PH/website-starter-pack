@@ -80,6 +80,7 @@ def send_email(
     body: str,
     html_body: str | None = None,
     raise_on_error: bool = True,
+    reply_to: str | None = None,
 ) -> bool:
     """
     Send an email via Mailgun.
@@ -90,6 +91,7 @@ def send_email(
         body: Plain text body
         html_body: Optional HTML body
         raise_on_error: Whether to raise an exception on error
+        reply_to: Where replies go, since mail is sent from a no-reply address
 
     Returns:
         True if email was sent successfully, False otherwise
@@ -109,6 +111,8 @@ def send_email(
 
     if html_body:
         data["html"] = html_body
+    if reply_to:
+        data["h:Reply-To"] = reply_to
 
     try:
         response = requests.post(
@@ -141,6 +145,7 @@ def _send_templated_email(
     context: dict,
     text_fallback: str | None,
     raise_on_error: bool = True,
+    reply_to: str | None = None,
 ) -> bool:
     """Render the templated subject and HTML+text bodies and send. Falls back to ``text_fallback`` text-only.
 
@@ -161,6 +166,7 @@ def _send_templated_email(
         body=text_body,
         html_body=html_body,
         raise_on_error=raise_on_error,
+        reply_to=reply_to,
     )
 
 
