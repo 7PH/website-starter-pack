@@ -27,6 +27,9 @@ INTERNAL_API_ENABLED = bool(INTERNAL_API_KEY) and (
 # Minimum length requirement for user passwords
 PASSWORD_MIN_LENGTH = 8
 
+# Sign-ups per IP per 15 minutes. Raise it when many people join from one network (a school, an office NAT).
+REGISTER_RATE_LIMIT_PER_IP = int(os.environ.get("REGISTER_RATE_LIMIT_PER_IP", "5"))
+
 # Stripe
 STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "false").lower() == "true"
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")

@@ -75,9 +75,11 @@ class TestDisplayFor:
         user = _user(auth_method="deleted", display_name="Ignored", email="x@y.z")
         assert display_for(user) is None
 
-    def test_first_name_only_falls_through_to_email(self):
-        user = _user(first_name="Alice", email="a@b.c")
-        assert display_for(user) == "a@b.c"
+    def test_first_name_alone_beats_email(self):
+        assert display_for(_user(first_name="Alice", last_name="", email="a@b.c")) == "Alice"
+
+    def test_last_name_alone_beats_email(self):
+        assert display_for(_user(last_name="Doe", email="a@b.c")) == "Doe"
 
     def test_names_ignored_when_real_names_are_off(self, real_names_off):
         """Names stored before a pseudonymous app turned the flag off must not surface."""

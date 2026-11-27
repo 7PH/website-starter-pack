@@ -14,7 +14,7 @@ def display_for(user) -> str | None:
     """Return a human-friendly label, or None if the caller should i18n a fallback.
 
     Ladder:
-        display_name → username → first_name + last_name → email → None
+        display_name → username → first and/or last name → email → None
 
     `display_name` stays on top: it's the deliberate override, so an app that
     sets both gets the one it set on purpose. The username rung applies only
@@ -37,22 +37,22 @@ def display_for(user) -> str | None:
         if username:
             return username
 
-    if REAL_NAMES_ENABLED:
-        first = getattr(user, "first_name", None)
-        last = getattr(user, "last_name", None)
-        if first and last:
-            return f"{first} {last}"
+    # Google can send a first name without a last one: that still beats showing the email.
+    if name := _real_name(user):
+        return name
 
     return getattr(user, "email", None) or None
 
 
+def _real_name(user) -> str:
+    if not REAL_NAMES_ENABLED:
+        return ""
+    return " ".join(p for p in (getattr(user, "first_name", None), getattr(user, "last_name", None)) if p)
+
+
 def billing_name(user) -> str:
     """Customer name for Stripe: the real name when collected, else the display label."""
-    if REAL_NAMES_ENABLED:
-        name = " ".join(p for p in (getattr(user, "first_name", None), getattr(user, "last_name", None)) if p)
-        if name:
-            return name
-    return display_for(user) or ""
+    return _real_name(user) or display_for(user) or ""
 
 
 def greeting_for(user) -> str | None:

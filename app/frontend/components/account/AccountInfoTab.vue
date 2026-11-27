@@ -69,9 +69,6 @@ function validateProfile(): boolean {
     if (realNamesEnabled.value && !profileForm.firstName.trim()) {
         profileErrors.value.firstName = t('core.validation.required');
     }
-    if (realNamesEnabled.value && !profileForm.lastName.trim()) {
-        profileErrors.value.lastName = t('core.validation.required');
-    }
     // Blank is only "leave it alone" for users who never got a handle (OAuth and
     // access-code signups). Once you have one you can rename it but not remove
     // it, so blanking the field is an error rather than a silent no-op.
