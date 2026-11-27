@@ -15,7 +15,13 @@ from ..constants import USERNAMES_ENABLED, EventType
 from ..crud.event_logs import get_events, log_event
 from ..crud.organizations import get_user_organizations
 from ..crud.users import get_user_by_id, is_username_taken, soft_delete_user, update_user
-from ..helpers.auth import create_access_token, get_current_admin, get_real_admin_id, get_user_or_404
+from ..helpers.auth import (
+    create_access_token,
+    get_current_admin,
+    get_real_admin_id,
+    get_user_or_404,
+    revoke_sessions,
+)
 from ..helpers.db import get_session
 from ..helpers.username import UsernameError, username_conflict_as_409, validate_username
 from ..models.cms import CmsEditorBase
@@ -174,6 +180,7 @@ def update_user_by_admin(
     user = get_user_or_404(session, user_id)
 
     changes: dict[str, Any] = {}
+    was_admin = user.is_admin
 
     for field in ("first_name", "last_name", "display_name", "is_admin", "is_premium"):
         new_value = getattr(user_update, field)
@@ -212,6 +219,9 @@ def update_user_by_admin(
         if new_custom_data != (user.custom_data or {}):
             changes["custom_data"] = {"from": user.custom_data or {}, "to": new_custom_data}
             user.custom_data = new_custom_data
+
+    if was_admin and not user.is_admin:
+        revoke_sessions(user)
 
     with username_conflict_as_409(session):
         update_user(session, user)
@@ -301,7 +311,7 @@ def start_impersonation(
 
     # Create token with impersonation info
     target_user_read = UserRead.model_validate(target_user)
-    token = create_access_token(admin, impersonating_as=target_user_read)
+    token = create_access_token(admin, token_version=target_user.token_version, impersonating_as=target_user_read)
 
     return ImpersonationResponse(
         access_token=token.access_token,
@@ -342,7 +352,7 @@ def stop_impersonation(
     )
 
     admin_user_read = UserRead.model_validate(admin_user)
-    token = create_access_token(admin_user_read)
+    token = create_access_token(admin_user_read, token_version=admin_user.token_version)
 
     return ImpersonationResponse(
         access_token=token.access_token,

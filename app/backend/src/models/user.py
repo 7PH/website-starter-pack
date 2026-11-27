@@ -25,6 +25,8 @@ class UserBase(Base):
     # Nullable: OAuth users may have no password; access-code users never do.
     hashed_password = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
+    # Lives in every JWT: bumping it signs the user out everywhere.
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
     stripe_id = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
     has_personal_subscription = Column(Boolean, default=False)

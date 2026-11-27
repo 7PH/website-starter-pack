@@ -47,46 +47,56 @@ def verify_password(password: str, hashed_password: str) -> bool:
         return False
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRead:
-    """
-    Get the current user from the JWT token.
+def get_token_user(session: Session, payload: dict) -> UserBase:
+    """The DB row behind a decoded access token, or 401 when the account is gone or its sessions were revoked."""
+    from ..crud.users import get_user_by_id
 
-    Reads claims from the token; does not hit the DB. The id is read from the
-    top-level `id` claim (sub now holds str(id) for OAuth2 conformance — email
-    may be None for access-code users).
+    data = payload.get("data", {})
+    user = get_user_by_id(session, payload["id"])
+    # Tokens minted before token_version existed carry no claim and match the column default.
+    if not user or user.token_version != data.get("token_version", 0):
+        raise InvalidTokenException("Session expired, please sign in again")
+    # An impersonation token dies with the admin rights of whoever started it.
+    if real_admin_id := data.get("real_admin_id"):
+        admin = get_user_by_id(session, real_admin_id)
+        if not admin or not admin.is_admin:
+            raise InvalidTokenException("Session expired, please sign in again")
+    return user
+
+
+def revoke_sessions(user: UserBase) -> None:
+    """Invalidate every token issued to the user so far. The caller commits."""
+    user.token_version += 1
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> UserRead:
+    """
+    Get the current user from the JWT token, checked against the DB.
+
+    The row has the final say on is_admin, email and email_confirmed. is_premium
+    stays the claim: managed accounts inherit their owner's at mint time.
     """
     token_decoded = decode_access_token(token)
+    user = get_token_user(session, token_decoded)
     data = token_decoded.get("data", {})
     return UserRead(
-        id=token_decoded["id"],
-        email=data.get("email"),
+        id=user.id,
+        email=user.email,
+        email_confirmed=bool(user.email_confirmed),
         username=data.get("username"),
         first_name=data.get("first_name"),
         last_name=data.get("last_name"),
         display_name=data.get("display_name"),
-        is_admin=data.get("is_admin") or False,
+        is_admin=bool(user.is_admin),
         is_premium=data.get("is_premium") or False,
         auth_method=data.get("auth_method", "password"),
         managed_account_group_id=data.get("managed_account_group_id"),
     )
 
 
-async def get_current_admin(
-    current_user: UserRead = Depends(get_current_user),
-    session: Session = Depends(get_session),
-) -> UserRead:
-    """
-    Get the current user, requiring admin privileges.
-
-    Re-checks ``is_admin`` against the DB rather than trusting the JWT claim, so
-    a demoted admin loses access immediately instead of keeping it until the
-    token expires. Raises HTTPException 403 if the user is not (or no longer) an
-    admin. Mirrors the DB-backed ``require_premium`` pattern.
-    """
-    from ..crud.users import get_user_by_id
-
-    db_user = get_user_by_id(session, current_user.id)
-    if not db_user or not db_user.is_admin:
+async def get_current_admin(current_user: UserRead = Depends(get_current_user)) -> UserRead:
+    """Get the current user, requiring admin privileges (``is_admin`` comes from the DB)."""
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
@@ -254,6 +264,8 @@ async def get_parent_user_id(token: str = Depends(oauth2_scheme)) -> int | None:
 
 def create_access_token(
     user: UserRead,
+    *,
+    token_version: int,
     impersonating_as: UserRead | None = None,
     open_as_managed_account: UserRead | None = None,
 ) -> UserTokenUpdate:
@@ -265,10 +277,12 @@ def create_access_token(
 
     Args:
         user: The user to create the token for (the owner when open_as / the admin when impersonating)
+        token_version: DB token_version of the user the token represents (the target when impersonating / open_as)
         impersonating_as: If set, admin-impersonation token for this user
         open_as_managed_account: If set, owner-initiated "open as" token for this managed account
     """
-    exp = datetime.now(UTC) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    now = datetime.now(UTC)
+    exp = now + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # When impersonating or open-as, the token represents the target user.
     effective_user = impersonating_as or open_as_managed_account or user
@@ -276,8 +290,10 @@ def create_access_token(
     encoded_data = {
         "id": effective_user.id,
         "sub": str(effective_user.id),
+        "iat": int(now.timestamp()),
         "exp": int(exp.timestamp()),
         "data": {
+            "token_version": token_version,
             "email": effective_user.email,
             "username": effective_user.username,
             "first_name": effective_user.first_name,
@@ -298,7 +314,7 @@ def create_access_token(
 
     token_parsed = dict(
         user=effective_user,
-        created_at=datetime.now(UTC),
+        created_at=now,
         expires_at=exp,
         real_admin_id=user.id if impersonating_as else None,
     )
@@ -338,7 +354,7 @@ def decode_access_token(token: str) -> dict:
 
 def issue_jwt_with_orgs(session: Session, user: UserBase) -> UserTokenUpdate:
     """Mint an access token whose UserRead includes the user's org memberships."""
-    return create_access_token(build_user_read_with_orgs(session, user))
+    return create_access_token(build_user_read_with_orgs(session, user), token_version=user.token_version)
 
 
 def issue_jwt_for_user(session: Session, user: UserBase) -> UserTokenUpdate:
@@ -354,4 +370,4 @@ def issue_jwt_for_user(session: Session, user: UserBase) -> UserTokenUpdate:
     """
     user_read = UserRead.model_validate(user)
     user_read.is_premium = is_premium_effective(session, user)
-    return create_access_token(user_read)
+    return create_access_token(user_read, token_version=user.token_version)

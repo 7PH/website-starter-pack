@@ -202,7 +202,7 @@ export function useCmsMediaUpload(onUploaded?: (media: CmsMediaRead) => void) {
             } catch (error) {
                 const status = getErrorStatus(error);
                 // Same as useApi on an expired token: drop it so the user logs in again.
-                if (status === 401) auth.logout();
+                if (status === 401) auth.dropRefusedToken();
                 const target = live();
                 if (target) target.errorKey = cmsUploadErrorKey(status, error instanceof Error ? error.message : '');
             }

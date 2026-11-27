@@ -20,6 +20,7 @@ from ..helpers.auth import (
     get_user_or_404,
     hash_password,
     issue_jwt_for_user,
+    revoke_sessions,
     sync_existing_user_to_stripe,
     verify_password,
 )
@@ -201,7 +202,7 @@ def request_password_reset(
     # skip non-password users here (oauth, access_code, deleted) — they have
     # no password to reset, but we don't want to leak that fact.
     if user and user.auth_method == "password":
-        token = create_password_reset_token(user.id)
+        token = create_password_reset_token(user.id, user.token_version)
         reset_url = get_password_reset_url(token)
 
         with swallow_email_errors():
@@ -231,7 +232,9 @@ def reset_password(
     """
     Reset password using the JWT token from the reset email.
     """
-    _, user = _decode_token_and_get_user(session, body.token, "reset-password")
+    payload, user = _decode_token_and_get_user(session, body.token, "reset-password")
+    if payload.get("token_version", 0) != user.token_version:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
 
     # Reject non-password accounts: even a leaked reset token shouldn't be able
     # to graft a password onto an oauth/access_code/deleted user.
@@ -247,6 +250,7 @@ def reset_password(
         )
 
     user.hashed_password = hash_password(body.password)
+    revoke_sessions(user)
     update_user(session, user)
 
     # Log password reset

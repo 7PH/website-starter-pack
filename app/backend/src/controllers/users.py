@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from ..constants import (
     IS_PROD,
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
     PUBLIC_URL,
     REAL_NAMES_ENABLED,
     USERNAMES_ENABLED,
@@ -19,7 +18,6 @@ from ..crud.event_logs import log_event
 from ..crud.users import (
     create_user,
     get_user_by_email,
-    get_user_by_id,
     get_user_by_username,
     is_email_taken,
     is_username_taken,
@@ -31,10 +29,12 @@ from ..helpers.auth import (
     decode_access_token,
     get_current_nonmanaged_user,
     get_current_user,
+    get_token_user,
     get_user_or_404,
     hash_password,
     issue_jwt_with_orgs,
     oauth2_scheme,
+    revoke_sessions,
     setup_new_user_stripe,
     sync_existing_user_to_stripe,
     verify_password,
@@ -140,7 +140,7 @@ def register_user(*, request: Request, session: Session = Depends(get_session), 
 
     setup_new_user_stripe(session, user)
 
-    token = create_access_token(UserRead.model_validate(user))
+    token = create_access_token(UserRead.model_validate(user), token_version=user.token_version)
 
     # Log the registration event
     log_event(session, action=EventType.USER_REGISTER, user_id=user.id, request=request)
@@ -215,17 +215,12 @@ def refresh_token(
     payload = decode_access_token(token)
 
     token_exp = payload.get("exp", 0)
-    token_created = token_exp - (JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    # Tokens minted before the iat claim count as old, so they refresh right away.
+    token_created = payload.get("iat", 0)
     now = datetime.now(UTC).timestamp()
 
-    # Always fetch fresh user data with organizations
-    user_id = payload.get("id")
-    user = get_user_by_id(session, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account no longer exists",
-        )
+    # Before the cooldown shortcut, or a revoked token would come back as valid.
+    user = get_token_user(session, payload)
 
     user_read = build_user_read_with_orgs(session, user)
 
@@ -241,7 +236,7 @@ def refresh_token(
             user=user_read,
         )
 
-    return create_access_token(user_read)
+    return create_access_token(user_read, token_version=user.token_version)
 
 
 @router.get("/users/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
@@ -314,7 +309,7 @@ def update_me(
 
 @router.put(
     "/users/me/password",
-    response_model=UserRead,
+    response_model=UserTokenUpdate,
     status_code=status.HTTP_200_OK,
 )
 def update_my_password(
@@ -327,6 +322,7 @@ def update_my_password(
 ):
     """
     Update the password of the currently authenticated user.
+    Signs out every other session and returns a fresh token for this one.
     """
     user = get_user_or_404(session, current_user.id)
 
@@ -340,12 +336,13 @@ def update_my_password(
         )
 
     user.hashed_password = hash_password(user_change_pwd.new_password)
+    revoke_sessions(user)
     update_user(session, user)
 
     # Log password change
     log_event(session, action=EventType.USER_PASSWORD_CHANGE, user_id=user.id, request=request)
 
-    return UserRead.model_validate(user)
+    return issue_jwt_with_orgs(session, user)
 
 
 @router.post(

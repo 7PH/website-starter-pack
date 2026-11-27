@@ -61,6 +61,26 @@ export const useAuth = defineStore('auth', {
         },
 
         /**
+         * The server refused our token. Another tab may have stored a newer one
+         * (eg after a password change): switch to it, and only log out without one.
+         */
+        dropRefusedToken(): void {
+            if (import.meta.server) {
+                return;
+            }
+            try {
+                const stored = JSON.parse(localStorage.getItem(STORAGE_TOKEN_KEY) ?? 'null') as UserTokenUpdate | null;
+                if (stored && stored.access_token !== this.token?.access_token) {
+                    this.token = stored;
+                    return;
+                }
+            } catch {
+                // Unreadable storage: log out below.
+            }
+            this.logout();
+        },
+
+        /**
          * Save a new token and update user state.
          * @param token - The authentication token response
          */
@@ -141,7 +161,7 @@ export const useAuth = defineStore('auth', {
                 // logout() wipes localStorage, so one blip would force a real re-login.
                 const status = (error as { response?: { status?: number } })?.response?.status;
                 if (status === 401) {
-                    this.logout();
+                    this.dropRefusedToken();
                 }
             }
         },

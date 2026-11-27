@@ -61,10 +61,10 @@ export async function updateProfile(data: UserChangeInfo): Promise<UserRead> {
 }
 
 /**
- * Change user password.
+ * Change user password. Other sessions are signed out; the returned token keeps this one.
  */
-export async function changePassword(data: UserChangePassword): Promise<UserRead> {
-    return useApi().put<UserRead>('/users/me/password', data);
+export async function changePassword(data: UserChangePassword): Promise<UserTokenUpdate> {
+    return useApi().put<UserTokenUpdate>('/users/me/password', data);
 }
 
 /**

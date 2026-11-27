@@ -38,7 +38,7 @@ class UserRead(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     display_name: str | None = None
-    # None when built from a JWT, which doesn't carry it; GET /users/me has the live value.
+    # None when the UserRead was built by hand without it.
     email_confirmed: bool | None = None
     is_admin: bool
     is_premium: bool

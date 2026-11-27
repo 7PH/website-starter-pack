@@ -354,7 +354,7 @@ def open_as_account(
     # Inherit premium from the owner (i.e. self) so the swapped session sees
     # the same entitlement the manager paid for.
     target.is_premium = is_premium_effective(session, account)
-    return create_access_token(user, open_as_managed_account=target)
+    return create_access_token(user, token_version=account.token_version, open_as_managed_account=target)
 
 
 # ─── public picker ───

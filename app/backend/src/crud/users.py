@@ -2,9 +2,10 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from ..helpers.auth import revoke_sessions
 from ..helpers.stripe import delete_customer
 from ..models.organization import UserOrganizationBase
 from ..models.user import UserBase
@@ -119,4 +120,7 @@ def soft_delete_user(session: Session, user: UserBase) -> None:
     user.oauth_provider = None
     user.oauth_id = None
     user.email_confirmed = False
+    revoke_sessions(user)
+    # A deleted account must not keep org rights (or a premium seat) through its old memberships.
+    session.execute(delete(UserOrganizationBase).where(UserOrganizationBase.user_id == user.id))
     session.commit()

@@ -32,9 +32,10 @@ def create_email_verification_token(user_id: int, email: str) -> str:
     )
 
 
-def create_password_reset_token(user_id: int) -> str:
+def create_password_reset_token(user_id: int, token_version: int) -> str:
+    # token_version is bumped by the reset itself, so each link works once.
     return _encode_typed_token(
-        {"type": "reset-password", "user_id": user_id},
+        {"type": "reset-password", "user_id": user_id, "token_version": token_version},
         timedelta(hours=PASSWORD_RESET_EXPIRE_HOURS),
     )
 

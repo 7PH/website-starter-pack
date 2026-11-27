@@ -71,7 +71,7 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
                 }
 
                 if (response.headers.get('WWW-Authenticate')?.includes('invalid_token')) {
-                    authStore.logout();
+                    authStore.dropRefusedToken();
                     throw new Error('Invalid or expired token');
                 }
 

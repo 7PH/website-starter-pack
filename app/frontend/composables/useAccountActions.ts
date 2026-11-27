@@ -222,7 +222,7 @@ export function useAccountActions() {
             () => usersApi.changePassword({ old_password: oldPassword, new_password: newPassword }),
             'core.account.password.changeSuccess',
             'core.errors.generic',
-            undefined,
+            (token) => auth.saveUserToken(token),
             { 401: 'core.account.password.wrongCurrent' },
         );
     }

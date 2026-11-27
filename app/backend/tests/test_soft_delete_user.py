@@ -15,6 +15,7 @@ def _user(stripe_id: str | None) -> UserBase:
         stripe_id=stripe_id,
         is_premium=True,
         has_personal_subscription=True,
+        token_version=0,
     )
 
 
@@ -35,3 +36,13 @@ def test_skips_stripe_without_customer():
         crud_users.soft_delete_user(MagicMock(), user)
     delete_customer.assert_not_called()
     assert user.deleted_at is not None
+
+
+def test_revokes_sessions_and_drops_memberships():
+    user = _user(None)
+    session = MagicMock()
+    with patch.object(crud_users, "delete_customer"):
+        crud_users.soft_delete_user(session, user)
+    assert user.token_version == 1
+    statement = session.execute.call_args.args[0]
+    assert statement.table.name == "user_organizations"
